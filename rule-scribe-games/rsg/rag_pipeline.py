@@ -13,7 +13,7 @@ def ensure_collection():
     if settings.collection_name not in [c.name for c in client.get_collections().collections]:
         client.create_collection(
             collection_name=settings.collection_name,
-            vectors_config=qdrant.VectorParams(settings.vector_dim, qdrant.Distance.COSINE),
+            vectors_config=qdrant.VectorParams(size=settings.vector_dim, distance=qdrant.Distance.COSINE),
         )
 
 
