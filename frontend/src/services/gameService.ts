@@ -2,7 +2,7 @@ import { Game } from '@/components/GameCard';
 import { searchGames as searchMockGames } from '@/data/mockGames';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-const USE_MOCK_DATA = import.meta.env.VITE_USE_MOCK_DATA === 'true' || true; // Default to mock for demo
+const USE_MOCK_DATA = import.meta.env.VITE_USE_MOCK_DATA === 'true' || false;
 
 export class GameService {
   private static instance: GameService;
@@ -27,7 +27,7 @@ export class GameService {
     // Production API call
     try {
       const response = await fetch(
-        `${API_BASE_URL}/api/search?query=${encodeURIComponent(query)}`,
+        `${API_BASE_URL}/search?q=${encodeURIComponent(query)}`,
         {
           method: 'GET',
           headers: {
