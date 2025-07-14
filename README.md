@@ -1,45 +1,73 @@
-# rule-scribe-games：Google Gemini 版 - フルコード一式
+# Rule-Scribe-Games: ボードゲームルール検索＆要約サービス
 
-これは "ボードゲーム公式ルール検索＆要約サービス" を **Google Gemini API** で動かすミニマル・モノリシック実装です。
-フロントエンドとバックエンドが含まれており、`docker-compose up --build` で一括起動できます。
+このプロジェクトへようこそ！ `Rule-Scribe-Games` は、お手持ちのボードゲームのルールを簡単に見つけ、AI（Google Gemini）が分かりやすく要約してくれるサービスです。
 
-## 1. ディレクトリ構成
+PDFなどからテキストをコピー＆ペーストするだけで、ルールを整理し、いつでも参照できるMarkdown形式で保存します。
 
-```text
-.
-├── frontend/     # フロントエンド (React + TypeScript)
-└── rule-scribe-games/ # バックエンド (Python + FastAPI)
-    ├─ rsg/
-    ├─ worker.py
-    ├─ requirements.txt
-    ├─ Dockerfile
-    └─ docker-compose.yml
-```
+## 🌟 主な機能
 
-## 2. 起動手順
+*   **ルールの検索**: 登録済みのゲームルールをタイトルで簡単に検索できます。
+*   **AIによる要約**: Google Gemini APIを利用して、長いルールテキストを「セットアップ」「ゲームの流れ」「勝利条件」の3つのポイントに絞って要約します。
+*   **Dockerによる簡単起動**: 必要な環境がすべてパッケージ化されているため、コマンド一つでアプリケーション全体を起動できます。
 
-```bash
-# 1. APIキーを .env に設定
-echo "GEMINI_API_KEY=xxxxxxxxxxxxxxxx" > ./rule-scribe-games/.env
+## 🛠️ 技術スタック
 
-# 2. 一括起動
-docker-compose -f ./rule-scribe-games/docker-compose.yml up --build
-```
+*   **フロントエンド**: React, TypeScript, Vite
+*   **バックエンド**: Python, FastAPI
+*   **AIモデル**: Google Gemini Pro
+*   **データベース**: SQLite, Qdrant (ベクトル検索用)
+*   **非同期処理**: Celery, Redis
 
-## 3. 使い方
+## 🚀 使い方
 
-1.  ブラウザで `http://localhost:3000` を開きます。
-2.  検索バーにボードゲームの名前を入力して、ルールを検索します。
-3.  まだインデックスに登録されていないゲームの場合は、ルールテキストを送信して要約を生成できます。
+### 1. 準備
 
-### API エンドポイント
+このアプリケーションを動かすには、お使いのコンピュータに [Docker](https://www.docker.com/get-started) と [Docker Compose](https://docs.docker.com/compose/install/) がインストールされている必要があります。
 
-*   `POST /request`: ルールの要約をリクエストします。
-    ```json
-    {
-      "title": "カタン",
-      "raw_text": "## セットアップ ... (公式 PDF を抽出したテキスト)"
-    }
+### 2. Google Gemini APIキーの取得
+
+このサービスの中核であるAI機能を利用するには、Google Gemini APIキーが必要です。
+
+1.  [Google AI Studio](https://aistudio.google.com/app/apikey) にアクセスし、Googleアカウントでログインします。
+2.  `Create API key` ボタンをクリックして、新しいAPIキーを作成します。
+3.  生成されたAPIキーを安全な場所にコピーしておいてください。
+
+### 3. アプリケーションの起動
+
+1.  まず、このリポジトリのコードをお手元にダウンロード（クローン）します。
+    ```bash
+    git clone https://github.com/KAFKA2306/rule-scribe-games.git
+    cd rule-scribe-games
     ```
-*   `GET /search?q={query}`: 指定されたクエリでゲームを検索します。
-*   `GET /games/{game_id}`: 特定のゲームの詳細を取得します。
+
+2.  次に、バックエンドのディレクトリに、あなたのAPIキーを設定するためのファイルを作成します。
+    - `rule-scribe-games` という名前のフォルダの中に、`.env` という名前のファイルを作成してください。
+    - そのファイルに、先ほど取得したAPIキーを以下のように記述します。
+
+    ```
+    GEMINI_API_KEY=ここにあなたのAPIキーを貼り付けます
+    ```
+
+3.  準備が整いました。以下のコマンドを実行して、アプリケーションを起動しましょう。
+    ```bash
+    docker-compose -f ./rule-scribe-games/docker-compose.yml up --build
+    ```
+    初回起動時は、必要なイメージのダウンロードとビルドのため、少し時間がかかります。
+
+4.  ビルドが完了し、コンテナが起動したら、Webブラウザで `http://localhost:3000` にアクセスしてください。
+
+### 4. サービスの利用
+
+*   **ルールの検索**: トップページの検索バーにゲーム名を入力すると、すでに登録されているルールの要約を閲覧できます。
+*   **新しいルールの要約**:
+    1.  もしゲームが見つからない場合は、お手持ちのルールのテキスト（PDFやWebサイトからコピーしたもの）を所定のフォームに貼り付けます。
+    2.  「要約をリクエスト」ボタンを押すと、バックグラウンドでAIによる要約処理が始まります。
+    3.  処理が完了すると（通常は数十秒から数分）、検索結果に表示されるようになります。
+
+## 🤝 コントリビューション
+
+このプロジェクトへの貢献に興味をお持ちいただき、ありがとうございます。バグ報告、機能提案、プルリクエストなど、いつでも歓迎します。
+
+---
+
+このREADMEで、よりプロジェクトの全体像と使い方が明確になったかと思います。ご不明な点があれば、お気軽にご質問ください。
