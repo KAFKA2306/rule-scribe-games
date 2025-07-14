@@ -17,6 +17,7 @@ services:
     depends_on: [qdrant, redis]
     volumes:
       - ./rsg.db:/app/rsg.db
+    command: sh -c "touch rsg.db && uvicorn rsg.api:app --host 0.0.0.0 --port 8000"
 
   worker:
     build: .
