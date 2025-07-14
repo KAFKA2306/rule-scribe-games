@@ -1,73 +1,45 @@
-# Welcome to your Lovable project
+# rule-scribe-games：Google Gemini 版 - フルコード一式
 
-## Project info
+これは "ボードゲーム公式ルール検索＆要約サービス" を **Google Gemini API** で動かすミニマル・モノリシック実装です。
+フロントエンドとバックエンドが含まれており、`docker-compose up --build` で一括起動できます。
 
-**URL**: https://lovable.dev/projects/89873b74-fd73-4213-bf2d-69eb1ddcd2b0
+## 1. ディレクトリ構成
 
-## How can I edit this code?
-
-There are several ways of editing your application.
-
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/89873b74-fd73-4213-bf2d-69eb1ddcd2b0) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+```text
+.
+├── frontend/     # フロントエンド (React + TypeScript)
+└── rule-scribe-games/ # バックエンド (Python + FastAPI)
+    ├─ rsg/
+    ├─ worker.py
+    ├─ requirements.txt
+    ├─ Dockerfile
+    └─ docker-compose.yml
 ```
 
-**Edit a file directly in GitHub**
+## 2. 起動手順
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+```bash
+# 1. APIキーを .env に設定
+echo "GEMINI_API_KEY=xxxxxxxxxxxxxxxx" > ./rule-scribe-games/.env
 
-**Use GitHub Codespaces**
+# 2. 一括起動
+docker-compose -f ./rule-scribe-games/docker-compose.yml up --build
+```
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## 3. 使い方
 
-## What technologies are used for this project?
+1.  ブラウザで `http://localhost:3000` を開きます。
+2.  検索バーにボードゲームの名前を入力して、ルールを検索します。
+3.  まだインデックスに登録されていないゲームの場合は、ルールテキストを送信して要約を生成できます。
 
-This project is built with:
+### API エンドポイント
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/89873b74-fd73-4213-bf2d-69eb1ddcd2b0) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+*   `POST /request`: ルールの要約をリクエストします。
+    ```json
+    {
+      "title": "カタン",
+      "raw_text": "## セットアップ ... (公式 PDF を抽出したテキスト)"
+    }
+    ```
+*   `GET /search?q={query}`: 指定されたクエリでゲームを検索します。
+*   `GET /games/{game_id}`: 特定のゲームの詳細を取得します。
