@@ -2,6 +2,7 @@ import google.generativeai as genai
 from app.core.settings import settings
 import httpx
 import json
+import re
 
 genai.configure(api_key=settings.gemini_api_key)
 
@@ -47,8 +48,9 @@ class GeminiClient:
             res.raise_for_status()
             text = res.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
 
-        if text.startswith("```"):
-            text = text.split("\n", 1)[1].rsplit("\n", 1)[0]
+        if match := re.search(r"```(?:json)?\s*(.*?)\s*```", text, re.DOTALL):
+            text = match.group(1)
+
         data = json.loads(text)
 
         if isinstance(data.get("rules_content"), (dict, list)):
