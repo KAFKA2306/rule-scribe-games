@@ -47,7 +47,7 @@ class SupabaseGameRepository(GameRepository):
                 return (
                     self.client.table("games")
                     .select("*")
-                    .or_(f"title.ilike.%{query}%,description.ilike.%{query}%")
+                    .or_(f"title.ilike.*{query}*,description.ilike.*{query}*")
                     .execute()
                     .data
                 )
