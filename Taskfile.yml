@@ -1,4 +1,4 @@
-version: '3'
+version: "3"
 
 tasks:
   default:
@@ -6,45 +6,33 @@ tasks:
     cmd: task --list
 
   setup:
-    desc: バックエンドとフロントエンドの依存関係をインストール
+    desc: "依存インストール (backend: uv sync, frontend: npm install)"
     cmds:
       - cmd: cd backend && uv sync
       - cmd: cd frontend && npm install
 
   dev:
-    desc: フルスタック（バックエンド + フロントエンド）を実行
-    deps: [kill]
-    cmds:
-      - task: dev:up
-
-  dev:up:
-    desc: サービスの起動（内部タスク）
+    desc: バックエンドとフロントエンドを同時起動
     deps: [dev:backend, dev:frontend]
 
   dev:backend:
-    desc: バックエンドAPIを実行 (ポート 8000)
+    desc: FastAPI 開発サーバー (http://localhost:8000)
     dir: backend
     cmd: uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
   dev:frontend:
-    desc: フロントエンドを実行 (ポート 5173)
+    desc: Vite 開発サーバー (http://localhost:5173)
     dir: frontend
     cmd: npm run dev -- --host
 
-  kill:
-    desc: ポート 8000 と 5173 のプロセスを終了
-    cmds:
-      - fuser -k 8000/tcp 5173/tcp 5174/tcp || true
-    silent: true
-
   db:init:
-    desc: "データベース初期化SQLを表示 (Supabaseダッシュボードで実行)"
+    desc: DB初期化SQLを表示
     cmd: cat backend/init_db.sql
 
   lint:
-    desc: コードのLintとフォーマットを実行
+    desc: Lint / format (backend Ruff, frontend Prettier+ESLint)
     cmds:
-      - cd backend && uv run ruff check --fix .
-      - cd backend && uv run ruff format .
-      - cd frontend && npx prettier --write .
-      - cd frontend && ESLINT_USE_FLAT_CONFIG=false npx eslint . --ext .js,.jsx --fix
+      - cmd: cd backend && uv run ruff check --fix .
+      - cmd: cd backend && uv run ruff format .
+      - cmd: cd frontend && npx prettier --write .
+      - cmd: cd frontend && ESLINT_USE_FLAT_CONFIG=false npx eslint . --ext .js,.jsx --fix
