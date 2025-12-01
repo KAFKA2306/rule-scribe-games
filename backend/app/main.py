@@ -24,9 +24,9 @@ elif backend_env.exists():
 else:
     load_dotenv(override=True)
 
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from app.routers import search, summarize
+from fastapi import FastAPI  # noqa: E402
+from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
+from app.routers import search, summarize  # noqa: E402
 
 app = FastAPI(title="RuleScribe Minimal", version="1.0.0")
 

@@ -6,7 +6,6 @@ from app.core.supabase import (
     _repo,
     SupabaseGameRepository,
     NoopGameRepository,
-    GameRepository,
 )
 
 # --- Test _client factory ---

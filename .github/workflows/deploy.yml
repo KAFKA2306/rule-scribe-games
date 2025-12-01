@@ -4,13 +4,40 @@ on:
   push:
     branches:
       - main
+  pull_request:
 
 env:
   VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
   VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
 jobs:
+  Test-Backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: "backend/pyproject.toml"
+      - name: Install dependencies
+        working-directory: backend
+        run: uv sync
+      - name: Lint with Ruff
+        working-directory: backend
+        run: uv run ruff check .
+      - name: Test with pytest
+        working-directory: backend
+        run: |
+          export PYTHONPATH=$PYTHONPATH:$(pwd)
+          uv run pytest tests
+
   Deploy-Production:
+    needs: [Test-Backend]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
