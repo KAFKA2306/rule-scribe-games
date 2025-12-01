@@ -5,18 +5,26 @@ function App() {
   const [query, setQuery] = useState('')
   const [results, setResults] = useState([])
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
   const [selectedGame, setSelectedGame] = useState(null)
   const [summary, setSummary] = useState(null)
 
   const api = async (url, body) => {
-    setLoading(true)
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    })
-    setLoading(false)
-    return await res.json()
+    try {
+      setLoading(true)
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+      if (!res.ok) throw new Error('Request failed')
+      return await res.json()
+    } catch (err) {
+      console.error(err)
+      return null
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleSearch = async (e) => {
@@ -25,16 +33,29 @@ function App() {
     setResults([])
     setSelectedGame(null)
     setSummary(null)
+    setError(null)
+
     const data = await api('/api/search', { query })
-    if (data) setResults(data)
+    if (data) {
+      setResults(data)
+    } else {
+      setError(
+        'Search failed. Please check the backend connection or API keys.',
+      )
+    }
   }
 
   const handleSummarize = async () => {
     if (!selectedGame) return
+    setError(null)
     const data = await api('/api/summarize', {
       text: selectedGame.rules_content,
     })
-    if (data) setSummary(data.summary)
+    if (data) {
+      setSummary(data.summary)
+    } else {
+      setError('Summarization failed.')
+    }
   }
 
   return (
@@ -46,7 +67,7 @@ function App() {
               RuleScribe
             </span>
             <span className="text-xs font-medium bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded-full">
-              Minimal
+              Codex
             </span>
           </div>
         </div>
@@ -55,11 +76,10 @@ function App() {
       <main className="max-w-6xl mx-auto px-4 py-8">
         <div className="text-center mb-12">
           <h1 className="text-4xl font-extrabold text-gray-900 mb-4">
-            Master Any Board Game
+            The Living Grimoire
           </h1>
           <p className="text-lg text-gray-600">
-            Instantly find rules, get AI-powered summaries, and start playing
-            faster.
+            AI-powered rule synthesis. Infinite knowledge. Evolution with every search.
           </p>
         </div>
 
@@ -80,6 +100,11 @@ function App() {
               {loading ? '...' : 'Search'}
             </button>
           </form>
+          {error && (
+            <div className="mt-4 p-4 bg-red-50 text-red-700 border border-red-200 rounded-xl text-center">
+              {error}
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -92,7 +117,7 @@ function App() {
                 </span>
               )}
             </h2>
-            {results.length === 0 && !loading && query && (
+            {results.length === 0 && !loading && query && !error && (
               <div className="p-8 text-center border-2 border-dashed rounded-xl text-gray-500">
                 No games found via DB.
               </div>
