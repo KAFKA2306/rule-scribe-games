@@ -19,8 +19,16 @@
       "dest": "/backend/app/main.py"
     },
     {
-      "src": "/(.*)",
-      "dest": "/frontend/$1"
+      "src": "/",
+      "dest": "/frontend/index.html"
+    },
+    {
+      "src": "/assets/(.*)",
+      "dest": "/frontend/assets/$1"
+    },
+    {
+      "src": "/favicon.ico",
+      "dest": "/frontend/favicon.ico"
     },
     {
       "handle": "filesystem"
