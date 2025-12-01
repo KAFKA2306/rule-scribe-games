@@ -1,15 +1,5 @@
 import { useState } from 'react'
-
-const Markdown = ({ content }) => (
-  <div
-    className="prose prose-sm max-w-none text-gray-700"
-    dangerouslySetInnerHTML={{
-      __html: content
-        .replace(/\n/g, '<br/>')
-        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>'),
-    }}
-  />
-)
+import ReactMarkdown from 'react-markdown'
 
 function App() {
   const [query, setQuery] = useState('')
@@ -149,7 +139,9 @@ function App() {
                       <h3 className="text-lg font-semibold text-teal-900 mb-2">
                         AI Summary
                       </h3>
-                      <Markdown content={summary} />
+                      <ReactMarkdown className="prose prose-sm max-w-none text-gray-700">
+                        {summary}
+                      </ReactMarkdown>
                     </div>
                   )}
                   <div>
@@ -165,8 +157,10 @@ function App() {
                         </button>
                       )}
                     </div>
-                    <div className="bg-gray-50 rounded-xl p-6 border max-h-[500px] overflow-y-auto whitespace-pre-wrap text-gray-700">
-                      {selectedGame.rules_content}
+                    <div className="bg-gray-50 rounded-xl p-6 border max-h-[500px] overflow-y-auto text-gray-700">
+                      <ReactMarkdown className="prose prose-sm max-w-none text-gray-700">
+                        {selectedGame.rules_content}
+                      </ReactMarkdown>
                     </div>
                   </div>
                 </div>
