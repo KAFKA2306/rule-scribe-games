@@ -26,7 +26,7 @@ else:
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import search, summarize
+from app.routers import search, summarize, debug
 
 app = FastAPI(title="RuleScribe Minimal", version="1.0.0")
 
@@ -40,6 +40,7 @@ app.add_middleware(
 
 app.include_router(search.router, prefix="/api", tags=["search"])
 app.include_router(summarize.router, prefix="/api", tags=["summarize"])
+app.include_router(debug.router, prefix="/api", tags=["debug"])
 
 
 @app.get("/health")

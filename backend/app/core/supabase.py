@@ -1,5 +1,6 @@
 from typing import List, Protocol, Dict, Any, Optional
-
+import sys
+import traceback
 import anyio
 
 try:
@@ -29,10 +30,12 @@ def _client() -> Optional[Client]:
         or settings.supabase_key == PLACEHOLDER
         or create_client is None
     ):
+        print("Warning: Supabase credentials missing or client library not found. Falling back to Mock.", file=sys.stderr)
         return None
     try:
         return create_client(settings.supabase_url, settings.supabase_key)
-    except Exception:
+    except Exception as e:
+        print(f"Error initializing Supabase client: {e}", file=sys.stderr)
         return None
 
 
@@ -42,8 +45,9 @@ class SupabaseGameRepository(GameRepository):
 
     async def search(self, query: str) -> List[Dict[str, Any]]:
         try:
-
             def _search():
+                # Note: ilike syntax for 'OR' filter in supabase-py might vary by version
+                # using a raw filter string or built-in methods.
                 return (
                     self.client.table("games")
                     .select("*")
@@ -53,12 +57,13 @@ class SupabaseGameRepository(GameRepository):
                 )
 
             return await anyio.to_thread.run_sync(_search)
-        except Exception:
+        except Exception as e:
+            print(f"Error in Supabase search: {e}", file=sys.stderr)
+            traceback.print_exc()
             return []
 
     async def upsert(self, data: Dict[str, Any]) -> List[Dict[str, Any]]:
         try:
-
             def _upsert():
                 key = "source_url" if data.get("source_url") else "title"
                 return (
@@ -69,12 +74,12 @@ class SupabaseGameRepository(GameRepository):
                 )
 
             return await anyio.to_thread.run_sync(_upsert)
-        except Exception:
+        except Exception as e:
+            print(f"Error in Supabase upsert: {e}", file=sys.stderr)
             return []
 
     async def get_by_id(self, game_id: int) -> Optional[Dict[str, Any]]:
         try:
-
             def _get():
                 res = (
                     self.client.table("games")
@@ -86,12 +91,12 @@ class SupabaseGameRepository(GameRepository):
                 return res[0] if res else None
 
             return await anyio.to_thread.run_sync(_get)
-        except Exception:
+        except Exception as e:
+            print(f"Error in Supabase get_by_id: {e}", file=sys.stderr)
             return None
 
     async def update_summary(self, game_id: int, summary: str) -> bool:
         try:
-
             def _update():
                 (
                     self.client.table("games")
@@ -102,12 +107,12 @@ class SupabaseGameRepository(GameRepository):
                 return True
 
             return await anyio.to_thread.run_sync(_update)
-        except Exception:
+        except Exception as e:
+            print(f"Error in Supabase update_summary: {e}", file=sys.stderr)
             return False
 
     async def update_structured_data(self, game_id: int, structured_data: dict) -> bool:
         try:
-
             def _update():
                 (
                     self.client.table("games")
@@ -118,7 +123,8 @@ class SupabaseGameRepository(GameRepository):
                 return True
 
             return await anyio.to_thread.run_sync(_update)
-        except Exception:
+        except Exception as e:
+            print(f"Error in Supabase update_structured_data: {e}", file=sys.stderr)
             return False
 
 
