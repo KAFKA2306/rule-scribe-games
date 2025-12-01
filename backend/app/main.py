@@ -1,7 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routers import search, summarize
-import os
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -20,5 +19,4 @@ app.include_router(search.router, prefix="/api", tags=["search"])
 app.include_router(summarize.router, prefix="/api", tags=["summarize"])
 
 @app.get("/health")
-def health_check():
-    return {"status": "ok"}
+def health_check(): return {"status": "ok"}
