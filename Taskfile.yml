@@ -2,47 +2,47 @@ version: '3'
 
 tasks:
   default:
-    desc: List tasks
+    desc: タスク一覧を表示
     cmd: task --list
 
   setup:
-    desc: Install dependencies for backend and frontend
+    desc: バックエンドとフロントエンドの依存関係をインストール
     cmds:
       - cmd: cd backend && uv sync
       - cmd: cd frontend && npm install
 
   dev:
-    desc: Run the full stack (Backend + Frontend)
+    desc: フルスタック（バックエンド + フロントエンド）を実行
     deps: [kill]
     cmds:
       - task: dev:up
 
   dev:up:
-    desc: internal task to run services
+    desc: サービスの起動（内部タスク）
     deps: [dev:backend, dev:frontend]
 
   dev:backend:
-    desc: Run backend API (port 8000)
+    desc: バックエンドAPIを実行 (ポート 8000)
     dir: backend
     cmd: uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
   dev:frontend:
-    desc: Run frontend (port 5173)
+    desc: フロントエンドを実行 (ポート 5173)
     dir: frontend
     cmd: npm run dev -- --host
 
   kill:
-    desc: Kill processes on ports 8000 and 5173
+    desc: ポート 8000 と 5173 のプロセスを終了
     cmds:
       - fuser -k 8000/tcp 5173/tcp 5174/tcp || true
     silent: true
 
   db:init:
-    desc: "Show SQL to initialize database (Run in Supabase Dashboard)"
+    desc: "データベース初期化SQLを表示 (Supabaseダッシュボードで実行)"
     cmd: cat backend/init_db.sql
 
   lint:
-    desc: Lint and format code
+    desc: コードのLintとフォーマットを実行
     cmds:
       - cd backend && uv run ruff check --fix .
       - cd backend && uv run ruff format .
