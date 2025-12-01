@@ -1,58 +1,120 @@
 # RuleScribe Games
 
-## 究極の目標
-**「世界中のあらゆるボードゲームのルールを、瞬時に、正確に、母国語で理解できる "Living Wiki" を構築する」**
+[![Vercel](https://therealsujitk-vercel-badge.vercel.app/?app=rule-scribe-games)](https://rule-scribe-games.vercel.app)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python 3.11](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/downloads/release/python-3110/)
+[![React](https://img.shields.io/badge/react-18.x-61dafb.svg)](https://reactjs.org/)
 
-RuleScribe Games は、AIの力でウェブ上の散在する情報を統合し、プレイヤーが直感的に理解できる形式（セットアップ、ゲームフロー、勝利条件）に再構築します。ユーザーが検索するたびにデータベースが充実し、自己進化し続ける「生きたルールブック」を目指します。
+**AI-Powered Board Game Rule Wiki & Summarizer**
 
-## 主要機能
+「世界中のあらゆるボードゲームのルールを、瞬時に、正確に、母国語で理解できる "Living Wiki"」
 
-### 1. AI駆動の自動Wiki生成
-*   **検索即生成**: データベースにないゲームが検索されると、即座にウェブ（公式サイト、BGG、PDFマニュアル）を探索し、情報を構造化して保存します。
-*   **情報の正規化**: 揺れのある表記を統一し、英語と日本語のタイトルを併記。
-*   **出典の厳選**: 公式ルールブックや信頼性の高い情報源を優先的に参照し、ハルシネーションを最小化します。
+---
 
-### 2. インテリジェント・サマリー
-*   **構造化された要約**: 膨大なルールブックを「準備」「手順」「勝利条件」の3点に絞ってMarkdown形式で出力。
-*   **多言語対応**: 英語のソースからでも、流暢な日本語で解説を生成。
+## 🚀 Demo
 
-### 3. "Living" Database (Supabase + Vector Search)
-*   **自己進化**: ユーザーの検索行動自体がWikiを育てます。一度検索されたゲームは永続化され、次回以降は超高速に表示。
-*   **画像統合**: ゲームのボックスアートやコンポーネント画像を自動取得し、視覚的なデータベースを構築。
+**[Live Demo (Vercel)](https://rule-scribe-games.vercel.app)**
 
-### 4. ミニマルで美しいUI
-*   **即応性**: React + Tailwind CSS によるモダンで高速なインターフェース。
-*   **集中**: 余計な装飾を排し、プレイヤーが「今すぐ遊び始める」ことだけに集中できるデザイン。
+---
 
-## 技術スタック
-*   **Backend**: Python (FastAPI), Gemini 2.5 Flash (Google AI Studio)
-*   **Frontend**: React (Vite), Tailwind CSS
-*   **Database**: Supabase (PostgreSQL + pgvector)
-*   **Search Grounding**: Google Search Grounding (via Gemini)
+## 📖 About
 
-## セットアップ (Setup)
+RuleScribe Games は、AI (Gemini 2.5 Flash) を活用してウェブ上の情報を統合し、ボードゲームのルールを「セットアップ」「ゲームフロー」「勝利条件」の3点に絞って構造化・要約するアプリケーションです。
 
-### 前提条件
-*   Python 3.11+
-*   Node.js 18+
-*   Supabase アカウント & プロジェクト
-*   Google Gemini API Key
+ユーザーが検索するたびにデータベース (Supabase) が更新され、未知のゲームも即座にウェブ検索を行ってWikiページを生成する「自己進化型」データベースです。
 
-### インストール
-```bash
-# 依存関係のインストール
-task setup
+### Key Features
+- **🔍 検索即生成**: DB未登録のゲームもリアルタイムでウェブ検索・要約・保存。
+- **📝 インテリジェント・サマリー**: 膨大なマニュアルを短時間で読める形式に構造化。
+- **🌏 多言語対応**: 英語の情報源からでも日本語で要約を生成。
+- **⚡ 高速なレスポンス**: 一度生成された情報はDBにキャッシュされ、次回以降は瞬時に表示。
 
-# 環境変数の設定 (.envを作成し、キーを入力)
-cp .env.example .env
+## 🛠 Tech Stack
+
+| Category | Technology |
+|----------|------------|
+| **Frontend** | React, Vite, Tailwind CSS |
+| **Backend** | Python (FastAPI), UV (Package Manager) |
+| **AI Model** | Google Gemini 2.5 Flash |
+| **Search** | Google Search Grounding (via Gemini) |
+| **Database** | Supabase (PostgreSQL + pgvector) |
+| **Deployment** | Vercel |
+| **Tooling** | Taskfile, Ruff, Prettier |
+
+## 💻 Getting Started (Local Development)
+
+### Prerequisites
+- **Python 3.11+** (Manage with `uv` recommended)
+- **Node.js 18+**
+- **Supabase Account** & Project
+- **Google Gemini API Key** (via Google AI Studio)
+- **Task** (Taskfile runner) - Optional but recommended
+
+### Installation
+
+1.  **Clone the repository**
+    ```bash
+    git clone <repository-url>
+    cd rule-scribe-games
+    ```
+
+2.  **Environment Setup**
+    ```bash
+    cp .env.example .env
+    # .env ファイルを開き、Supabase URL/Key と Google API Key を入力してください
+    ```
+
+3.  **Install Dependencies**
+    ```bash
+    task setup
+    # Or manually:
+    # cd backend && uv sync
+    # cd frontend && npm install
+    ```
+
+4.  **Database Initialization**
+    SupabaseのSQLエディタで `backend/init_db.sql` の内容を実行し、テーブルを作成してください。
+    ```bash
+    # SQLの内容を表示
+    task db:init
+    ```
+
+5.  **Run Development Server**
+    ```bash
+    task dev
+    ```
+    - Frontend: [http://localhost:5173](http://localhost:5173)
+    - Backend: [http://localhost:8000](http://localhost:8000)
+
+## 📜 Available Commands
+
+このプロジェクトでは `Taskfile` を使用してコマンドを管理しています。
+
+| Command | Description |
+|---------|-------------|
+| `task dev` | フロントエンドとバックエンドを同時に起動 (Hot Reload有効) |
+| `task setup` | 依存関係のインストール (`uv sync`, `npm install`) |
+| `task lint` | コードのLintとフォーマット (`ruff`, `prettier`, `eslint`) |
+| `task db:init` | DB初期化用SQLを表示 |
+| `task kill` | 開発サーバーのポート(8000, 5173)を強制解放 |
+
+## 📂 Project Structure
+
 ```
-
-### データベース初期化
-SupabaseのSQLエディタで `backend/init_db.sql` を実行してください。
-
-### 起動
-```bash
-task dev
+rule-scribe-games/
+├── backend/            # FastAPI Backend
+│   ├── app/
+│   │   ├── main.py     # Entry point
+│   │   ├── routers/    # API Routes
+│   │   ├── services/   # Business Logic (Gemini Client etc.)
+│   │   └── core/       # Config & DB connection
+│   ├── config.yaml     # App configuration
+│   └── init_db.sql     # Database schema
+├── frontend/           # React Frontend
+│   ├── src/
+│   │   ├── App.jsx     # Main component
+│   │   └── ...
+│   └── vite.config.js
+├── Taskfile.yml        # Task runner configuration
+└── vercel.json         # Vercel deployment config
 ```
-- Frontend: http://localhost:5173
-- Backend: http://localhost:8000
