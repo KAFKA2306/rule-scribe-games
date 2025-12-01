@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 from pydantic import BaseModel
 from app.services.gemini_client import GeminiClient
 
@@ -13,8 +13,5 @@ class SummarizeResponse(BaseModel):
 
 @router.post("/summarize", response_model=SummarizeResponse)
 async def summarize(request: SummarizeRequest):
-    try:
-        summary = gemini.summarize(request.text)
-        return {"summary": summary}
-    except Exception as e:
-        raise HTTPException(500, str(e))
+    summary = gemini.summarize(request.text)
+    return {"summary": summary}
