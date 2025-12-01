@@ -82,7 +82,9 @@ class GeminiClient:
                 if res.status_code != 200:
                     # Fallback to mock if API fails
                     print(f"Gemini API Error {res.status_code}: {res.text}")
-                    return self._mock_response(query, error=f"API Error {res.status_code}")
+                    return self._mock_response(
+                        query, error=f"API Error {res.status_code}"
+                    )
 
                 payload = res.json()
 
@@ -122,5 +124,33 @@ class GeminiClient:
             "description": description,
             "rules_content": "## Mock Rules\n\n1. **Setup**: None required.\n2. **Play**: Imagine the game.\n3. **Win**: Everyone wins in mock mode.",
             "image_url": "https://placehold.co/600x400?text=Mock+Game",
-            "source_url": "mock://system"
+            "source_url": "mock://system",
         }
+
+    async def generate_structured_json(self, prompt: str) -> dict:
+        if self.is_mock:
+            return {"type": "unknown", "overview": "Mock data"}
+
+        try:
+            async with httpx.AsyncClient() as client:
+                res = await client.post(
+                    self.base_url,
+                    headers={"Content-Type": "application/json"},
+                    json={"contents": [{"parts": [{"text": prompt}]}]},
+                    timeout=30.0,
+                )
+
+                if res.status_code != 200:
+                    return {}
+
+                payload = res.json()
+                text = self._extract_text(payload)
+
+                if match := re.search(r"```(?:json)?\s*(.*?)\s*```", text, re.DOTALL):
+                    text = match.group(1)
+
+                return json.loads(text)
+
+        except Exception as e:
+            print(f"Structured JSON generation failed: {e}")
+            return {}
