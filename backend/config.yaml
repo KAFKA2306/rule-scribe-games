@@ -1,4 +1,0 @@
-gemini:
-  model: "gemini-2.5-flash"
-  embed_model: "models/embedding-001"
-  api_key_env_var: "GEMINI_API_KEY"

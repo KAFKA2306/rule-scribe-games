@@ -1,6 +1,6 @@
 import re
-from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, Field
+from fastapi import APIRouter
+from pydantic import BaseModel
 from typing import List, Optional
 
 from app.core.supabase import supabase_repository
@@ -19,15 +19,12 @@ class SearchResult(BaseModel):
 
 
 class SearchRequest(BaseModel):
-    query: str = Field(..., min_length=2, max_length=256)
+    query: str
 
 
 @router.post("/search", response_model=List[SearchResult])
 async def search(req: SearchRequest):
     clean_query = req.query.strip()
-    if not clean_query or len(clean_query) < 2:
-        raise HTTPException(status_code=400, detail="query must be at least 2 characters")
-
     if not clean_query.startswith("http"):
         if res := await supabase_repository.search(clean_query):
             return [SearchResult(**r) for r in res]
