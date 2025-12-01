@@ -47,7 +47,11 @@ function App() {
     const data = await post('/api/search', { query: q }, setError, setLoading)
     if (data) {
       setGames(data)
-      setPick(data[0] || null)
+      const first = data[0] || null
+      setPick(first)
+      if (first?.summary) {
+        setSummary(first.summary)
+      }
     }
   }
 
@@ -56,7 +60,7 @@ function App() {
     setError('')
     const data = await post(
       '/api/summarize',
-      { text: pick.rules_content || '' },
+      { text: pick.rules_content || '', game_id: pick.id },
       setError,
       setLoading,
     )
@@ -102,7 +106,7 @@ function App() {
                   className={pick?.id === game.id ? 'active' : ''}
                   onClick={() => {
                     setPick(game)
-                    setSummary('')
+                    setSummary(game.summary || '')
                   }}
                 >
                   <strong>{game.title}</strong>
@@ -140,15 +144,17 @@ function App() {
               {summary && (
                 <div className="summary">
                   <h3>AI Summary</h3>
-                  <ReactMarkdown className="markdown">{summary}</ReactMarkdown>
+                  <div className="markdown" style={{ whiteSpace: 'pre-wrap' }}>
+                    {summary}
+                  </div>
                 </div>
               )}
 
               <div className="summary">
                 <h3>Full Rules</h3>
-                <ReactMarkdown className="markdown">
+                <div className="markdown" style={{ whiteSpace: 'pre-wrap' }}>
                   {pick.rules_content || 'No rules provided.'}
-                </ReactMarkdown>
+                </div>
               </div>
             </>
           )}
