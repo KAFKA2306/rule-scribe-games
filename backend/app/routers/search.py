@@ -17,6 +17,8 @@ class SearchResult(BaseModel):
     rules_content: Optional[str] = None
     image_url: Optional[str] = None
     summary: Optional[str] = None
+    structured_data: Optional[dict] = None
+    source_url: Optional[str] = None
 
 
 class SearchRequest(BaseModel):
@@ -30,8 +32,10 @@ async def search(req: SearchRequest):
         try:
             if res := await supabase_repository.search(clean_query):
                 return [SearchResult(**r) for r in res]
-        except Exception:
-            # If DB search fails, continue to AI search
+        except Exception as e:
+            # If DB search fails, log it and continue to AI search
+            import sys
+            print(f"Search error (DB -> Pydantic): {e}", file=sys.stderr)
             pass
 
     try:
