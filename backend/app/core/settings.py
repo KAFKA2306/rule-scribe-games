@@ -1,13 +1,23 @@
 # rsg/settings.py
 from pydantic_settings import BaseSettings
 from pydantic import Field
+import yaml
+import os
 
+def load_config():
+    try:
+        with open("config.yaml", "r") as f:
+            return yaml.safe_load(f)
+    except FileNotFoundError:
+        return {}
+
+config = load_config()
 
 class Settings(BaseSettings):
     # ---------- Google Gemini ----------
     gemini_api_key: str = Field(..., env="GEMINI_API_KEY")
-    gemini_model: str = "models/gemini-1.5-pro-latest"
-    gemini_embed_model: str = "models/embedding-001"
+    gemini_model: str = config.get("gemini", {}).get("model", "gemini-2.5-flash")
+    gemini_embed_model: str = config.get("gemini", {}).get("embed_model", "models/embedding-001")
 
     # ---------- Vector DB (Qdrant) ------
     qdrant_host: str = "qdrant"
@@ -24,6 +34,7 @@ class Settings(BaseSettings):
 
     class Config:
         env_file = ".env"
+        extra = "ignore"
 
 
 settings = Settings()

@@ -1,45 +1,58 @@
-# rule-scribe-games：Google Gemini 版 - フルコード一式
+# RuleScribe Games
 
-これは "ボードゲーム公式ルール検索＆要約サービス" を **Google Gemini API** で動かすミニマル・モノリシック実装です。
-フロントエンドとバックエンドが含まれており、`docker-compose up --build` で一括起動できます。
+## 究極の目標
+**「世界中のあらゆるボードゲームのルールを、瞬時に、正確に、母国語で理解できる "Living Wiki" を構築する」**
 
-## 1. ディレクトリ構成
+RuleScribe Games は、AIの力でウェブ上の散在する情報を統合し、プレイヤーが直感的に理解できる形式（セットアップ、ゲームフロー、勝利条件）に再構築します。ユーザーが検索するたびにデータベースが充実し、自己進化し続ける「生きたルールブック」を目指します。
 
-```text
-.
-├── frontend/     # フロントエンド (React + TypeScript)
-└── rule-scribe-games/ # バックエンド (Python + FastAPI)
-    ├─ rsg/
-    ├─ worker.py
-    ├─ requirements.txt
-    ├─ Dockerfile
-    └─ docker-compose.yml
-```
+## 主要機能
 
-## 2. 起動手順
+### 1. AI駆動の自動Wiki生成
+*   **検索即生成**: データベースにないゲームが検索されると、即座にウェブ（公式サイト、BGG、PDFマニュアル）を探索し、情報を構造化して保存します。
+*   **情報の正規化**: 揺れのある表記を統一し、英語と日本語のタイトルを併記。
+*   **出典の厳選**: 公式ルールブックや信頼性の高い情報源を優先的に参照し、ハルシネーションを最小化します。
 
+### 2. インテリジェント・サマリー
+*   **構造化された要約**: 膨大なルールブックを「準備」「手順」「勝利条件」の3点に絞ってMarkdown形式で出力。
+*   **多言語対応**: 英語のソースからでも、流暢な日本語で解説を生成。
+
+### 3. "Living" Database (Supabase + Vector Search)
+*   **自己進化**: ユーザーの検索行動自体がWikiを育てます。一度検索されたゲームは永続化され、次回以降は超高速に表示。
+*   **画像統合**: ゲームのボックスアートやコンポーネント画像を自動取得し、視覚的なデータベースを構築。
+
+### 4. ミニマルで美しいUI
+*   **即応性**: React + Tailwind CSS によるモダンで高速なインターフェース。
+*   **集中**: 余計な装飾を排し、プレイヤーが「今すぐ遊び始める」ことだけに集中できるデザイン。
+
+## 技術スタック
+*   **Backend**: Python (FastAPI), Gemini 2.5 Flash (Google AI Studio)
+*   **Frontend**: React (Vite), Tailwind CSS
+*   **Database**: Supabase (PostgreSQL + pgvector)
+*   **Search Grounding**: Google Search Grounding (via Gemini)
+
+## セットアップ (Setup)
+
+### 前提条件
+*   Python 3.11+
+*   Node.js 18+
+*   Supabase アカウント & プロジェクト
+*   Google Gemini API Key
+
+### インストール
 ```bash
-# 1. APIキーを .env に設定
-echo "GEMINI_API_KEY=xxxxxxxxxxxxxxxx" > ./rule-scribe-games/.env
+# 依存関係のインストール
+task setup
 
-# 2. 一括起動
-docker-compose -f ./rule-scribe-games/docker-compose.yml up --build
+# 環境変数の設定 (.envを作成し、キーを入力)
+cp .env.example .env
 ```
 
-## 3. 使い方
+### データベース初期化
+SupabaseのSQLエディタで `backend/init_db.sql` を実行してください。
 
-1.  ブラウザで `http://localhost:3000` を開きます。
-2.  検索バーにボードゲームの名前を入力して、ルールを検索します。
-3.  まだインデックスに登録されていないゲームの場合は、ルールテキストを送信して要約を生成できます。
-
-### API エンドポイント
-
-*   `POST /request`: ルールの要約をリクエストします。
-    ```json
-    {
-      "title": "カタン",
-      "raw_text": "## セットアップ ... (公式 PDF を抽出したテキスト)"
-    }
-    ```
-*   `GET /search?q={query}`: 指定されたクエリでゲームを検索します。
-*   `GET /games/{game_id}`: 特定のゲームの詳細を取得します。
+### 起動
+```bash
+task dev
+```
+- Frontend: http://localhost:5173
+- Backend: http://localhost:8000
