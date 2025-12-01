@@ -65,6 +65,9 @@ class GeminiClient:
             "- description: Japanese summary.\n"
             "- rules_content: Detailed Japanese rules (Setup, Flow, Victory) as Markdown.\n"
             "- image_url: Official image URL.\n"
+            "- structured_data: JSON object with:\n"
+            "  - keywords: List of {term, description} (key mechanics/terms).\n"
+            "  - popular_cards: List of {name, type, cost, reason} (key cards/components).\n"
         )
 
         try:
@@ -125,6 +128,14 @@ class GeminiClient:
             "rules_content": "## Mock Rules\n\n1. **Setup**: None required.\n2. **Play**: Imagine the game.\n3. **Win**: Everyone wins in mock mode.",
             "image_url": "https://placehold.co/600x400?text=Mock+Game",
             "source_url": "mock://system",
+            "structured_data": {
+                "keywords": [
+                    {"term": "Mock Term", "description": "A fake term for testing."}
+                ],
+                "popular_cards": [
+                    {"name": "Ace of Spades", "type": "Card", "cost": "0", "reason": "Always wins."}
+                ]
+            }
         }
 
     async def generate_structured_json(self, prompt: str) -> dict:
