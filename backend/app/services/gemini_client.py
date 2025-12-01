@@ -1,6 +1,6 @@
 import google.generativeai as genai
 from app.core.settings import settings
-import requests
+import httpx
 import json
 
 genai.configure(api_key=settings.gemini_api_key)
@@ -15,9 +15,9 @@ class GeminiClient:
         )
         self.base_url = f"https://generativelanguage.googleapis.com/v1beta/{self.model_name}:generateContent?key={settings.gemini_api_key}"
 
-    def summarize(self, context: str) -> str:
+    async def summarize(self, context: str) -> str:
         model = genai.GenerativeModel(settings.gemini_model)
-        res = model.generate_content(
+        res = await model.generate_content_async(
             f"Explain board game rules in Japanese (Markdown):\n{context}",
             generation_config=genai.types.GenerationConfig(
                 temperature=0.2, max_output_tokens=512
@@ -25,7 +25,7 @@ class GeminiClient:
         )
         return res.text.strip()
 
-    def extract_game_info(self, query: str) -> dict:
+    async def extract_game_info(self, query: str) -> dict:
         prompt = (
             f"Search official board game info for '{query}'. Prioritize official/BGG sources.\n"
             "Return JSON:\n"
@@ -34,16 +34,19 @@ class GeminiClient:
             "- rules_content: Detailed Japanese rules (Setup, Flow, Victory) as Markdown.\n"
             "- image_url: Official image URL.\n"
         )
-        res = requests.post(
-            self.base_url,
-            headers={"Content-Type": "application/json"},
-            json={
-                "contents": [{"parts": [{"text": prompt}]}],
-                "tools": [{"google_search": {}}],
-            },
-        )
-        res.raise_for_status()
-        text = res.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
+        async with httpx.AsyncClient() as client:
+            res = await client.post(
+                self.base_url,
+                headers={"Content-Type": "application/json"},
+                json={
+                    "contents": [{"parts": [{"text": prompt}]}],
+                    "tools": [{"google_search": {}}],
+                },
+                timeout=30.0,
+            )
+            res.raise_for_status()
+            text = res.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
+
         if text.startswith("```"):
             text = text.split("\n", 1)[1].rsplit("\n", 1)[0]
         data = json.loads(text)

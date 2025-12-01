@@ -16,5 +16,5 @@ class SummarizeResponse(BaseModel):
 
 @router.post("/summarize", response_model=SummarizeResponse)
 async def summarize(request: SummarizeRequest):
-    summary = gemini.summarize(request.text)
+    summary = await gemini.summarize(request.text)
     return {"summary": summary}
