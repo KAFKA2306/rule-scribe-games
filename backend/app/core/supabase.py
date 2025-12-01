@@ -8,7 +8,7 @@ except Exception:  # pragma: no cover
     Client = None  # type: ignore
     create_client = None  # type: ignore
 
-from app.core.settings import settings
+from app.core.settings import settings, PLACEHOLDER
 
 
 class GameRepository(Protocol):
@@ -17,7 +17,13 @@ class GameRepository(Protocol):
 
 
 def _client() -> Optional[Client]:
-    if not settings.supabase_url or not settings.supabase_key or create_client is None:
+    if (
+        not settings.supabase_url
+        or settings.supabase_url == PLACEHOLDER
+        or not settings.supabase_key
+        or settings.supabase_key == PLACEHOLDER
+        or create_client is None
+    ):
         return None
     try:
         return create_client(settings.supabase_url, settings.supabase_key)
