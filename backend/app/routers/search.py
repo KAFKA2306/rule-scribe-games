@@ -37,9 +37,8 @@ async def search(req: SearchRequest):
         clean_query if clean_query.startswith("http") else _derived_source(data)
     )
     
-    # Security: Disable auto-save to prevent unauthenticated database pollution.
-    # if saved := await supabase_repository.upsert(data):
-    #     return [SearchResult(**r) for r in saved]
+    if saved := await supabase_repository.upsert(data):
+        return [SearchResult(**r) for r in saved]
     
     return [SearchResult(**{**data, "id": 0})]
 

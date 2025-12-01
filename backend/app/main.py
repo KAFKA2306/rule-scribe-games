@@ -1,5 +1,11 @@
 from pathlib import Path
-from dotenv import load_dotenv
+
+# Make python-dotenv optional in serverless environments.
+try:
+    from dotenv import load_dotenv
+except ImportError:  # pragma: no cover - Vercel may not install optional deps
+    def load_dotenv(*args, **kwargs):
+        return False
 
 # Load .env from repository root (fallback to backend/.env if needed).
 repo_root_env = Path(__file__).resolve().parents[2] / ".env"
