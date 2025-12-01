@@ -47,4 +47,4 @@ tasks:
       - cd backend && uv run ruff check --fix .
       - cd backend && uv run ruff format .
       - cd frontend && npx prettier --write .
-      - cd frontend && npx eslint . --ext .js,.jsx --fix
+      - cd frontend && ESLINT_USE_FLAT_CONFIG=false npx eslint . --ext .js,.jsx --fix

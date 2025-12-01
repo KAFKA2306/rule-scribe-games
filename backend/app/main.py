@@ -18,5 +18,7 @@ app.add_middleware(
 app.include_router(search.router, prefix="/api", tags=["search"])
 app.include_router(summarize.router, prefix="/api", tags=["summarize"])
 
+
 @app.get("/health")
-def health_check(): return {"status": "ok"}
+def health_check():
+    return {"status": "ok"}
