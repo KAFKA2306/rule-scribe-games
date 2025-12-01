@@ -26,17 +26,31 @@ class SearchRequest(BaseModel):
 async def search(req: SearchRequest):
     clean_query = req.query.strip()
     if not clean_query.startswith("http"):
-        if res := await supabase_repository.search(clean_query):
-            return [SearchResult(**r) for r in res]
+        try:
+            if res := await supabase_repository.search(clean_query):
+                return [SearchResult(**r) for r in res]
+        except Exception:
+            # If DB search fails, continue to AI search
+            pass
 
-    data = await gemini.extract_game_info(clean_query)
+    try:
+        data = await gemini.extract_game_info(clean_query)
+    except Exception:
+        # If AI search completely blows up despite safeguards
+        return []
+
     data["source_url"] = (
         clean_query if clean_query.startswith("http") else _derived_source(data)
     )
     
-    if saved := await supabase_repository.upsert(data):
-        return [SearchResult(**r) for r in saved]
+    try:
+        if saved := await supabase_repository.upsert(data):
+            return [SearchResult(**r) for r in saved]
+    except Exception:
+        # If upsert fails, just return what we have
+        pass
     
+    # Return result with provisional ID 0
     return [SearchResult(**{**data, "id": 0})]
 
 
