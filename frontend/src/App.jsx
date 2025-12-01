@@ -47,7 +47,11 @@ function App() {
     const data = await post('/api/search', { query: q }, setError, setLoading)
     if (data) {
       setGames(data)
-      setPick(data[0] || null)
+      const first = data[0] || null
+      setPick(first)
+      if (first?.summary) {
+        setSummary(first.summary)
+      }
     }
   }
 
@@ -56,7 +60,7 @@ function App() {
     setError('')
     const data = await post(
       '/api/summarize',
-      { text: pick.rules_content || '' },
+      { text: pick.rules_content || '', game_id: pick.id },
       setError,
       setLoading,
     )
@@ -102,7 +106,7 @@ function App() {
                   className={pick?.id === game.id ? 'active' : ''}
                   onClick={() => {
                     setPick(game)
-                    setSummary('')
+                    setSummary(game.summary || '')
                   }}
                 >
                   <strong>{game.title}</strong>
