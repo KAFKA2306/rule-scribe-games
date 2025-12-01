@@ -13,7 +13,7 @@ const post = async (path, payload, onError, setLoading) => {
     return await res.json()
   } catch (err) {
     console.error(err)
-    onError('Request failed. Check the backend or API keys.')
+    onError('ごめんね、うまくいかなかったみたい。')
     return null
   } finally {
     setLoading(false)
@@ -66,21 +66,21 @@ function App() {
   return (
     <div className="app">
       <header>
-        <div className="brand" onClick={clear}>RuleScribe mini</div>
-        <span className="muted">Simple search + summary for board games.</span>
+        <div className="brand" onClick={clear}>ボドゲのミカタ</div>
+        <span className="muted">ルール、わからなくなっても大丈夫。</span>
       </header>
 
       <form onSubmit={search}>
         <input
-          placeholder="Search a game name or URL"
+          placeholder="ゲームの名前を入れてね"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
         <button type="submit" disabled={loading}>
-          {loading ? 'Working...' : 'Search'}
+          {loading ? '考え中...' : 'さがす'}
         </button>
         <button type="button" className="secondary" onClick={clear}>
-          Clear
+          クリア
         </button>
       </form>
 
@@ -89,11 +89,11 @@ function App() {
       <div className="layout">
         <section className="results">
           <div className="section-head">
-            <h2>Results</h2>
+            <h2>見つかったゲーム</h2>
             {games.length > 0 && <span className="muted">{games.length}</span>}
           </div>
           {games.length === 0 ? (
-            <p className="muted">No results yet. Try a search.</p>
+            <p className="muted">まずは検索してみてね。</p>
           ) : (
             <ul>
               {games.map((game) => (
@@ -106,7 +106,7 @@ function App() {
                   }}
                 >
                   <strong>{game.title}</strong>
-                  <small>{game.description || 'No description available.'}</small>
+                  <small>{game.description || '説明がないみたい。'}</small>
                 </li>
               ))}
             </ul>
@@ -115,7 +115,7 @@ function App() {
 
         <section className="detail">
           {!pick ? (
-            <p className="muted">Select a result to see the rules.</p>
+            <p className="muted">リストから選ぶと、ここにルールが出るよ。</p>
           ) : (
             <>
               <div className="detail-head">
@@ -123,7 +123,7 @@ function App() {
                   <h2>{pick.title}</h2>
                   {pick.source_url && (
                     <a href={pick.source_url} target="_blank" rel="noreferrer" className="muted">
-                      Source
+                      情報元
                     </a>
                   )}
                 </div>
@@ -133,21 +133,21 @@ function App() {
                   disabled={loading || !!summary}
                   className="secondary"
                 >
-                  {summary ? 'Summarized' : 'Summarize'}
+                  {summary ? '要約完了！' : '要約する'}
                 </button>
               </div>
 
               {summary && (
                 <div className="summary">
-                  <h3>AI Summary</h3>
+                  <h3>AIのまとめ</h3>
                   <ReactMarkdown className="markdown">{summary}</ReactMarkdown>
                 </div>
               )}
 
               <div className="summary">
-                <h3>Full Rules</h3>
+                <h3>詳しいルール</h3>
                 <ReactMarkdown className="markdown">
-                  {pick.rules_content || 'No rules provided.'}
+                  {pick.rules_content || 'ルールが見つかりませんでした。'}
                 </ReactMarkdown>
               </div>
             </>
@@ -155,7 +155,7 @@ function App() {
         </section>
       </div>
 
-      <footer className="muted">© {new Date().getFullYear()} RuleScribe.</footer>
+      <footer className="muted">© {new Date().getFullYear()} ボドゲのミカタ</footer>
     </div>
   )
 }
