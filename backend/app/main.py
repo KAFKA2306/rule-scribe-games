@@ -1,29 +1,33 @@
 from pathlib import Path
 import sys
+import os
 
-# Optional dotenv; Vercel may omit it, so guard the import.
+# --- Vercel Import Hack ---
+# Vercel's Python runtime puts the handler file in a specific location.
+# We need to ensure the `backend` directory is in sys.path so that `from app...` works.
+# If `backend/app/main.py` is the entry point, then `backend` is the parent directory.
+
+BASE_DIR = Path(__file__).resolve().parent.parent  # .../backend
+if str(BASE_DIR) not in sys.path:
+    sys.path.insert(0, str(BASE_DIR))
+
+# Also add the project root if needed (for finding .env or other resources)
+ROOT_DIR = BASE_DIR.parent
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
+
+# --- Environment Loading ---
 try:
     from dotenv import load_dotenv
-except Exception:  # pragma: no cover
-    def load_dotenv(*args, **kwargs):
-        return False
+    # Try loading .env from root first, then backend
+    if (ROOT_DIR / ".env").exists():
+        load_dotenv(ROOT_DIR / ".env")
+    elif (BASE_DIR / ".env").exists():
+        load_dotenv(BASE_DIR / ".env")
+except ImportError:
+    pass # Vercel handles env vars via dashboard
 
-# Ensure `app` package is importable both locally and in serverless.
-backend_dir = Path(__file__).resolve().parents[1]  # .../backend
-for p in {backend_dir, backend_dir.parent}:
-    if str(p) not in sys.path:
-        sys.path.insert(0, str(p))
-
-# Load environment variables (.env at repo root preferred, fallback to backend/.env)
-repo_root_env = backend_dir.parent / ".env"
-backend_env = backend_dir / ".env"
-if repo_root_env.exists():
-    load_dotenv(dotenv_path=repo_root_env, override=True)
-elif backend_env.exists():
-    load_dotenv(dotenv_path=backend_env, override=True)
-else:
-    load_dotenv(override=True)
-
+# --- App ---
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routers import search, summarize
@@ -32,8 +36,8 @@ app = FastAPI(title="RuleScribe Minimal", version="1.0.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # relax origin but keep credentials off to avoid startup error
-    allow_credentials=False,
+    allow_origins=["*"],
+    allow_credentials=True, # Changed to True for better compatibility if credentials are added later
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -41,8 +45,20 @@ app.add_middleware(
 app.include_router(search.router, prefix="/api", tags=["search"])
 app.include_router(summarize.router, prefix="/api", tags=["summarize"])
 
-
 @app.get("/health")
 @app.get("/api/health")
 def health_check():
-    return {"status": "ok"}
+    """
+    Health check endpoint.
+    Returns status and environment variable presence (safe bools).
+    """
+    from app.core.settings import settings
+    # Re-import safely just in case
+
+    return {
+        "status": "ok",
+        "env": {
+            "gemini": "PLACEHOLDER" not in settings.gemini_api_key and bool(settings.gemini_api_key),
+            "supabase_url": "PLACEHOLDER" not in settings.supabase_url and bool(settings.supabase_url),
+        }
+    }
