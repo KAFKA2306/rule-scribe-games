@@ -16,6 +16,9 @@ class GameRepository(Protocol):
     async def upsert(self, data: Dict[str, Any]) -> List[Dict[str, Any]]: ...
     async def get_by_id(self, game_id: int) -> Optional[Dict[str, Any]]: ...
     async def update_summary(self, game_id: int, summary: str) -> bool: ...
+    async def update_structured_data(
+        self, game_id: int, structured_data: dict
+    ) -> bool: ...
 
 
 def _client() -> Optional[Client]:
@@ -39,6 +42,7 @@ class SupabaseGameRepository(GameRepository):
 
     async def search(self, query: str) -> List[Dict[str, Any]]:
         try:
+
             def _search():
                 return (
                     self.client.table("games")
@@ -54,6 +58,7 @@ class SupabaseGameRepository(GameRepository):
 
     async def upsert(self, data: Dict[str, Any]) -> List[Dict[str, Any]]:
         try:
+
             def _upsert():
                 key = "source_url" if data.get("source_url") else "title"
                 return (
@@ -69,6 +74,7 @@ class SupabaseGameRepository(GameRepository):
 
     async def get_by_id(self, game_id: int) -> Optional[Dict[str, Any]]:
         try:
+
             def _get():
                 res = (
                     self.client.table("games")
@@ -85,10 +91,27 @@ class SupabaseGameRepository(GameRepository):
 
     async def update_summary(self, game_id: int, summary: str) -> bool:
         try:
+
             def _update():
                 (
                     self.client.table("games")
                     .update({"summary": summary})
+                    .eq("id", game_id)
+                    .execute()
+                )
+                return True
+
+            return await anyio.to_thread.run_sync(_update)
+        except Exception:
+            return False
+
+    async def update_structured_data(self, game_id: int, structured_data: dict) -> bool:
+        try:
+
+            def _update():
+                (
+                    self.client.table("games")
+                    .update({"structured_data": structured_data})
                     .eq("id", game_id)
                     .execute()
                 )
@@ -110,6 +133,9 @@ class NoopGameRepository(GameRepository):
         return None
 
     async def update_summary(self, game_id: int, summary: str) -> bool:
+        return False
+
+    async def update_structured_data(self, game_id: int, structured_data: dict) -> bool:
         return False
 
 

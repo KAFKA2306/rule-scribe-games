@@ -2,10 +2,12 @@ from fastapi import APIRouter
 from pydantic import BaseModel
 from typing import Optional
 from app.services.gemini_client import GeminiClient
+from app.services.data_enhancer import DataEnhancer
 from app.core.supabase import supabase_repository
 
 router = APIRouter()
 gemini = GeminiClient()
+enhancer = DataEnhancer()
 
 
 class SummarizeRequest(BaseModel):
@@ -23,6 +25,12 @@ async def summarize(request: SummarizeRequest):
         game = await supabase_repository.get_by_id(request.game_id)
         if game and game.get("summary"):
             return {"summary": game["summary"]}
+
+        if game and await enhancer.should_enhance(game):
+            enhanced_data = await enhancer.enhance(game, context="summarize")
+            await supabase_repository.update_structured_data(
+                request.game_id, enhanced_data
+            )
 
     summary = await gemini.summarize(request.text)
 

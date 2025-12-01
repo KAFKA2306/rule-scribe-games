@@ -148,6 +148,29 @@ function App() {
                 </div>
               )}
 
+              {pick.structured_data?.keywords && (
+                <div className="summary">
+                  <h3>キーワード</h3>
+                  {pick.structured_data.keywords.map((kw) => (
+                    <div key={kw.term} style={{ marginBottom: '8px' }}>
+                      <strong>{kw.term}</strong>: {kw.description}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {pick.structured_data?.popular_cards && (
+                <div className="summary">
+                  <h3>人気のカード/コンポーネント</h3>
+                  {pick.structured_data.popular_cards.map((card) => (
+                    <div key={card.name} style={{ marginBottom: '8px' }}>
+                      <strong>{card.name}</strong> ({card.type}, コスト{card.cost})
+                      {card.reason && <small> - {card.reason}</small>}
+                    </div>
+                  ))}
+                </div>
+              )}
+
               <div className="summary">
                 <h3>詳しいルール</h3>
                 <ReactMarkdown className="markdown">
