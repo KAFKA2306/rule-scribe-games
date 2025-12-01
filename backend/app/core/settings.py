@@ -1,7 +1,9 @@
 import os
 
+PLACEHOLDER = "PLACEHOLDER"
+
 def _env(name: str) -> str:
-    return os.getenv(name, "")
+    return os.getenv(name, PLACEHOLDER)
 
 
 class Settings:
