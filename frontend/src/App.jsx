@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
-import ReactMarkdown from 'react-markdown'
+import { BrowserRouter, Routes, Route, Link, useNavigate } from 'react-router-dom'
+import GamePage from './pages/GamePage'
 
 const post = async (path, payload, setLoading) => {
   setLoading(true)
@@ -15,11 +15,10 @@ const post = async (path, payload, setLoading) => {
   return data
 }
 
-function App() {
+function Home() {
   const [query, setQuery] = useState('')
   const [initialGames, setInitialGames] = useState([])
   const [games, setGames] = useState([])
-  const [pick, setPick] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -28,11 +27,8 @@ function App() {
     setError('')
     if (initialGames.length > 0) {
       setGames(initialGames)
-      const first = initialGames[0] || null
-      setPick(first)
     } else {
       setGames([])
-      setPick(null)
     }
   }
 
@@ -45,8 +41,6 @@ function App() {
         const data = await res.json()
         setInitialGames(data)
         setGames(data)
-        const first = data[0] || null
-        setPick(first)
       } catch (e) {
         console.error("Failed to load initial games:", e)
       } finally {
@@ -61,7 +55,6 @@ function App() {
     const q = query.trim()
     if (!q) return
     setError('')
-    setPick(null)
     setGames([])
     
     try {
@@ -70,8 +63,6 @@ function App() {
          setError(data.error)
       } else {
          setGames(data)
-         const first = data[0] || null
-         setPick(first)
       }
     } catch (e) {
       setError(e.message)
@@ -109,7 +100,7 @@ function App() {
       )}
 
       <div className="layout">
-        <section className="results panel">
+        <section className="results panel" style={{ width: '100%' }}>
           <div className="section-head">
             <h2>見つかったゲーム</h2>
             {games.length > 0 && (
@@ -123,68 +114,31 @@ function App() {
           ) : (
             <ul>
               {games.map((game) => (
-                <li
-                  key={game.id ?? game.title}
-                  className={pick?.id === game.id ? 'active' : ''}
-                  onClick={() => {
-                    setPick(game)
-                  }}
-                >
-                  <strong>{game.title}</strong>
-                  <small>{game.description || '説明がないみたい。'}</small>
+                <li key={game.id ?? game.title}>
+                  <Link to={`/games/${game.slug}`} style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
+                    <strong>{game.title}</strong>
+                    <small>{game.description || '説明がないみたい。'}</small>
+                  </Link>
                 </li>
               ))}
             </ul>
-          )}
-        </section>
-
-        <section className="detail panel">
-          {!pick ? (
-            <p className="muted">リストから選ぶと、ここにルールが出るよ。</p>
-          ) : (
-            <>
-              <div className="detail-head">
-                <div>
-                  <h2>{pick.title}</h2>
-                </div>
-              </div>
-
-              {pick.structured_data?.keywords && (
-                <div className="summary">
-                  <h3>キーワード</h3>
-                  {pick.structured_data.keywords.map((kw) => (
-                    <div key={kw.term} style={{ marginBottom: '8px' }}>
-                      <strong>{kw.term}</strong>: {kw.description}
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {pick.structured_data?.popular_cards && (
-                <div className="summary">
-                  <h3>人気のカード/コンポーネント</h3>
-                  {pick.structured_data.popular_cards.map((card) => (
-                    <div key={card.name} style={{ marginBottom: '8px' }}>
-                      <strong>{card.name}</strong> ({card.type}, コスト{card.cost})
-                      {card.reason && <small> - {card.reason}</small>}
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              <div className="summary">
-                <h3>詳しいルール</h3>
-                <ReactMarkdown className="markdown">
-                  {pick.rules_content || 'ルールが見つかりませんでした。'}
-                </ReactMarkdown>
-              </div>
-            </>
           )}
         </section>
       </div>
 
       <footer className="muted">© {new Date().getFullYear()} ボドゲのミカタ</footer>
     </div>
+  )
+}
+
+function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/games/:slug" element={<GamePage />} />
+      </Routes>
+    </BrowserRouter>
   )
 }
 

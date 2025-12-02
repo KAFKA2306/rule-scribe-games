@@ -13,5 +13,5 @@ createRoot(document.getElementById('root')).render(
         <Route path="/data" element={<DataViewer />} />
       </Routes>
     </BrowserRouter>
-  </StrictMode>,
+  </StrictMode>
 )

@@ -2,8 +2,10 @@ import os
 
 PLACEHOLDER = "PLACEHOLDER"
 
+
 def _env(name: str) -> str:
     return os.getenv(name, PLACEHOLDER)
+
 
 class Settings:
     gemini_api_key: str = _env("GEMINI_API_KEY")
@@ -23,5 +25,6 @@ class Settings:
         or os.getenv("NEXT_PUBLIC_SUPABASE_ANON_KEY")
         or PLACEHOLDER
     )
+
 
 settings = Settings()
