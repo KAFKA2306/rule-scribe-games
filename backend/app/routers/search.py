@@ -44,21 +44,11 @@ async def search(req: SearchRequest):
         )
 
         if is_simple_search:
-            try:
-                if res := await supabase_repository.search(clean_query):
-                    return [SearchResult(**r) for r in res]
-            except Exception as e:
-                # If DB search fails, log it and continue to AI search
-                import sys
 
-                print(f"Search error (DB -> Pydantic): {e}", file=sys.stderr)
-                pass
+            if res := await supabase_repository.search(clean_query):
+                return [SearchResult(**r) for r in res]
 
-    try:
-        data = await gemini.extract_game_info(clean_query)
-    except Exception:
-        # If AI search completely blows up despite safeguards
-        return []
+    data = await gemini.extract_game_info(clean_query)
 
     # Check for error from GeminiClient
     if "error" in data:
@@ -76,12 +66,8 @@ async def search(req: SearchRequest):
         clean_query if clean_query.startswith("http") else _derived_source(data)
     )
 
-    try:
-        if saved := await supabase_repository.upsert(data):
-            return [SearchResult(**r) for r in saved]
-    except Exception:
-        # If upsert fails, just return what we have
-        pass
+    if saved := await supabase_repository.upsert(data):
+        return [SearchResult(**r) for r in saved]
 
     # Return result with provisional ID 0
     return [SearchResult(**{**data, "id": 0})]
@@ -104,11 +90,6 @@ async def list_games(limit: int = 100):
     immediately without requiring a search query.
     """
     safe_limit = min(max(limit, 1), 200)
-    try:
-        if res := await supabase_repository.list_recent(safe_limit):
-            return [SearchResult(**r) for r in res]
-    except Exception as e:  # pragma: no cover - defensive
-        import sys
-
-        print(f"List games error: {e}", file=sys.stderr)
+    if res := await supabase_repository.list_recent(safe_limit):
+        return [SearchResult(**r) for r in res]
     return []

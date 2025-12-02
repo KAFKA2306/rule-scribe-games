@@ -46,44 +46,39 @@ class GeminiClient:
             "  - popular_cards: List of {name, type, cost, reason} (key cards/components).\n"
         )
 
-        try:
-            async with httpx.AsyncClient() as client:
-                res = await client.post(
-                    self.base_url,
-                    headers={"Content-Type": "application/json"},
-                    json={
-                        "contents": [{"parts": [{"text": prompt}]}],
-                        "tools": [{"google_search": {}}],
-                    },
-                    timeout=30.0,
-                )
+        async with httpx.AsyncClient() as client:
+            res = await client.post(
+                self.base_url,
+                headers={"Content-Type": "application/json"},
+                json={
+                    "contents": [{"parts": [{"text": prompt}]}],
+                    "tools": [{"google_search": {}}],
+                },
+                timeout=30.0,
+            )
 
-                if res.status_code != 200:
-                    print(f"Gemini API Error {res.status_code}: {res.text}")
-                    # Return error dict that frontend can handle
-                    return {"error": f"API Error {res.status_code}"}
+            if res.status_code != 200:
+                print(f"Gemini API Error {res.status_code}: {res.text}")
+                # Return error dict that frontend can handle
+                return {"error": f"API Error {res.status_code}"}
 
-                payload = res.json()
+            payload = res.json()
 
-            text = self._extract_text(payload)
-            if match := re.search(r"```(?:json)?\s*(.*?)\s*```", text, re.DOTALL):
-                text = match.group(1)
+        text = self._extract_text(payload)
+        if match := re.search(r"```(?:json)?\s*(.*?)\s*```", text, re.DOTALL):
+            text = match.group(1)
 
-            data = json.loads(text)
+        data = json.loads(text)
 
-            # Normalize rules_content to string if it came back as dict/list
-            if isinstance(data.get("rules_content"), (dict, list)):
-                rc = data["rules_content"]
-                data["rules_content"] = (
-                    "\n".join([f"**{k}**:\n{v}" for k, v in rc.items()])
-                    if isinstance(rc, dict)
-                    else "\n".join(map(str, rc))
-                )
-            return data
-
-        except Exception as e:
-            print(f"Gemini extraction failed: {e}")
-            return {"error": str(e)}
+        # Normalize rules_content to string if it came back as dict/list
+        if isinstance(data.get("rules_content"), (dict, list)):
+            rc = data["rules_content"]
+            data["rules_content"] = (
+                "\n".join([f"**{k}**:\n{v}" for k, v in rc.items()])
+                if isinstance(rc, dict)
+                else "\n".join(map(str, rc))
+            )
+        return data
 
     def _extract_text(self, payload: Dict[str, Any]) -> str:
         try:
@@ -92,26 +87,21 @@ class GeminiClient:
             raise ValueError("Invalid response format from Gemini API")
 
     async def generate_structured_json(self, prompt: str) -> dict:
-        try:
-            async with httpx.AsyncClient() as client:
-                res = await client.post(
-                    self.base_url,
-                    headers={"Content-Type": "application/json"},
-                    json={"contents": [{"parts": [{"text": prompt}]}]},
-                    timeout=30.0,
-                )
+        async with httpx.AsyncClient() as client:
+            res = await client.post(
+                self.base_url,
+                headers={"Content-Type": "application/json"},
+                json={"contents": [{"parts": [{"text": prompt}]}]},
+                timeout=30.0,
+            )
 
-                if res.status_code != 200:
-                    return {}
+            if res.status_code != 200:
+                return {}
 
-                payload = res.json()
-                text = self._extract_text(payload)
+            payload = res.json()
+            text = self._extract_text(payload)
 
-                if match := re.search(r"```(?:json)?\s*(.*?)\s*```", text, re.DOTALL):
-                    text = match.group(1)
+            if match := re.search(r"```(?:json)?\s*(.*?)\s*```", text, re.DOTALL):
+                text = match.group(1)
 
-                return json.loads(text)
-
-        except Exception as e:
-            print(f"Structured JSON generation failed: {e}")
-            return {}
+            return json.loads(text)
