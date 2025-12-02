@@ -42,7 +42,7 @@ function Home() {
         setInitialGames(data)
         setGames(data)
       } catch (e) {
-        console.error("Failed to load initial games:", e)
+        console.error('Failed to load initial games:', e)
       } finally {
         setLoading(false)
       }
@@ -56,13 +56,13 @@ function Home() {
     if (!q) return
     setError('')
     setGames([])
-    
+
     try {
       const data = await post('/api/search', { query: q }, setLoading)
       if (data.error) {
-         setError(data.error)
+        setError(data.error)
       } else {
-         setGames(data)
+        setGames(data)
       }
     } catch (e) {
       setError(e.message)
@@ -72,9 +72,13 @@ function Home() {
   return (
     <div className="app">
       <header>
-        <div className="brand" onClick={clear}>ボドゲのミカタ</div>
+        <div className="brand" onClick={clear}>
+          ボドゲのミカタ
+        </div>
         <span className="muted">ルール、わからなくなっても大丈夫。</span>
-        <Link to="/data" className="data-link">📊 データ</Link>
+        <Link to="/data" className="data-link">
+          📊 データ
+        </Link>
       </header>
 
       <form onSubmit={search}>
@@ -93,8 +97,8 @@ function Home() {
 
       {error && (
         <p className="error">
-          {error.includes("API Error") 
-            ? "AIサービスの呼び出しに失敗しました。しばらく待ってからもう一度お試しください。" 
+          {error.includes('API Error')
+            ? 'AIサービスの呼び出しに失敗しました。しばらく待ってからもう一度お試しください。'
             : error}
         </p>
       )}
@@ -115,7 +119,10 @@ function Home() {
             <ul>
               {games.map((game) => (
                 <li key={game.id ?? game.title}>
-                  <Link to={`/games/${game.slug}`} style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
+                  <Link
+                    to={`/games/${game.slug}`}
+                    style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}
+                  >
                     <strong>{game.title}</strong>
                     <small>{game.description || '説明がないみたい。'}</small>
                   </Link>

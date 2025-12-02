@@ -1,5 +1,5 @@
-import { useParams } from "react-router-dom"
-import { useEffect, useState } from "react"
+import { useParams } from 'react-router-dom'
+import { useEffect, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 
 export default function GamePage() {
@@ -19,7 +19,7 @@ export default function GamePage() {
           setGame(null)
         }
       } catch (e) {
-        console.error("Failed to fetch game:", e)
+        console.error('Failed to fetch game:', e)
         setGame(null)
       } finally {
         setLoading(false)
@@ -34,13 +34,20 @@ export default function GamePage() {
   return (
     <div className="app">
       <header>
-        <div className="brand"><a href="/">ボドゲのミカタ</a></div>
+        <div className="brand">
+          <a href="/">ボドゲのミカタ</a>
+        </div>
         <span className="muted">ルール、わからなくなっても大丈夫。</span>
-        <a href="/data" className="data-link">📊 データ</a>
+        <a href="/data" className="data-link">
+          📊 データ
+        </a>
       </header>
 
       <div className="layout">
-        <section className="detail panel" style={{ width: '100%', maxWidth: '800px', margin: '0 auto' }}>
+        <section
+          className="detail panel"
+          style={{ width: '100%', maxWidth: '800px', margin: '0 auto' }}
+        >
           <div className="detail-head">
             <div>
               <h2>{game.title}</h2>
