@@ -20,19 +20,16 @@ function App() {
   const [initialGames, setInitialGames] = useState([])
   const [games, setGames] = useState([])
   const [pick, setPick] = useState(null)
-  const [summary, setSummary] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
   const clear = () => {
     setQuery('')
     setError('')
-    setSummary('')
     if (initialGames.length > 0) {
       setGames(initialGames)
       const first = initialGames[0] || null
       setPick(first)
-      if (first?.summary) setSummary(first.summary)
     } else {
       setGames([])
       setPick(null)
@@ -42,15 +39,19 @@ function App() {
   useEffect(() => {
     const loadInitial = async () => {
       setLoading(true)
-      const res = await fetch('/api/games')
-      if (!res.ok) throw new Error(await res.text())
-      const data = await res.json()
-      setInitialGames(data)
-      setGames(data)
-      const first = data[0] || null
-      setPick(first)
-      if (first?.summary) setSummary(first.summary)
-      setLoading(false)
+      try {
+        const res = await fetch('/api/games')
+        if (!res.ok) throw new Error(await res.text())
+        const data = await res.json()
+        setInitialGames(data)
+        setGames(data)
+        const first = data[0] || null
+        setPick(first)
+      } catch (e) {
+        console.error("Failed to load initial games:", e)
+      } finally {
+        setLoading(false)
+      }
     }
     loadInitial()
   }, [])
@@ -60,25 +61,21 @@ function App() {
     const q = query.trim()
     if (!q) return
     setError('')
-    setSummary('')
     setPick(null)
     setGames([])
-    const data = await post('/api/search', { query: q }, setLoading)
-    setGames(data)
-    const first = data[0] || null
-    setPick(first)
-    if (first?.summary) setSummary(first.summary)
-  }
-
-  const summarize = async () => {
-    if (!pick) return
-    setError('')
-    const data = await post(
-      '/api/summarize',
-      { text: pick.rules_content || '', game_id: pick.id },
-      setLoading,
-    )
-    setSummary(data.summary)
+    
+    try {
+      const data = await post('/api/search', { query: q }, setLoading)
+      if (data.error) {
+         setError(data.error)
+      } else {
+         setGames(data)
+         const first = data[0] || null
+         setPick(first)
+      }
+    } catch (e) {
+      setError(e.message)
+    }
   }
 
   return (
@@ -125,7 +122,6 @@ function App() {
                   className={pick?.id === game.id ? 'active' : ''}
                   onClick={() => {
                     setPick(game)
-                    setSummary(game.summary || '')
                   }}
                 >
                   <strong>{game.title}</strong>
@@ -144,28 +140,8 @@ function App() {
               <div className="detail-head">
                 <div>
                   <h2>{pick.title}</h2>
-                  {pick.source_url && (
-                    <a href={pick.source_url} target="_blank" rel="noreferrer" className="muted">
-                      情報元
-                    </a>
-                  )}
                 </div>
-                <button
-                  type="button"
-                  onClick={summarize}
-                  disabled={loading || !!summary}
-                  className="secondary"
-                >
-                  {summary ? '要約完了！' : '要約する'}
-                </button>
               </div>
-
-              {summary && (
-                <div className="summary">
-                  <h3>AIのまとめ</h3>
-                  <ReactMarkdown className="markdown">{summary}</ReactMarkdown>
-                </div>
-              )}
 
               {pick.structured_data?.keywords && (
                 <div className="summary">

@@ -5,8 +5,10 @@ import sys
 try:
     from dotenv import load_dotenv
 except Exception:  # pragma: no cover
+
     def load_dotenv(*args, **kwargs):
         return False
+
 
 # Ensure `app` package is importable both locally and in serverless.
 backend_dir = Path(__file__).resolve().parents[1]  # .../backend
@@ -26,7 +28,7 @@ else:
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import search, summarize, debug
+from app.routers import search, debug
 
 app = FastAPI(title="RuleScribe Minimal", version="1.0.0")
 
@@ -39,7 +41,6 @@ app.add_middleware(
 )
 
 app.include_router(search.router, prefix="/api", tags=["search"])
-app.include_router(summarize.router, prefix="/api", tags=["summarize"])
 app.include_router(debug.router, prefix="/api", tags=["debug"])
 
 

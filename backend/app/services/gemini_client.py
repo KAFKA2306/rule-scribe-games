@@ -30,34 +30,7 @@ class GeminiClient:
         key = settings.gemini_api_key if settings.gemini_api_key != PLACEHOLDER else ""
         self.base_url = f"https://generativelanguage.googleapis.com/v1beta/{self.model_name}:generateContent?key={key}"
 
-    @property
-    def is_mock(self) -> bool:
-        return (
-            genai is None
-            or not settings.gemini_api_key
-            or settings.gemini_api_key == PLACEHOLDER
-        )
-
-    async def summarize(self, context: str) -> str:
-        if self.is_mock:
-            return "Summary unavailable (Backend running in Mock Mode - No Gemini API Key configured)."
-
-        try:
-            model = genai.GenerativeModel(settings.gemini_model)
-            res = await model.generate_content_async(
-                f"Explain board game rules in Japanese (Markdown):\n{context}",
-                generation_config=genai.types.GenerationConfig(
-                    temperature=0.2, max_output_tokens=512
-                ),
-            )
-            return res.text.strip()
-        except Exception:
-            return "Failed to generate summary."
-
     async def extract_game_info(self, query: str) -> dict:
-        if self.is_mock:
-            return self._mock_response(query)
-
         prompt = (
             f"Search official board game info for '{query}'. Prioritize official/BGG sources.\n"
             "Return JSON:\n"
@@ -83,11 +56,9 @@ class GeminiClient:
                 )
 
                 if res.status_code != 200:
-                    # Fallback to mock if API fails
                     print(f"Gemini API Error {res.status_code}: {res.text}")
-                    return self._mock_response(
-                        query, error=f"API Error {res.status_code}"
-                    )
+                    # Return error dict that frontend can handle
+                    return {"error": f"API Error {res.status_code}"}
 
                 payload = res.json()
 
@@ -109,7 +80,7 @@ class GeminiClient:
 
         except Exception as e:
             print(f"Gemini extraction failed: {e}")
-            return self._mock_response(query, error=str(e))
+            return {"error": str(e)}
 
     def _extract_text(self, payload: Dict[str, Any]) -> str:
         try:
@@ -117,31 +88,7 @@ class GeminiClient:
         except (KeyError, IndexError, TypeError):
             raise ValueError("Invalid response format from Gemini API")
 
-    def _mock_response(self, query: str, error: str = "") -> dict:
-        description = "This is a mock description because the backend is running in safe mode without a valid Gemini API Key."
-        if error:
-            description += f" (Error: {error})"
-
-        return {
-            "title": f"Mock Game: {query}",
-            "description": description,
-            "rules_content": "## Mock Rules\n\n1. **Setup**: None required.\n2. **Play**: Imagine the game.\n3. **Win**: Everyone wins in mock mode.",
-            "image_url": "https://placehold.co/600x400?text=Mock+Game",
-            "source_url": "mock://system",
-            "structured_data": {
-                "keywords": [
-                    {"term": "Mock Term", "description": "A fake term for testing."}
-                ],
-                "popular_cards": [
-                    {"name": "Ace of Spades", "type": "Card", "cost": "0", "reason": "Always wins."}
-                ]
-            }
-        }
-
     async def generate_structured_json(self, prompt: str) -> dict:
-        if self.is_mock:
-            return {"type": "unknown", "overview": "Mock data"}
-
         try:
             async with httpx.AsyncClient() as client:
                 res = await client.post(
