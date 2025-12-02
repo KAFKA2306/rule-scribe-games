@@ -20,6 +20,7 @@ class GameRepository(Protocol):
     async def update_structured_data(
         self, game_id: int, structured_data: dict
     ) -> bool: ...
+    async def list_recent(self, limit: int = 100) -> List[Dict[str, Any]]: ...
 
 
 def _client() -> Optional[Client]:
@@ -127,6 +128,23 @@ class SupabaseGameRepository(GameRepository):
             print(f"Error in Supabase update_structured_data: {e}", file=sys.stderr)
             return False
 
+    async def list_recent(self, limit: int = 100) -> List[Dict[str, Any]]:
+        try:
+            def _list():
+                return (
+                    self.client.table("games")
+                    .select("*")
+                    .order("updated_at", desc=True)
+                    .limit(limit)
+                    .execute()
+                    .data
+                )
+
+            return await anyio.to_thread.run_sync(_list)
+        except Exception as e:
+            print(f"Error in Supabase list_recent: {e}", file=sys.stderr)
+            return []
+
 
 class NoopGameRepository(GameRepository):
     async def search(self, query: str) -> List[Dict[str, Any]]:
@@ -143,6 +161,9 @@ class NoopGameRepository(GameRepository):
 
     async def update_structured_data(self, game_id: int, structured_data: dict) -> bool:
         return False
+
+    async def list_recent(self, limit: int = 100) -> List[Dict[str, Any]]:
+        return []
 
 
 def _repo() -> GameRepository:

@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import ReactMarkdown from 'react-markdown'
 
 const post = async (path, payload, onError, setLoading) => {
@@ -22,6 +23,7 @@ const post = async (path, payload, onError, setLoading) => {
 
 function App() {
   const [query, setQuery] = useState('')
+  const [initialGames, setInitialGames] = useState([])
   const [games, setGames] = useState([])
   const [pick, setPick] = useState(null)
   const [summary, setSummary] = useState('')
@@ -30,11 +32,47 @@ function App() {
 
   const clear = () => {
     setQuery('')
-    setGames([])
-    setPick(null)
-    setSummary('')
     setError('')
+    setSummary('')
+    if (initialGames.length > 0) {
+      setGames(initialGames)
+      const first = initialGames[0] || null
+      setPick(first)
+      if (first?.summary) setSummary(first.summary)
+    } else {
+      setGames([])
+      setPick(null)
+    }
   }
+
+  useEffect(() => {
+    let canceled = false
+    const loadInitial = async () => {
+      setLoading(true)
+      try {
+        const res = await fetch('/api/games')
+        if (!res.ok) throw new Error(await res.text())
+        const data = await res.json()
+        if (canceled) return
+        setInitialGames(data)
+        setGames(data)
+        const first = data[0] || null
+        setPick(first)
+        if (first?.summary) setSummary(first.summary)
+      } catch (err) {
+        console.error(err)
+        if (!canceled) {
+          setError('Supabaseから初期データを読み込めませんでした。検索してみてね。')
+        }
+      } finally {
+        if (!canceled) setLoading(false)
+      }
+    }
+    loadInitial()
+    return () => {
+      canceled = true
+    }
+  }, [])
 
   const search = async (e) => {
     e.preventDefault()
@@ -72,6 +110,7 @@ function App() {
       <header>
         <div className="brand" onClick={clear}>ボドゲのミカタ</div>
         <span className="muted">ルール、わからなくなっても大丈夫。</span>
+        <Link to="/data" className="data-link">📊 データ</Link>
       </header>
 
       <form onSubmit={search}>
@@ -91,10 +130,14 @@ function App() {
       {error && <p className="error">{error}</p>}
 
       <div className="layout">
-        <section className="results">
+        <section className="results panel">
           <div className="section-head">
             <h2>見つかったゲーム</h2>
-            {games.length > 0 && <span className="muted">{games.length}</span>}
+            {games.length > 0 && (
+              <span className="pill">
+                <span style={{ fontWeight: 700 }}>{games.length}</span> titles
+              </span>
+            )}
           </div>
           {games.length === 0 ? (
             <p className="muted">まずは検索してみてね。</p>
@@ -117,7 +160,7 @@ function App() {
           )}
         </section>
 
-        <section className="detail">
+        <section className="detail panel">
           {!pick ? (
             <p className="muted">リストから選ぶと、ここにルールが出るよ。</p>
           ) : (
