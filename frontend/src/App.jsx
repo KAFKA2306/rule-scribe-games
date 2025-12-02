@@ -111,6 +111,7 @@ function App() {
         <div className="brand" onClick={clear}>ボドゲのミカタ</div>
         <span className="muted">ルール、わからなくなっても大丈夫。</span>
         <Link to="/data" className="data-link">📊 データ</Link>
+        <Link to="/mock-game" className="data-link" style={{ marginLeft: '1rem' }}>🃏 Mock Game</Link>
       </header>
 
       <form onSubmit={search}>
