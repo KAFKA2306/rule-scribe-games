@@ -8,17 +8,11 @@ function DataViewer() {
 
   useEffect(() => {
     const loadData = async () => {
-      try {
-        const res = await fetch('/api/games?limit=200')
-        if (!res.ok) throw new Error(await res.text())
-        const data = await res.json()
-        setGames(data)
-      } catch (err) {
-        console.error(err)
-        setError('データの読み込みに失敗しました')
-      } finally {
-        setLoading(false)
-      }
+      const res = await fetch('/api/games?limit=200')
+      if (!res.ok) throw new Error(await res.text())
+      const data = await res.json()
+      setGames(data)
+      setLoading(false)
     }
     loadData()
   }, [])

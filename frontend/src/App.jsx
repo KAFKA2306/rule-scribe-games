@@ -2,23 +2,17 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import ReactMarkdown from 'react-markdown'
 
-const post = async (path, payload, onError, setLoading) => {
+const post = async (path, payload, setLoading) => {
   setLoading(true)
-  try {
-    const res = await fetch(path, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    })
-    if (!res.ok) throw new Error(await res.text())
-    return await res.json()
-  } catch (err) {
-    console.error(err)
-    onError('ごめんね、うまくいかなかったみたい。')
-    return null
-  } finally {
-    setLoading(false)
-  }
+  const res = await fetch(path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+  if (!res.ok) throw new Error(await res.text())
+  const data = await res.json()
+  setLoading(false)
+  return data
 }
 
 function App() {
@@ -46,32 +40,19 @@ function App() {
   }
 
   useEffect(() => {
-    let canceled = false
     const loadInitial = async () => {
       setLoading(true)
-      try {
-        const res = await fetch('/api/games')
-        if (!res.ok) throw new Error(await res.text())
-        const data = await res.json()
-        if (canceled) return
-        setInitialGames(data)
-        setGames(data)
-        const first = data[0] || null
-        setPick(first)
-        if (first?.summary) setSummary(first.summary)
-      } catch (err) {
-        console.error(err)
-        if (!canceled) {
-          setError('Supabaseから初期データを読み込めませんでした。検索してみてね。')
-        }
-      } finally {
-        if (!canceled) setLoading(false)
-      }
+      const res = await fetch('/api/games')
+      if (!res.ok) throw new Error(await res.text())
+      const data = await res.json()
+      setInitialGames(data)
+      setGames(data)
+      const first = data[0] || null
+      setPick(first)
+      if (first?.summary) setSummary(first.summary)
+      setLoading(false)
     }
     loadInitial()
-    return () => {
-      canceled = true
-    }
   }, [])
 
   const search = async (e) => {
@@ -82,15 +63,11 @@ function App() {
     setSummary('')
     setPick(null)
     setGames([])
-    const data = await post('/api/search', { query: q }, setError, setLoading)
-    if (data) {
-      setGames(data)
-      const first = data[0] || null
-      setPick(first)
-      if (first?.summary) {
-        setSummary(first.summary)
-      }
-    }
+    const data = await post('/api/search', { query: q }, setLoading)
+    setGames(data)
+    const first = data[0] || null
+    setPick(first)
+    if (first?.summary) setSummary(first.summary)
   }
 
   const summarize = async () => {
@@ -99,10 +76,9 @@ function App() {
     const data = await post(
       '/api/summarize',
       { text: pick.rules_content || '', game_id: pick.id },
-      setError,
       setLoading,
     )
-    if (data) setSummary(data.summary)
+    setSummary(data.summary)
   }
 
   return (
@@ -111,7 +87,6 @@ function App() {
         <div className="brand" onClick={clear}>ボドゲのミカタ</div>
         <span className="muted">ルール、わからなくなっても大丈夫。</span>
         <Link to="/data" className="data-link">📊 データ</Link>
-        <Link to="/mock-game" className="data-link" style={{ marginLeft: '1rem' }}>🃏 Mock Game</Link>
       </header>
 
       <form onSubmit={search}>
