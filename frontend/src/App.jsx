@@ -100,7 +100,13 @@ function App() {
         </button>
       </form>
 
-      {error && <p className="error">{error}</p>}
+      {error && (
+        <p className="error">
+          {error.includes("API Error") 
+            ? "AIサービスの呼び出しに失敗しました。しばらく待ってからもう一度お試しください。" 
+            : error}
+        </p>
+      )}
 
       <div className="layout">
         <section className="results panel">
