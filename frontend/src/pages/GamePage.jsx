@@ -90,6 +90,12 @@ export default function GamePage({ slug: propSlug }) {
         )}
       </div>
 
+      {/* Rules */}
+      <div className="rules-section">
+        <h3>詳しいルール</h3>
+        {renderRules()}
+      </div>
+
       {/* Keywords */}
       {game.structured_data?.keywords && (
         <div className="info-section">
@@ -122,12 +128,6 @@ export default function GamePage({ slug: propSlug }) {
           </div>
         </div>
       )}
-
-      {/* Rules */}
-      <div className="rules-section">
-        <h3>詳しいルール</h3>
-        {renderRules()}
-      </div>
     </div>
   )
 
