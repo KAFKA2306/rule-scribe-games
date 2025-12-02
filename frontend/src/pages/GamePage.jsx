@@ -83,7 +83,7 @@ export default function GamePage({ slug: propSlug }) {
     <div className="game-detail-content">
       <div className="detail-header">
         <h2>{title}</h2>
-        {game.source_url && (
+        {game.source_url && game.source_url.startsWith('http') && (
           <a href={game.source_url} target="_blank" rel="noreferrer" className="source-badge">
             情報元
           </a>
