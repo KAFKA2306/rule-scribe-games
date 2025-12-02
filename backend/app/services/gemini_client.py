@@ -32,7 +32,10 @@ class GeminiClient:
 
     async def extract_game_info(self, query: str) -> dict:
         prompt = (
-            f"Search official board game info for '{query}'. Prioritize official/BGG sources.\n"
+            f"User Query: '{query}'\n\n"
+            "Task: Search for official board game info or update existing game data based on the query.\n"
+            "If the query implies updating (e.g. 'add card list', 'update rules'), find the game and apply changes.\n"
+            "Prioritize official/BGG sources.\n\n"
             "Return JSON:\n"
             "- title: Unique name (English+Japanese e.g. 'Catan (カタン)').\n"
             "- description: Japanese summary.\n"

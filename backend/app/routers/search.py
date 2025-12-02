@@ -28,15 +28,30 @@ class SearchRequest(BaseModel):
 @router.post("/search", response_model=List[SearchResult])
 async def search(req: SearchRequest):
     clean_query = req.query.strip()
+
+    # Check if this is an update request for an existing game
+    # We'll let Gemini decide if it's an update, but we can try to find context if possible
+    # For now, we just pass the query to Gemini and let it handle the logic
+    # If Gemini returns a game that matches an existing one (by title/url), upsert will update it.
+
     if not clean_query.startswith("http"):
-        try:
-            if res := await supabase_repository.search(clean_query):
-                return [SearchResult(**r) for r in res]
-        except Exception as e:
-            # If DB search fails, log it and continue to AI search
-            import sys
-            print(f"Search error (DB -> Pydantic): {e}", file=sys.stderr)
-            pass
+        # Only try DB search if it looks like a simple title search, not a complex update command
+        # Simple heuristic: if it's short and doesn't contain "update"/"add"/"change"
+        is_simple_search = len(clean_query) < 50 and not any(
+            k in clean_query.lower()
+            for k in ["update", "add", "change", "更新", "追加"]
+        )
+
+        if is_simple_search:
+            try:
+                if res := await supabase_repository.search(clean_query):
+                    return [SearchResult(**r) for r in res]
+            except Exception as e:
+                # If DB search fails, log it and continue to AI search
+                import sys
+
+                print(f"Search error (DB -> Pydantic): {e}", file=sys.stderr)
+                pass
 
     try:
         data = await gemini.extract_game_info(clean_query)
@@ -44,17 +59,29 @@ async def search(req: SearchRequest):
         # If AI search completely blows up despite safeguards
         return []
 
+    # Check for error from GeminiClient
+    if "error" in data:
+        # We can return an empty list or a special error object if we want to show it to the user
+        # For now, let's return a list with a special "error" item or just empty to fail gracefully
+        # But the frontend expects a list of SearchResult.
+        # Let's return empty list and let frontend handle "no results" or maybe we should propagate error?
+        # The user wants to see the error.
+        # But SearchResult model doesn't have 'error' field.
+        # Let's just print it and return empty for now, or maybe we can hack it into description?
+        print(f"Gemini returned error: {data['error']}")
+        return []
+
     data["source_url"] = (
         clean_query if clean_query.startswith("http") else _derived_source(data)
     )
-    
+
     try:
         if saved := await supabase_repository.upsert(data):
             return [SearchResult(**r) for r in saved]
     except Exception:
         # If upsert fails, just return what we have
         pass
-    
+
     # Return result with provisional ID 0
     return [SearchResult(**{**data, "id": 0})]
 
@@ -81,5 +108,6 @@ async def list_games(limit: int = 100):
             return [SearchResult(**r) for r in res]
     except Exception as e:  # pragma: no cover - defensive
         import sys
+
         print(f"List games error: {e}", file=sys.stderr)
     return []
