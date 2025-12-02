@@ -1,4 +1,4 @@
-from backend.app.core.setup import apply_initial_setup
+from app.core.setup import apply_initial_setup
 
 apply_initial_setup()
 
