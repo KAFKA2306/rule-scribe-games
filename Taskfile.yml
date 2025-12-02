@@ -34,5 +34,5 @@ tasks:
     cmds:
       - cmd: cd backend && uv run ruff check --fix .
       - cmd: cd backend && uv run ruff format .
-      - cmd: cd frontend && npx prettier --write .
-      - cmd: cd frontend && ESLINT_USE_FLAT_CONFIG=false npx eslint . --ext .js,.jsx --fix
+      - cmd: cd frontend && npm run format
+      - cmd: cd frontend && npm run lint:fix

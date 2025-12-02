@@ -28,7 +28,7 @@ else:
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import search, debug
+from app.routers import search, debug, games
 
 app = FastAPI(title="RuleScribe Minimal", version="1.0.0")
 
@@ -41,6 +41,7 @@ app.add_middleware(
 )
 
 app.include_router(search.router, prefix="/api", tags=["search"])
+app.include_router(games.router, prefix="/api", tags=["games"])
 app.include_router(debug.router, prefix="/api", tags=["debug"])
 
 
