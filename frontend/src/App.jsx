@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { BrowserRouter, Routes, Route, Link } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import GamePage from './pages/GamePage'
 
 const post = async (path, payload, setLoading) => {
@@ -15,7 +15,7 @@ const post = async (path, payload, setLoading) => {
   return data
 }
 
-function Home() {
+function App() { // Renamed from Home to App
   const [query, setQuery] = useState('')
   const [initialGames, setInitialGames] = useState([])
   const [games, setGames] = useState([])
@@ -138,15 +138,5 @@ function Home() {
   )
 }
 
-function App() {
-  return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/games/:slug" element={<GamePage />} />
-      </Routes>
-    </BrowserRouter>
-  )
-}
-
 export default App
+

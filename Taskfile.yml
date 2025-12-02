@@ -25,10 +25,6 @@ tasks:
     dir: frontend
     cmd: npm run dev -- --host
 
-  db:init:
-    desc: DB初期化SQLを表示
-    cmd: cat backend/init_db.sql
-
   lint:
     desc: Lint / format (backend Ruff, frontend Prettier+ESLint)
     cmds:
@@ -36,3 +32,4 @@ tasks:
       - cmd: cd backend && uv run ruff format .
       - cmd: cd frontend && npm run format
       - cmd: cd frontend && npm run lint:fix
+      - cmd: gh run list --limit 5
