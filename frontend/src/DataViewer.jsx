@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom'
 function DataViewer() {
   const [games, setGames] = useState([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
+  const [error, _setError] = useState('')
 
   useEffect(() => {
     const loadData = async () => {
