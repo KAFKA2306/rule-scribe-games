@@ -1,142 +1,194 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
 import GamePage from './pages/GamePage'
 
-const post = async (path, payload, setLoading) => {
-  setLoading(true)
-  const res = await fetch(path, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  })
-  if (!res.ok) throw new Error(await res.text())
-  const data = await res.json()
-  setLoading(false)
-  return data
+// Simple API client
+const api = {
+  get: async (path) => {
+    const res = await fetch(path)
+    if (!res.ok) throw new Error(`API Error: ${res.status}`)
+    return res.json()
+  },
+  post: async (path, body) => {
+    const res = await fetch(path, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    })
+    if (!res.ok) throw new Error(`API Error: ${res.status}`)
+    return res.json()
+  }
 }
 
-function App() { // Renamed from Home to App
-  const [query, setQuery] = useState('')
-  const [initialGames, setInitialGames] = useState([])
+function App() {
+  // State
   const [games, setGames] = useState([])
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
+  const [initialGames, setInitialGames] = useState([])
+  const [selectedSlug, setSelectedSlug] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const [query, setQuery] = useState('')
 
-  const clear = () => {
-    setQuery('')
-    setError('')
-    if (initialGames.length > 0) {
-      setGames(initialGames)
-    } else {
-      setGames([])
-    }
-  }
-
+  // Initial Load
   useEffect(() => {
-    const loadInitial = async () => {
-      setLoading(true)
+    const load = async () => {
       try {
-        const res = await fetch('/api/games')
-        if (!res.ok) throw new Error(await res.text())
-        const data = await res.json()
-        setInitialGames(data)
-        setGames(data)
+        setLoading(true)
+        const data = await api.get('/api/games')
+        const list = Array.isArray(data) ? data : data.games || []
+
+        // Normalize data
+        const normalized = list.map(g => ({
+          ...g,
+          slug: g.slug || g.game_slug || String(g.id),
+          name: g.name || g.title || 'Untitled'
+        }))
+
+        setGames(normalized)
+        setInitialGames(normalized)
+
+        // Auto-select first game
+        if (normalized.length > 0) {
+          setSelectedSlug(normalized[0].slug)
+        }
       } catch (e) {
-        console.error('Failed to load initial games:', e)
+        console.error('Load failed:', e)
+        setError('ゲームの読み込みに失敗しました。')
       } finally {
         setLoading(false)
       }
     }
-    loadInitial()
+    load()
   }, [])
 
-  const search = async (e) => {
+  // Search Handler
+  const handleSearch = async (e) => {
     e.preventDefault()
-    const q = query.trim()
-    if (!q) return
-    setError('')
-    setGames([])
+    if (!query.trim()) {
+      setGames(initialGames)
+      return
+    }
 
     try {
-      const data = await post('/api/search', { query: q }, setLoading)
-      if (data.error) {
-        setError(data.error)
-      } else {
-        setGames(data)
+      setLoading(true)
+      const data = await api.post('/api/search', { query })
+      const list = Array.isArray(data) ? data : data.games || []
+
+      const normalized = list.map(g => ({
+        ...g,
+        slug: g.slug || g.game_slug || String(g.id),
+        name: g.name || g.title || 'Untitled'
+      }))
+
+      setGames(normalized)
+      if (normalized.length > 0) {
+        setSelectedSlug(normalized[0].slug)
       }
     } catch (e) {
-      setError(e.message)
+      console.error('Search failed:', e)
+      setError('検索に失敗しました。')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleClear = () => {
+    setQuery('')
+    setGames(initialGames)
+    if (initialGames.length > 0) {
+      setSelectedSlug(initialGames[0].slug)
     }
   }
 
   return (
-    <div className="app">
-      <header>
-        <div className="brand" onClick={clear}>
-          ボドゲのミカタ
+    <div className="app-container">
+      {/* Header */}
+      <header className="main-header">
+        <div className="brand" onClick={handleClear}>
+          <span className="logo-icon">♜</span>
+          <h1>ボドゲのミカタ</h1>
         </div>
-        <span className="muted">ルール、わからなくなっても大丈夫。</span>
-        <Link to="/data" className="data-link">
-          📊 データ
-        </Link>
+        <nav>
+          <a href="/data" className="nav-link">📊 データ</a>
+        </nav>
       </header>
 
-      <form onSubmit={search}>
-        <input
-          placeholder="ゲームの名前を入れてね"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-        />
-        <button type="submit" disabled={loading}>
-          {loading ? '考え中...' : 'さがす'}
-        </button>
-        <button type="button" className="secondary" onClick={clear}>
-          クリア
-        </button>
-      </form>
-
-      {error && (
-        <p className="error">
-          {error.includes('API Error')
-            ? 'AIサービスの呼び出しに失敗しました。しばらく待ってからもう一度お試しください。'
-            : error}
-        </p>
-      )}
-
-      <div className="layout">
-        <section className="results panel" style={{ width: '100%' }}>
-          <div className="section-head">
-            <h2>見つかったゲーム</h2>
-            {games.length > 0 && (
-              <span className="pill">
-                <span style={{ fontWeight: 700 }}>{games.length}</span> titles
-              </span>
-            )}
-          </div>
-          {games.length === 0 ? (
-            <p className="muted">まずは検索してみてね。</p>
-          ) : (
-            <ul>
-              {games.map((game) => (
-                <li key={game.id ?? game.title}>
-                  <Link
-                    to={`/games/${game.slug}`}
-                    style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}
-                  >
-                    <strong>{game.title}</strong>
-                    <small>{game.description || '説明がないみたい。'}</small>
-                  </Link>
-                </li>
-              ))}
-            </ul>
+      {/* Search Bar */}
+      <div className="search-section">
+        <form onSubmit={handleSearch} className="search-form">
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="ゲーム名で検索..."
+            className="search-input"
+          />
+          <button type="submit" className="btn-primary" disabled={loading}>
+            {loading ? '...' : '検索'}
+          </button>
+          {query && (
+            <button type="button" onClick={handleClear} className="btn-ghost">
+              クリア
+            </button>
           )}
-        </section>
+        </form>
       </div>
 
-      <footer className="muted">© {new Date().getFullYear()} ボドゲのミカタ</footer>
+      {/* Error Message */}
+      {error && <div className="error-banner">{error}</div>}
+
+      {/* Main Layout */}
+      <main className="main-layout">
+        {/* Left Pane: Game List */}
+        <aside className="game-list-pane">
+          <div className="pane-header">
+            <h2>ゲーム一覧 <span className="count">{games.length}</span></h2>
+          </div>
+
+          <div className="game-grid">
+            {games.map(game => (
+              <div
+                key={game.slug}
+                className={`game-card ${selectedSlug === game.slug ? 'active' : ''}`}
+                onClick={() => setSelectedSlug(game.slug)}
+              >
+                <h3 className="game-title">{game.name}</h3>
+                <p className="game-summary">
+                  {game.structured_data?.summary || game.description || 'No description'}
+                </p>
+                {game.structured_data?.keywords && (
+                  <div className="game-tags">
+                    {game.structured_data.keywords.slice(0, 2).map((k, i) => (
+                      <span key={i} className="tag">{k.term}</span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+
+            {games.length === 0 && !loading && (
+              <div className="empty-state">
+                ゲームが見つかりませんでした。
+              </div>
+            )}
+          </div>
+        </aside>
+
+        {/* Right Pane: Game Detail */}
+        <section className="game-detail-pane">
+          {selectedSlug ? (
+            <GamePage slug={selectedSlug} />
+          ) : (
+            <div className="empty-selection">
+              <p>左のリストからゲームを選択してください</p>
+            </div>
+          )}
+        </section>
+      </main>
+
+      <footer className="main-footer">
+        © {new Date().getFullYear()} ボドゲのミカタ
+      </footer>
     </div>
   )
 }
 
 export default App
-
