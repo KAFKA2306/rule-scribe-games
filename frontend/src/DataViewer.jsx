@@ -40,9 +40,7 @@ function DataViewer() {
               <span className="card-id">ID: {game.id}</span>
             </div>
 
-            {game.description && (
-              <p className="card-description">{game.description}</p>
-            )}
+            {game.description && <p className="card-description">{game.description}</p>}
 
             <div className="card-meta">
               {game.source_url && (
@@ -80,22 +78,18 @@ function DataViewer() {
               )}
 
               <div className="meta-item">
-                <strong>Created:</strong>{' '}
-                {new Date(game.created_at).toLocaleString('ja-JP')}
+                <strong>Created:</strong> {new Date(game.created_at).toLocaleString('ja-JP')}
               </div>
 
               <div className="meta-item">
-                <strong>Updated:</strong>{' '}
-                {new Date(game.updated_at).toLocaleString('ja-JP')}
+                <strong>Updated:</strong> {new Date(game.updated_at).toLocaleString('ja-JP')}
               </div>
             </div>
           </div>
         ))}
       </div>
 
-      {!loading && games.length === 0 && (
-        <p className="empty-state">データがありません</p>
-      )}
+      {!loading && games.length === 0 && <p className="empty-state">データがありません</p>}
     </div>
   )
 }
