@@ -81,15 +81,3 @@ def _derived_source(data: dict) -> str:
     title = data.get("title") or ""
     slug = re.sub(r"[^a-z0-9]+", "-", title.lower()).strip("-") or "unknown"
     return f"derived://title/{slug}"
-
-
-@router.get("/games", response_model=List[SearchResult])
-async def list_games(limit: int = 100):
-    """
-    Simple listing endpoint so the frontend can show Supabase data
-    immediately without requiring a search query.
-    """
-    safe_limit = min(max(limit, 1), 200)
-    if res := await supabase_repository.list_recent(safe_limit):
-        return [SearchResult(**r) for r in res]
-    return []

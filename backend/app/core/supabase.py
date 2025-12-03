@@ -1,6 +1,5 @@
 from typing import List, Protocol, Dict, Any, Optional
 import sys
-import traceback
 import anyio
 
 try:

@@ -21,4 +21,4 @@ dev = [
 ]
 
 [tool.ruff.lint]
-per-file-ignores = {"app/main.py" = ["E402"]}
+per-file-ignores = {"app/main.py" = ["E402"], "../api/index.py" = ["E402", "F401"]}
