@@ -18,8 +18,8 @@ def apply_initial_setup():
             sys.path.insert(0, str(p))
 
     # Load environment variables (.env at repo root preferred, fallback to backend/.env)
-    repo_root_env = backend_dir.parent.parent / ".env"
-    backend_env = backend_dir.parent / ".env"
+    repo_root_env = backend_dir.parent / ".env"
+    backend_env = backend_dir / ".env"
     if repo_root_env.exists():
         load_dotenv(dotenv_path=repo_root_env, override=True)
     elif backend_env.exists():
