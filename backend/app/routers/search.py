@@ -20,6 +20,7 @@ class SearchResult(BaseModel):
     summary: Optional[str] = None
     structured_data: Optional[dict] = None
     source_url: Optional[str] = None
+    affiliate_urls: Optional[dict] = None
 
 
 class SearchRequest(BaseModel):
@@ -46,7 +47,12 @@ async def search(req: SearchRequest):
         if is_simple_search:
 
             if res := await supabase_repository.search(clean_query):
-                return [SearchResult(**r) for r in res]
+                results = []
+                for r in res:
+                    sd = r.get("structured_data") or {}
+                    affiliate_urls = sd.get("affiliate_urls")
+                    results.append(SearchResult(**r, affiliate_urls=affiliate_urls))
+                return results
 
     data = await gemini.extract_game_info(clean_query)
 
@@ -67,7 +73,12 @@ async def search(req: SearchRequest):
     )
 
     if saved := await supabase_repository.upsert(data):
-        return [SearchResult(**r) for r in saved]
+        results = []
+        for r in saved:
+            sd = r.get("structured_data") or {}
+            affiliate_urls = sd.get("affiliate_urls")
+            results.append(SearchResult(**r, affiliate_urls=affiliate_urls))
+        return results
 
     # Return result with provisional ID 0
     return [SearchResult(**{**data, "id": 0})]
