@@ -87,6 +87,7 @@ create extension if not exists vector;
 
 create table if not exists games (
   id bigint primary key generated always as identity,
+  slug text unique not null,        -- URL用スラッグ (タイトルから生成)
   title text not null,              -- ゲームタイトル (日/英)
   description text,                 -- 短い概要
   rules_content text,               -- 詳細ルール (Markdown)
