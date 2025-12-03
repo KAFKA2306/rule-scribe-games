@@ -1,13 +1,15 @@
 from typing import Dict, Any
-from datetime import datetime, UTC
+from datetime import datetime, timezone
 from app.services.gemini_client import GeminiClient
 
 gemini = GeminiClient()
 
+UTC = timezone.utc
+
 
 class DataEnhancer:
     async def should_enhance(self, game: Dict[str, Any]) -> bool:
-        structured_data = game.get("structured_data", {})
+        structured_data = game.get("structured_data", {}) or {}
         version = structured_data.get("data_version", 0)
 
         if version < 2:
@@ -21,18 +23,27 @@ class DataEnhancer:
 
     def _days_since(self, timestamp) -> int:
         if isinstance(timestamp, str):
-            dt = datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
+            # Handle ISO format with Z or offset
+            try:
+                dt = datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
+            except ValueError:
+                # Fallback or handle other formats if necessary
+                return 0
         else:
             dt = timestamp
 
         now = datetime.now(UTC)
-        delta = now - dt.replace(tzinfo=UTC) if dt.tzinfo is None else now - dt
+        # Ensure dt is timezone-aware
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=UTC)
+            
+        delta = now - dt
         return delta.days
 
     async def enhance(
         self, game: Dict[str, Any], context: str = "search"
     ) -> Dict[str, Any]:
-        current_data = game.get("structured_data", {})
+        current_data = game.get("structured_data", {}) or {}
         current_version = current_data.get("data_version", 0)
 
         prompt = self._build_enhancement_prompt(
@@ -44,9 +55,13 @@ class DataEnhancer:
         )
 
         enhanced = await gemini.generate_structured_json(prompt)
-        enhanced["data_version"] = current_version + 1
+        
+        # Merge enhanced data into current_data
+        # Note: In a real scenario, we might want deeper merging or specific field handling
+        new_data = {**current_data, **enhanced}
+        new_data["data_version"] = current_version + 1
 
-        return {**current_data, **enhanced}
+        return new_data
 
     def _build_enhancement_prompt(
         self,

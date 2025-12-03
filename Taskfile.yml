@@ -8,8 +8,16 @@ tasks:
   setup:
     desc: "依存インストール (backend: uv sync, frontend: npm install)"
     cmds:
-      - cmd: cd backend && uv sync
-      - cmd: cd frontend && npm install
+      - task: setup:backend
+      - task: setup:frontend
+
+  setup:backend:
+    dir: backend
+    cmd: uv sync
+
+  setup:frontend:
+    dir: frontend
+    cmd: npm install
 
   dev:
     desc: バックエンドとフロントエンドを同時起動
@@ -25,11 +33,49 @@ tasks:
     dir: frontend
     cmd: npm run dev -- --host
 
+  build:
+    desc: フロントエンドのビルド
+    dir: frontend
+    cmd: npm run build
+
+  preview:
+    desc: フロントエンドのプレビュー (ビルド後)
+    dir: frontend
+    cmd: npm run preview
+
   lint:
     desc: Lint / format (backend Ruff, frontend Prettier+ESLint)
     cmds:
-      - cmd: cd backend && uv run ruff check --fix .
-      - cmd: cd backend && uv run ruff format .
-      - cmd: cd frontend && npm run format
-      - cmd: cd frontend && npm run lint:fix
-      - cmd: gh run list --limit 5
+      - task: lint:backend
+      - task: lint:frontend
+
+  lint:backend:
+    dir: backend
+    cmds:
+      - uv run ruff check --fix .
+      - uv run ruff format .
+
+  lint:frontend:
+    dir: frontend
+    cmds:
+      - npm run format
+      - npm run lint:fix
+
+  db:init:
+    desc: DB初期化用SQLを表示
+    cmd: cat backend/init_db.sql
+
+  clean:
+    desc: キャッシュとビルドアーティファクトの削除
+    ignore_error: true
+    cmds:
+      - find . -type d -name "__pycache__" -exec rm -rf {} +
+      - rm -rf backend/.ruff_cache
+      - rm -rf frontend/dist
+
+  kill:
+    desc: 開発サーバーのポート(8000, 5173)を強制解放
+    ignore_error: true
+    cmds:
+      - fuser -k 8000/tcp
+      - fuser -k 5173/tcp

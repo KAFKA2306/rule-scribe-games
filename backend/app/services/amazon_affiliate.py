@@ -3,6 +3,7 @@ from urllib.parse import quote
 
 TRACKING_ID = os.getenv("AMAZON_TRACKING_ID")
 
+
 def amazon_search_url(title: str) -> str | None:
     if not TRACKING_ID:
         return None

@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import App from './App.jsx'
 import DataViewer from './DataViewer.jsx'
-import GamePage from './pages/GamePage.jsx' // Import GamePage
+import GamePage from './pages/GamePage.jsx'
 import './index.css'
 
 createRoot(document.getElementById('root')).render(
@@ -12,7 +12,7 @@ createRoot(document.getElementById('root')).render(
       <Routes>
         <Route path="/" element={<App />} />
         <Route path="/data" element={<DataViewer />} />
-        <Route path="/games/:slug" element={<GamePage />} /> {/* Add GamePage route */}
+        <Route path="/games/:slug" element={<GamePage />} />
       </Routes>
     </BrowserRouter>
   </StrictMode>
