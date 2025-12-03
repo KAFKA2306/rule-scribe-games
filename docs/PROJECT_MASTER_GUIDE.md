@@ -68,6 +68,7 @@ graph TD
 *   `backend/app/core/settings.py`: 環境変数読み込みとフォールバック設定。
 *   `backend/app/services/gemini_client.py`: 検索と基本情報抽出のAIロジック。
 *   `backend/app/services/data_enhancer.py`: 既存データの段階的強化を行うAIロジック。
+*   `backend/app/routers/games.py`: ゲーム一覧・詳細取得エンドポイント。
 *   `frontend/src/index.css`: グローバルスタイルとカラー変数定義。
 *   `vercel.json`: デプロイ設定とルーティングルール。
 *   `frontend/vite.config.js`: フロントエンドのビルド・開発プロキシ設定。
@@ -90,13 +91,17 @@ create table if not exists games (
   slug text unique not null,        -- URL用スラッグ (タイトルから生成)
   title text not null,              -- ゲームタイトル (日/英)
   description text,                 -- 短い概要
+  summary text,                     -- AI生成要約
   rules_content text,               -- 詳細ルール (Markdown)
   source_url text unique,           -- 情報源URL (重複排除キー)
   image_url text,                   -- 画像URL
-  structured_data jsonb,            -- 構造化データ (詳細はJSONスキーマ参照)
+  structured_data jsonb default '{}'::jsonb, -- 構造化データ
   created_at timestamp with time zone default timezone('utc'::text, now()) not null,
   updated_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
+
+create index if not exists idx_games_slug on games(slug);
+create index if not exists idx_games_title on games(title);
 ```
 
 ### 3.2 トリガー (Triggers)
@@ -263,7 +268,7 @@ JSON形式で返してください。
 ```
 
 ### 6.2 GET `/api/games`
-最近更新されたゲームの一覧を取得。
+最近更新されたゲームの一覧を取得します。`supabase_repository.list_recent` を使用して取得します。
 
 **Parameters**: `limit` (default: 100)
 
@@ -369,6 +374,25 @@ Pydanticモデルやフロントエンドの型定義で `int` を使用する�
 2. `backend/.env`
 
 ルートの `.env` に古い値が残っていると、`backend/.env` を更新しても反映されないため注意が必要です。
+
+### 9.4 Vercel環境変数のデバッグ
+環境変数が正しく設定されているか確認するには、`vercel env pull` を使用して実際の値をダウンロードし、`cat -A` で非表示文字（改行など）を確認します。
+
+```bash
+vercel env pull .env.vercel.production --environment=production
+cat -A .env.vercel.production
+```
+
+### 9.5 デプロイ状況の確認 (GitHub Actions)
+`gh` コマンドを使用して、デプロイワークフローのステータスを素早く確認できます。
+
+```bash
+gh run list --limit 5
+```
+
+### 9.6 APIルーティングの競合
+FastAPIでは、先に登録されたルーターのエンドポイントが優先されます。
+例: `search.py` で `/games` を定義し、その後に `games.py` で `/games` を定義した場合、`search.py` の方が優先され、意図しない挙動（バリデーションエラーなど）を引き起こす可能性があります。エンドポイントの重複には十分注意してください。
 
 ---
 
