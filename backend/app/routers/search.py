@@ -11,7 +11,7 @@ gemini = GeminiClient()
 
 
 class SearchResult(BaseModel):
-    id: int
+    id: str  # UUID from database
     slug: str  # Added slug field
     title: str
     description: Optional[str] = None
