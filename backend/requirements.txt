@@ -1,8 +1,0 @@
-fastapi>=0.123.0
-google-generativeai>=0.8.5
-httpx>=0.28.1
-pydantic>=2.12.5
-supabase>=2.24.0
-uvicorn>=0.38.0
-python-dotenv>=1.0.0
-python-amazon-paapi>=5.0.1

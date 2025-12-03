@@ -107,8 +107,9 @@ rule-scribe-games/
 │   │   ├── main.py     # Entry point
 │   │   ├── routers/    # API Routes
 │   │   ├── services/   # Business Logic (Gemini Client etc.)
-│   │   └── core/       # Config & DB connection
-│   ├── config.yaml     # App configuration
+│   │   ├── core/       # Config & DB connection
+│   │   └── models.py   # Shared Pydantic Models
+│   ├── experiments/    # Experimental Code (CrewAI etc.)
 │   └── init_db.sql     # Database schema
 ├── frontend/           # React Frontend
 │   ├── src/

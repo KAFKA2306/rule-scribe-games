@@ -3,14 +3,13 @@ import sys
 import anyio
 
 try:
-    from supabase import create_client, Client  # type: ignore
-except Exception:  # pragma: no cover
-    Client = None  # type: ignore
-    create_client = None  # type: ignore
+    from supabase import create_client, Client
+except Exception as e:
+    print(f"Failed to import supabase: {e}", file=sys.stderr)
+    Client = None
+    create_client = None
 
 from app.core.settings import settings, PLACEHOLDER
-
-
 from app.utils.slugify import slugify
 
 
@@ -46,18 +45,37 @@ class SupabaseGameRepository(GameRepository):
     def __init__(self, client: Client):
         self.client = client
         self.valid_columns = {
-            "id", "slug", "title", "description", "summary", "rules_content",
-            "source_url", "image_url", "structured_data", "view_count",
-            "search_count", "data_version", "is_official", "min_players",
-            "max_players", "play_time", "min_age", "published_year",
-            "title_ja", "title_en", "official_url", "bgg_url", "bga_url",
-            "amazon_url", "audio_url", "created_at", "updated_at"
+            "id",
+            "slug",
+            "title",
+            "description",
+            "summary",
+            "rules_content",
+            "source_url",
+            "image_url",
+            "structured_data",
+            "view_count",
+            "search_count",
+            "data_version",
+            "is_official",
+            "min_players",
+            "max_players",
+            "play_time",
+            "min_age",
+            "published_year",
+            "title_ja",
+            "title_en",
+            "official_url",
+            "bgg_url",
+            "bga_url",
+            "amazon_url",
+            "audio_url",
+            "created_at",
+            "updated_at",
         }
 
     async def search(self, query: str) -> List[Dict[str, Any]]:
         def _search():
-            # Note: ilike syntax for 'OR' filter in supabase-py might vary by version
-            # using a raw filter string or built-in methods.
             return (
                 self.client.table("games")
                 .select("*")
@@ -70,9 +88,8 @@ class SupabaseGameRepository(GameRepository):
 
     async def upsert(self, data: Dict[str, Any]) -> List[Dict[str, Any]]:
         def _upsert():
-            # Filter data to only include valid columns
             filtered_data = {k: v for k, v in data.items() if k in self.valid_columns}
-            
+
             title = filtered_data.get("title") or ""
             if title:
                 filtered_data["slug"] = slugify(title)
@@ -93,11 +110,7 @@ class SupabaseGameRepository(GameRepository):
     async def get_by_id(self, game_id: int) -> Optional[Dict[str, Any]]:
         def _get():
             res = (
-                self.client.table("games")
-                .select("*")
-                .eq("id", game_id)
-                .execute()
-                .data
+                self.client.table("games").select("*").eq("id", game_id).execute().data
             )
             return res[0] if res else None
 
@@ -105,13 +118,7 @@ class SupabaseGameRepository(GameRepository):
 
     async def get_by_slug(self, slug: str) -> Optional[Dict[str, Any]]:
         def _get():
-            res = (
-                self.client.table("games")
-                .select("*")
-                .eq("slug", slug)
-                .execute()
-                .data
-            )
+            res = self.client.table("games").select("*").eq("slug", slug).execute().data
             return res[0] if res else None
 
         return await anyio.to_thread.run_sync(_get)
@@ -180,7 +187,9 @@ class NoopGameRepository(GameRepository):
 def _repo() -> GameRepository:
     client = _client()
     if client is None:
-        return NoopGameRepository()
+        raise RuntimeError(
+            "Supabase client could not be initialized. Check dependencies and environment variables."
+        )
     return SupabaseGameRepository(client)
 
 

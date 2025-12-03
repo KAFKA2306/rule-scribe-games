@@ -1,116 +1,89 @@
 import json
+import os
 import re
-from typing import Any, Dict
-
 import httpx
-
-try:
-    import google.generativeai as genai
-except ImportError:
-    genai = None
-
-from app.core.settings import settings, PLACEHOLDER
-
-# Configure genai if available and key is valid
-if genai and settings.gemini_api_key and settings.gemini_api_key != PLACEHOLDER:
-    try:
-        genai.configure(api_key=settings.gemini_api_key)
-    except Exception:
-        pass
 
 
 class GeminiClient:
     def __init__(self):
-        self.model_name = (
-            settings.gemini_model
-            if settings.gemini_model.startswith("models/")
-            else f"models/{settings.gemini_model}"
-        )
-        # Use key if available, otherwise empty string (will fail if used against real API)
-        key = settings.gemini_api_key if settings.gemini_api_key != PLACEHOLDER else ""
-        self.base_url = f"https://generativelanguage.googleapis.com/v1beta/{self.model_name}:generateContent?key={key}"
+        self.api_key = os.getenv("GEMINI_API_KEY")
+        if not self.api_key:
+            print("Warning: GEMINI_API_KEY not found in environment variables.")
+
+        self.model_name = "gemini-2.5-flash"
+        self.base_url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.model_name}:generateContent"
 
     async def extract_game_info(self, query: str) -> dict:
-        prompt = (
-            f"User Query: '{query}'\n\n"
-            "Task: Search for official board game info or update existing game data based on the query.\n"
-            "If the query implies updating (e.g. 'add card list', 'update rules'), find the game and apply changes.\n"
-            "Prioritize official/BGG sources.\n\n"
-            "Return JSON:\n"
-            "- title: Unique name (English+Japanese e.g. 'Catan (カタン)').\n"
-            "- title_ja: Japanese title (e.g. 'カタン').\n"
-            "- title_en: English title (e.g. 'Catan').\n"
-            "- description: Japanese summary.\n"
-            "- rules_content: Comprehensive and detailed Japanese rules (Setup, Gameplay Flow, Victory Conditions). Do not summarize; provide full explanation as Markdown.\n"
-            "- image_url: Official image URL.\n"
-            "- min_players: Integer (e.g. 3).\n"
-            "- max_players: Integer (e.g. 4).\n"
-            "- play_time: Integer minutes (e.g. 60).\n"
-            "- min_age: Integer years (e.g. 10).\n"
-            "- published_year: Integer (e.g. 1995).\n"
-            "- official_url: URL.\n"
-            "- bgg_url: URL.\n"
-            "- structured_data: JSON object with:\n"
-            "  - keywords: List of {term, description} (key mechanics/terms).\n"
-            "  - popular_cards: List of {name, type, cost, reason} (key cards/components).\n"
-        )
+        if not self.api_key:
+            return {"error": "Gemini API key not configured"}
 
-        async with httpx.AsyncClient() as client:
-            res = await client.post(
-                self.base_url,
-                headers={"Content-Type": "application/json"},
-                json={
-                    "contents": [{"parts": [{"text": prompt}]}],
-                    "tools": [{"google_search": {}}],
-                },
-                timeout=120.0,
-            )
+        prompt = f"""
+        You are a board game database expert.
+        Search for the board game "{query}" and generate a JSON object with the following fields.
+        Do not include any markdown formatting, explanations, or code blocks. Return ONLY the raw JSON string.
 
-            if res.status_code != 200:
-                print(f"Gemini API Error {res.status_code}: {res.text}")
-                # Return error dict that frontend can handle
-                return {"error": f"API Error {res.status_code}"}
+        Required Fields:
+        - title: (string) Official title
+        - title_ja: (string) Japanese title (if available, else same as title)
+        - title_en: (string) English title
+        - description: (string) Brief description (Japanese)
+        - rules_content: (string) Detailed complete rules for real play (Japanese). Include setup, turn structure, and victory conditions.
+        - image_url: (string) URL to a box art image (use a placeholder if not found)
+        - min_players: (integer)
+        - max_players: (integer)
+        - play_time: (integer) Minutes
+        - min_age: (integer) Years
+        - published_year: (integer)
+        - official_url: (string or null)
+        - bgg_url: (string or null)
+        - structured_data: {{
+            "keywords": [{{"term": "string", "description": "string"}}],
+            "popular_cards": []
+        }}
 
-            payload = res.json()
+        If the game is not found, return an error JSON: {{"error": "Game not found"}}
+        """
 
-        text = self._extract_text(payload)
-        if match := re.search(r"```(?:json)?\s*(.*?)\s*```", text, re.DOTALL):
-            text = match.group(1)
-
-        data = json.loads(text)
-
-        # Normalize rules_content to string if it came back as dict/list
-        if isinstance(data.get("rules_content"), (dict, list)):
-            rc = data["rules_content"]
-            data["rules_content"] = (
-                "\n".join([f"**{k}**:\n{v}" for k, v in rc.items()])
-                if isinstance(rc, dict)
-                else "\n".join(map(str, rc))
-            )
-        return data
-
-    def _extract_text(self, payload: Dict[str, Any]) -> str:
-        try:
-            return payload["candidates"][0]["content"]["parts"][0]["text"].strip()
-        except (KeyError, IndexError, TypeError):
-            raise ValueError("Invalid response format from Gemini API")
+        return await self.generate_structured_json(prompt)
 
     async def generate_structured_json(self, prompt: str) -> dict:
-        async with httpx.AsyncClient() as client:
-            res = await client.post(
-                self.base_url,
-                headers={"Content-Type": "application/json"},
-                json={"contents": [{"parts": [{"text": prompt}]}]},
-                timeout=120.0,
-            )
+        headers = {"Content-Type": "application/json"}
+        params = {"key": self.api_key}
+        data = {
+            "contents": [{"parts": [{"text": prompt}]}],
+            "generationConfig": {
+                "temperature": 0.1,
+                "response_mime_type": "application/json",
+            },
+        }
 
-            if res.status_code != 200:
-                return {}
+        try:
+            async with httpx.AsyncClient(timeout=60.0) as client:
+                response = await client.post(
+                    self.base_url, headers=headers, params=params, json=data
+                )
+                response.raise_for_status()
 
-            payload = res.json()
-            text = self._extract_text(payload)
+                result = response.json()
+                text_content = result["candidates"][0]["content"]["parts"][0]["text"]
 
-            if match := re.search(r"```(?:json)?\s*(.*?)\s*```", text, re.DOTALL):
-                text = match.group(1)
+                cleaned_text = self._clean_json_string(text_content)
 
-            return json.loads(text)
+                return json.loads(cleaned_text)
+
+        except httpx.HTTPStatusError as e:
+            print(f"Gemini API HTTP Error: {e}")
+            return {"error": f"Gemini API request failed: {e.response.text}"}
+        except httpx.RequestError as e:
+            print(f"Gemini API Request Error: {e}")
+            return {"error": f"Gemini API connection failed: {str(e)}"}
+        except (KeyError, IndexError, json.JSONDecodeError) as e:
+            print(f"Gemini Response Parsing Error: {e}")
+            return {"error": "Failed to parse Gemini response"}
+
+    def _clean_json_string(self, text: str) -> str:
+        if "```" in text:
+            match = re.search(r"```(?:json)?\s*(.*?)\s*```", text, re.DOTALL)
+            if match:
+                return match.group(1)
+        return text.strip()

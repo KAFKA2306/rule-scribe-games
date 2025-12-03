@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import GamePage from './pages/GamePage'
 
-// Simple API client
 const api = {
   get: async (path) => {
     const res = await fetch(path)
@@ -16,11 +15,10 @@ const api = {
     })
     if (!res.ok) throw new Error(`API Error: ${res.status}`)
     return res.json()
-  }
+  },
 }
 
 function App() {
-  // State
   const [games, setGames] = useState([])
   const [initialGames, setInitialGames] = useState([])
   const [selectedSlug, setSelectedSlug] = useState(null)
@@ -28,7 +26,6 @@ function App() {
   const [error, setError] = useState(null)
   const [query, setQuery] = useState('')
 
-  // Initial Load
   useEffect(() => {
     const load = async () => {
       try {
@@ -36,17 +33,15 @@ function App() {
         const data = await api.get('/api/games')
         const list = Array.isArray(data) ? data : data.games || []
 
-        // Normalize data
-        const normalized = list.map(g => ({
+        const normalized = list.map((g) => ({
           ...g,
           slug: g.slug || g.game_slug || String(g.id),
-          name: g.name || g.title || 'Untitled'
+          name: g.name || g.title || 'Untitled',
         }))
 
         setGames(normalized)
         setInitialGames(normalized)
 
-        // Auto-select first game
         if (normalized.length > 0) {
           setSelectedSlug(normalized[0].slug)
         }
@@ -60,10 +55,8 @@ function App() {
     load()
   }, [])
 
-  // Search Handler
   const [debouncedQuery, setDebouncedQuery] = useState('')
 
-  // Debounce effect
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedQuery(query)
@@ -71,39 +64,31 @@ function App() {
     return () => clearTimeout(timer)
   }, [query])
 
-  // Real-time Search Effect
   useEffect(() => {
     const searchRealtime = async () => {
       if (!debouncedQuery.trim()) {
-        if (!query.trim()) setGames(initialGames)
+        setGames(initialGames)
         return
       }
 
       try {
-        // Real-time search: generate=false (DB only)
         const data = await api.post('/api/search', { query: debouncedQuery, generate: false })
         const list = Array.isArray(data) ? data : data.games || []
 
-        const normalized = list.map(g => ({
+        const normalized = list.map((g) => ({
           ...g,
           slug: g.slug || g.game_slug || String(g.id),
-          name: g.name || g.title || 'Untitled'
+          name: g.name || g.title || 'Untitled',
         }))
 
-        // Only update if we found something or if it's a clear search
-        // If DB search returns nothing, we don't clear the list immediately to avoid flashing empty state
-        // unless the user explicitly cleared it.
-        // Actually, for real-time, showing "No existing games found" is fine, but maybe we keep previous results?
-        // Let's just update. If empty, it shows empty.
         setGames(normalized)
       } catch (e) {
         console.error('Real-time search failed:', e)
-        // Silent fail for real-time
       }
     }
 
     searchRealtime()
-  }, [debouncedQuery])
+  }, [debouncedQuery, initialGames])
 
   const handleSearch = async (e) => {
     e.preventDefault()
@@ -114,14 +99,14 @@ function App() {
 
     try {
       setLoading(true)
-      // Full search: generate=true (DB + Generate)
+
       const data = await api.post('/api/search', { query, generate: true })
       const list = Array.isArray(data) ? data : data.games || []
 
-      const normalized = list.map(g => ({
+      const normalized = list.map((g) => ({
         ...g,
         slug: g.slug || g.game_slug || String(g.id),
-        name: g.name || g.title || 'Untitled'
+        name: g.name || g.title || 'Untitled',
       }))
 
       setGames(normalized)
@@ -147,18 +132,18 @@ function App() {
 
   return (
     <div className="app-container">
-      {/* Header */}
       <header className="main-header">
         <div className="brand" onClick={handleClear}>
           <span className="logo-icon">♜</span>
           <h1>ボドゲのミカタ</h1>
         </div>
         <nav>
-          <a href="/data" className="nav-link">📊 データ</a>
+          <a href="/data" className="nav-link">
+            📊 データ
+          </a>
         </nav>
       </header>
 
-      {/* Search Bar */}
       <div className="search-section">
         <form onSubmit={handleSearch} className="search-form">
           <input
@@ -178,19 +163,18 @@ function App() {
         </form>
       </div>
 
-      {/* Error Message */}
       {error && <div className="error-banner">{error}</div>}
 
-      {/* Main Layout */}
       <main className="main-layout">
-        {/* Left Pane: Game List */}
         <aside className="game-list-pane">
           <div className="pane-header">
-            <h2>ゲーム一覧 <span className="count">{games.length}</span></h2>
+            <h2>
+              ゲーム一覧 <span className="count">{games.length}</span>
+            </h2>
           </div>
 
           <div className="game-grid">
-            {games.map(game => (
+            {games.map((game) => (
               <div
                 key={game.slug}
                 className={`game-card ${selectedSlug === game.slug ? 'active' : ''}`}
@@ -203,7 +187,9 @@ function App() {
                 {game.structured_data?.keywords && (
                   <div className="game-tags">
                     {game.structured_data.keywords.slice(0, 2).map((k, i) => (
-                      <span key={i} className="tag">{k.term}</span>
+                      <span key={i} className="tag">
+                        {k.term}
+                      </span>
                     ))}
                   </div>
                 )}
@@ -211,14 +197,11 @@ function App() {
             ))}
 
             {games.length === 0 && !loading && (
-              <div className="empty-state">
-                ゲームが見つかりませんでした。
-              </div>
+              <div className="empty-state">ゲームが見つかりませんでした。</div>
             )}
           </div>
         </aside>
 
-        {/* Right Pane: Game Detail */}
         <section className="game-detail-pane">
           {selectedSlug ? (
             <GamePage slug={selectedSlug} />
@@ -230,9 +213,7 @@ function App() {
         </section>
       </main>
 
-      <footer className="main-footer">
-        © {new Date().getFullYear()} ボドゲのミカタ
-      </footer>
+      <footer className="main-footer">© {new Date().getFullYear()} ボドゲのミカタ</footer>
     </div>
   )
 }

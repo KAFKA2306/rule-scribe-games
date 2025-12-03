@@ -11,10 +11,9 @@ const ShareButton = ({ slug }) => {
       if (navigator.clipboard && navigator.clipboard.writeText) {
         await navigator.clipboard.writeText(url)
       } else {
-        // Fallback for environments without Clipboard API
-        const textArea = document.createElement("textarea")
+        const textArea = document.createElement('textarea')
         textArea.value = url
-        textArea.style.position = "fixed" // Avoid scrolling to bottom
+        textArea.style.position = 'fixed'
         document.body.appendChild(textArea)
         textArea.focus()
         textArea.select()
@@ -55,17 +54,32 @@ function AffiliateBox({ affiliateUrls, gameTitle }) {
   return (
     <div className="affiliate-box">
       {amazon && (
-        <a href={amazon} target="_blank" rel="noopener noreferrer sponsored" className="affiliate-link amazon">
+        <a
+          href={amazon}
+          target="_blank"
+          rel="noopener noreferrer sponsored"
+          className="affiliate-link amazon"
+        >
           Amazonで{gameTitle}を見る
         </a>
       )}
       {rakuten && (
-        <a href={rakuten} target="_blank" rel="noopener noreferrer sponsored" className="affiliate-link rakuten">
+        <a
+          href={rakuten}
+          target="_blank"
+          rel="noopener noreferrer sponsored"
+          className="affiliate-link rakuten"
+        >
           楽天で{gameTitle}を見る
         </a>
       )}
       {yahoo && (
-        <a href={yahoo} target="_blank" rel="noopener noreferrer sponsored" className="affiliate-link yahoo">
+        <a
+          href={yahoo}
+          target="_blank"
+          rel="noopener noreferrer sponsored"
+          className="affiliate-link yahoo"
+        >
           Yahoo!で{gameTitle}を見る
         </a>
       )}
@@ -94,7 +108,7 @@ export default function GamePage({ slug: propSlug }) {
         if (!res.ok) throw new Error('Game not found')
 
         const data = await res.json()
-        const gameData = Array.isArray(data) ? data[0] : (data.game || data)
+        const gameData = Array.isArray(data) ? data[0] : data.game || data
 
         if (!gameData) throw new Error('No game data')
         setGame(gameData)
@@ -114,15 +128,12 @@ export default function GamePage({ slug: propSlug }) {
   if (error) return <div className="error-message">{error}</div>
   if (!game) return <div className="not-found">ゲームが見つかりません</div>
 
-  // Safe Data Access
   const title = game.title || game.name || 'Untitled'
   const rules = game.rules_content || game.rules || game.content || ''
 
-  // Determine Rules Type safely
   const isStringRules = typeof rules === 'string'
   const isObjectRules = typeof rules === 'object' && rules !== null
 
-  // Render Content
   const renderRules = () => {
     if (isStringRules) {
       return (
@@ -154,18 +165,19 @@ export default function GamePage({ slug: propSlug }) {
     <div className="game-detail-content">
       <div className="detail-header">
         <h2>{title}</h2>
-        <div className="header-actions" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div
+          className="header-actions"
+          style={{ display: 'flex', alignItems: 'center', gap: '12px' }}
+        >
           <ShareButton slug={slug} />
         </div>
       </div>
 
-      {/* Rules */}
       <div className="rules-section">
         <h3>詳しいルール</h3>
         {renderRules()}
       </div>
 
-      {/* Basic Info */}
       {(game.min_players || game.play_time || game.min_age || game.published_year) && (
         <div className="info-section">
           <h3>基本情報</h3>
@@ -173,7 +185,10 @@ export default function GamePage({ slug: propSlug }) {
             {game.min_players && (
               <div className="info-item">
                 <strong>プレイ人数</strong>
-                <span>{game.min_players}{game.max_players ? ` - ${game.max_players}` : ''}人</span>
+                <span>
+                  {game.min_players}
+                  {game.max_players ? ` - ${game.max_players}` : ''}人
+                </span>
               </div>
             )}
             {game.play_time && (
@@ -198,7 +213,6 @@ export default function GamePage({ slug: propSlug }) {
         </div>
       )}
 
-      {/* Links */}
       {(game.official_url || game.bgg_url) && (
         <div className="info-section">
           <h3>リンク</h3>
@@ -217,7 +231,6 @@ export default function GamePage({ slug: propSlug }) {
         </div>
       )}
 
-      {/* Keywords */}
       {game.structured_data?.keywords && (
         <div className="info-section">
           <h3>キーワード</h3>
@@ -232,7 +245,6 @@ export default function GamePage({ slug: propSlug }) {
         </div>
       )}
 
-      {/* Popular Cards */}
       {game.structured_data?.popular_cards && (
         <div className="info-section">
           <h3>人気のカード・要素</h3>
@@ -250,8 +262,9 @@ export default function GamePage({ slug: propSlug }) {
         </div>
       )}
 
-      {/* Affiliate Box - Moved to bottom */}
-      {game.affiliate_urls && <AffiliateBox affiliateUrls={game.affiliate_urls} gameTitle={title} />}
+      {game.affiliate_urls && (
+        <AffiliateBox affiliateUrls={game.affiliate_urls} gameTitle={title} />
+      )}
     </div>
   )
 
@@ -264,13 +277,9 @@ export default function GamePage({ slug: propSlug }) {
           </div>
         </header>
         <main className="main-layout single-col">
-          <div className="game-detail-pane">
-            {content}
-          </div>
+          <div className="game-detail-pane">{content}</div>
         </main>
-        <footer className="main-footer">
-          © {new Date().getFullYear()} ボドゲのミカタ
-        </footer>
+        <footer className="main-footer">© {new Date().getFullYear()} ボドゲのミカタ</footer>
       </div>
     )
   }

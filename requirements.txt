@@ -5,4 +5,3 @@ pydantic>=2.12.5
 supabase>=2.24.0
 uvicorn>=0.38.0
 python-dotenv>=1.0.0
-anyio>=4.0.0
