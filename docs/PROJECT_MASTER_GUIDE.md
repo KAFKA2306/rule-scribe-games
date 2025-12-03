@@ -187,8 +187,9 @@ create index if not exists idx_games_title on games(title);
 | `AMAZON_TRACKING_ID` | `None` | AmazonアソシエイトのトラッキングID。 |
 
 ### 5.2 定数値 (Hardcoded Constants)
+*   `gemini_client.py`: タイムアウト `60.0` 秒。
 *   `search.py`: "Simple Search" 判定の文字数制限 `50` 文字。
-*   `data_enhancer.py`: クールダウン `30` 日。
+*   `data_enhancer.py`: クールダウン `30` 日, 検証タイムアウト `30.0` 秒。
 
 ---
 
