@@ -45,6 +45,14 @@ def _client() -> Optional[Client]:
 class SupabaseGameRepository(GameRepository):
     def __init__(self, client: Client):
         self.client = client
+        self.valid_columns = {
+            "id", "slug", "title", "description", "summary", "rules_content",
+            "source_url", "image_url", "structured_data", "view_count",
+            "search_count", "data_version", "is_official", "min_players",
+            "max_players", "play_time", "min_age", "published_year",
+            "title_ja", "title_en", "official_url", "bgg_url", "bga_url",
+            "amazon_url", "audio_url", "created_at", "updated_at"
+        }
 
     async def search(self, query: str) -> List[Dict[str, Any]]:
         def _search():
@@ -62,17 +70,20 @@ class SupabaseGameRepository(GameRepository):
 
     async def upsert(self, data: Dict[str, Any]) -> List[Dict[str, Any]]:
         def _upsert():
-            title = data.get("title") or ""
+            # Filter data to only include valid columns
+            filtered_data = {k: v for k, v in data.items() if k in self.valid_columns}
+            
+            title = filtered_data.get("title") or ""
             if title:
-                data["slug"] = slugify(title)
+                filtered_data["slug"] = slugify(title)
 
             key = "slug"
-            if data.get("source_url"):
+            if filtered_data.get("source_url"):
                 key = "source_url"
 
             return (
                 self.client.table("games")
-                .upsert(data, on_conflict=key)
+                .upsert(filtered_data, on_conflict=key)
                 .execute()
                 .data
             )

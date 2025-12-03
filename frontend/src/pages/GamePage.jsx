@@ -155,11 +155,6 @@ export default function GamePage({ slug: propSlug }) {
       <div className="detail-header">
         <h2>{title}</h2>
         <div className="header-actions" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          {game.source_url && game.source_url.startsWith('http') && (
-            <a href={game.source_url} target="_blank" rel="noreferrer" className="source-badge">
-              情報元
-            </a>
-          )}
           <ShareButton slug={slug} />
         </div>
       </div>
@@ -169,6 +164,58 @@ export default function GamePage({ slug: propSlug }) {
         <h3>詳しいルール</h3>
         {renderRules()}
       </div>
+
+      {/* Basic Info */}
+      {(game.min_players || game.play_time || game.min_age || game.published_year) && (
+        <div className="info-section">
+          <h3>基本情報</h3>
+          <div className="basic-info-grid">
+            {game.min_players && (
+              <div className="info-item">
+                <strong>プレイ人数</strong>
+                <span>{game.min_players}{game.max_players ? ` - ${game.max_players}` : ''}人</span>
+              </div>
+            )}
+            {game.play_time && (
+              <div className="info-item">
+                <strong>プレイ時間</strong>
+                <span>{game.play_time}分</span>
+              </div>
+            )}
+            {game.min_age && (
+              <div className="info-item">
+                <strong>対象年齢</strong>
+                <span>{game.min_age}歳〜</span>
+              </div>
+            )}
+            {game.published_year && (
+              <div className="info-item">
+                <strong>発行年</strong>
+                <span>{game.published_year}年</span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Links */}
+      {(game.official_url || game.bgg_url) && (
+        <div className="info-section">
+          <h3>リンク</h3>
+          <div className="links-list">
+            {game.official_url && (
+              <a href={game.official_url} target="_blank" rel="noreferrer" className="link-item">
+                公式サイト
+              </a>
+            )}
+            {game.bgg_url && (
+              <a href={game.bgg_url} target="_blank" rel="noreferrer" className="link-item">
+                BoardGameGeek
+              </a>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Keywords */}
       {game.structured_data?.keywords && (
