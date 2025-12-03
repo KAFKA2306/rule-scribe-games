@@ -8,6 +8,7 @@ create table if not exists games (
   rules_content text,
   source_url text unique,
   image_url text,
+  structured_data jsonb,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null,
   updated_at timestamp with time zone default timezone('utc'::text, now()) not null
 );

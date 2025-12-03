@@ -1,6 +1,6 @@
 from typing import List, Protocol, Dict, Any, Optional
 import sys
-import traceback
+
 import anyio
 
 try:
@@ -72,10 +72,7 @@ class SupabaseGameRepository(GameRepository):
                 key = "source_url"
 
             return (
-                self.client.table("games")
-                .upsert(data, on_conflict=key)
-                .execute()
-                .data
+                self.client.table("games").upsert(data, on_conflict=key).execute().data
             )
 
         return await anyio.to_thread.run_sync(_upsert)
@@ -83,11 +80,7 @@ class SupabaseGameRepository(GameRepository):
     async def get_by_id(self, game_id: int) -> Optional[Dict[str, Any]]:
         def _get():
             res = (
-                self.client.table("games")
-                .select("*")
-                .eq("id", game_id)
-                .execute()
-                .data
+                self.client.table("games").select("*").eq("id", game_id).execute().data
             )
             return res[0] if res else None
 
@@ -95,13 +88,7 @@ class SupabaseGameRepository(GameRepository):
 
     async def get_by_slug(self, slug: str) -> Optional[Dict[str, Any]]:
         def _get():
-            res = (
-                self.client.table("games")
-                .select("*")
-                .eq("slug", slug)
-                .execute()
-                .data
-            )
+            res = self.client.table("games").select("*").eq("slug", slug).execute().data
             return res[0] if res else None
 
         return await anyio.to_thread.run_sync(_get)

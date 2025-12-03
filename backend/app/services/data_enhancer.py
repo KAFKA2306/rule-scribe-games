@@ -79,8 +79,9 @@ JSON形式で返してください。
 現在のデータ: {current_data}
 
 以下の情報を追加してください:
-- keywords: ゲームの重要な用語とその説明のリスト
-  形式: [{{"term": "用語", "description": "説明"}}]
+- mechanics: ゲームのメカニクス（リスト）
+- components: コンポーネントリスト（{{name, count, description}}）
+- setup_instructions: セットアップ手順（リスト）
 
 既存のデータと追加情報を統合したJSON形式で返してください。
 """
@@ -93,8 +94,12 @@ JSON形式で返してください。
 現在のデータ: {current_data}
 
 以下の情報を追加してください:
-- popular_cards or popular_components: 人気のあるカード/コンポーネント（該当する場合）
-- expansions: 拡張セットの情報（該当する場合）
+- winning_condition: 勝利条件
+- faq: よくある質問（{{question, answer}}のリスト）
+- players: プレイ人数情報（{{min, max, best}}）
+- play_time: プレイ時間（{{min, max}}）
+- age_recommendation: 対象年齢
+- complexity: 複雑さ
 
 既存のデータと追加情報を統合したJSON形式で返してください。
 """

@@ -42,27 +42,41 @@ class GeminiClient:
             "- rules_content: Detailed Japanese rules (Setup, Flow, Victory) as Markdown.\n"
             "- image_url: Official image URL.\n"
             "- structured_data: JSON object with:\n"
-            "  - keywords: List of {term, description} (key mechanics/terms).\n"
-            "  - popular_cards: List of {name, type, cost, reason} (key cards/components).\n"
+            "  - summary: Short summary of the game.\n"
+            "  - players: { min: int, max: int, best: [int] }.\n"
+            "  - play_time: { min: int, max: int } (minutes).\n"
+            "  - age_recommendation: string (e.g. '10+').\n"
+            "  - complexity: string (Low/Medium/High).\n"
+            "  - mechanics: list of strings.\n"
+            "  - components: list of { name, count, description }.\n"
+            "  - setup_instructions: list of strings.\n"
+            "  - winning_condition: string.\n"
+            "  - faq: list of { question, answer }.\n"
         )
 
-        async with httpx.AsyncClient() as client:
-            res = await client.post(
-                self.base_url,
-                headers={"Content-Type": "application/json"},
-                json={
-                    "contents": [{"parts": [{"text": prompt}]}],
-                    "tools": [{"google_search": {}}],
-                },
-                timeout=30.0,
-            )
+        try:
+            async with httpx.AsyncClient() as client:
+                res = await client.post(
+                    self.base_url,
+                    headers={"Content-Type": "application/json"},
+                    json={
+                        "contents": [{"parts": [{"text": prompt}]}],
+                        "tools": [{"google_search": {}}],
+                    },
+                    timeout=60.0,
+                )
 
-            if res.status_code != 200:
-                print(f"Gemini API Error {res.status_code}: {res.text}")
-                # Return error dict that frontend can handle
-                return {"error": f"API Error {res.status_code}"}
+                if res.status_code != 200:
+                    print(f"Gemini API Error {res.status_code}: {res.text}")
+                    return {"error": f"API Error {res.status_code}"}
 
-            payload = res.json()
+                payload = res.json()
+        except httpx.TimeoutException:
+            print("Gemini API Timeout")
+            return {"error": "Gemini API Timeout"}
+        except Exception as e:
+            print(f"Gemini API Exception: {e}")
+            return {"error": f"Gemini API Exception: {e}"}
 
         text = self._extract_text(payload)
         if match := re.search(r"```(?:json)?\s*(.*?)\s*```", text, re.DOTALL):
