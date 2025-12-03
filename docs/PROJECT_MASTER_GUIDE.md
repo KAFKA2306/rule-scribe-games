@@ -89,20 +89,21 @@ graph TD
 create extension if not exists vector;
 
 create table if not exists games (
-  id bigint primary key generated always as identity,
-  slug text unique not null,        -- URL用スラッグ (タイトルから生成)
+  id uuid primary key default gen_random_uuid(), -- UUID (BigIntから変更)
+  slug text unique,                 -- URL用スラッグ (タイトルから生成)
   title text not null,              -- ゲームタイトル (日/英)
   description text,                 -- 短い概要
   summary text,                     -- AI生成要約
   rules_content text,               -- 詳細ルール (Markdown)
-  source_url text unique,           -- 情報源URL (重複排除キー)
+  rules jsonb default '{}'::jsonb,  -- 構造化ルール (Legacy/Future use)
+  source_url text,                  -- 情報源URL
   image_url text,                   -- 画像URL
-  structured_data jsonb default '{}'::jsonb, -- 構造化データ
-
+  structured_data jsonb,            -- 構造化データ
+  
   -- Analytics & Logic
   view_count bigint default 0,      -- 閲覧数
   search_count bigint default 0,    -- 検索ヒット数
-  data_version integer default 0,   -- データ拡張バージョン (DataEnhancer用)
+  data_version integer default 0,   -- データ拡張バージョン
   is_official boolean default false,-- 公式/検証済みフラグ
 
   -- Metadata for Sorting/Filtering (#28)
@@ -125,8 +126,8 @@ create table if not exists games (
   -- Media/Content (#30, #32)
   audio_url text,                   -- 音声解説URL (Voicevox/Zundamon)
 
-  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
-  updated_at timestamp with time zone default timezone('utc'::text, now()) not null
+  created_at timestamp with time zone default now() not null,
+  updated_at timestamp with time zone default now() not null
 );
 
 create index if not exists idx_games_slug on games(slug);
@@ -194,9 +195,18 @@ Prioritize official/BGG sources.
 
 Return JSON:
 - title: Unique name (English+Japanese e.g. 'Catan (カタン)').
+- title_ja: Japanese title (e.g. 'カタン').
+- title_en: English title (e.g. 'Catan').
 - description: Japanese summary.
-- rules_content: Detailed Japanese rules (Setup, Flow, Victory) as Markdown.
+- rules_content: Comprehensive and detailed Japanese rules (Setup, Gameplay Flow, Victory Conditions). Do not summarize; provide full explanation as Markdown.
 - image_url: Official image URL.
+- min_players: Integer (e.g. 3).
+- max_players: Integer (e.g. 4).
+- play_time: Integer minutes (e.g. 60).
+- min_age: Integer years (e.g. 10).
+- published_year: Integer (e.g. 1995).
+- official_url: URL.
+- bgg_url: URL.
 - structured_data: JSON object with:
   - keywords: List of {term, description} (key mechanics/terms).
   - popular_cards: List of {name, type, cost, reason} (key cards/components).
@@ -287,6 +297,13 @@ JSON形式で返してください。
     "rules_content": "**セットアップ**: ...",
     "image_url": "https://...",
     "source_url": "https://boardgamegeek.com/...",
+    "min_players": 3,
+    "max_players": 4,
+    "play_time": 60,
+    "min_age": 10,
+    "published_year": 1995,
+    "official_url": "https://...",
+    "bgg_url": "https://boardgamegeek.com/...",
     "structured_data": {
       "keywords": [{"term": "交渉", "description": "資源交換"}],
       "popular_cards": [],
@@ -424,6 +441,13 @@ gh run list --limit 5
 ### 9.6 APIルーティングの競合
 FastAPIでは、先に登録されたルーターのエンドポイントが優先されます。
 例: `search.py` で `/games` を定義し、その後に `games.py` で `/games` を定義した場合、`search.py` の方が優先され、意図しない挙動（バリデーションエラーなど）を引き起こす可能性があります。エンドポイントの重複には十分注意してください。
+
+### 9.7 AI生成のタイムアウト
+詳細なルール生成など、出力トークン数が多いタスクでは、デフォルトのタイムアウト（30秒）では不足する場合があります。`httpx.ReadTimeout` が発生する場合は、クライアントの `timeout` 設定を適切に（例: 120秒）増やしてください。
+
+### 9.8 Supabase Upsertの厳格化
+AIがプロンプトで指示していない余分なフィールド（ハルシネーションなど）を返すと、Supabaseの `upsert` が "Column does not exist" エラーで失敗します。
+DBに書き込む前に、必ずデータをホワイトリスト方式でフィルタリングし、有効なカラムのみを渡すように実装してください。
 
 ---
 
