@@ -72,7 +72,7 @@ class DataEnhancer:
             if k
         ]
 
-        async with httpx.AsyncClient(follow_redirects=True) as client:
+        async with httpx.AsyncClient(timeout=30.0, follow_redirects=True) as client:
             tasks = []
             # 3つのフィールドそれぞれの「ベストなURL」を決定するタスクを作成
             for field in ["official_url", "amazon_url", "image_url"]:
