@@ -247,7 +247,7 @@ JSON形式で返してください。
 ```json
 [
   {
-    "id": 123,
+    "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
     "slug": "catan",
     "title": "Catan (カタン)",
     "description": "無人島を開拓する...",
@@ -340,6 +340,35 @@ JSON形式で返してください。
 *   **Type Hints**: すべての関数引数と戻り値に型ヒントをつける。
 *   **Async/Await**: I/O処理（DB, API）は必ず非同期で書く。
 *   **Pydantic**: バリデーションに利用。
+
+---
+
+## 9. 重要トラブルシューティング (Critical Troubleshooting)
+
+最近のインシデントから得られた重要な教訓です。
+
+### 9.1 Vercel環境変数の設定
+`echo` コマンドを使用してVercelの環境変数を設定する場合、デフォルトで末尾に改行文字 (`\n`) が追加されます。これによりAPIキーが無効になる問題が発生しました。
+**必ず `echo -n` を使用してください。**
+
+```bash
+# ❌ 悪い例（改行が入る）
+echo "key" | vercel env add GEMINI_API_KEY production
+
+# ✅ 正しい例（改行なし）
+echo -n "key" | vercel env add GEMINI_API_KEY production
+```
+
+### 9.2 IDの型定義
+SupabaseのデータベースIDは **UUID (文字列)** です。
+Pydanticモデルやフロントエンドの型定義で `int` を使用すると、バリデーションエラーやランタイムエラーが発生します。必ず `str` を使用してください。
+
+### 9.3 環境変数の読み込み順序
+`backend/app/core/setup.py` により、以下の順序で `.env` ファイルが読み込まれます：
+1. リポジトリルートの `.env` (優先)
+2. `backend/.env`
+
+ルートの `.env` に古い値が残っていると、`backend/.env` を更新しても反映されないため注意が必要です。
 
 ---
 
