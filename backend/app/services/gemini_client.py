@@ -39,7 +39,7 @@ class GeminiClient:
             affiliate_link = amazon_search_url(search_term)
 
             if affiliate_link:
-                result_data["amazon_url"] = affiliate_link
+                result_data["affiliate_urls"] = {"amazon": affiliate_link}
 
         return result_data
 
