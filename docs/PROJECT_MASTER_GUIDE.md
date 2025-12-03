@@ -69,6 +69,8 @@ graph TD
 *   `backend/app/services/gemini_client.py`: 検索と基本情報抽出のAIロジック。
 *   `backend/app/services/data_enhancer.py`: 既存データの段階的強化を行うAIロジック。
 *   `backend/app/routers/games.py`: ゲーム一覧・詳細取得エンドポイント。
+*   `backend/app/services/amazon_affiliate.py`: Amazon検索URL生成ロジック (Layer 0)。
+*   `backend/app/services/amazon_batch.py`: Amazon ASIN取得バッチ処理 (Layer 1)。
 *   `frontend/src/index.css`: グローバルスタイルとカラー変数定義。
 *   `vercel.json`: デプロイ設定とルーティングルール。
 *   `frontend/vite.config.js`: フロントエンドのビルド・開発プロキシ設定。
@@ -138,6 +140,10 @@ execute function update_updated_at_column();
 | `SUPABASE_SERVICE_ROLE_KEY`| `None` | Supabase 管理者キー (優先)。 |
 | `SUPABASE_KEY` | `None` | Supabase APIキー。 |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | - | `SUPABASE_KEY` のフォールバック。 |
+| `AMAZON_TRACKING_ID` | `None` | AmazonアソシエイトのトラッキングID。 |
+| `AMAZON_ACCESS_KEY` | `None` | Amazon PA-API アクセスキー (Batch用)。 |
+| `AMAZON_SECRET_KEY` | `None` | Amazon PA-API シークレットキー (Batch用)。 |
+| `AMAZON_PARTNER_TAG` | `None` | Amazon PA-API パートナータグ (Batch用)。 |
 
 ### 4.2 フロントエンド設定 (`frontend/vite.config.js`)
 *   **Proxy**: `/api` へのリクエストは `http://localhost:8000` (バックエンド) に転送されます。
@@ -261,7 +267,10 @@ JSON形式で返してください。
     "source_url": "https://boardgamegeek.com/...",
     "structured_data": {
       "keywords": [{"term": "交渉", "description": "資源交換"}],
-      "popular_cards": []
+      "popular_cards": [],
+      "affiliate_urls": {
+        "amazon": "https://www.amazon.co.jp/..."
+      }
     }
   }
 ]
@@ -318,7 +327,7 @@ JSON形式で返してください。
 ### 8.1 ローカル開発環境の構築
 
 **依存関係 (Dependencies)**:
-*   **Backend**: `fastapi>=0.123.0`, `google-generativeai>=0.8.5`, `supabase>=2.24.0`
+*   **Backend**: `fastapi>=0.123.0`, `google-generativeai>=0.8.5`, `supabase>=2.24.0`, `python-amazon-paapi>=5.0.1`
 *   **Frontend**: `react^18.2.0`, `react-markdown^10.1.0`
 
 **環境変数 (Environment Variables)**:
@@ -393,6 +402,26 @@ gh run list --limit 5
 ### 9.6 APIルーティングの競合
 FastAPIでは、先に登録されたルーターのエンドポイントが優先されます。
 例: `search.py` で `/games` を定義し、その後に `games.py` で `/games` を定義した場合、`search.py` の方が優先され、意図しない挙動（バリデーションエラーなど）を引き起こす可能性があります。エンドポイントの重複には十分注意してください。
+
+---
+
+## 10. アフィリエイトシステム (Affiliate System)
+
+収益化の中核となるアフィリエイトリンク生成ロジックです。
+
+### 10.1 Layer 0: 自動検索リンク (Automatic Search Links)
+*   **ロジック**: 手動設定されたリンクがない場合、自動的に `https://www.amazon.co.jp/s?k={Title}&tag={TrackingID}` を生成します。
+*   **メリット**: 全てのゲームに対して即座にリンクを提供可能。手動運用コストゼロ。
+*   **実装**: `backend/app/services/amazon_affiliate.py`
+
+### 10.2 Layer 1: ASIN自動取得バッチ (ASIN Batch)
+*   **ロジック**: Amazon Product Advertising API (PA-API) を使用して、正確な商品ページ (ASIN) を検索し、データベース (`structured_data.affiliate_urls.amazon`) に保存します。
+*   **実装**: `backend/app/services/amazon_batch.py`
+*   **実行**: `uv run python -m app.services.amazon_batch`
+
+### 10.3 優先順位
+1.  **手動設定**: `structured_data.affiliate_urls.amazon` に値がある場合、最優先で使用（Layer 1による更新もこれに含まれる）。
+2.  **自動生成**: 上記がない場合、Layer 0 の検索リンクを使用。
 
 ---
 
