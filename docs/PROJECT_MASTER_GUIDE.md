@@ -96,8 +96,8 @@ graph TD
 *   `backend/init_db.sql`: データベーススキーマとトリガー定義。
 *   `backend/app/main.py`: バックエンドのエントリーポイント。
 *   `backend/app/core/settings.py`: 環境変数読み込み。
-*   `backend/app/core/prompts.py`: `prompts.yaml` ローダー。
-*   `backend/app/prompts.yaml`: 全AIプロンプト定義 (YAML)。
+*   `backend/app/core/prompts.py`: `prompts_data.py` ローダー。
+*   `backend/app/core/prompts_data.py`: 全AIプロンプト定義 (Python Dictionary)。
 *   `backend/app/services/gemini_client.py`: 検索と基本情報抽出のAIロジック (1-shot)。Amazonリンク注入含む。
 *   `backend/app/services/data_enhancer.py`: リンク検証・自動更新ロジック (Background Task)。
 *   `backend/app/routers/games.py`: ゲーム一覧・詳細取得エンドポイント (DataEnhancer統合済み)。
@@ -195,7 +195,7 @@ create index if not exists idx_games_title on games(title);
 
 ## 6. AIプロンプト全集 (Prompt Registry)
 
-すべてのプロンプトは `backend/app/prompts.yaml` で管理されます。
+すべてのプロンプトは `backend/app/core/prompts_data.py` で管理されます。
 
 ### 6.1 新規検索・基本情報抽出 (`gemini_client.extract_game_info`)
 ユーザーが新しいゲームを検索した際に実行されます。厳密な事実に基づき、ハルシネーションを回避するよう指示されています。
@@ -282,7 +282,7 @@ CrewAIなどの新しいAIエージェントを試す場合は、必ず `backend
 *   **No Comments**: コードで語る。
 *   **Japanese Content**: ユーザー向けテキストは日本語。
 *   **Type Hints**: Pythonコードには型ヒントを必須とする。
-*   **Prompts in YAML**: プロンプトは全て `prompts.yaml` に記述する。
+*   **Prompts in Python**: プロンプトは `prompts_data.py` に記述する (Vercel互換性のため)。
 
 ---
 
