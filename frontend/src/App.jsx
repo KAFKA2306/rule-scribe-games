@@ -61,6 +61,50 @@ function App() {
   }, [])
 
   // Search Handler
+  const [debouncedQuery, setDebouncedQuery] = useState('')
+
+  // Debounce effect
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedQuery(query)
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [query])
+
+  // Real-time Search Effect
+  useEffect(() => {
+    const searchRealtime = async () => {
+      if (!debouncedQuery.trim()) {
+        if (!query.trim()) setGames(initialGames)
+        return
+      }
+
+      try {
+        // Real-time search: generate=false (DB only)
+        const data = await api.post('/api/search', { query: debouncedQuery, generate: false })
+        const list = Array.isArray(data) ? data : data.games || []
+
+        const normalized = list.map(g => ({
+          ...g,
+          slug: g.slug || g.game_slug || String(g.id),
+          name: g.name || g.title || 'Untitled'
+        }))
+
+        // Only update if we found something or if it's a clear search
+        // If DB search returns nothing, we don't clear the list immediately to avoid flashing empty state
+        // unless the user explicitly cleared it.
+        // Actually, for real-time, showing "No existing games found" is fine, but maybe we keep previous results?
+        // Let's just update. If empty, it shows empty.
+        setGames(normalized)
+      } catch (e) {
+        console.error('Real-time search failed:', e)
+        // Silent fail for real-time
+      }
+    }
+
+    searchRealtime()
+  }, [debouncedQuery])
+
   const handleSearch = async (e) => {
     e.preventDefault()
     if (!query.trim()) {
@@ -70,7 +114,8 @@ function App() {
 
     try {
       setLoading(true)
-      const data = await api.post('/api/search', { query })
+      // Full search: generate=true (DB + Generate)
+      const data = await api.post('/api/search', { query, generate: true })
       const list = Array.isArray(data) ? data : data.games || []
 
       const normalized = list.map(g => ({
@@ -93,6 +138,7 @@ function App() {
 
   const handleClear = () => {
     setQuery('')
+    setDebouncedQuery('')
     setGames(initialGames)
     if (initialGames.length > 0) {
       setSelectedSlug(initialGames[0].slug)

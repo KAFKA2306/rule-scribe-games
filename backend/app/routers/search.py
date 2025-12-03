@@ -25,6 +25,7 @@ class SearchResult(BaseModel):
 
 class SearchRequest(BaseModel):
     query: str
+    generate: bool = True
 
 
 @router.post("/search", response_model=List[SearchResult])
@@ -53,6 +54,10 @@ async def search(req: SearchRequest):
                     affiliate_urls = sd.get("affiliate_urls")
                     results.append(SearchResult(**r, affiliate_urls=affiliate_urls))
                 return results
+
+    # If generation is disabled, return empty list here
+    if not req.generate:
+        return []
 
     data = await gemini.extract_game_info(clean_query)
 
