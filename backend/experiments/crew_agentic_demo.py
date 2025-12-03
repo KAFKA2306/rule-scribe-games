@@ -43,7 +43,6 @@ crew = Crew(
 import os
 import sys
 
-# Add backend directory to path so we can import app modules if needed
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 

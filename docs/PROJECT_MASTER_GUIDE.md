@@ -43,10 +43,11 @@
 ### 2.2 🏛 上層：CORE (本番 OS)
 *信頼できる一本線*
 
-*   **Endpoint**: `/api/search`
+*   **Endpoint**: `/api/search`, `/api/games`
 *   **Logic**: Supabase 検索 OR (Gemini 1-shot 生成 -> Upsert)
-*   **GeminiClient**: 1-shot JSON 専用。CrewAI 禁止。
-*   **Frontend**: `/api/search` のみを叩く。
+*   **GeminiClient**: 1-shot JSON 専用。CrewAI 禁止。プロンプトは `prompts.yaml` で一元管理。
+*   **DataEnhancer**: バックグラウンドタスクとしてリンク検証・更新を実行。
+*   **Frontend**: `/api/*` のみを叩く。
 *   **特徴**: 壊れない、明瞭、保守しやすい。
 
 ### 2.3 🧪 下層：EXPERIMENTS (実験レイヤー)
@@ -86,15 +87,20 @@ graph TD
 
     BE --> |Read/Write| Supabase
     BE --> |Generate| Gemini
-    Gemini --> |Grounding (Search)| Internet[World Wide Web]
+    BE -.-> |Background| DataEnhancer[Data Enhancer]
+    DataEnhancer --> |Verify| Internet[World Wide Web]
+    Gemini --> |Grounding (Search)| Internet
 ```
 
 ### 3.2 ファイル構成 (Detailed File Manifest)
 *   `backend/init_db.sql`: データベーススキーマとトリガー定義。
 *   `backend/app/main.py`: バックエンドのエントリーポイント。
 *   `backend/app/core/settings.py`: 環境変数読み込み。
-*   `backend/app/services/gemini_client.py`: 検索と基本情報抽出のAIロジック (1-shot)。
-*   `backend/app/routers/games.py`: ゲーム一覧・詳細取得エンドポイント。
+*   `backend/app/core/prompts.py`: `prompts.yaml` ローダー。
+*   `backend/app/prompts.yaml`: 全AIプロンプト定義 (YAML)。
+*   `backend/app/services/gemini_client.py`: 検索と基本情報抽出のAIロジック (1-shot)。Amazonリンク注入含む。
+*   `backend/app/services/data_enhancer.py`: リンク検証・自動更新ロジック (Background Task)。
+*   `backend/app/routers/games.py`: ゲーム一覧・詳細取得エンドポイント (DataEnhancer統合済み)。
 *   `backend/app/routers/search.py`: 検索・生成エンドポイント。
 *   `backend/app/services/amazon_affiliate.py`: Amazon検索URL生成ロジック。
 *   `backend/app/models.py`: 共有Pydanticモデル定義。
@@ -183,40 +189,19 @@ create index if not exists idx_games_title on games(title);
 ### 5.2 定数値 (Hardcoded Constants)
 *   `gemini_client.py`: タイムアウト `60.0` 秒。
 *   `search.py`: "Simple Search" 判定の文字数制限 `50` 文字。
+*   `data_enhancer.py`: クールダウン `30` 日, 検証タイムアウト `8.0` 秒。
 
 ---
 
 ## 6. AIプロンプト全集 (Prompt Registry)
 
-### 6.1 新規検索・基本情報抽出 (`gemini_client.py`)
-ユーザーが新しいゲームを検索した際に実行されます。
+すべてのプロンプトは `backend/app/prompts.yaml` で管理されます。
 
-```text
-You are a board game database expert.
-Search for the board game "{query}" and generate a JSON object with the following fields.
-Do not include any markdown formatting, explanations, or code blocks. Return ONLY the raw JSON string.
+### 6.1 新規検索・基本情報抽出 (`gemini_client.extract_game_info`)
+ユーザーが新しいゲームを検索した際に実行されます。厳密な事実に基づき、ハルシネーションを回避するよう指示されています。
 
-Required Fields:
-- title: (string) Official title
-- title_ja: (string) Japanese title (if available, else same as title)
-- title_en: (string) English title
-- description: (string) Brief description (Japanese)
-- rules_content: (string) Summary of rules (Japanese)
-- image_url: (string) URL to a box art image (use a placeholder if not found)
-- min_players: (integer)
-- max_players: (integer)
-- play_time: (integer) Minutes
-- min_age: (integer) Years
-- published_year: (integer)
-- official_url: (string or null)
-- bgg_url: (string or null)
-- structured_data: {
-    "keywords": [{"term": "string", "description": "string"}],
-    "popular_cards": []
-}
-
-If the game is not found, return an error JSON: {"error": "Game not found"}
-```
+### 6.2 リンク検証・更新 (`data_enhancer.find_valid_links`)
+`DataEnhancer` がバックグラウンドで実行する際、公式URL、Amazon URL、画像URLの候補を探すために使用されます。
 
 ---
 
@@ -251,6 +236,7 @@ If the game is not found, return an error JSON: {"error": "Game not found"}
 
 ### 7.3 GET `/api/games/{slug}`
 特定のゲーム詳細を取得。Slug または ID でアクセス可能。
+**バックグラウンド処理**: `DataEnhancer` が起動し、リンク情報の検証と更新を非同期で試みます。
 
 ---
 
@@ -280,7 +266,7 @@ If the game is not found, return an error JSON: {"error": "Game not found"}
 ### 9.1 ローカル開発環境の構築
 
 **依存関係 (Dependencies)**:
-*   **Backend**: `fastapi`, `google-generativeai`, `supabase`, `httpx`
+*   **Backend**: `fastapi`, `google-generativeai`, `supabase`, `httpx`, `PyYAML`
 *   **Frontend**: `react`, `react-markdown`
 
 **コマンド (Taskfile)**:
@@ -296,6 +282,7 @@ CrewAIなどの新しいAIエージェントを試す場合は、必ず `backend
 *   **No Comments**: コードで語る。
 *   **Japanese Content**: ユーザー向けテキストは日本語。
 *   **Type Hints**: Pythonコードには型ヒントを必須とする。
+*   **Prompts in YAML**: プロンプトは全て `prompts.yaml` に記述する。
 
 ---
 
@@ -318,6 +305,11 @@ SupabaseのIDは **UUID (str)** です。`int` として扱わないこと。
 *   **ロジック**: `https://www.amazon.co.jp/s?k={Title}&tag={TrackingID}` を自動生成。
 *   **実装**: `backend/app/services/amazon_affiliate.py`
 *   **優先順位**: `structured_data` に明示的なリンクがない場合に使用される。
+
+### 11.2 検証済みリンク (Layer 1 - DataEnhancer)
+*   **ロジック**: `DataEnhancer` がバックグラウンドで有効なAmazon商品ページURLを特定し、DBに保存。
+*   **実装**: `backend/app/services/data_enhancer.py`
+*   **優先順位**: 最優先。DBに `amazon_url` があればそれを使用。
 
 ---
 

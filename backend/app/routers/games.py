@@ -1,8 +1,9 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, BackgroundTasks
 from typing import List, Optional
 from pydantic import BaseModel
 from app.core.supabase import supabase_repository
 from app.services.amazon_affiliate import amazon_search_url
+from app.services.data_enhancer import DataEnhancer
 from app.models import GameDetail
 
 router = APIRouter(prefix="/games", tags=["games"])
@@ -25,10 +26,15 @@ async def list_games():
 
 
 @router.get("/{slug}", response_model=GameDetail)
-async def get_game_by_slug(slug: str):
+async def get_game_by_slug(slug: str, background_tasks: BackgroundTasks):
     game = await supabase_repository.get_by_slug(slug)
     if not game:
         raise HTTPException(status_code=404, detail="Game not found")
+
+    # Background Data Enhancement
+    enhancer = DataEnhancer()
+    if await enhancer.should_enhance(game):
+        background_tasks.add_task(run_background_enhancement, game)
 
     sd = game.get("structured_data") or {}
     affiliate_urls = sd.get("affiliate_urls") or {}
@@ -38,6 +44,19 @@ async def get_game_by_slug(slug: str):
             affiliate_urls["amazon"] = url
 
     return GameDetail(**game, affiliate_urls=affiliate_urls or None)
+
+
+async def run_background_enhancement(game: dict):
+    try:
+        enhancer = DataEnhancer()
+        enhanced_game = await enhancer.enhance(game)
+        
+        # If data changed (version increased), save it
+        if enhanced_game.get("data_version", 0) > game.get("data_version", 0):
+            await supabase_repository.upsert(enhanced_game)
+            print(f"Background enhancement saved for {game.get('title')}")
+    except Exception as e:
+        print(f"Background enhancement failed for {game.get('title')}: {e}")
 
 
 class UpdateGameRequest(BaseModel):

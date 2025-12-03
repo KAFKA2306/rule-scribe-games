@@ -2,6 +2,11 @@ import json
 import os
 import re
 import httpx
+from app.core.prompts import Prompts
+from app.services.amazon_affiliate import amazon_search_url
+
+
+
 
 
 class GeminiClient:
@@ -17,38 +22,32 @@ class GeminiClient:
         if not self.api_key:
             return {"error": "Gemini API key not configured"}
 
-        prompt = f"""
-        You are a board game database expert.
-        Search for the board game "{query}" and generate a JSON object with the following fields.
-        Do not include any markdown formatting, explanations, or code blocks. Return ONLY the raw JSON string.
+        prompt_template = Prompts.get("gemini_client.extract_game_info")
+        prompt = prompt_template.format(query=query)
 
-        Required Fields:
-        - title: (string) Official title
-        - title_ja: (string) Japanese title (if available, else same as title)
-        - title_en: (string) English title
-        - description: (string) Brief description (Japanese)
-        - rules_content: (string) Detailed complete rules for real play (Japanese). Include setup, turn structure, and victory conditions.
-        - image_url: (string) URL to a box art image (use a placeholder if not found)
-        - min_players: (integer)
-        - max_players: (integer)
-        - play_time: (integer) Minutes
-        - min_age: (integer) Years
-        - published_year: (integer)
-        - official_url: (string or null)
-        - bgg_url: (string or null)
-        - structured_data: {{
-            "keywords": [{{"term": "string", "description": "string"}}],
-            "popular_cards": []
-        }}
+        # 1. AIによる生成を実行
+        result_data = await self.generate_structured_json(prompt)
 
-        If the game is not found, return an error JSON: {{"error": "Game not found"}}
-        """
+        # 2. エラーでなければ、Amazonリンクを静的に注入 (Post-Processing)
+        if "error" not in result_data:
+            # 日本語タイトルがあればそれを優先、なければ英語タイトル、最悪の場合は検索クエリ
+            search_term = (
+                result_data.get("title_ja") or result_data.get("title") or query
+            )
 
-        return await self.generate_structured_json(prompt)
+            # Master Guideの方針に従い、検索結果ページへのリンクを生成
+            affiliate_link = amazon_search_url(search_term)
+
+            if affiliate_link:
+                result_data["amazon_url"] = affiliate_link
+
+        return result_data
 
     async def generate_structured_json(self, prompt: str) -> dict:
         headers = {"Content-Type": "application/json"}
         params = {"key": self.api_key}
+
+        # 将来的にはここに tools: [{google_search: {}}] を追加すると精度がさらに向上します
         data = {
             "contents": [{"parts": [{"text": prompt}]}],
             "generationConfig": {
