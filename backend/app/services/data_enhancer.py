@@ -18,7 +18,6 @@ UTC = timezone.utc
 class DataEnhancer:
     def __init__(self):
         self.COOLDOWN_DAYS = 30
-        self.VERIFY_TIMEOUT = 8.0
         # 一般的なブラウザのUser-Agent (スクレイピング対策回避)
         self.USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 
@@ -73,9 +72,7 @@ class DataEnhancer:
             if k
         ]
 
-        async with httpx.AsyncClient(
-            timeout=self.VERIFY_TIMEOUT, follow_redirects=True
-        ) as client:
+        async with httpx.AsyncClient(follow_redirects=True) as client:
             tasks = []
             # 3つのフィールドそれぞれの「ベストなURL」を決定するタスクを作成
             for field in ["official_url", "amazon_url", "image_url"]:
