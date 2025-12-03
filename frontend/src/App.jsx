@@ -122,7 +122,7 @@ function App() {
             className="search-input"
           />
           <button type="submit" className="btn-primary" disabled={loading}>
-            {loading ? '...' : '検索'}
+            {loading ? '検索中...' : '検索'}
           </button>
           {query && (
             <button type="button" onClick={handleClear} className="btn-ghost">
