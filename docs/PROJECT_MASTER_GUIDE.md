@@ -98,6 +98,33 @@ create table if not exists games (
   source_url text unique,           -- 情報源URL (重複排除キー)
   image_url text,                   -- 画像URL
   structured_data jsonb default '{}'::jsonb, -- 構造化データ
+
+  -- Analytics & Logic
+  view_count bigint default 0,      -- 閲覧数
+  search_count bigint default 0,    -- 検索ヒット数
+  data_version integer default 0,   -- データ拡張バージョン (DataEnhancer用)
+  is_official boolean default false,-- 公式/検証済みフラグ
+
+  -- Metadata for Sorting/Filtering (#28)
+  min_players integer,              -- 最低プレイ人数
+  max_players integer,              -- 最高プレイ人数
+  play_time integer,                -- プレイ時間 (分)
+  min_age integer,                  -- 対象年齢
+  published_year integer,           -- 発行年
+
+  -- Titles (#28)
+  title_ja text,                    -- 日本語タイトル
+  title_en text,                    -- 英語タイトル
+
+  -- External Links (#31, #33)
+  official_url text,                -- 公式サイトURL
+  bgg_url text,                     -- BoardGameGeek URL
+  bga_url text,                     -- Board Game Arena URL
+  amazon_url text,                  -- Amazon URL (Search/Affiliate)
+
+  -- Media/Content (#30, #32)
+  audio_url text,                   -- 音声解説URL (Voicevox/Zundamon)
+
   created_at timestamp with time zone default timezone('utc'::text, now()) not null,
   updated_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
@@ -107,22 +134,17 @@ create index if not exists idx_games_title on games(title);
 ```
 
 ### 3.2 トリガー (Triggers)
-更新日時を自動更新するためのトリガーが設定されていますが、動作不良が報告されています。デバッグが必要です。
+`extensions.moddatetime` を使用して信頼性の高い更新日時管理を行います。
 
 ```sql
-create or replace function update_updated_at_column()
-returns trigger as $$
-begin
-    new.updated_at = now();
-    return new;
-end;
-$$ language plpgsql;
+create extension if not exists moddatetime schema extensions;
 
-create trigger update_games_updated_at
-before update on games
-for each row
-execute function update_updated_at_column();
+create trigger handle_updated_at before update on games
+  for each row execute procedure moddatetime (updated_at);
 ```
+
+**更新履歴:**
+*   `backend/migrate_schema_v2.sql`: 上記カラムの追加とトリガー修正を含むマイグレーションスクリプト。
 
 ---
 
