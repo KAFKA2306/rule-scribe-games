@@ -2,6 +2,50 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import ReactMarkdown from 'react-markdown'
 
+const ShareButton = ({ slug }) => {
+  const [copied, setCopied] = useState(false)
+
+  const handleShare = async () => {
+    const url = `https://bodoge-no-mikata.vercel.app/games/${slug}`
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(url)
+      } else {
+        // Fallback for environments without Clipboard API
+        const textArea = document.createElement("textarea")
+        textArea.value = url
+        textArea.style.position = "fixed" // Avoid scrolling to bottom
+        document.body.appendChild(textArea)
+        textArea.focus()
+        textArea.select()
+        try {
+          document.execCommand('copy')
+        } catch (err) {
+          console.error('Fallback copy failed', err)
+          document.body.removeChild(textArea)
+          throw err
+        }
+        document.body.removeChild(textArea)
+      }
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch (err) {
+      console.error('Failed to copy:', err)
+    }
+  }
+
+  return (
+    <button
+      onClick={handleShare}
+      className={`share-btn ${copied ? 'copied' : ''}`}
+      title={copied ? 'コピーしました' : 'リンクをコピー'}
+      aria-label="Share this game"
+    >
+      {copied ? '✓' : '🔗'}
+    </button>
+  )
+}
+
 export default function GamePage({ slug: propSlug }) {
   const { slug: urlSlug } = useParams()
   const slug = propSlug || urlSlug
@@ -83,11 +127,14 @@ export default function GamePage({ slug: propSlug }) {
     <div className="game-detail-content">
       <div className="detail-header">
         <h2>{title}</h2>
-        {game.source_url && game.source_url.startsWith('http') && (
-          <a href={game.source_url} target="_blank" rel="noreferrer" className="source-badge">
-            情報元
-          </a>
-        )}
+        <div className="header-actions" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          {game.source_url && game.source_url.startsWith('http') && (
+            <a href={game.source_url} target="_blank" rel="noreferrer" className="source-badge">
+              情報元
+            </a>
+          )}
+          <ShareButton slug={slug} />
+        </div>
       </div>
 
       {/* Rules */}
