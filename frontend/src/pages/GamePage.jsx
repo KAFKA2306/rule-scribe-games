@@ -46,6 +46,33 @@ const ShareButton = ({ slug }) => {
   )
 }
 
+function AffiliateBox({ affiliateUrls, gameTitle }) {
+  if (!affiliateUrls) return null
+  const { amazon, rakuten, yahoo } = affiliateUrls
+  const hasAny = amazon || rakuten || yahoo
+  if (!hasAny) return null
+
+  return (
+    <div className="affiliate-box">
+      {amazon && (
+        <a href={amazon} target="_blank" rel="noopener noreferrer sponsored" className="affiliate-link amazon">
+          Amazonで{gameTitle}を見る
+        </a>
+      )}
+      {rakuten && (
+        <a href={rakuten} target="_blank" rel="noopener noreferrer sponsored" className="affiliate-link rakuten">
+          楽天で{gameTitle}を見る
+        </a>
+      )}
+      {yahoo && (
+        <a href={yahoo} target="_blank" rel="noopener noreferrer sponsored" className="affiliate-link yahoo">
+          Yahoo!で{gameTitle}を見る
+        </a>
+      )}
+    </div>
+  )
+}
+
 export default function GamePage({ slug: propSlug }) {
   const { slug: urlSlug } = useParams()
   const slug = propSlug || urlSlug
@@ -175,6 +202,9 @@ export default function GamePage({ slug: propSlug }) {
           </div>
         </div>
       )}
+
+      {/* Affiliate Box - Moved to bottom */}
+      {game.affiliate_urls && <AffiliateBox affiliateUrls={game.affiliate_urls} gameTitle={title} />}
     </div>
   )
 
