@@ -314,3 +314,22 @@ SupabaseのIDは **UUID (str)** です。`int` として扱わないこと。
 ---
 
 このガイドラインを参考にして、シンプルかつ高速な「ボドゲのミカタ」を開発し続けましょう。
+
+---
+
+## 12. SEO & Verification
+
+### 12.1 Google Search Console Verification
+*   **Method**: HTML File Upload
+*   **File**: `frontend/public/google0e9954154a369dd5.html`
+*   **Content**: `google-site-verification: google0e9954154a369dd5.html`
+*   **Purpose**: Google Search Console の所有権確認用。
+
+### 12.2 Meta Tags & Indexability
+*   **Robots Meta Tag**: `frontend/index.html` に `<meta name="robots" content="index, follow" />` を配置し、インデックスを許可。
+*   **Dynamic Meta Tags**: `react-helmet-async` を使用して、各ゲームページ (`GamePage.jsx`) で動的に `<title>`, `<meta name="description">`, OGPタグを生成。
+*   **Canonical URL**: 重複コンテンツ防止のため、正規化URLを設定。
+
+### 12.3 Sitemap & Robots.txt
+*   **Sitemap**: `frontend/public/sitemap.xml` (手動/静的配置)
+*   **Robots.txt**: `frontend/public/robots.txt`
