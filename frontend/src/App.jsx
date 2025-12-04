@@ -225,10 +225,10 @@ function App() {
               <div className="empty-state">ゲームが見つかりませんでした。</div>
             )}
 
-            {hasMore && !query && (
+            {hasMore && !query && !loading && (
               <div
                 ref={(node) => {
-                  if (node && !loadingMore) {
+                  if (node && !loadingMore && !loading) {
                     const observer = new IntersectionObserver(
                       (entries) => {
                         if (entries[0].isIntersecting) {
