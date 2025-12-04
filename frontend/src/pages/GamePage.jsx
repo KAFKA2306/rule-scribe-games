@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
+import { Helmet } from 'react-helmet-async'
 import ReactMarkdown from 'react-markdown'
 
 const ShareButton = ({ slug }) => {
@@ -78,7 +79,7 @@ function ExternalLinks({ game }) {
             rel="noopener noreferrer sponsored"
             className="link-button amazon"
           >
-            Amazonで見る
+            Amazon
           </a>
         )}
         {isValidUrl(rakuten) && (
@@ -173,6 +174,11 @@ export default function GamePage({ slug: propSlug }) {
   const isStringRules = typeof rules === 'string'
   const isObjectRules = typeof rules === 'object' && rules !== null
 
+  const pageTitle = `「${title}」のルールをAIで瞬時に要約 | ボドゲのミカタ`
+  const description = game.summary || game.description || `「${title}」のルールをAIが日本語で瞬時に要約。セットアップから勝利条件まで、インスト時間を短縮しながらサクッと確認できます。`
+  const gameUrl = `https://bodoge-no-mikata.vercel.app/games/${slug}`
+  const imageUrl = game.image_url || 'https://bodoge-no-mikata.vercel.app/og-default.jpg'
+
   const renderRules = () => {
     if (isStringRules) {
       return (
@@ -202,6 +208,26 @@ export default function GamePage({ slug: propSlug }) {
 
   const content = (
     <div className="game-detail-content">
+      <Helmet>
+        <title>{pageTitle}</title>
+        <meta name="description" content={description} />
+        <link rel="canonical" href={gameUrl} />
+
+        {/* Open Graph / Facebook */}
+        <meta property="og:type" content="article" />
+        <meta property="og:url" content={gameUrl} />
+        <meta property="og:title" content={pageTitle} />
+        <meta property="og:description" content={description} />
+        <meta property="og:image" content={imageUrl} />
+        <meta property="og:site_name" content="ボドゲのミカタ" />
+
+        {/* Twitter */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:url" content={gameUrl} />
+        <meta name="twitter:title" content={pageTitle} />
+        <meta name="twitter:description" content={description} />
+        <meta name="twitter:image" content={imageUrl} />
+      </Helmet>
       {game.image_url && (
         <div className="game-hero-image">
           <img src={game.image_url} alt={title} onError={(e) => e.target.style.display = 'none'} />
