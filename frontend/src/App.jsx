@@ -188,21 +188,24 @@ function App() {
                 key={game.slug}
                 className={`game-card ${selectedSlug === game.slug ? 'active' : ''}`}
                 onClick={() => handleSelectGame(game)}
-                style={{
-                  backgroundImage: game.image_url
-                    ? `linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.8)), url(${game.image_url})`
-                    : 'none',
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center',
-                }}
               >
-                <h3 className="game-title">{game.name}</h3>
-                <p className="game-summary">{game.description}</p>
-                <div className="game-tags">
-                  <span className="tag">
-                    {game.min_players}-{game.max_players}人用
-                  </span>
-                  <span className="tag">{game.play_time}分</span>
+                <div
+                  className="game-card-bg"
+                  style={{
+                    backgroundImage: game.image_url
+                      ? `linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.8)), url(${game.image_url})`
+                      : 'none',
+                  }}
+                />
+                <div className="game-card-content">
+                  <h3 className="game-title">{game.name}</h3>
+                  <p className="game-summary">{game.description}</p>
+                  <div className="game-tags">
+                    <span className="tag">
+                      {game.min_players}-{game.max_players}人用
+                    </span>
+                    <span className="tag">{game.play_time}分</span>
+                  </div>
                 </div>
               </div>
             ))}

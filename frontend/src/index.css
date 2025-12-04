@@ -205,13 +205,36 @@ body {
   min-height: 140px;
   display: flex;
   flex-direction: column;
+  isolation: isolate;
+  /* Create new stacking context */
+}
+
+.game-card-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-size: cover;
+  background-position: center;
+  transition: transform 0.3s ease;
+}
+
+.game-card:hover .game-card-bg {
+  transform: scale(1.05);
+}
+
+.game-card-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  pointer-events: none;
+  /* Let clicks pass through to parent */
 }
 
 .game-card:hover {
-  background-color: var(--bg-card-hover);
-  /* Fallback */
-  transform: translateY(-2px);
   border-color: rgba(255, 255, 255, 0.1);
+  transform: translateY(-2px);
 }
 
 .game-card.active {
@@ -219,38 +242,32 @@ body {
   box-shadow: 0 0 20px var(--accent-glow);
 }
 
-/* Ensure active state overlay is visible even with bg image */
-.game-card.active::before {
+/* Active overlay */
+.game-card.active::after {
   content: '';
   position: absolute;
   inset: 0;
   background: rgba(78, 240, 199, 0.1);
   pointer-events: none;
-  z-index: 1;
+  z-index: 2;
 }
 
 .game-title {
   margin: 0 0 8px;
   font-size: 18px;
   font-weight: 700;
-  position: relative;
-  z-index: 2;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
 }
 
 .game-summary {
   margin: 0 0 12px;
   font-size: 13px;
-  color: var(--text-muted);
-  /* Muted might be too dark over image, let's brighten */
   color: #cbd5e1;
   line-height: 1.5;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  position: relative;
-  z-index: 2;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
 }
 
@@ -258,8 +275,6 @@ body {
   display: flex;
   gap: 6px;
   flex-wrap: wrap;
-  position: relative;
-  z-index: 2;
   margin-top: auto;
 }
 
