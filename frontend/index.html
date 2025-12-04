@@ -39,6 +39,46 @@
       name="twitter:description"
       content="「説明書を読むのが面倒」「インスト準備に時間がかかる」そんな悩みをAIが解決。ボドゲのミカタは、世界中のボードゲームのルールを瞬時に要約・検索できるツールです。"
     />
+
+    <!-- Structured Data (JSON-LD) -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "WebSite",
+            "@id": "https://bodoge-no-mikata.vercel.app/#website",
+            "url": "https://bodoge-no-mikata.vercel.app/",
+            "name": "ボドゲのミカタ",
+            "description": "AIでボードゲームのルールを瞬時に要約。インスト時間を短縮",
+            "inLanguage": "ja",
+            "potentialAction": {
+              "@type": "SearchAction",
+              "target": {
+                "@type": "EntryPoint",
+                "urlTemplate": "https://bodoge-no-mikata.vercel.app/?q={search_term_string}"
+              },
+              "query-input": "required name=search_term_string"
+            }
+          },
+          {
+            "@type": "WebApplication",
+            "@id": "https://bodoge-no-mikata.vercel.app/#webapp",
+            "url": "https://bodoge-no-mikata.vercel.app/",
+            "name": "ボドゲのミカタ",
+            "description": "「説明書を読むのが面倒」「インスト準備に時間がかかる」そんな悩みをAIが解決。ボドゲのミカタは、世界中のボードゲームのルールを瞬時に要約・検索できるツールです。",
+            "applicationCategory": "UtilitiesApplication",
+            "operatingSystem": "Web Browser",
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "JPY"
+            },
+            "inLanguage": "ja"
+          }
+        ]
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>
