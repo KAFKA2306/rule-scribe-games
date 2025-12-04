@@ -592,10 +592,16 @@ body {
   border-radius: 12px;
   overflow: hidden;
   border: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.2);
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .game-hero-image img {
-  width: 100%;
+  max-width: 100%;
+  max-height: 400px;
+  width: auto;
   height: auto;
   display: block;
 }
@@ -619,9 +625,12 @@ body {
 }
 
 @keyframes pulse {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 1;
   }
+
   50% {
     opacity: 0.7;
   }
@@ -671,4 +680,3 @@ body {
   text-align: center;
   color: var(--text-muted);
 }
-
