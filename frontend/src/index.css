@@ -543,3 +543,132 @@ body {
   background: var(--bg-card-hover);
   border-color: var(--accent);
 }
+
+/* External Links Grid */
+.external-links-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.link-button {
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 20px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.2s;
+  border: 1px solid var(--border);
+}
+
+.link-button.amazon {
+  background: #232f3e;
+  color: #fff;
+  border-color: #37475a;
+}
+
+.link-button.official {
+  background: rgba(78, 240, 199, 0.1);
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.link-button.bgg {
+  background: rgba(142, 197, 255, 0.1);
+  color: #8ec5ff;
+  border-color: #8ec5ff;
+}
+
+.link-button:hover {
+  transform: translateY(-2px);
+  opacity: 0.9;
+}
+
+/* Game Hero Image */
+.game-hero-image {
+  margin-bottom: 24px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.game-hero-image img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Generation Status Banner */
+.generating-banner {
+  background: linear-gradient(135deg, rgba(78, 240, 199, 0.1), rgba(142, 197, 255, 0.1));
+  border: 1px solid var(--accent);
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.generating-banner span {
+  color: var(--text-main);
+  font-weight: 600;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* Spinner */
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 3px solid rgba(78, 240, 199, 0.3);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Error Banner */
+.error-banner {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgb(239, 68, 68);
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin-bottom: 20px;
+  color: rgb(254, 202, 202);
+  font-weight: 600;
+}
+
+/* Loading Spinner */
+.loading-spinner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  color: var(--text-muted);
+}
+
+/* Empty States */
+.empty-state,
+.not-found,
+.empty-selection {
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--text-muted);
+}
+

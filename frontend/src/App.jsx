@@ -23,6 +23,7 @@ function App() {
   const [initialGames, setInitialGames] = useState([])
   const [selectedSlug, setSelectedSlug] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [generating, setGenerating] = useState(false)
   const [error, setError] = useState(null)
   const [query, setQuery] = useState('')
 
@@ -99,6 +100,7 @@ function App() {
 
     try {
       setLoading(true)
+      setGenerating(true)
 
       const data = await api.post('/api/search', { query, generate: true })
       const list = Array.isArray(data) ? data : data.games || []
@@ -118,6 +120,7 @@ function App() {
       setError('検索に失敗しました。')
     } finally {
       setLoading(false)
+      setGenerating(false)
     }
   }
 
@@ -164,6 +167,12 @@ function App() {
       </div>
 
       {error && <div className="error-banner">{error}</div>}
+      {generating && (
+        <div className="generating-banner">
+          <div className="spinner"></div>
+          <span>🎲 新しいゲームを生成中... (30-60秒かかります)</span>
+        </div>
+      )}
 
       <main className="main-layout">
         <aside className="game-list-pane">

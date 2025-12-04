@@ -45,44 +45,71 @@ const ShareButton = ({ slug }) => {
   )
 }
 
-function AffiliateBox({ affiliateUrls, gameTitle }) {
-  if (!affiliateUrls) return null
-  const { amazon, rakuten, yahoo } = affiliateUrls
-  const hasAny = amazon || rakuten || yahoo
-  if (!hasAny) return null
+function ExternalLinks({ game }) {
+  const { affiliate_urls, official_url, bgg_url, amazon_url } = game
+  const amazon = affiliate_urls?.amazon || amazon_url
+  const rakuten = affiliate_urls?.rakuten
+  const yahoo = affiliate_urls?.yahoo
+
+  const hasAnyLink = amazon || rakuten || yahoo || official_url || bgg_url
+
+  if (!hasAnyLink) return null
 
   return (
-    <div className="affiliate-box">
-      {amazon && (
-        <a
-          href={amazon}
-          target="_blank"
-          rel="noopener noreferrer sponsored"
-          className="affiliate-link amazon"
-        >
-          Amazonで{gameTitle}を見る
-        </a>
-      )}
-      {rakuten && (
-        <a
-          href={rakuten}
-          target="_blank"
-          rel="noopener noreferrer sponsored"
-          className="affiliate-link rakuten"
-        >
-          楽天で{gameTitle}を見る
-        </a>
-      )}
-      {yahoo && (
-        <a
-          href={yahoo}
-          target="_blank"
-          rel="noopener noreferrer sponsored"
-          className="affiliate-link yahoo"
-        >
-          Yahoo!で{gameTitle}を見る
-        </a>
-      )}
+    <div className="info-section">
+      <h3>Links</h3>
+      <div className="external-links-grid">
+        {amazon && (
+          <a
+            href={amazon}
+            target="_blank"
+            rel="noopener noreferrer sponsored"
+            className="link-button amazon"
+          >
+            Amazonで見る
+          </a>
+        )}
+        {rakuten && (
+          <a
+            href={rakuten}
+            target="_blank"
+            rel="noopener noreferrer sponsored"
+            className="link-button rakuten"
+          >
+            楽天で見る
+          </a>
+        )}
+        {yahoo && (
+          <a
+            href={yahoo}
+            target="_blank"
+            rel="noopener noreferrer sponsored"
+            className="link-button yahoo"
+          >
+            Yahoo!で見る
+          </a>
+        )}
+        {official_url && (
+          <a
+            href={official_url}
+            target="_blank"
+            rel="noreferrer"
+            className="link-button official"
+          >
+            公式サイト
+          </a>
+        )}
+        {bgg_url && (
+          <a
+            href={bgg_url}
+            target="_blank"
+            rel="noreferrer"
+            className="link-button bgg"
+          >
+            BoardGameGeek
+          </a>
+        )}
+      </div>
     </div>
   )
 }
@@ -128,7 +155,7 @@ export default function GamePage({ slug: propSlug }) {
   if (error) return <div className="error-message">{error}</div>
   if (!game) return <div className="not-found">ゲームが見つかりません</div>
 
-  const title = game.title || game.name || 'Untitled'
+  const title = game.title_ja || game.title || game.name || 'Untitled'
   const rules = game.rules_content || game.rules || game.content || ''
 
   const isStringRules = typeof rules === 'string'
@@ -163,6 +190,12 @@ export default function GamePage({ slug: propSlug }) {
 
   const content = (
     <div className="game-detail-content">
+      {game.image_url && (
+        <div className="game-hero-image">
+          <img src={game.image_url} alt={title} onError={(e) => e.target.style.display = 'none'} />
+        </div>
+      )}
+
       <div className="detail-header">
         <h2>{title}</h2>
         <div
@@ -213,24 +246,6 @@ export default function GamePage({ slug: propSlug }) {
         </div>
       )}
 
-      {(game.official_url || game.bgg_url) && (
-        <div className="info-section">
-          <h3>リンク</h3>
-          <div className="links-list">
-            {game.official_url && (
-              <a href={game.official_url} target="_blank" rel="noreferrer" className="link-item">
-                公式サイト
-              </a>
-            )}
-            {game.bgg_url && (
-              <a href={game.bgg_url} target="_blank" rel="noreferrer" className="link-item">
-                BoardGameGeek
-              </a>
-            )}
-          </div>
-        </div>
-      )}
-
       {game.structured_data?.keywords && (
         <div className="info-section">
           <h3>キーワード</h3>
@@ -245,7 +260,7 @@ export default function GamePage({ slug: propSlug }) {
         </div>
       )}
 
-      {game.structured_data?.popular_cards && (
+      {game.structured_data?.popular_cards && game.structured_data.popular_cards.length > 0 && (
         <div className="info-section">
           <h3>人気のカード・要素</h3>
           <div className="cards-grid">
@@ -262,9 +277,7 @@ export default function GamePage({ slug: propSlug }) {
         </div>
       )}
 
-      {game.affiliate_urls && (
-        <AffiliateBox affiliateUrls={game.affiliate_urls} gameTitle={title} />
-      )}
+      <ExternalLinks game={game} />
     </div>
   )
 

@@ -1,13 +1,16 @@
 PROMPTS = {
     "gemini_client": {
-        "extract_game_info": """You are a strict and accurate board game librarian.
-Your task is to search for the board game "{query}" and generate a JSON object based **ONLY** on verified facts found in the search results.
+        "extract_game_info": """You are an accurate board game librarian.
+Your task is to search for the board game "{query}" and generate a JSON object based on verified facts found in the search results.
 
-# Strict Rules for Accuracy
-1. **NO HALLUCINATION**: If the game does not exist or you cannot find reliable information, return {{"error": "Game not found"}}. Do not invent rules or cards.
-2. **NO GUESSING URLs**: Only include URLs (official_url) if you have found a direct, working link in the search results. If not found, set it to null. Do not construct URLs manually.
-3. **LANGUAGE**: All descriptive text (description, rules_content) MUST be in Japanese.
-4. **TARGET**: The content is for beginners. Focus on "How to play", "Setup", and "Winning conditions".
+# Rules for Accuracy
+1. NO HALLUCINATION: If the game does not exist or you cannot find reliable information, return {{"error": "Game not found"}}. Do not invent rules or cards.
+2. NO GUESSING URLs: Only include URLs (official_url) if you have found a direct, working link in the search results. If not found, set it to null. Do not construct URLs manually.
+3. LANGUAGE: All descriptive text (description, rules_content, popular_cards.reason, components) MUST be in Japanese.
+4. TARGET: The content is for beginners who want to play the game immediately.
+   - rules_content: MUST be comprehensive. Include "Preparation (Setup)", "Game Flow (Turn Structure)", "End Game Conditions", and "Victory Conditions". Write in a clear, step-by-step format.
+   - popular_cards: Include not just the function, but the "charm" (魅力) or "fun point" (面白さ) of the card/element in the 'reason' field. ALWAYS include at least 2-3 popular cards.
+   - components: List the main physical components included in the game (e.g., cards, dice, board, tokens).
 
 # Output Format (JSON Only)
 Return ONLY the raw JSON string. No markdown, no code blocks.
@@ -33,7 +36,8 @@ Return ONLY the raw JSON string. No markdown, no code blocks.
     "bgg_url": null,
     "structured_data": {{
         "keywords": [{{"term": "string", "description": "string"}}],
-        "popular_cards": []
+        "components": [{{"name": "string", "quantity": "string", "description": "string"}}],
+        "popular_cards": [{{"name": "string", "type": "string", "reason": "string (Include function AND charm)"}}]
     }}
 }}
 """

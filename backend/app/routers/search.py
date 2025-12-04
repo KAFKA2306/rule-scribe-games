@@ -22,9 +22,21 @@ async def search_game(request: SearchRequest):
         raise HTTPException(status_code=400, detail="Query cannot be empty")
 
     existing_games = await supabase_repository.search(query)
-    if existing_games:
+    
+    query_lower = query.lower().strip()
+    exact_matches = []
+    
+    for game in existing_games:
+        title = (game.get("title") or "").lower().strip()
+        title_ja = (game.get("title_ja") or "").lower().strip()
+        title_en = (game.get("title_en") or "").lower().strip()
+        
+        if query_lower in [title, title_ja, title_en]:
+            exact_matches.append(game)
+    
+    if exact_matches:
         results = []
-        for game in existing_games:
+        for game in exact_matches:
             results.append(
                 SearchResult(
                     id=str(game.get("id", "0")),
