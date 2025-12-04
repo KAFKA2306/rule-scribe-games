@@ -1,24 +1,11 @@
 import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import GamePage from './pages/GamePage'
 
-const api = {
-  get: async (path) => {
-    const res = await fetch(path)
-    if (!res.ok) throw new Error(`API Error: ${res.status}`)
-    return res.json()
-  },
-  post: async (path, body) => {
-    const res = await fetch(path, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    })
-    if (!res.ok) throw new Error(`API Error: ${res.status}`)
-    return res.json()
-  },
-}
+// ... api definition ...
 
 function App() {
+  const [searchParams, setSearchParams] = useSearchParams()
   const [games, setGames] = useState([])
   const [initialGames, setInitialGames] = useState([])
   const [selectedSlug, setSelectedSlug] = useState(null)
@@ -26,51 +13,15 @@ function App() {
   const [loadingMore, setLoadingMore] = useState(false)
   const [generating, setGenerating] = useState(false)
   const [error, setError] = useState(null)
-  const [query, setQuery] = useState('')
+
+  // Initialize query from URL
+  const [query, setQuery] = useState(searchParams.get('q') || '')
   const [hasMore, setHasMore] = useState(true)
   const [offset, setOffset] = useState(0)
 
-  const loadGames = async (currentOffset = 0, append = false) => {
-    try {
-      if (!append) setLoading(true)
-      else setLoadingMore(true)
+  // ... loadGames ...
 
-      const data = await api.get(`/api/games?limit=50&offset=${currentOffset}`)
-      const list = Array.isArray(data) ? data : data.games || []
-
-      const normalized = list.map((g) => ({
-        ...g,
-        slug: g.slug || g.game_slug || String(g.id),
-        name: g.name || g.title || 'Untitled',
-      }))
-
-      if (append) {
-        setGames(prev => [...prev, ...normalized])
-        setInitialGames(prev => [...prev, ...normalized])
-      } else {
-        setGames(normalized)
-        setInitialGames(normalized)
-        if (normalized.length > 0) {
-          setSelectedSlug(normalized[0].slug)
-        }
-      }
-
-      setHasMore(normalized.length === 50)
-      setOffset(currentOffset + normalized.length)
-    } catch (e) {
-      console.error('Load failed:', e)
-      setError('ゲームの読み込みに失敗しました。')
-    } finally {
-      setLoading(false)
-      setLoadingMore(false)
-    }
-  }
-
-  useEffect(() => {
-    loadGames(0, false)
-  }, [])
-
-  const [debouncedQuery, setDebouncedQuery] = useState('')
+  const [debouncedQuery, setDebouncedQuery] = useState(query)
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -78,6 +29,15 @@ function App() {
     }, 300)
     return () => clearTimeout(timer)
   }, [query])
+
+  // Sync URL with debounced query
+  useEffect(() => {
+    if (debouncedQuery) {
+      setSearchParams({ q: debouncedQuery }, { replace: true })
+    } else {
+      setSearchParams({}, { replace: true })
+    }
+  }, [debouncedQuery, setSearchParams])
 
   useEffect(() => {
     const searchRealtime = async () => {
