@@ -25,6 +25,7 @@ Return ONLY the raw JSON string. No markdown, no code blocks.
     "title_ja": "string",
     "title_en": "string",
     "description": "string",
+    "summary": "string (Short summary of the game, 1-2 sentences)",
     "rules_content": "string",
     "image_url": null,
     "min_players": integer,
