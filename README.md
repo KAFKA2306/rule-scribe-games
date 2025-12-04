@@ -97,6 +97,21 @@ RuleScribe Games は、AI (Gemini 2.5 Flash) を活用してウェブ上の情�
 | `task lint` | コードのLintとフォーマット (`ruff`, `prettier`, `eslint`) |
 | `task db:init` | DB初期化用SQLを表示 |
 | `task kill` | 開発サーバーのポート(8000, 5173)を強制解放 |
+| `task issues` | GitHub Issue一覧を表示 |
+
+## 🔄 Development Loop
+
+私たちは **"Issue Driven Development"** と **"Concrete Proof"** を重視しています。
+
+1.  **Check Issues**: `task issues` でタスクを確認。
+    *   **Critical**: バグ、SEO、パフォーマンス問題 (最優先)
+    *   **Easy**: UI微修正、テキスト変更 (隙間時間に消化)
+2.  **Implement & Verify**: コードを修正し、ローカルで動作確認。
+3.  **Concrete Comment**: GitHub Issue に「具体的な証拠」と共にコメントする。
+    *   ✅ スクリーンショット (UI変更時)
+    *   ✅ ログ出力 / curl結果 (バックエンド変更時)
+    *   ✅ 修正したファイルパス
+4.  **Close**: 証拠を残してから Issue をクローズする。
 
 ## 📂 Project Structure
 

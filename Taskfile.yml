@@ -79,3 +79,11 @@ tasks:
     cmds:
       - fuser -k 8000/tcp
       - fuser -k 5173/tcp
+
+  issues:
+    desc: GitHub Issue一覧を表示 (開発ループの起点)
+    cmd: gh issue list --limit 20
+
+  issues:critical:
+    desc: 重要なIssueを表示 (開発ループの優先順位)
+    cmd: gh issue list --label "critical" --limit 10 || gh issue list --limit 5
