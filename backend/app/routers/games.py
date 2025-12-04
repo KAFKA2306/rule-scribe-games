@@ -81,6 +81,7 @@ class UpdateGameRequest(BaseModel):
     title_en: Optional[str] = None
     official_url: Optional[str] = None
     bgg_url: Optional[str] = None
+    bga_url: Optional[str] = None
     regenerate: Optional[bool] = False
 
 
@@ -110,7 +111,7 @@ async def update_game(slug: str, update_data: UpdateGameRequest):
         allowed_fields = {
             "title", "title_ja", "title_en", "description", "rules_content",
             "image_url", "min_players", "max_players", "play_time",
-            "min_age", "published_year", "official_url", "bgg_url",
+            "min_age", "published_year", "official_url", "bgg_url", "bga_url",
             "structured_data", "summary"
         }
         

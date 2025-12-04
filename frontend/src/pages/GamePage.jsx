@@ -175,6 +175,17 @@ function ExternalLinks({ game }) {
             BoardGameGeek
           </a>
         )}
+        {isValidUrl(game.bga_url) && (
+          <a
+            href={game.bga_url}
+            target="_blank"
+            rel="noreferrer"
+            className="link-button bga"
+            style={{ backgroundColor: '#000', color: '#fff' }}
+          >
+            Board Game Arena
+          </a>
+        )}
       </div>
     </div>
   )
