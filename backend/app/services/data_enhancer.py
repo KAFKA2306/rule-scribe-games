@@ -153,9 +153,13 @@ class DataEnhancer:
                 ct = resp.headers.get("content-type", "").lower()
                 return "image/" in ct or "application/octet-stream" in ct
 
-            # Amazonの場合: 形式チェックのみ (スクレイピング不可のため)
+            # Amazonの場合: 形式チェック + tracking ID存在確認
             if field == "amazon_url":
-                return "amazon.co.jp" in url or "amazon.com" in url
+                if not ("amazon.co.jp" in url or "amazon.com" in url):
+                    return False
+                if "tag=" not in url:
+                    return False
+                return True
 
             # 通常URLの場合: タイトル一致チェック (これが最強のフィルタ)
             # レスポンス本文がない(HEAD成功時)場合は、GETし直してタイトル確認
