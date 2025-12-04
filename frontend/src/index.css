@@ -147,7 +147,7 @@ body {
 /* Main Layout */
 .main-layout {
   display: grid;
-  grid-template-columns: 350px 1fr;
+  grid-template-columns: 400px 1fr;
   gap: 24px;
   flex: 1;
   min-height: 0;
