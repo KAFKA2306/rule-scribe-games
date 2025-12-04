@@ -5,6 +5,7 @@ from app.core.supabase import supabase_repository
 from app.services.amazon_affiliate import amazon_search_url
 from app.services.data_enhancer import DataEnhancer
 from app.models import GameDetail
+from app.services.gemini_client import GeminiClient
 
 router = APIRouter(prefix="/games", tags=["games"])
 
@@ -75,6 +76,9 @@ class UpdateGameRequest(BaseModel):
     title_en: Optional[str] = None
     official_url: Optional[str] = None
     bgg_url: Optional[str] = None
+    regenerate: Optional[bool] = False
+
+
 
 
 @router.patch("/{slug}", response_model=GameDetail)
@@ -83,7 +87,30 @@ async def update_game(slug: str, update_data: UpdateGameRequest):
     if not existing_game:
         raise HTTPException(status_code=404, detail="Game not found")
 
-    data_to_update = {k: v for k, v in update_data.dict().items() if v is not None}
+    data_to_update = {k: v for k, v in update_data.dict().items() if v is not None and k != "regenerate"}
+
+    if update_data.regenerate:
+        print(f"Regenerating game data for: {existing_game.get('title')}")
+        gemini_client = GeminiClient()
+        # Use existing title for regeneration
+        query = existing_game.get("title") or existing_game.get("title_ja") or existing_game.get("title_en")
+        if not query:
+             raise HTTPException(status_code=400, detail="Cannot regenerate: No title found")
+             
+        generated_data = await gemini_client.extract_game_info(query)
+        
+        if "error" in generated_data:
+            raise HTTPException(status_code=500, detail=generated_data["error"])
+
+        allowed_fields = {
+            "title", "title_ja", "title_en", "description", "rules_content",
+            "image_url", "min_players", "max_players", "play_time",
+            "min_age", "published_year", "official_url", "bgg_url",
+            "structured_data", "summary"
+        }
+        
+        filtered_generated = {k: v for k, v in generated_data.items() if k in allowed_fields}
+        data_to_update.update(filtered_generated)
 
     if not data_to_update:
         raise HTTPException(status_code=400, detail="No fields to update")
