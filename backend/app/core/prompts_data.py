@@ -35,6 +35,7 @@ Return ONLY the raw JSON string. No markdown, no code blocks.
     "published_year": integer,
     "official_url": "string",
     "bgg_url": null,
+    "bga_url": null,
     "structured_data": {{
         "keywords": [{{"term": "string", "description": "string"}}],
         "components": [{{"name": "string", "quantity": "string", "description": "string"}}],
