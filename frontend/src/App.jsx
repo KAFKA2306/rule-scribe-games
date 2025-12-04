@@ -34,7 +34,45 @@ function App() {
   const [hasMore, setHasMore] = useState(true)
   const [offset, setOffset] = useState(0)
 
-  // ... loadGames ...
+  const loadGames = async (currentOffset = 0, append = false) => {
+    try {
+      if (!append) setLoading(true)
+      else setLoadingMore(true)
+
+      const data = await api.get(`/api/games?limit=50&offset=${currentOffset}`)
+      const list = Array.isArray(data) ? data : data.games || []
+
+      const normalized = list.map((g) => ({
+        ...g,
+        slug: g.slug || g.game_slug || String(g.id),
+        name: g.name || g.title || 'Untitled',
+      }))
+
+      if (append) {
+        setGames(prev => [...prev, ...normalized])
+        setInitialGames(prev => [...prev, ...normalized])
+      } else {
+        setGames(normalized)
+        setInitialGames(normalized)
+        if (normalized.length > 0) {
+          setSelectedSlug(normalized[0].slug)
+        }
+      }
+
+      setHasMore(normalized.length === 50)
+      setOffset(currentOffset + normalized.length)
+    } catch (e) {
+      console.error('Load failed:', e)
+      setError('ゲームの読み込みに失敗しました。')
+    } finally {
+      setLoading(false)
+      setLoadingMore(false)
+    }
+  }
+
+  useEffect(() => {
+    loadGames(0, false)
+  }, [])
 
   const [debouncedQuery, setDebouncedQuery] = useState(query)
 
