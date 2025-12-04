@@ -13,6 +13,7 @@ const ShareButton = ({ slug }) => {
       if (navigator.clipboard && navigator.clipboard.writeText) {
         await navigator.clipboard.writeText(url)
       } else {
+        // Fallback
         const textArea = document.createElement('textarea')
         textArea.value = url
         textArea.style.position = 'fixed'
@@ -23,8 +24,6 @@ const ShareButton = ({ slug }) => {
           document.execCommand('copy')
         } catch (err) {
           console.error('Fallback copy failed', err)
-          document.body.removeChild(textArea)
-          throw err
         }
         document.body.removeChild(textArea)
       }
@@ -43,6 +42,27 @@ const ShareButton = ({ slug }) => {
       aria-label="Share this game"
     >
       {copied ? '✓' : '🔗'}
+    </button>
+  )
+}
+
+const TwitterShareButton = ({ slug, title }) => {
+  const handleTwitterShare = () => {
+    const text = `「${title}」のルールをAIで瞬時に要約！`
+    const url = `https://bodoge-no-mikata.vercel.app/games/${slug}`
+    const hashtags = 'ボドゲのミカタ,ボードゲーム'
+    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}&hashtags=${encodeURIComponent(hashtags)}`
+    window.open(twitterUrl, '_blank', 'noopener,noreferrer')
+  }
+
+  return (
+    <button
+      onClick={handleTwitterShare}
+      className="share-btn twitter"
+      title="X(Twitter)でシェア"
+      aria-label="Share on X"
+    >
+      𝕏
     </button>
   )
 }
@@ -301,6 +321,7 @@ export default function GamePage({ slug: propSlug }) {
             ✏️
           </button>
           <RefreshButton slug={slug} onRefresh={() => window.location.reload()} />
+          <TwitterShareButton slug={slug} title={title} />
           <ShareButton slug={slug} />
         </div>
       </div>
