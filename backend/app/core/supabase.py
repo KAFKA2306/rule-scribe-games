@@ -22,7 +22,7 @@ class GameRepository(Protocol):
     async def update_structured_data(
         self, game_id: int, structured_data: dict
     ) -> bool: ...
-    async def list_recent(self, limit: int = 100) -> List[Dict[str, Any]]: ...
+    async def list_recent(self, limit: int = 100, offset: int = 0) -> List[Dict[str, Any]]: ...
 
 
 def _client() -> Optional[Client]:
@@ -147,13 +147,13 @@ class SupabaseGameRepository(GameRepository):
 
         return await anyio.to_thread.run_sync(_update)
 
-    async def list_recent(self, limit: int = 100) -> List[Dict[str, Any]]:
+    async def list_recent(self, limit: int = 100, offset: int = 0) -> List[Dict[str, Any]]:
         def _list():
             return (
                 self.client.table("games")
                 .select("*")
                 .order("updated_at", desc=True)
-                .limit(limit)
+                .range(offset, offset + limit - 1)
                 .execute()
                 .data
             )
@@ -180,7 +180,7 @@ class NoopGameRepository(GameRepository):
     async def update_structured_data(self, game_id: int, structured_data: dict) -> bool:
         return False
 
-    async def list_recent(self, limit: int = 100) -> List[Dict[str, Any]]:
+    async def list_recent(self, limit: int = 100, offset: int = 0) -> List[Dict[str, Any]]:
         return []
 
 

@@ -10,8 +10,8 @@ router = APIRouter(prefix="/games", tags=["games"])
 
 
 @router.get("", response_model=List[GameDetail])
-async def list_games():
-    games = await supabase_repository.list_recent(limit=100)
+async def list_games(limit: int = 50, offset: int = 0):
+    games = await supabase_repository.list_recent(limit=min(limit, 100), offset=offset)
     results = []
     for g in games:
         sd = g.get("structured_data") or {}
