@@ -187,7 +187,7 @@ function App() {
               <div
                 key={game.slug}
                 className={`game-card ${selectedSlug === game.slug ? 'active' : ''}`}
-                onClick={() => handleSelectGame(game)}
+                onClick={() => setSelectedSlug(game.slug)}
                 style={{
                   backgroundImage: game.image_url
                     ? `linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.8)), url(${game.image_url})`
