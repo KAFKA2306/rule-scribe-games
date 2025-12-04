@@ -23,6 +23,8 @@ class GameRepository(Protocol):
         self, game_id: int, structured_data: dict
     ) -> bool: ...
     async def list_recent(self, limit: int = 100, offset: int = 0) -> List[Dict[str, Any]]: ...
+    async def find_exact_or_prefix(self, query: str) -> Optional[Dict[str, Any]]: ...
+    async def increment_view_count(self, game_id: str) -> None: ...
 
 
 def _client() -> Optional[Client]:
@@ -160,6 +162,51 @@ class SupabaseGameRepository(GameRepository):
 
         return await anyio.to_thread.run_sync(_list)
 
+    async def find_exact_or_prefix(self, query: str) -> Optional[Dict[str, Any]]:
+        def _find():
+            # Try exact slug match first (fastest)
+            res = self.client.table("games").select("*").eq("slug", query).execute().data
+            if res:
+                return res[0]
+            
+            # Try exact title match (case insensitive)
+            res = (
+                self.client.table("games")
+                .select("*")
+                .or_(f"title.ilike.{query},title_ja.ilike.{query},title_en.ilike.{query}")
+                .limit(1)
+                .execute()
+                .data
+            )
+            if res:
+                return res[0]
+
+            # Try prefix match (case insensitive)
+            res = (
+                self.client.table("games")
+                .select("*")
+                .or_(f"title.ilike.{query}%,title_ja.ilike.{query}%,title_en.ilike.{query}%")
+                .limit(1)
+                .execute()
+                .data
+            )
+            return res[0] if res else None
+
+        return await anyio.to_thread.run_sync(_find)
+
+    async def increment_view_count(self, game_id: str) -> None:
+        def _increment():
+            # Note: For atomic updates, an RPC is better, but this is sufficient for now.
+            # We fetch first to get current count, then update.
+            # Or we can try to use a raw query if the client supports it, but standard client doesn't easily.
+            # We will just do a blind read-modify-write for now.
+            res = self.client.table("games").select("view_count").eq("id", game_id).execute().data
+            if res:
+                current = res[0].get("view_count") or 0
+                self.client.table("games").update({"view_count": current + 1}).eq("id", game_id).execute()
+
+        await anyio.to_thread.run_sync(_increment)
+
 
 class NoopGameRepository(GameRepository):
     async def search(self, query: str) -> List[Dict[str, Any]]:
@@ -182,6 +229,12 @@ class NoopGameRepository(GameRepository):
 
     async def list_recent(self, limit: int = 100, offset: int = 0) -> List[Dict[str, Any]]:
         return []
+
+    async def find_exact_or_prefix(self, query: str) -> Optional[Dict[str, Any]]:
+        return None
+
+    async def increment_view_count(self, game_id: str) -> None:
+        pass
 
 
 def _repo() -> GameRepository:

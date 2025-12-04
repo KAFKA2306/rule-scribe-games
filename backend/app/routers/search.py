@@ -21,6 +21,32 @@ async def search_game(request: SearchRequest):
     if not query:
         raise HTTPException(status_code=400, detail="Query cannot be empty")
 
+    # 1. Fast Path: Exact or Prefix Match
+    fast_match = await supabase_repository.find_exact_or_prefix(query)
+    if fast_match:
+        # Increment view count asynchronously (fire and forget in this context)
+        await supabase_repository.increment_view_count(fast_match.get("id"))
+        
+        return [
+            SearchResult(
+                id=str(fast_match.get("id", "0")),
+                slug=fast_match.get("slug") or slugify(fast_match.get("title", "")),
+                title=fast_match.get("title"),
+                description=fast_match.get("description"),
+                rules_content=fast_match.get("rules_content"),
+                image_url=fast_match.get("image_url"),
+                structured_data=fast_match.get("structured_data"),
+                min_players=fast_match.get("min_players"),
+                max_players=fast_match.get("max_players"),
+                play_time=fast_match.get("play_time"),
+                min_age=fast_match.get("min_age"),
+                published_year=fast_match.get("published_year"),
+                official_url=fast_match.get("official_url"),
+                bgg_url=fast_match.get("bgg_url"),
+            )
+        ]
+
+    # 2. Fuzzy Search (Fallback)
     existing_games = await supabase_repository.search(query)
     
     query_lower = query.lower().strip()
@@ -31,12 +57,19 @@ async def search_game(request: SearchRequest):
         title_ja = (game.get("title_ja") or "").lower().strip()
         title_en = (game.get("title_en") or "").lower().strip()
         
+        # If we found it here, it might be a fuzzy match that is "close enough" to be considered exact
+        # But since we already did exact/prefix check, these are likely partial matches.
+        # We'll return them if they are strong matches.
         if query_lower in [title, title_ja, title_en]:
-            exact_matches.append(game)
+             exact_matches.append(game)
     
     if exact_matches:
         results = []
         for game in exact_matches:
+            # Increment view count for the first match (most relevant)
+            if game == exact_matches[0]:
+                 await supabase_repository.increment_view_count(game.get("id"))
+
             results.append(
                 SearchResult(
                     id=str(game.get("id", "0")),
