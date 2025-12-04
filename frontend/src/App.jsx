@@ -170,7 +170,7 @@ function App() {
       {generating && (
         <div className="generating-banner">
           <div className="spinner"></div>
-          <span>🎲 新しいゲームを生成中... (30-60秒かかります)</span>
+          <span>🎲 新しいボードゲームを調査中... (30-60秒かかります)</span>
         </div>
       )}
 

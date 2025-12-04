@@ -9,7 +9,7 @@ Your task is to search for the board game "{query}" and generate a JSON object b
 3. LANGUAGE: All descriptive text (description, rules_content, popular_cards.reason, components) MUST be in Japanese.
 4. TARGET: The content is for beginners who want to play the game immediately.
    - rules_content: MUST be comprehensive. Include "Preparation (Setup)", "Game Flow (Turn Structure)", "End Game Conditions", and "Victory Conditions". Write in a clear, step-by-step format.
-   - popular_cards: Include not just the function, but the "charm" (魅力) or "fun point" (面白さ) of the card/element in the 'reason' field. ALWAYS include at least 2-3 popular cards.
+   - popular_cards: Include not just the function, but the "charm" (魅力) or "fun point" (面白さ) of the card/element in the 'reason' field.
    - components: List the main physical components included in the game (e.g., cards, dice, board, tokens).
 
 # Output Format (JSON Only)
