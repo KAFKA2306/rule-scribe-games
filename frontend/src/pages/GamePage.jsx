@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
 import ReactMarkdown from 'react-markdown'
+import EditGameModal from '../components/EditGameModal'
 
 const ShareButton = ({ slug }) => {
   const [copied, setCopied] = useState(false)
@@ -166,6 +167,7 @@ export default function GamePage({ slug: propSlug }) {
   const [game, setGame] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [isEditOpen, setIsEditOpen] = useState(false)
 
   const isStandalone = !propSlug
 
@@ -194,6 +196,24 @@ export default function GamePage({ slug: propSlug }) {
 
     fetchGame()
   }, [slug])
+
+  const handleSave = async (updatedData) => {
+    try {
+      const res = await fetch(`/api/games/${slug}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedData),
+      })
+
+      if (!res.ok) throw new Error('Update failed')
+
+      const data = await res.json()
+      setGame(data) // Update local state with response
+    } catch (err) {
+      console.error('Failed to update game:', err)
+      throw err // Re-throw for modal to handle
+    }
+  }
 
   if (!slug) return <div className="p-4">Invalid Game URL</div>
   if (loading) return <div className="loading-spinner">読み込み中...</div>
@@ -272,10 +292,32 @@ export default function GamePage({ slug: propSlug }) {
           className="header-actions"
           style={{ display: 'flex', alignItems: 'center', gap: '12px' }}
         >
+          <button
+            className="share-btn"
+            onClick={() => setIsEditOpen(true)}
+            title="編集"
+            aria-label="Edit game"
+          >
+            ✏️
+          </button>
           <RefreshButton slug={slug} onRefresh={() => window.location.reload()} />
           <ShareButton slug={slug} />
         </div>
       </div>
+
+      <EditGameModal
+        game={game}
+        isOpen={isEditOpen}
+        onClose={() => setIsEditOpen(false)}
+        onSave={handleSave}
+      />
+
+      {game.summary && (
+        <div className="info-section">
+          <h3>概要</h3>
+          <p style={{ lineHeight: '1.7', color: 'var(--text-muted)' }}>{game.summary}</p>
+        </div>
+      )}
 
       <div className="rules-section">
         <h3>詳しいルール</h3>
