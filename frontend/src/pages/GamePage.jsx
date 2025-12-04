@@ -45,13 +45,25 @@ const ShareButton = ({ slug }) => {
   )
 }
 
+const isValidUrl = (url) => {
+  if (!url || typeof url !== 'string') return false
+  const trimmed = url.trim()
+  if (!trimmed) return false
+  try {
+    new URL(trimmed)
+    return trimmed.startsWith('http://') || trimmed.startsWith('https://')
+  } catch {
+    return false
+  }
+}
+
 function ExternalLinks({ game }) {
   const { affiliate_urls, official_url, bgg_url, amazon_url } = game
   const amazon = affiliate_urls?.amazon || amazon_url
   const rakuten = affiliate_urls?.rakuten
   const yahoo = affiliate_urls?.yahoo
 
-  const hasAnyLink = amazon || rakuten || yahoo || official_url || bgg_url
+  const hasAnyLink = isValidUrl(amazon) || isValidUrl(rakuten) || isValidUrl(yahoo) || isValidUrl(official_url) || isValidUrl(bgg_url)
 
   if (!hasAnyLink) return null
 
@@ -59,7 +71,7 @@ function ExternalLinks({ game }) {
     <div className="info-section">
       <h3>Links</h3>
       <div className="external-links-grid">
-        {amazon && (
+        {isValidUrl(amazon) && (
           <a
             href={amazon}
             target="_blank"
@@ -69,7 +81,7 @@ function ExternalLinks({ game }) {
             Amazonで見る
           </a>
         )}
-        {rakuten && (
+        {isValidUrl(rakuten) && (
           <a
             href={rakuten}
             target="_blank"
@@ -79,7 +91,7 @@ function ExternalLinks({ game }) {
             楽天で見る
           </a>
         )}
-        {yahoo && (
+        {isValidUrl(yahoo) && (
           <a
             href={yahoo}
             target="_blank"
@@ -89,7 +101,7 @@ function ExternalLinks({ game }) {
             Yahoo!で見る
           </a>
         )}
-        {official_url && (
+        {isValidUrl(official_url) && (
           <a
             href={official_url}
             target="_blank"
@@ -99,7 +111,7 @@ function ExternalLinks({ game }) {
             公式サイト
           </a>
         )}
-        {bgg_url && (
+        {isValidUrl(bgg_url) && (
           <a
             href={bgg_url}
             target="_blank"
