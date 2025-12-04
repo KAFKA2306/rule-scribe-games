@@ -23,37 +23,51 @@ function App() {
   const [initialGames, setInitialGames] = useState([])
   const [selectedSlug, setSelectedSlug] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
   const [generating, setGenerating] = useState(false)
   const [error, setError] = useState(null)
   const [query, setQuery] = useState('')
+  const [hasMore, setHasMore] = useState(true)
+  const [offset, setOffset] = useState(0)
 
-  useEffect(() => {
-    const load = async () => {
-      try {
-        setLoading(true)
-        const data = await api.get('/api/games')
-        const list = Array.isArray(data) ? data : data.games || []
+  const loadGames = async (currentOffset = 0, append = false) => {
+    try {
+      if (!append) setLoading(true)
+      else setLoadingMore(true)
 
-        const normalized = list.map((g) => ({
-          ...g,
-          slug: g.slug || g.game_slug || String(g.id),
-          name: g.name || g.title || 'Untitled',
-        }))
+      const data = await api.get(`/api/games?limit=50&offset=${currentOffset}`)
+      const list = Array.isArray(data) ? data : data.games || []
 
+      const normalized = list.map((g) => ({
+        ...g,
+        slug: g.slug || g.game_slug || String(g.id),
+        name: g.name || g.title || 'Untitled',
+      }))
+
+      if (append) {
+        setGames(prev => [...prev, ...normalized])
+        setInitialGames(prev => [...prev, ...normalized])
+      } else {
         setGames(normalized)
         setInitialGames(normalized)
-
         if (normalized.length > 0) {
           setSelectedSlug(normalized[0].slug)
         }
-      } catch (e) {
-        console.error('Load failed:', e)
-        setError('ゲームの読み込みに失敗しました。')
-      } finally {
-        setLoading(false)
       }
+
+      setHasMore(normalized.length === 50)
+      setOffset(currentOffset + normalized.length)
+    } catch (e) {
+      console.error('Load failed:', e)
+      setError('ゲームの読み込みに失敗しました。')
+    } finally {
+      setLoading(false)
+      setLoadingMore(false)
     }
-    load()
+  }
+
+  useEffect(() => {
+    loadGames(0, false)
   }, [])
 
   const [debouncedQuery, setDebouncedQuery] = useState('')
@@ -209,6 +223,30 @@ function App() {
 
             {games.length === 0 && !loading && (
               <div className="empty-state">ゲームが見つかりませんでした。</div>
+            )}
+
+            {hasMore && !query && (
+              <div
+                ref={(node) => {
+                  if (node && !loadingMore) {
+                    const observer = new IntersectionObserver(
+                      (entries) => {
+                        if (entries[0].isIntersecting) {
+                          loadGames(offset, true)
+                        }
+                      },
+                      { threshold: 0.1 }
+                    )
+                    observer.observe(node)
+                    return () => observer.disconnect()
+                  }
+                }}
+                style={{ height: '20px', margin: '10px 0' }}
+              />
+            )}
+
+            {loadingMore && (
+              <div style={{ textAlign: 'center', padding: '20px' }}>読み込み中...</div>
             )}
           </div>
         </aside>
