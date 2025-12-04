@@ -207,19 +207,6 @@ body {
   flex-direction: column;
 }
 
-.game-card-bg {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  background-size: cover;
-  background-position: center;
-  transition: transform 0.3s ease;
-}
-
-.game-card:hover .game-card-bg {
-  transform: scale(1.05);
-}
-
 .game-card:hover {
   background-color: var(--bg-card-hover);
   /* Fallback */
