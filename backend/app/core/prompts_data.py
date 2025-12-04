@@ -27,7 +27,7 @@ Return ONLY the raw JSON string. No markdown, no code blocks.
     "description": "string",
     "summary": "string (Short summary of the game, 1-2 sentences)",
     "rules_content": "string",
-    "image_url": null,
+    "image_url": "string (URL to high-quality box art image)",
     "min_players": integer,
     "max_players": integer,
     "play_time": integer,
@@ -51,7 +51,7 @@ Target: "{title}"
 Task: Find accurate, valid, and working URLs. 
 1. official_url: Publisher or Official Site.
 2. amazon_url: Amazon.co.jp Product Page.
-3. image_url: Direct link to box art (.jpg/.png).
+3. image_url: Direct link to high-quality box art (.jpg/.png). Prioritize official publisher images or Amazon high-res images.
 
 Current Hints (May be broken):
 {current_json}
