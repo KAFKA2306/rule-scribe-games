@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, BackgroundTasks
+from fastapi import APIRouter, HTTPException, BackgroundTasks, Response
 from typing import List, Optional
 from pydantic import BaseModel
 from app.core.supabase import supabase_repository
@@ -9,9 +9,11 @@ from app.services.gemini_client import GeminiClient
 
 router = APIRouter(prefix="/games", tags=["games"])
 
-
 @router.get("", response_model=List[GameDetail])
-async def list_games(limit: int = 50, offset: int = 0):
+async def list_games(response: Response, limit: int = 50, offset: int = 0):
+    # Cache for 1 minute (public), shared cache 1 minute
+    response.headers["Cache-Control"] = "public, max-age=60, s-maxage=60"
+    
     games = await supabase_repository.list_recent(limit=min(limit, 100), offset=offset)
     results = []
     for g in games:
@@ -27,7 +29,10 @@ async def list_games(limit: int = 50, offset: int = 0):
 
 
 @router.get("/{slug}", response_model=GameDetail)
-async def get_game_by_slug(slug: str, background_tasks: BackgroundTasks):
+async def get_game_by_slug(slug: str, background_tasks: BackgroundTasks, response: Response):
+    # Cache for 1 hour (browser), 1 day (CDN), revalidate for 1 week
+    response.headers["Cache-Control"] = "public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800"
+
     game = await supabase_repository.get_by_slug(slug)
     if not game:
         raise HTTPException(status_code=404, detail="Game not found")
