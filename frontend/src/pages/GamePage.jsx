@@ -46,6 +46,38 @@ const ShareButton = ({ slug }) => {
   )
 }
 
+const RefreshButton = ({ slug, onRefresh }) => {
+  const [refreshing, setRefreshing] = useState(false)
+
+  const handleRefresh = async () => {
+    try {
+      setRefreshing(true)
+      await fetch(`/api/games/${slug}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      })
+      if (onRefresh) onRefresh()
+    } catch (err) {
+      console.error('Refresh failed:', err)
+    } finally {
+      setRefreshing(false)
+    }
+  }
+
+  return (
+    <button
+      onClick={handleRefresh}
+      className="share-btn"
+      title="データを更新"
+      disabled={refreshing}
+      aria-label="Refresh game data"
+    >
+      {refreshing ? '⏳' : '🔄'}
+    </button>
+  )
+}
+
 const isValidUrl = (url) => {
   if (!url || typeof url !== 'string') return false
   const trimmed = url.trim()
@@ -240,6 +272,7 @@ export default function GamePage({ slug: propSlug }) {
           className="header-actions"
           style={{ display: 'flex', alignItems: 'center', gap: '12px' }}
         >
+          <RefreshButton slug={slug} onRefresh={() => window.location.reload()} />
           <ShareButton slug={slug} />
         </div>
       </div>
