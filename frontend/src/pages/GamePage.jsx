@@ -56,7 +56,7 @@ const RefreshButton = ({ slug, onRefresh }) => {
       await fetch(`/api/games/${slug}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({}),
+        body: JSON.stringify({ regenerate: true }),
       })
       if (onRefresh) onRefresh()
     } catch (err) {
