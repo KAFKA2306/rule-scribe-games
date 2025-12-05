@@ -4,6 +4,7 @@ import react from '@vitejs/plugin-react'
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  envDir: '..',
   plugins: [react()],
   envPrefix: ['VITE_', 'NEXT_'],
   server: {
