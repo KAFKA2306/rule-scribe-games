@@ -5,11 +5,11 @@ import logging
 import httpx
 import re
 from fastapi import HTTPException, BackgroundTasks
-from api.app.core.supabase import supabase_repository
-from api.app.services import generator
-from api.app.utils.affiliate import amazon_search_url, ensure_amazon_tag, _AMAZON_DOMAINS
-from api.app.utils.slugify import slugify
-from api.app.utils.logger import log_audit
+from app.core.supabase import supabase_repository
+from app.services import generator
+from app.utils.affiliate import amazon_search_url, ensure_amazon_tag, _AMAZON_DOMAINS
+from app.utils.slugify import slugify
+from app.utils.logger import log_audit
 import uuid
 
 logger = logging.getLogger(__name__)

@@ -2,7 +2,7 @@ import json
 import re
 
 import httpx
-from api.app.core.settings import settings
+from app.core.settings import settings
 
 
 class GeminiClient:

@@ -4,7 +4,7 @@ import json
 import logging
 import yaml
 from pathlib import Path
-from api.app.core.gemini import GeminiClient
+from app.core.gemini import GeminiClient
 
 logger = logging.getLogger(__name__)
 
