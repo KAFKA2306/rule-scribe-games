@@ -4,22 +4,7 @@ import GamePage from './pages/GamePage'
 import { supabase } from './lib/supabase'
 import LoginButton from './components/LoginButton'
 
-const api = {
-  get: async (path) => {
-    const res = await fetch(path)
-    if (!res.ok) throw new Error(`API Error: ${res.status}`)
-    return res.json()
-  },
-  post: async (path, body) => {
-    const res = await fetch(path, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    })
-    if (!res.ok) throw new Error(`API Error: ${res.status}`)
-    return res.json()
-  },
-}
+import { api } from './lib/api'
 
 function App() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -46,7 +31,6 @@ function App() {
     return () => subscription.unsubscribe()
   }, [])
 
-  // Initialize query from URL
   const [query, setQuery] = useState(searchParams.get('q') || '')
   const [hasMore, setHasMore] = useState(true)
   const [offset, setOffset] = useState(0)
@@ -59,25 +43,19 @@ function App() {
       const data = await api.get(`/api/games?limit=50&offset=${currentOffset}`)
       const list = Array.isArray(data) ? data : data.games || []
 
-      const normalized = list.map((g) => ({
-        ...g,
-        slug: g.slug || g.game_slug || String(g.id),
-        name: g.name || g.title_ja || 'Untitled',
-      }))
-
       if (append) {
-        setGames(prev => [...prev, ...normalized])
-        setInitialGames(prev => [...prev, ...normalized])
+        setGames((prev) => [...prev, ...list])
+        setInitialGames((prev) => [...prev, ...list])
       } else {
-        setGames(normalized)
-        setInitialGames(normalized)
-        if (normalized.length > 0) {
-          setSelectedSlug(normalized[0].slug)
+        setGames(list)
+        setInitialGames(list)
+        if (list.length > 0) {
+          setSelectedSlug(list[0].slug)
         }
       }
 
-      setHasMore(normalized.length === 50)
-      setOffset(currentOffset + normalized.length)
+      setHasMore(list.length === 50)
+      setOffset(currentOffset + list.length)
     } catch (e) {
       console.error('Load failed:', e)
       setError('ゲームの読み込みに失敗しました。')
@@ -100,7 +78,6 @@ function App() {
     return () => clearTimeout(timer)
   }, [query])
 
-  // Sync URL with debounced query
   useEffect(() => {
     if (debouncedQuery) {
       setSearchParams({ q: debouncedQuery }, { replace: true })
@@ -119,14 +96,7 @@ function App() {
       try {
         const data = await api.post('/api/search', { query: debouncedQuery, generate: false })
         const list = Array.isArray(data) ? data : data.games || []
-
-        const normalized = list.map((g) => ({
-          ...g,
-          slug: g.slug || g.game_slug || String(g.id),
-          name: g.name || g.title || 'Untitled',
-        }))
-
-        setGames(normalized)
+        setGames(list)
       } catch (e) {
         console.error('Real-time search failed:', e)
       }
@@ -149,15 +119,9 @@ function App() {
       const data = await api.post('/api/search', { query, generate: true })
       const list = Array.isArray(data) ? data : data.games || []
 
-      const normalized = list.map((g) => ({
-        ...g,
-        slug: g.slug || g.game_slug || String(g.id),
-        name: g.name || g.title || 'Untitled',
-      }))
-
-      setGames(normalized)
-      if (normalized.length > 0) {
-        setSelectedSlug(normalized[0].slug)
+      setGames(list)
+      if (list.length > 0) {
+        setSelectedSlug(list[0].slug)
       }
     } catch (e) {
       console.error('Search failed:', e)
@@ -241,7 +205,7 @@ function App() {
                   backgroundPosition: 'center',
                 }}
               >
-                <h3 className="game-title">{game.name}</h3>
+                <h3 className="game-title">{game.title}</h3>
                 <p className="game-summary">{game.description}</p>
                 <div className="game-tags">
                   <span className="tag">
