@@ -24,7 +24,7 @@ tasks:
 
   dev:backend:
     desc: FastAPI 開発サーバー (http://localhost:8000)
-    cmd: uv run uvicorn api.app.main:app --reload --host 0.0.0.0 --port 8000
+    cmd: uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
   dev:frontend:
     desc: Vite 開発サーバー (http://localhost:5173)
@@ -49,8 +49,8 @@ tasks:
 
   lint:backend:
     cmds:
-      - uv run ruff check --fix api/app
-      - uv run ruff format api/app
+      - uv run ruff check --fix app
+      - uv run ruff format app
 
   lint:frontend:
     dir: frontend

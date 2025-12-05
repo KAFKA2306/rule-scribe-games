@@ -3,9 +3,9 @@ import os
 from dotenv import load_dotenv
 from pathlib import Path
 
-# Load .env from project root (3 levels up: core -> app -> backend -> root)
+# Load .env from project root (3 levels up: core -> app -> root)
 try:
-    env_path = Path(__file__).resolve().parent.parent.parent.parent / ".env"
+    env_path = Path(__file__).resolve().parent.parent.parent / ".env"
     load_dotenv(env_path)
 except Exception:
     pass  # In Vercel, env vars are injected directly

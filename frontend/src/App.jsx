@@ -205,7 +205,7 @@ function App() {
                   backgroundPosition: 'center',
                 }}
               >
-                <h3 className="game-title">{game.title}</h3>
+                <h3 className="game-title">{game.title_ja}</h3>
                 <p className="game-summary">{game.description}</p>
                 <div className="game-tags">
                   <span className="tag">
