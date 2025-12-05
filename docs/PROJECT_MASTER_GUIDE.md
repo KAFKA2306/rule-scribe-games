@@ -11,7 +11,7 @@
 *   **英語 (Repo)**: Bodoge no Mikata
 *   **略称**: Bodoge no Mikata
 
-### 1.2 コアコンセプト & 哲学 (Core Concepts & Philosophy)
+### 1.2 システムコンセプト定義 (System Concept Definition)
 
 1.  **Living Wiki (生きているWiki)**
     *   静的なデータベースではありません。ユーザーが「知らないゲーム」を検索した瞬間、AIが世界中から情報を収集し、Wikiページをリアルタイムで生成します。
@@ -32,7 +32,7 @@
 
 ---
 
-## 2. 戦略: Core vs Experiments (Strategy)
+## 2. 開発方針とアーキテクチャパターン (Development Policy & Architecture Pattern)
 
 本プロジェクトは、**「本番の堅牢性」**と**「実験の自由度」**を両立させるために、明確な二層構造を採用します。
 
@@ -61,24 +61,24 @@
 
 ---
 
-## 3. システムアーキテクチャ (System Architecture)
+## 3. システム構成 (System Configuration)
 
-### 3.1 全体構成図 (Overview Diagram)
+### 3.1 システム構成図 (System Configuration Diagram)
 ```mermaid
 graph TD
-    subgraph Client [User Environment]
-        Browser[Web Browser]
+    subgraph Client ["User Environment"]
+        Browser["Web Browser"]
     end
 
-    subgraph Vercel [Vercel Platform]
-        CDN[Edge Network / CDN]
-        FE[Static Frontend (React/Vite)]
-        BE[Serverless Function (Python/FastAPI)]
+    subgraph Vercel ["Vercel Platform"]
+        CDN["Edge Network / CDN"]
+        FE["Static Frontend (React/Vite)"]
+        BE["Serverless Function (Python/FastAPI)"]
     end
 
-    subgraph External [External Services]
-        Supabase[(Supabase PostgreSQL)]
-        Gemini[Google Gemini 2.5 Flash]
+    subgraph External ["External Services"]
+        Supabase[("Supabase PostgreSQL")]
+        Gemini["Google Gemini 2.5 Flash"]
     end
 
     Browser --> |HTTPS| CDN
@@ -87,9 +87,8 @@ graph TD
 
     BE --> |Read/Write| Supabase
     BE --> |Generate| Gemini
-    BE -.-> |Background| DataEnhancer[Data Enhancer]
-    DataEnhancer --> |Verify| Internet[World Wide Web]
-    Gemini --> |Grounding (Search)| Internet
+    BE -.-> |Background| DataEnhancer["Data Enhancer"]
+    DataEnhancer --> |Verify| Internet["World Wide Web"]
 ```
 
 ### 3.2 ファイル構成 (Detailed File Manifest)
@@ -111,7 +110,89 @@ graph TD
 
 ---
 
-## 4. データベース詳細 (Database Schema)
+### 3.3 詳細設計図 (Detailed Design Diagrams)
+
+#### 3.3.1 E-R図 (Entity-Relationship Diagram)
+```mermaid
+erDiagram
+    GAMES {
+        bigint id PK
+        text slug UK
+        text title
+        text title_ja
+        text title_en
+        text description
+        text summary
+        text rules_content
+        jsonb structured_data
+        text image_url
+        text official_url
+        text amazon_url
+        int min_players
+        int max_players
+        int play_time
+        int min_age
+        int published_year
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    PROFILES {
+        uuid id PK "FK -> auth.users.id"
+        text username UK
+        text avatar_url
+        timestamp updated_at
+    }
+
+    USER_GAMES {
+        uuid id PK
+        uuid user_id FK "-> profiles.id"
+        uuid game_id FK "-> games.id"
+        text status "owned, wishlist, played"
+        int rating
+        text comment
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    PROFILES ||--o{ USER_GAMES : "has"
+    GAMES ||--o{ USER_GAMES : "is_listed_in"
+```
+> **凡例**:
+> *   **PK (Primary Key)**: 主キー。データを一意に識別するためのID。
+> *   **UK (Unique Key)**: ユニークキー。重複を許さない項目（URLスラッグなど）。
+> *   **FK (Foreign Key)**: 外部キー。他のテーブルとの関連。
+
+#### 3.3.2 検索・生成シーケンス (Search & Generation Sequence)
+```mermaid
+sequenceDiagram
+    participant User as Client (Browser)
+    participant API as Backend (FastAPI)
+    participant DB as Supabase (DB)
+    participant AI as Gemini (LLM)
+
+    User->>API: POST /api/search {query}
+    
+    API->>DB: Select * FROM games WHERE title LIKE query
+    
+    alt Game Found (Cache Hit)
+        DB-->>API: Game Record
+        API-->>User: Return JSON
+    else Game Not Found (Cache Miss)
+        API->>AI: Generate Game Info (1-shot)
+        AI-->>API: Structured JSON
+        
+        par Async Save
+            API->>DB: Upsert Game Data
+        and Return Response
+            API-->>User: Return JSON
+        end
+    end
+```
+
+---
+
+## 4. データモデリング (Data Modeling)
 
 **Platform**: Supabase (PostgreSQL)
 
@@ -261,7 +342,7 @@ create index if not exists idx_games_title on games(title);
 
 ---
 
-## 9. 開発・デプロイガイド (Development & Deployment)
+## 9. 開発環境とデプロイフロー (Development Environment & Deploy Flow)
 
 ### 9.1 ローカル開発環境の構築
 
@@ -286,7 +367,7 @@ CrewAIなどの新しいAIエージェントを試す場合は、必ず `backend
 
 ---
 
-## 10. トラブルシューティング (Troubleshooting)
+## 10. 障害管理 (Failure Management)
 
 ### 10.1 Vercel環境変数
 `echo -n` を使用して改行を含めずに設定すること。
@@ -317,7 +398,7 @@ SupabaseのIDは **UUID (str)** です。`int` として扱わないこと。
 
 ---
 
-## 12. SEO & Verification
+## 12. SEOと検証 (SEO & Validation)
 
 ### 12.1 Google Search Console Verification
 *   **Method**: HTML File Upload
@@ -333,3 +414,122 @@ SupabaseのIDは **UUID (str)** です。`int` として扱わないこと。
 ### 12.3 Sitemap & Robots.txt
 *   **Sitemap**: `frontend/public/sitemap.xml` (手動/静的配置)
 *   **Robots.txt**: `frontend/public/robots.txt`
+
+---
+
+## 13. 新機能詳細 (New Features Specification)
+
+### 13.1 音声解説機能 (Audio Explanation)
+*   **目的**: 視覚だけでなく聴覚でもルールを理解できるようにする（アクセシビリティ向上）。
+*   **技術**: Browser Native `SpeechSynthesis` API (Web Speech API)。
+    *   **Backend不要**: サーバー負荷ゼロ、コストゼロ。
+    *   **Offline対応**: ブラウザの機能に依存するため、一部オフラインでも動作可能。
+*   **実装**: `frontend/src/pages/GamePage.jsx` 内の `TextToSpeech` コンポーネント。
+*   **挙動**:
+    *   「🔊」ボタンで `game.summary` (要約) を読み上げ開始。
+    *   「⏹️」ボタンで停止。
+    *   日本語音声 (`ja-JP`) を自動選択。
+
+### 13.2 ユーザー管理 & リスト機能 (User Management)
+*   **目的**: ユーザーが「持っているゲーム」「欲しいゲーム」を管理できるようにする。
+*   **認証**: Supabase Auth (Email, Google予定)。
+*   **データベーススキーマ**:
+    *   `profiles`: ユーザー基本情報。`auth.users` と1対1で同期（Trigger使用）。
+    *   `user_games`: ユーザーとゲームの多対多関係。
+        *   `status`: 'owned' (所持), 'wishlist' (欲しい), 'played' (プレイ済み)。
+        *   `rating`: 1-10の評価。
+        *   `comment`: 個別メモ。
+*   **セキュリティ**: RLS (Row Level Security) により、他人のデータは閲覧のみ許可、更新は本人のみ。
+
+### 13.3 ソーシャルシェア (Social Sharing)
+*   **Twitter (X)**:
+    *   カスタムインテントURLを使用: `https://twitter.com/intent/tweet`
+    *   テキスト: `ボードゲーム「{title}」がアツい！今すぐチェック！`
+    *   ハッシュタグ: `#ボドゲのミカタ`
+*   **Copy Link**: クリップボードAPIを使用。非対応ブラウザ用のフォールバック実装あり。
+
+---
+
+## 14. プロンプトエンジニアリング戦略 (Prompt Engineering)
+
+### 14.1 構造化データの進化
+初期の `popular_cards` (カードゲーム限定) から、より汎用的な `key_elements` へ移行しました。
+
+*   **Key Elements**:
+    *   **Type**: Card, Tile, Board, Token, Power Plant, Meeple など。
+    *   **Reason**: 単なる機能説明ではなく、「なぜそれが面白いのか（Charm）」を含めるようAIに指示。
+
+### 14.2 Markdownルールの強制
+`rules_content` は単なるテキストではなく、以下のヘッダー構造を持つMarkdownとして生成されます。
+1.  `## Setup` (準備)
+2.  `## Gameplay` (ゲームの流れ)
+3.  `## End Game` (終了条件・勝利条件)
+
+これにより、フロントエンドでの可読性が向上し、将来的にはセクションごとのアコーディオン表示なども可能になります。
+
+---
+
+## 15. デプロイメント戦略 (Deployment Strategy)
+
+### 15.1 Vercel Configuration
+*   **Framework Preset**: Vite (Frontend), Python (Backend).
+*   **Configuration File**: `vercel.json`
+    *   **Rewrites**: `/api/*` へのリクエストを `backend/app/main.py` へルーティング。
+    *   **SPA Fallback**: その他のリクエストは `frontend/index.html` へ。
+
+### 15.2 Environment Variables (Production)
+本番環境 (Vercel) では、以下の変数を設定する必要があります。
+*   `GEMINI_API_KEY`: 本番用のGoogle AI Studioキー。
+*   `SUPABASE_URL`: 本番SupabaseプロジェクトURL。
+*   `SUPABASE_KEY`: `service_role` キーではなく、**`anon` キー**を使用することを推奨（RLSで保護されているため）。ただし、Backend処理で特権が必要な場合は `service_role` を検討するが、現在は `anon` で十分。
+*   `AMAZON_TRACKING_ID`: 本番用のアソシエイトID。
+
+### 15.3 CI/CD Flow
+1.  **GitHub Push**: `main` ブランチへのプッシュをトリガー。
+2.  **Vercel Build**:
+    *   Frontend: `npm install && npm run build`
+    *   Backend: `pip install -r requirements.txt`
+3.  **Deploy**: 自動的にEdge Networkへデプロイ。
+
+---
+
+## 16. 将来のロードマップ (Future Roadmap)
+
+### 16.1 フェーズ 2: ユーザーエンゲージメント (Current)
+*   **Google Login (Issue #61)**: ワンクリックでログイン。
+*   **Like / Favorite (Issue #62)**: 個別のゲームに「いいね」をつける機能。
+*   **Lists (Issue #59, #60)**:
+    *   「持っている (Owned)」
+    *   「遊びたい (Wishlist)」
+    *   「遊んだ (Played)」
+    *   これらをマイページで管理・公開。
+
+### 16.2 フェーズ 3: ソーシャル & コミュニティ
+*   **Review & Rating**: 星評価とテキストレビュー。
+*   **Follow User**: 他のユーザーをフォローし、アクティビティ（「〇〇を買った！」）をタイムラインで表示。
+*   **Share Lists**: 「私のベスト10」リストを作成してSNSでシェア。
+
+### 16.3 フェーズ 4: 高度なAI機能
+*   **Rule Q&A Chatbot**: 「このカード、手札が0枚のとき使える？」といった具体的な質問に答えるチャットボット。
+*   **Recommendation**: 「カタンが好きなら、次はこれがおすすめ」というAIレコメンド。
+
+---
+
+## 17. サービスマネジメント (Service Management)
+
+### 17.1 API Rate Limits (Gemini)
+*   **現状**: Gemini 2.5 Flash Free Tier を使用。
+*   **制限**: 1分あたり15リクエスト (RPM)、1日あたり1,500リクエスト (RPD)。
+*   **対策**:
+    *   **Caching**: `Cache-Control` ヘッダーにより、CDNとブラウザでキャッシュを最大化。
+    *   **Database First**: 必ずSupabaseを先に検索し、存在しない場合のみ生成。
+    *   **Availability (可用性)**: 429エラー発生時は、ユーザーに「現在混み合っています」と表示し、システム全体のダウンを防ぐ（縮退運転）。
+
+### 17.2 ログ監視
+*   **Backend Logs**: Vercel Dashboardの "Logs" タブで確認。
+*   **Client Errors**: ブラウザコンソールおよびネットワークタブで確認。
+*   **Critical Errors**: 500エラーが発生した場合、直ちに `backend.log` (ローカル) または Vercel Logs を確認し、修正パッチを適用。
+
+### 17.3 データベースバックアップ
+*   **Backup Strategy**: SupabaseのPITR (Point-in-Time Recovery) 機能に依存。
+*   大規模なスキーマ変更前には、手動でSQLダンプを取得することを推奨。

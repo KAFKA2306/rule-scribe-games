@@ -97,13 +97,25 @@ async def update_game(slug: str, update_data: UpdateGameRequest):
 
     if update_data.regenerate:
         print(f"Regenerating game data for: {existing_game.get('title')}")
-        gemini_client = GeminiClient()
+        from app.services.research_agent import ResearchAgentService
+        
         # Use existing title for regeneration
         query = existing_game.get("title") or existing_game.get("title_ja") or existing_game.get("title_en")
         if not query:
              raise HTTPException(status_code=400, detail="Cannot regenerate: No title found")
              
-        generated_data = await gemini_client.extract_game_info(query)
+        try:
+            print(f"DEBUG: Starting CrewAI research for {query}")
+            agent_service = ResearchAgentService()
+            # Run in a thread to avoid blocking the event loop with CrewAI's sync calls
+            import anyio
+            generated_data = await anyio.to_thread.run_sync(agent_service.run_research_task, query)
+            print(f"DEBUG: Generated Data: {generated_data}")
+        except Exception as e:
+            print(f"DEBUG: ERROR during generation: {e}")
+            import traceback
+            traceback.print_exc()
+            raise HTTPException(status_code=500, detail=f"Generation failed: {str(e)}")
         
         if "error" in generated_data:
             raise HTTPException(status_code=500, detail=generated_data["error"])

@@ -26,8 +26,8 @@ Return ONLY the raw JSON string. No markdown, no code blocks.
     "title_en": "string",
     "description": "string",
     "summary": "string (Short summary of the game, 1-2 sentences)",
-    "rules_content": "string",
-    "image_url": "string (URL to high-quality box art image)",
+    "rules_content": "string (Markdown format. MUST include headers: ## Setup, ## Gameplay, ## End Game)",
+    "image_url": "string (URL to high-quality box art image. Search for '{query} board game box art')",
     "min_players": integer,
     "max_players": integer,
     "play_time": integer,
@@ -39,7 +39,7 @@ Return ONLY the raw JSON string. No markdown, no code blocks.
     "structured_data": {{
         "keywords": [{{"term": "string", "description": "string"}}],
         "components": [{{"name": "string", "quantity": "string", "description": "string"}}],
-        "popular_cards": [{{"name": "string", "type": "string", "reason": "string (Include function AND charm)"}}]
+        "key_elements": [{{"name": "string", "type": "string (Card, Tile, Board, Token, etc.)", "reason": "string (Include function AND charm)"}}]
     }}
 }}
 """
