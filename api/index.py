@@ -15,10 +15,6 @@ except Exception as e:
     @app.get("/api/{path:path}")
     def debug_error(path: str):
         return {
-            "error_type": type(e).__name__,
             "error": str(e),
-            "traceback": traceback.format_exc(),
-            "sys_path": sys.path,
-            "cwd": os.getcwd(),
-            "contents": os.listdir(".")
+            "type": type(e).__name__
         }
