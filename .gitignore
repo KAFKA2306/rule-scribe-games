@@ -43,4 +43,4 @@ pnpm-debug.log*
 
 # Testing
 coverage/
-.nyc_output/
+.nyc_output/backend/logs/

@@ -45,7 +45,7 @@ def _client() -> Optional[Client]:
         or (create_client is None)
     ):
         print(
-            "Warning: Supabase credentials missing or client library not found. Falling back to Mock.",
+            "Supabase client could not be initialized. Check dependencies and environment variables.",
             file=sys.stderr,
         )
         return None
