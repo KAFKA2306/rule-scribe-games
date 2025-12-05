@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import GamePage from './pages/GamePage'
+import { supabase } from './lib/supabase'
+import LoginButton from './components/LoginButton'
 
 const api = {
   get: async (path) => {
@@ -28,6 +30,21 @@ function App() {
   const [loadingMore, setLoadingMore] = useState(false)
   const [generating, setGenerating] = useState(false)
   const [error, setError] = useState(null)
+  const [session, setSession] = useState(null)
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session)
+    })
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session)
+    })
+
+    return () => subscription.unsubscribe()
+  }, [])
 
   // Initialize query from URL
   const [query, setQuery] = useState(searchParams.get('q') || '')
@@ -167,10 +184,11 @@ function App() {
           <span className="logo-icon">♜</span>
           <h1>ボドゲのミカタ</h1>
         </div>
-        <nav>
+        <nav style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           <a href="/data" className="nav-link">
             📊 データ
           </a>
+          <LoginButton session={session} />
         </nav>
       </header>
 

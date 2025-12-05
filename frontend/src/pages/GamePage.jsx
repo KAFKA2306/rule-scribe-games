@@ -48,7 +48,7 @@ const ShareButton = ({ slug }) => {
 
 const TwitterShareButton = ({ slug, title }) => {
   const handleTwitterShare = () => {
-    const text = `ボードゲーム「${title}」がアツい！今すぐチェック！`
+    const text = `ボードゲーム「${title}」が気になる！ルールや魅力を3分でチェック！`
     const url = `https://bodoge-no-mikata.vercel.app/games/${slug}`
     const hashtags = 'ボドゲのミカタ,ボードゲーム'
     const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}&hashtags=${encodeURIComponent(hashtags)}`
@@ -101,13 +101,7 @@ const RefreshButton = ({ slug, onRefresh }) => {
 
 const TextToSpeech = ({ text }) => {
   const [speaking, setSpeaking] = useState(false)
-  const [supported, setSupported] = useState(false)
-
-  useEffect(() => {
-    if ('speechSynthesis' in window) {
-      setSupported(true)
-    }
-  }, [])
+  const [supported] = useState(() => typeof window !== 'undefined' && 'speechSynthesis' in window)
 
   const handleSpeak = () => {
     if (!supported) return
@@ -449,17 +443,17 @@ export default function GamePage({ slug: propSlug }) {
         </div>
       )}
 
-      {game.structured_data?.popular_cards && game.structured_data.popular_cards.length > 0 && (
+      {(game.structured_data?.key_elements || game.structured_data?.popular_cards) && (
         <div className="info-section">
-          <h3>人気のカード・要素</h3>
+          <h3>重要な要素・カード</h3>
           <div className="cards-grid">
-            {game.structured_data.popular_cards.map((card, i) => (
+            {(game.structured_data.key_elements || game.structured_data.popular_cards).map((item, i) => (
               <div key={i} className="card-item">
                 <div className="card-head">
-                  <strong>{card.name}</strong>
-                  <span className="card-type">{card.type}</span>
+                  <strong>{item.name}</strong>
+                  <span className="card-type">{item.type}</span>
                 </div>
-                <p>{card.reason}</p>
+                <p>{item.reason}</p>
               </div>
             ))}
           </div>
