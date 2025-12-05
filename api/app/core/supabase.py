@@ -8,8 +8,8 @@ except Exception as e:
     print(f"Failed to import supabase: {e}", file=sys.stderr)
     Client = None
     create_client = None
-from app.core.settings import settings, PLACEHOLDER
-from app.utils.slugify import slugify
+from api.app.core.settings import settings, PLACEHOLDER
+from api.app.utils.slugify import slugify
 
 
 class GameRepository(Protocol):
