@@ -12,6 +12,7 @@ dependencies = [
     "supabase>=2.24.0",
     "uvicorn>=0.38.0",
     "crewai[google-genai]>=1.6.1",
+    "crewai-tools>=1.6.1",
 ]
 
 [dependency-groups]
