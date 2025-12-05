@@ -13,7 +13,7 @@ class GeminiClient:
         self.last_attempts = 0
 
     async def _post_no_retry(self, json_payload: dict) -> httpx.Response:
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(timeout=300.0) as client:
             return await client.post(
                 self.base_url,
                 headers={"Content-Type": "application/json"},

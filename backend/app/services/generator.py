@@ -27,6 +27,7 @@ _FIELD_KEYS = [
     "bgg_url",
     "bga_url",
     "amazon_url",
+    "video_url",
 ]
 
 
