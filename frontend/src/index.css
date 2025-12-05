@@ -609,6 +609,18 @@ body {
   border-color: #8ec5ff;
 }
 
+.link-button.rakuten {
+  background: #bf0000;
+  color: #fff;
+  border-color: #ffcccc;
+}
+
+.link-button.yahoo {
+  background: #ff0033;
+  color: #fff;
+  border-color: #ffcccc;
+}
+
 .link-button:hover {
   transform: translateY(-2px);
   opacity: 0.9;
@@ -653,7 +665,6 @@ body {
 }
 
 @keyframes pulse {
-
   0%,
   100% {
     opacity: 1;
