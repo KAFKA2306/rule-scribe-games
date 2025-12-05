@@ -14,7 +14,6 @@ def apply_initial_setup():
     for p in {backend_dir, backend_dir.parent}:
         if str(p) not in sys.path:
             sys.path.insert(0, str(p))
-
     repo_root_env = backend_dir.parent / ".env"
     backend_env = backend_dir / ".env"
     if repo_root_env.exists():

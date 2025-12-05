@@ -264,7 +264,9 @@ create index if not exists idx_games_title on games(title);
 | `GEMINI_API_KEY` | `None` (Required) | Google AI Studio APIキー。 |
 | `GEMINI_MODEL` | `models/gemini-2.5-flash` | 使用するAIモデル名。 |
 | `SUPABASE_URL` | `None` (Required) | Supabase プロジェクトURL。 |
-| `SUPABASE_KEY` | `None` (Required) | Supabase APIキー。 |
+| `SUPABASE_URL` | `None` (Required) | Supabase プロジェクトURL。 |
+| `SUPABASE_SERVICE_ROLE_KEY` | `None` (Recommended for Backend) | RLSをバイパスする管理者キー。バックエンド操作に推奨。 |
+| `SUPABASE_KEY` / `VITE_...` | `None` (Fallback) | `SERVICE_ROLE_KEY` がない場合、`SUPABASE_KEY` -> `NEXT_PUBLIC_...` -> `VITE_SUPABASE_ANON_KEY` の順でフォールバックします。 |
 | `AMAZON_TRACKING_ID` | `None` | AmazonアソシエイトのトラッキングID。 |
 
 ### 5.2 定数値 (Hardcoded Constants)
@@ -377,6 +379,14 @@ SupabaseのIDは **UUID (str)** です。`int` として扱わないこと。
 
 ### 10.3 Supabase Upsert
 必ずホワイトリスト方式でカラムをフィルタリングしてから `upsert` すること。AIが生成した余分なフィールドが含まれているとエラーになります。
+
+### 10.4 トラブルシューティング (Troubleshooting)
+*   **Backend Startup Failure**:
+    *   `ImportError` や `ModuleNotFoundError` が発生する場合、依存関係 (`uv sync`) の不整合や、実験的コード (`crewai_tools` 等) の誤ったインポートを疑ってください。
+    *   `research_agent.py` などで `crewai` ツールを使用する場合、適切なデコレータと **docstring** が必須です。
+*   **Frontend Database Connection Error**:
+    *   APIが "Invalid Date" などを返す場合、バックエンドのPydanticモデル (`GameDetail`) が `created_at` や `updated_at` を正しく返しているか確認してください。
+    *   環境変数 `SUPABASE_URL` が正しく設定されているか確認してください。
 
 ---
 
