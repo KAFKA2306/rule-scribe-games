@@ -215,37 +215,6 @@ class SupabaseGameRepository(GameRepository):
         await anyio.to_thread.run_sync(_increment)
 
 
-class NoopGameRepository(GameRepository):
-    async def search(self, query: str) -> List[Dict[str, Any]]:
-        return []
-
-    async def upsert(self, data: Dict[str, Any]) -> List[Dict[str, Any]]:
-        return []
-
-    async def get_by_id(self, game_id: int) -> Optional[Dict[str, Any]]:
-        return None
-
-    async def get_by_slug(self, slug: str) -> Optional[Dict[str, Any]]:
-        return None
-
-    async def update_summary(self, game_id: int, summary: str) -> bool:
-        return False
-
-    async def update_structured_data(self, game_id: int, structured_data: dict) -> bool:
-        return False
-
-    async def list_recent(
-        self, limit: int = 100, offset: int = 0
-    ) -> List[Dict[str, Any]]:
-        return []
-
-    async def find_exact_or_prefix(self, query: str) -> Optional[Dict[str, Any]]:
-        return None
-
-    async def increment_view_count(self, game_id: str) -> None:
-        pass
-
-
 def _repo() -> GameRepository:
     client = _client()
     if client is None:

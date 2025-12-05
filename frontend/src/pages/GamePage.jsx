@@ -4,229 +4,10 @@ import { Helmet } from 'react-helmet-async'
 import ReactMarkdown from 'react-markdown'
 import EditGameModal from '../components/EditGameModal'
 
-const ShareButton = ({ slug }) => {
-  const [copied, setCopied] = useState(false)
-
-  const handleShare = async () => {
-    const url = `https://bodoge-no-mikata.vercel.app/games/${slug}`
-    try {
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        await navigator.clipboard.writeText(url)
-      } else {
-        // Fallback
-        const textArea = document.createElement('textarea')
-        textArea.value = url
-        textArea.style.position = 'fixed'
-        document.body.appendChild(textArea)
-        textArea.focus()
-        textArea.select()
-        try {
-          document.execCommand('copy')
-        } catch (err) {
-          console.error('Fallback copy failed', err)
-        }
-        document.body.removeChild(textArea)
-      }
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
-    } catch (err) {
-      console.error('Failed to copy:', err)
-    }
-  }
-
-  return (
-    <button
-      onClick={handleShare}
-      className={`share-btn ${copied ? 'copied' : ''}`}
-      title={copied ? 'コピーしました' : 'リンクをコピー'}
-      aria-label="Share this game"
-    >
-      {copied ? '✓' : '🔗'}
-    </button>
-  )
-}
-
-const TwitterShareButton = ({ slug, title }) => {
-  const handleTwitterShare = () => {
-    const text = `ボードゲーム「${title}」が気になる！ルールや魅力を3分でチェック！`
-    const url = `https://bodoge-no-mikata.vercel.app/games/${slug}`
-    const hashtags = 'ボドゲのミカタ,ボードゲーム'
-    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}&hashtags=${encodeURIComponent(hashtags)}`
-    window.open(twitterUrl, '_blank', 'noopener,noreferrer')
-  }
-
-  return (
-    <button
-      onClick={handleTwitterShare}
-      className="share-btn twitter"
-      title="X(Twitter)でシェア"
-      aria-label="Share on X"
-    >
-      𝕏
-    </button>
-  )
-}
-
-const RefreshButton = ({ slug, onRefresh }) => {
-  const [refreshing, setRefreshing] = useState(false)
-
-  const handleRefresh = async () => {
-    try {
-      setRefreshing(true)
-      await fetch(`/api/games/${slug}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ regenerate: true }),
-      })
-      if (onRefresh) onRefresh()
-    } catch (err) {
-      console.error('Refresh failed:', err)
-    } finally {
-      setRefreshing(false)
-    }
-  }
-
-  return (
-    <button
-      onClick={handleRefresh}
-      className="share-btn"
-      title="データを更新"
-      disabled={refreshing}
-      aria-label="Refresh game data"
-    >
-      {refreshing ? '⏳' : '🔄'}
-    </button>
-  )
-}
-
-const TextToSpeech = ({ text }) => {
-  const [speaking, setSpeaking] = useState(false)
-  const [supported] = useState(() => typeof window !== 'undefined' && 'speechSynthesis' in window)
-
-  const handleSpeak = () => {
-    if (!supported) return
-
-    if (speaking) {
-      window.speechSynthesis.cancel()
-      setSpeaking(false)
-      return
-    }
-
-    const utterance = new SpeechSynthesisUtterance(text)
-    utterance.lang = 'ja-JP'
-    utterance.onend = () => setSpeaking(false)
-    utterance.onerror = () => setSpeaking(false)
-
-    window.speechSynthesis.speak(utterance)
-    setSpeaking(true)
-  }
-
-  if (!supported) return null
-
-  return (
-    <button
-      onClick={handleSpeak}
-      className={`share-btn ${speaking ? 'speaking' : ''}`}
-      title={speaking ? '読み上げ停止' : '読み上げ開始'}
-      aria-label="Text to speech"
-      style={speaking ? { backgroundColor: '#e7f5ff', color: '#007bff' } : {}}
-    >
-      {speaking ? '⏹️' : '🔊'}
-    </button>
-  )
-}
-
-const isValidUrl = (url) => {
-  if (!url || typeof url !== 'string') return false
-  const trimmed = url.trim()
-  if (!trimmed) return false
-  try {
-    new URL(trimmed)
-    return trimmed.startsWith('http://') || trimmed.startsWith('https://')
-  } catch {
-    return false
-  }
-}
-
-function ExternalLinks({ game }) {
-  const { affiliate_urls, official_url, bgg_url, amazon_url } = game
-  const amazon = affiliate_urls?.amazon || amazon_url
-  const rakuten = affiliate_urls?.rakuten
-  const yahoo = affiliate_urls?.yahoo
-
-  const hasAnyLink = isValidUrl(amazon) || isValidUrl(rakuten) || isValidUrl(yahoo) || isValidUrl(official_url) || isValidUrl(bgg_url)
-
-  if (!hasAnyLink) return null
-
-  return (
-    <div className="info-section">
-      <h3>Links</h3>
-      <div className="external-links-grid">
-        {isValidUrl(amazon) && (
-          <a
-            href={amazon}
-            target="_blank"
-            rel="noopener noreferrer sponsored"
-            className="link-button amazon"
-          >
-            Amazon
-          </a>
-        )}
-        {isValidUrl(rakuten) && (
-          <a
-            href={rakuten}
-            target="_blank"
-            rel="noopener noreferrer sponsored"
-            className="link-button rakuten"
-          >
-            楽天で見る
-          </a>
-        )}
-        {isValidUrl(yahoo) && (
-          <a
-            href={yahoo}
-            target="_blank"
-            rel="noopener noreferrer sponsored"
-            className="link-button yahoo"
-          >
-            Yahoo!で見る
-          </a>
-        )}
-        {isValidUrl(official_url) && (
-          <a
-            href={official_url}
-            target="_blank"
-            rel="noreferrer"
-            className="link-button official"
-          >
-            公式サイト
-          </a>
-        )}
-        {isValidUrl(bgg_url) && (
-          <a
-            href={bgg_url}
-            target="_blank"
-            rel="noreferrer"
-            className="link-button bgg"
-          >
-            BoardGameGeek
-          </a>
-        )}
-        {isValidUrl(game.bga_url) && (
-          <a
-            href={game.bga_url}
-            target="_blank"
-            rel="noreferrer"
-            className="link-button bga"
-            style={{ backgroundColor: '#000', color: '#fff' }}
-          >
-            Board Game Arena
-          </a>
-        )}
-      </div>
-    </div>
-  )
-}
+import { ShareButton, TwitterShareButton } from '../components/game/ShareButtons'
+import { RefreshButton } from '../components/game/RefreshButton'
+import { TextToSpeech } from '../components/game/TextToSpeech'
+import { ExternalLinks } from '../components/game/ExternalLinks'
 
 export default function GamePage({ slug: propSlug }) {
   const { slug: urlSlug } = useParams()
@@ -245,42 +26,31 @@ export default function GamePage({ slug: propSlug }) {
     const fetchGame = async () => {
       setLoading(true)
       setError(null)
-      try {
-        const res = await fetch(`/api/games/${slug}`)
-        if (!res.ok) throw new Error('Game not found')
+      const res = await fetch(`/api/games/${slug}`)
+      if (!res.ok) throw new Error('Game not found')
 
-        const data = await res.json()
-        const gameData = Array.isArray(data) ? data[0] : data.game || data
+      const data = await res.json()
+      const gameData = Array.isArray(data) ? data[0] : data.game || data
 
-        if (!gameData) throw new Error('No game data')
-        setGame(gameData)
-      } catch (e) {
-        console.error('Fetch error:', e)
-        setError(e.message)
-      } finally {
-        setLoading(false)
-      }
+      if (!gameData) throw new Error('No game data')
+      setGame(gameData)
+      setLoading(false)
     }
 
     fetchGame()
   }, [slug])
 
   const handleSave = async (updatedData) => {
-    try {
-      const res = await fetch(`/api/games/${slug}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedData),
-      })
+    const res = await fetch(`/api/games/${slug}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updatedData),
+    })
 
-      if (!res.ok) throw new Error('Update failed')
+    if (!res.ok) throw new Error('Update failed')
 
-      const data = await res.json()
-      setGame(data) // Update local state with response
-    } catch (err) {
-      console.error('Failed to update game:', err)
-      throw err // Re-throw for modal to handle
-    }
+    const data = await res.json()
+    setGame(data)
   }
 
   if (!slug) return <div className="p-4">Invalid Game URL</div>
@@ -295,9 +65,12 @@ export default function GamePage({ slug: propSlug }) {
   const isObjectRules = typeof rules === 'object' && rules !== null
 
   const pageTitle = `「${title}」のルールをAIで瞬時に要約 | ボドゲのミカタ`
-  const description = game.summary || game.description || `「${title}」のルールをAIが日本語で瞬時に要約。セットアップから勝利条件まで、インスト時間を短縮しながらサクッと確認できます。`
+  const description =
+    game.summary ||
+    game.description ||
+    `「${title}」のルールをAIが日本語で瞬時に要約。セットアップから勝利条件まで、インスト時間を短縮しながらサクッと確認できます。`
   const gameUrl = `https://bodoge-no-mikata.vercel.app/games/${slug}`
-  const imageUrl = game.image_url || 'https://bodoge-no-mikata.vercel.app/og-default.jpg'
+  const imageUrl = game.image_url || 'https://bodoge-no-mikata.vercel.app/og-image.png'
 
   const renderRules = () => {
     if (isStringRules) {
@@ -333,7 +106,7 @@ export default function GamePage({ slug: propSlug }) {
         <meta name="description" content={description} />
         <link rel="canonical" href={gameUrl} />
 
-        {/* Open Graph / Facebook */}
+        {}
         <meta property="og:type" content="article" />
         <meta property="og:url" content={gameUrl} />
         <meta property="og:title" content={pageTitle} />
@@ -341,7 +114,7 @@ export default function GamePage({ slug: propSlug }) {
         <meta property="og:image" content={imageUrl} />
         <meta property="og:site_name" content="ボドゲのミカタ" />
 
-        {/* Twitter */}
+        {}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:url" content={gameUrl} />
         <meta name="twitter:title" content={pageTitle} />
@@ -350,7 +123,11 @@ export default function GamePage({ slug: propSlug }) {
       </Helmet>
       {game.image_url && (
         <div className="game-hero-image">
-          <img src={game.image_url} alt={title} onError={(e) => e.target.style.display = 'none'} />
+          <img
+            src={game.image_url}
+            alt={title}
+            onError={(e) => (e.target.style.display = 'none')}
+          />
         </div>
       )}
 
@@ -447,15 +224,17 @@ export default function GamePage({ slug: propSlug }) {
         <div className="info-section">
           <h3>重要な要素・カード</h3>
           <div className="cards-grid">
-            {(game.structured_data.key_elements || game.structured_data.popular_cards).map((item, i) => (
-              <div key={i} className="card-item">
-                <div className="card-head">
-                  <strong>{item.name}</strong>
-                  <span className="card-type">{item.type}</span>
+            {(game.structured_data.key_elements || game.structured_data.popular_cards).map(
+              (item, i) => (
+                <div key={i} className="card-item">
+                  <div className="card-head">
+                    <strong>{item.name}</strong>
+                    <span className="card-type">{item.type}</span>
+                  </div>
+                  <p>{item.reason}</p>
                 </div>
-                <p>{item.reason}</p>
-              </div>
-            ))}
+              )
+            )}
           </div>
         </div>
       )}
