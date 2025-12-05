@@ -106,7 +106,7 @@ export default function GamePage({ slug: propSlug }) {
         <meta name="description" content={description} />
         <link rel="canonical" href={gameUrl} />
 
-        {}
+        { }
         <meta property="og:type" content="article" />
         <meta property="og:url" content={gameUrl} />
         <meta property="og:title" content={pageTitle} />
@@ -114,7 +114,7 @@ export default function GamePage({ slug: propSlug }) {
         <meta property="og:image" content={imageUrl} />
         <meta property="og:site_name" content="ボドゲのミカタ" />
 
-        {}
+        { }
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:url" content={gameUrl} />
         <meta name="twitter:title" content={pageTitle} />
@@ -163,6 +163,25 @@ export default function GamePage({ slug: propSlug }) {
         <div className="info-section">
           <h3>概要</h3>
           <p style={{ lineHeight: '1.7', color: 'var(--text-muted)' }}>{game.summary}</p>
+        </div>
+      )}
+
+      {game.video_url && (
+        <div className="info-section">
+          <h3>ルール動画</h3>
+          <div className="video-container" style={{ position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden', borderRadius: '12px', border: '1px solid var(--border)' }}>
+            <iframe
+              src={`https://www.youtube.com/embed/${(() => {
+                const match = game.video_url.match(/(?:youtu\.be\/|youtube\.com\/watch\?v=)([^&]+)/);
+                return match ? match[1] : '';
+              })()}`}
+              style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              title="Rule Video"
+            />
+          </div>
         </div>
       )}
 
