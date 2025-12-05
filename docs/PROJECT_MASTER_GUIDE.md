@@ -15,7 +15,7 @@
 
 1.  **Living Wiki (生きているWiki)**
     *   静的なデータベースではありません。ユーザーが「知らないゲーム」を検索した瞬間、AIが世界中から情報を収集し、Wikiページをリアルタイムで生成します。
-    *   **自己進化**: 検索されるたびにデータベースが成長し、次回以降のユーザーはその恩恵（高速表示）を受けます。
+    *   **自己進化 (Regeneration)**: 情報が古い、または間違っている場合、ユーザーは「再生成」ボタンを押すことができます。システムは現在の情報をコンテキストとして読み込み、AIが自ら訂正を行います（Self-Correction）。
 
 2.  **Minimal Code & High Speed (最小コード・最高速度)**
     *   **"No Boilerplate"**: 不要なレイヤー（複雑なORMラッパー、過剰な抽象化）を排除します。
@@ -45,10 +45,11 @@
 
 *   **Endpoint**: `/api/search`, `/api/games`
 *   **Logic**: Supabase 検索 OR (Gemini 1-shot 生成 -> Upsert)
-*   **GeminiClient**: 1-shot JSON 専用。CrewAI 禁止。プロンプトは `prompts.yaml` で一元管理。
-*   **DataEnhancer**: バックグラウンドタスクとしてリンク検証・更新を実行。
+*   **GeminiClient**: 1-shot JSON 専用。Google Search Grounding有効。プロンプトは `prompts.yaml` で一元管理。
+*   **DataEnhancer**: `GameService`内に統合（Link Resolver Agent）。
 *   **Frontend**: `/api/*` のみを叩く。
 *   **特徴**: 壊れない、明瞭、保守しやすい。
+*   **Logging**: `app/core/logger.py` による中央集権ログ管理。
 
 ### 2.3 🧪 下層：EXPERIMENTS (実験レイヤー)
 *自由に壊していい場所*
@@ -86,24 +87,25 @@ graph TD
     CDN --> |/api/*| BE
 
     BE --> |Read/Write| Supabase
-    BE --> |Generate| Gemini
-    BE -.-> |Background| DataEnhancer["Data Enhancer"]
-    DataEnhancer --> |Verify| Internet["World Wide Web"]
+    BE --> |Generate + Grounding| Gemini
+    BE -.-> |Background| LinkResolver["Link Resolver Agent"]
+    LinkResolver --> |Verify| Internet["World Wide Web"]
+    Gemini -.-> |Search| Internet
 ```
 
 ### 3.2 ファイル構成 (Detailed File Manifest)
 *   `backend/init_db.sql`: データベーススキーマとトリガー定義。
 *   `backend/app/main.py`: バックエンドのエントリーポイント。
 *   `backend/app/core/settings.py`: 環境変数読み込み。
-*   `backend/app/core/prompts.py`: `prompts_data.py` ローダー。
-*   `backend/app/core/prompts_data.py`: 全AIプロンプト定義 (Python Dictionary)。
-*   `backend/app/services/gemini_client.py`: 検索と基本情報抽出のAIロジック (1-shot)。Amazonリンク注入含む。
-*   `backend/app/services/data_enhancer.py`: リンク検証・自動更新ロジック (Background Task)。
-*   `backend/app/routers/games.py`: ゲーム一覧・詳細取得エンドポイント (DataEnhancer統合済み)。
-*   `backend/app/routers/search.py`: 検索・生成エンドポイント。
-*   `backend/app/services/amazon_affiliate.py`: Amazon検索URL生成ロジック。
+*   `backend/app/core/logger.py`: **[NEW]** ログ設定 (Rotation + Console)。
+*   `backend/app/core/gemini.py`: Gemini API クライアント (Google Grounding)。
+*   `backend/app/prompts/prompts.yaml`: AIプロンプト定義ファイル。
+*   `backend/app/services/game_service.py`: ゲーム検索・生成・更新・リンク解決のコアロジック。
+*   `backend/app/routers/games.py`: ゲーム検索・一覧・詳細・更新エンドポイント。
 *   `backend/app/models.py`: 共有Pydanticモデル定義。
 *   `backend/experiments/`: 実験用コード置き場 (CrewAIなど)。
+*   `scripts/`: 開発・保守用スクリプト。
+    *   `verify_regeneration.py`: ゲーム再生成ロジックの動作検証用。
 *   `frontend/src/index.css`: グローバルスタイルとカラー変数定義。
 *   `vercel.json`: デプロイ設定とルーティングルール。
 *   `frontend/vite.config.js`: フロントエンドのビルド・開発プロキシ設定。
@@ -158,10 +160,6 @@ erDiagram
     PROFILES ||--o{ USER_GAMES : "has"
     GAMES ||--o{ USER_GAMES : "is_listed_in"
 ```
-> **凡例**:
-> *   **PK (Primary Key)**: 主キー。データを一意に識別するためのID。
-> *   **UK (Unique Key)**: ユニークキー。重複を許さない項目（URLスラッグなど）。
-> *   **FK (Foreign Key)**: 外部キー。他のテーブルとの関連。
 
 #### 3.3.2 検索・生成シーケンス (Search & Generation Sequence)
 ```mermaid
@@ -179,7 +177,7 @@ sequenceDiagram
         DB-->>API: Game Record
         API-->>User: Return JSON
     else Game Not Found (Cache Miss)
-        API->>AI: Generate Game Info (1-shot)
+        API->>AI: Generate Game Info (1-shot + Grounding)
         AI-->>API: Structured JSON
         
         par Async Save
@@ -264,27 +262,28 @@ create index if not exists idx_games_title on games(title);
 | `GEMINI_API_KEY` | `None` (Required) | Google AI Studio APIキー。 |
 | `GEMINI_MODEL` | `models/gemini-2.5-flash` | 使用するAIモデル名。 |
 | `SUPABASE_URL` | `None` (Required) | Supabase プロジェクトURL。 |
-| `SUPABASE_URL` | `None` (Required) | Supabase プロジェクトURL。 |
 | `SUPABASE_SERVICE_ROLE_KEY` | `None` (Recommended for Backend) | RLSをバイパスする管理者キー。バックエンド操作に推奨。 |
 | `SUPABASE_KEY` / `VITE_...` | `None` (Fallback) | `SERVICE_ROLE_KEY` がない場合、`SUPABASE_KEY` -> `NEXT_PUBLIC_...` -> `VITE_SUPABASE_ANON_KEY` の順でフォールバックします。 |
 | `AMAZON_TRACKING_ID` | `None` | AmazonアソシエイトのトラッキングID。 |
 
 ### 5.2 定数値 (Hardcoded Constants)
-*   `gemini_client.py`: タイムアウト `60.0` 秒。
+*   `gemini.py`: タイムアウト `60.0` 秒。
 *   `search.py`: "Simple Search" 判定の文字数制限 `50` 文字。
-*   `data_enhancer.py`: クールダウン `30` 日, 検証タイムアウト `30.0` 秒。
+*   `game_service.py`: クールダウン `30` 日, 検証タイムアウト `30.0` 秒。
 
 ---
 
 ## 6. AIプロンプト全集 (Prompt Registry)
 
-すべてのプロンプトは `backend/app/core/prompts_data.py` で管理されます。
+すべてのプロンプトは `backend/app/prompts/prompts.yaml` で管理されます。
 
-### 6.1 新規検索・基本情報抽出 (`gemini_client.extract_game_info`)
-ユーザーが新しいゲームを検索した際に実行されます。厳密な事実に基づき、ハルシネーションを回避するよう指示されています。
+### 6.1 新規検索・生成 (`metadata_generator`)
+ユーザーが新しいゲームを検索した際、または再生成時に実行されます。
+*   **Google Grounding**: 有効化されており、ハルシネーションを最小限に抑えます。
+*   **Regeneration**: 既存データをコンテキストとして受け取り、空白を埋め、誤りを訂正します。
 
-### 6.2 リンク検証・更新 (`data_enhancer.find_valid_links`)
-`DataEnhancer` がバックグラウンドで実行する際、公式URL、Amazon URL、画像URLの候補を探すために使用されます。
+### 6.2 リンク解決 (`link_resolve`)
+`Link Resolver Agent` がバックグラウンドで実行し、公式URL、Amazon URL、画像URLの候補を探して検証します。
 
 ---
 
@@ -319,7 +318,7 @@ create index if not exists idx_games_title on games(title);
 
 ### 7.3 GET `/api/games/{slug}`
 特定のゲーム詳細を取得。Slug または ID でアクセス可能。
-**バックグラウンド処理**: `DataEnhancer` が起動し、リンク情報の検証と更新を非同期で試みます。
+**バックグラウンド処理**: `Link Resolver` が起動し、リンク情報の検証と更新を非同期で試みます。
 
 ---
 
@@ -356,7 +355,13 @@ create index if not exists idx_games_title on games(title);
 *   `task dev`: 開発サーバー起動 (Backend + Frontend)
 *   `task lint`: Lint & Format
 
-### 9.2 実験的機能の開発 (Experiments)
+### 9.2 開発者用スクリプト (Developer Scripts)
+*   **検証スクリプト**: `scripts/verify_regeneration.py`
+    *   **用途**: Gemini APIを使用したゲーム再生成フローをローカルでテストします。
+    *   **実行**: `uv run python scripts/verify_regeneration.py`
+    *   **注意**: 実際に Gemni API コストが発生します。
+
+### 9.3 実験的機能の開発 (Experiments)
 CrewAIなどの新しいAIエージェントを試す場合は、必ず `backend/experiments/` ディレクトリ内で開発してください。
 `backend/app/` 内のコードは本番用であり、実験的な依存関係を含めてはいけません。
 
@@ -365,7 +370,7 @@ CrewAIなどの新しいAIエージェントを試す場合は、必ず `backend
 *   **No Comments**: コードで語る。
 *   **Japanese Content**: ユーザー向けテキストは日本語。
 *   **Type Hints**: Pythonコードには型ヒントを必須とする。
-*   **Prompts in Python**: プロンプトは `prompts_data.py` に記述する (Vercel互換性のため)。
+*   **Prompts in YAML**: プロンプトは `prompts.yaml` に記述する。
 
 ---
 
@@ -382,29 +387,19 @@ SupabaseのIDは **UUID (str)** です。`int` として扱わないこと。
 
 ### 10.4 トラブルシューティング (Troubleshooting)
 *   **Backend Startup Failure**:
-    *   `ImportError` や `ModuleNotFoundError` が発生する場合、依存関係 (`uv sync`) の不整合や、実験的コード (`crewai_tools` 等) の誤ったインポートを疑ってください。
-    *   `research_agent.py` などで `crewai` ツールを使用する場合、適切なデコレータと **docstring** が必須です。
-*   **Frontend Database Connection Error**:
-    *   APIが "Invalid Date" などを返す場合、バックエンドのPydanticモデル (`GameDetail`) が `created_at` や `updated_at` を正しく返しているか確認してください。
-    *   環境変数 `SUPABASE_URL` が正しく設定されているか確認してください。
+    *   `ImportError` や `ModuleNotFoundError` が発生する場合、依存関係 (`uv sync`) の不整合を疑ってください。
+*   **Rate Limits (429)**:
+    *   `Gemini` API制限（429）が発生した場合、バックエンドはエラーをログ (`app.log`) に記録し、処理を中断します。データベースは更新されません。
 
 ---
 
-## 11. アフィリエイトシステム (Affiliate System)
+## 11 検証済みリンク (Verified Links)
 
-### 11.1 自動検索リンク (Layer 0)
-*   **ロジック**: `https://www.amazon.co.jp/s?k={Title}&tag={TrackingID}` を自動生成。
-*   **実装**: `backend/app/services/amazon_affiliate.py`
-*   **優先順位**: `structured_data` に明示的なリンクがない場合に使用される。
+*   **Logic**: `Link Resolver Agent` (`resolve_external_links`) がLLMを使って候補URLを生成し、Pythonコード (`httpx`) でステータスコード 200 を確認してからDBに保存します。
+*   **優先順位**: 常にこの検証済み `amazon_url` が優先して使用されます。
+*   **自動化**: ゲーム生成時および更新時にバックグラウンドで自動実行されます。
 
-### 11.2 検証済みリンク (Layer 1 - DataEnhancer)
-*   **ロジック**: `DataEnhancer` がバックグラウンドで有効なAmazon商品ページURLを特定し、DBに保存。
-*   **実装**: `backend/app/services/data_enhancer.py`
-*   **優先順位**: 最優先。DBに `amazon_url` があればそれを使用。
 
----
-
-このガイドラインを参考にして、シンプルかつ高速な「ボドゲのミカタ」を開発し続けましょう。
 
 ---
 
@@ -533,13 +528,13 @@ SupabaseのIDは **UUID (str)** です。`int` として扱わないこと。
 *   **対策**:
     *   **Caching**: `Cache-Control` ヘッダーにより、CDNとブラウザでキャッシュを最大化。
     *   **Database First**: 必ずSupabaseを先に検索し、存在しない場合のみ生成。
-    *   **Availability (可用性)**: 429エラー発生時は、ユーザーに「現在混み合っています」と表示し、システム全体のダウンを防ぐ（縮退運転）。
+    *   **Availability**: 429エラーが発生した場合、バックエンドは `logs/app.log` にエラーを記録し、ユーザーへのレスポンスは維持します（再生性が失敗するのみ）。
 
 ### 17.2 ログ監視
-*   **Backend Logs**: Vercel Dashboardの "Logs" タブで確認。
-*   **Client Errors**: ブラウザコンソールおよびネットワークタブで確認。
-*   **Critical Errors**: 500エラーが発生した場合、直ちに `backend.log` (ローカル) または Vercel Logs を確認し、修正パッチを適用。
+*   **Backend Logs**: `backend/logs/app.log` にログが出力されます（ローカル開発時）。
+*   **Vercel Logs**: Vercel DashboardのFunction Logsで確認可能。
+*   **Critical Errors**: 500エラー発生時は直ちにログを確認。
 
 ### 17.3 データベースバックアップ
 *   **Backup Strategy**: SupabaseのPITR (Point-in-Time Recovery) 機能に依存。
-*   大規模なスキーマ変更前には、手動でSQLダンプを取得することを推奨。
+*   **Manual**: スキーマ変更前には、手動でSQLダンプを取得することを推奨。

@@ -19,6 +19,8 @@
 
 ## 📖 About
 
+> **Documentation**: 完全な開発者ガイダンスについては、[PROJECT_MASTER_GUIDE.md](docs/PROJECT_MASTER_GUIDE.md) を参照してください。これがプロジェクトの Single Source of Truth です。
+
 RuleScribe Games (ボドゲのミカタ) は、AI (Gemini 2.5 Flash) を活用してボードゲームの情報を整理・構造化するデータベースアプリケーションです。
 
 AIがゲームのルールを「準備」「進行」「勝利条件」の3点に整理し、さらに「ゲームの魅力（人気のカード・要素）」や「重要キーワード」も抽出してWikiページを生成します。
@@ -35,10 +37,9 @@ AIがゲームのルールを「準備」「進行」「勝利条件」の3点�
 
 | Category | Technology |
 |----------|------------|
-| **Frontend** | React, Vite, Tailwind CSS |
+| **Frontend** | React, Vite, Vanilla CSS (CSS Variables) |
 | **Backend** | Python (FastAPI), UV (Package Manager) |
-| **AI Model** | Google Gemini 2.5 Flash |
-| **Search** | Google Search Grounding (via Gemini) |
+| **AI Model** | Google Gemini 2.5 Flash + Google Search Grounding |
 | **Database** | Supabase (PostgreSQL + pgvector) |
 | **Deployment** | Vercel |
 | **Tooling** | Taskfile, Ruff, Prettier |

@@ -62,7 +62,7 @@ function App() {
       const normalized = list.map((g) => ({
         ...g,
         slug: g.slug || g.game_slug || String(g.id),
-        name: g.name || g.title || 'Untitled',
+        name: g.name || g.title_ja || 'Untitled',
       }))
 
       if (append) {
