@@ -1,8 +1,8 @@
 from fastapi import APIRouter, HTTPException, Query, BackgroundTasks, Depends
 from typing import List
 from pydantic import BaseModel
-from app.models import GameDetail
-from app.services.game_service import GameService
+from api.app.models import GameDetail
+from api.app.services.game_service import GameService
 
 router = APIRouter()
 
