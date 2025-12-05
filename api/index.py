@@ -7,14 +7,14 @@ sys.path.append(root_path)
 
 try:
     from app.main import app
-except Exception as e:
+except Exception:
     import traceback
     from fastapi import FastAPI
+    from fastapi.responses import PlainTextResponse
+    
     app = FastAPI()
+    error_msg = traceback.format_exc()
     
     @app.get("/api/{path:path}")
-    def debug_error(path: str):
-        return {
-            "error": str(e),
-            "type": type(e).__name__
-        }
+    def debug_catch_all(path: str):
+        return PlainTextResponse(error_msg, status_code=200)
