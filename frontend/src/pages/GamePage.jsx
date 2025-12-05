@@ -48,7 +48,7 @@ const ShareButton = ({ slug }) => {
 
 const TwitterShareButton = ({ slug, title }) => {
   const handleTwitterShare = () => {
-    const text = `「${title}」のルールをAIで瞬時に要約！`
+    const text = `ボードゲーム「${title}」がアツい！今すぐチェック！`
     const url = `https://bodoge-no-mikata.vercel.app/games/${slug}`
     const hashtags = 'ボドゲのミカタ,ボードゲーム'
     const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}&hashtags=${encodeURIComponent(hashtags)}`
