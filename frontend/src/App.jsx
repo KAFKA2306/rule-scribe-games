@@ -144,6 +144,31 @@ function App() {
 
   return (
     <div className="app-container">
+      <div
+        className="minimal-home"
+        onClick={handleClear}
+        style={{
+          position: 'fixed',
+          top: '20px',
+          left: '20px',
+          cursor: 'pointer',
+          fontSize: '1.5rem',
+          zIndex: 1000,
+          background: 'rgba(30, 30, 30, 0.8)',
+          color: 'white',
+          width: '48px',
+          height: '48px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          borderRadius: '50%',
+          boxShadow: '0 4px 6px rgba(0,0,0,0.3)',
+          backdropFilter: 'blur(4px)',
+          border: '1px solid rgba(255,255,255,0.1)',
+        }}
+      >
+        ♜
+      </div>
 
       {error && <div className="error-banner">{error}</div>}
       {generating && (

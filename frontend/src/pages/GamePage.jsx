@@ -59,7 +59,16 @@ export default function GamePage({ slug: propSlug }) {
     setGame(data)
   }
 
-  if (!slug) return <div className="p-4">Invalid Game URL</div>
+  if (!slug)
+    return (
+      <div className="p-4">
+        <a href="/" className="home-link">
+          ♜ ボドゲのミカタ
+        </a>
+        <br />
+        Invalid Game URL
+      </div>
+    )
   if (loading) return <div className="loading-spinner">⚡️ ルールを瞬時に要約中...</div>
   if (error) return <div className="error-message">{error}</div>
   if (!game) return <div className="not-found">ゲームが見つかりません</div>
@@ -112,7 +121,7 @@ export default function GamePage({ slug: propSlug }) {
         <meta name="description" content={description} />
         <link rel="canonical" href={gameUrl} />
 
-        {}
+        { }
         <meta property="og:type" content="article" />
         <meta property="og:url" content={gameUrl} />
         <meta property="og:title" content={pageTitle} />
@@ -120,7 +129,7 @@ export default function GamePage({ slug: propSlug }) {
         <meta property="og:image" content={imageUrl} />
         <meta property="og:site_name" content="ボドゲのミカタ" />
 
-        {}
+        { }
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:url" content={gameUrl} />
         <meta name="twitter:title" content={pageTitle} />
@@ -137,8 +146,8 @@ export default function GamePage({ slug: propSlug }) {
         </div>
       )}
 
-      <div className="detail-header">
-        <h2>{title}</h2>
+      <div className="game-content">
+        <h1 className="game-title">{title}</h1>
         <div
           className="header-actions"
           style={{ display: 'flex', alignItems: 'center', gap: '12px' }}
