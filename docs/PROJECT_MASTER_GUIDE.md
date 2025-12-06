@@ -386,10 +386,41 @@ SupabaseのIDは **UUID (str)** です。`int` として扱わないこと。
 必ずホワイトリスト方式でカラムをフィルタリングしてから `upsert` すること。AIが生成した余分なフィールドが含まれているとエラーになります。
 
 ### 10.4 トラブルシューティング (Troubleshooting)
-*   **Backend Startup Failure**:
-    *   `ImportError` や `ModuleNotFoundError` が発生する場合、依存関係 (`uv sync`) の不整合を疑ってください。
-*   **Rate Limits (429)**:
-    *   `Gemini` API制限（429）が発生した場合、バックエンドはエラーをログ (`app.log`) に記録し、処理を中断します。データベースは更新されません。
+*   **Backend 起動エラー**  
+    * `ImportError` / `ModuleNotFoundError` → `uv sync` を再実行。Python 3.11 系で起動しているか確認。  
+    * `.env` 未読込で `PLACEHOLDER` が設定されていると Supabase/Gemini 初期化が失敗する。
+*   **環境変数不足/誤り**  
+    * Gemini 401/404 → `GEMINI_API_KEY` 不在かタイプミス。  
+    * Supabase 401/403 → `SUPABASE_SERVICE_ROLE_KEY` / `SUPABASE_KEY` / `NEXT_PUBLIC_SUPABASE_URL` が欠落。  
+    * Frontend が空リスト → `NEXT_PUBLIC_SUPABASE_*` が未設定でクライアント生成が `null`。
+*   **Rate Limits (429)**  
+    * Gemini 429 はログに残るだけで DB 更新は行われない。数分待って再試行するか、キーを追加してローテーション（例: `GEMINI_API_KEY_2` など）を実装する。  
+    * 連続して `generate=true` を叩かない。まず Supabase キャッシュを検索し、生成はミスヒット時のみに抑える。  
+    * 再発する場合は同時実行数を絞る（キューイング）、プロンプト長を抑える、バッチ化を避ける。  
+*   **重複レコード / 上書きされない**  
+    * `slug` は `title` 由来のため、タイトルの表記揺れで upsert 衝突が起きる。確定キーがある場合は `source_url` を渡す。  
+    * `PATCH /api/games/{slug}?regenerate=true&fill_missing_only=true` で欠損のみ補完、`false` で全面上書き。背景タスクなので即時反映しない点に注意。  
+*   **ポート衝突**  
+    * 8000 / 5173 が埋まっている → `task kill` で解放。  
+*   **Vercel 502/タイムアウト**  
+    * 環境変数未設定またはコールドスタートが原因。Vercel に `.env` 内容を反映し、再デプロイ。  
+*   **CORS / フロント通信失敗**  
+    * CORS は許可済みだが、開発プロキシ設定が無いと相対パスで別ポートに届かないことがある。フロントからは `/api/...` の相対パスで叩くか、`vite.config` の `proxy` を有効にする。  
+*   **フロントが白画面になる**  
+    * `npm install` 未実施、または `task dev` でフロントを起動していない。  
+    * ブラウザコンソールに JS エラーが出ていないか確認（型の無いフィールドや undefined 参照が多い）。  
+    * API を絶対URLで別ポートに向けると CORS で落ちることがある。開発時は相対 `/api/...` を推奨。  
+    * 環境変数を変えたら Vite を再起動（`import.meta.env` はビルド時に埋め込まれる）。  
+*   **Supabase スキーマ不一致**  
+    * 新規カラム追加やインデックス不足で API が 500/422 を返すことがある。`backend/init_db.sql` を Supabase SQL エディタで再実行して整合させる。  
+    * 既存データへの影響がある変更（NOT NULL 追加など）はバックアップを取得してから適用。  
+    * RLS/ポリシーを有効化している場合、サービスロールキーを使う操作と anon での挙動が異なるので両方確認する。  
+    * スキーマ変更時の手順例:  
+        1. Supabase で DB バックアップを取得。  
+        2. ローカルで `backend/init_db.sql` を更新し、SQL エディタで実行。  
+        3. `app/models.py` など Pydantic モデルとフロント型（必要なら）を同期。  
+        4. 生成ロジックが依存するフィールドなら Gemini プロンプトの出力スキーマも更新（`app/prompts/prompts.yaml`）。  
+        5. `task lint` と簡易 API テスト（`GET /api/games`, `POST /api/search`）で回帰を確認。  
 
 ---
 

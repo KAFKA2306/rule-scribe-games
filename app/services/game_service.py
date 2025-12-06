@@ -113,7 +113,7 @@ class GameService:
         return game
 
     async def update_game_content(
-        self, slug: str, bg: BackgroundTasks
+        self, slug: str, bg: BackgroundTasks, fill_missing_only: bool = False
     ) -> Dict[str, Any]:
         game = await supabase.get_by_slug(slug)
         if not game:
@@ -123,9 +123,10 @@ class GameService:
             ctx = json.dumps(game, ensure_ascii=False)
             result = await generate_metadata(game.get("title"), ctx)
             if "error" not in result:
-                result["id"], result["slug"] = game["id"], slug
-                result["data_version"] = game.get("data_version", 0) + 1
-                await supabase.upsert(result)
+                merged = _merge_fields(game, result, fill_missing_only)
+                merged["id"], merged["slug"] = game["id"], slug
+                merged["data_version"] = game.get("data_version", 0) + 1
+                await supabase.upsert(merged)
 
         bg.add_task(_task)
         return {"status": "accepted"}
@@ -138,3 +139,23 @@ class GameService:
             return {}
         out = await supabase.upsert(result)
         return out[0] if out else {}
+
+
+def _merge_fields(
+    original: Dict[str, Any], incoming: Dict[str, Any], fill_missing_only: bool
+) -> Dict[str, Any]:
+    if not fill_missing_only:
+        return {**original, **incoming}
+
+    merged = dict(original)
+    for key, value in incoming.items():
+        current = merged.get(key)
+        # Treat None or empty string as missing; keep zeros and False as intentional values.
+        is_missing = current is None or (isinstance(current, str) and current.strip() == "")
+        if is_missing:
+            merged[key] = value
+        # Shallow merge for structured_data if it's missing or empty dict
+        if key == "structured_data":
+            if current is None or current == {}:
+                merged[key] = value
+    return merged
