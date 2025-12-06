@@ -1,12 +1,14 @@
 import { defineConfig } from 'vite'
-// Force rebuild: 2025-12-06
 import react from '@vitejs/plugin-react'
 
-// https://vitejs.dev/config/
 export default defineConfig({
   envDir: '..',
   plugins: [react()],
   envPrefix: ['VITE_', 'NEXT_'],
+  build: {
+    outDir: '../dist',
+    emptyOutDir: true,
+  },
   server: {
     proxy: {
       '/api': {
@@ -16,3 +18,4 @@ export default defineConfig({
     },
   },
 })
+
