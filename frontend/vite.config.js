@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
+// Build trigger: 2025-12-06-v2
 export default defineConfig({
   envDir: '..',
   plugins: [react()],
@@ -14,6 +15,3 @@ export default defineConfig({
     },
   },
 })
-
-
-# Force rebuild Sat Dec  6 10:41:11 JST 2025
