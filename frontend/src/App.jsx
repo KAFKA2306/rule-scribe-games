@@ -144,37 +144,6 @@ function App() {
 
   return (
     <div className="app-container">
-      <header className="main-header">
-        <div className="brand" onClick={handleClear}>
-          <span className="logo-icon">♜</span>
-          <h1>ボドゲのミカタ</h1>
-        </div>
-        <nav style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <a href="/data" className="nav-link">
-            📊 データ
-          </a>
-          <LoginButton session={session} />
-        </nav>
-      </header>
-
-      <div className="search-section">
-        <form onSubmit={handleSearch} className="search-form">
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="ゲーム名で検索..."
-            className="search-input"
-          />
-          <button type="submit" className="btn-primary" disabled={loading}>
-            {loading ? '検索中...' : '検索'}
-          </button>
-          {query && (
-            <button type="button" onClick={handleClear} className="btn-ghost">
-              クリア
-            </button>
-          )}
-        </form>
-      </div>
 
       {error && <div className="error-banner">{error}</div>}
       {generating && (
