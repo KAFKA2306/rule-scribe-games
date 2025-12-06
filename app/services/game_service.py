@@ -286,8 +286,13 @@ class GameService:
     async def create_game_from_query(
         self, query: str, background_tasks: BackgroundTasks
     ) -> Dict[str, Any]:
-        result = await generate_metadata(query)
-        if "error" in result:
+        try:
+            result = await generate_metadata(query)
+            if "error" in result:
+                logger.error(f"Gemini generation error: {result['error']}")
+                return {}
+        except Exception as e:
+            logger.error(f"Gemini generation failed: {e}")
             return {}
 
         out = await self.repository.upsert(result)
