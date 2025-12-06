@@ -63,6 +63,25 @@
 4. 429 簡易スロットル（短時間の連続呼び出しを間引き or sleep）。  
 5. structured_data のマージ方針を keywords union に決める。  
 
+## 実装バックログ（ファイル対応表）
+- `app/services/game_service.py`  
+  - タスクID生成・状態管理（暫定: インメモリ dict / 将来: Supabase tasks テーブル）。  
+  - try/except で task status と error を記録。slug 強制固定。structured_data keywords union マージ。  
+  - jsonschema バリデーション導入ポイント（Gemini出力直後）。  
+- `app/core/gemini.py`  
+  - 429/5xx ハンドリングとリトライ/スリープ（短期はリトライなしで明示失敗）。  
+  - JSON整形/クレンジング強化（フェンス検出、先頭`{}`抽出失敗時のエラー化）。  
+- `app/prompts/prompts.yaml`  
+  - `metadata_generator_fill_missing` / `metadata_critic_fill_missing` バリアント追加。  
+  - URL信頼度の上限設定と required フィールド指定を再確認。  
+- `app/core/logger.py`  
+  - 構造化ログ（json formatter） or key/value 形式を追加。task_id/slug/mode/status を必ず出す。  
+- `app/core/settings.py`  
+  - 必須 env の起動時検証。None のままなら早期に例外を投げる。  
+- `tests/`  
+  - Geminiレスポンスをモックしたユニットテスト（成功・必須欠損・429・JSON崩れ）。  
+  - `_merge_fields` の挙動テスト（fill_missing_only true/false、structured_data merge）。  
+
 ## ロールアウト案
 1. **短期**: ログ＋バリデーション＋slug固定＋fill-missingプロンプト実装。  
 2. **中期**: `task_id` 付き結果確認 API / タスク永続化（Supabase テーブル or キャッシュ）。  
