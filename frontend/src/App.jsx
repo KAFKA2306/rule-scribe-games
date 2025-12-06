@@ -18,6 +18,7 @@ function App() {
   const [session, setSession] = useState(null)
 
   useEffect(() => {
+    if (!supabase) return
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
     })
