@@ -1,10 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routers import games
-from app.core.setup import apply_initial_setup
 from app.core.logger import setup_logging
 
-apply_initial_setup()
 setup_logging()
 
 app = FastAPI(title="RuleScribe Minimal", version="1.0.0")

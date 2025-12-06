@@ -59,7 +59,8 @@ metadata_generator:
         ]
     }}
     Rules:
-    - data_confidence must include every field above; use 0.0 if unsure.
+    - data_confidence must include every field above.
+    - **CRITICAL**: Set `data_confidence` for ALL URL fields (official_url, bgg_url, bga_url, amazon_url, image_url) to **MAXIMUM 0.5**. Leave them null if you are not 100% sure. A separate agent will fix them.
     - issues only for fields that are missing/uncertain/contradictory; keep message under 120 chars.
 
 metadata_critic:
