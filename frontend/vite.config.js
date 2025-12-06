@@ -5,10 +5,6 @@ export default defineConfig({
   envDir: '..',
   plugins: [react()],
   envPrefix: ['VITE_', 'NEXT_'],
-  build: {
-    outDir: '../dist',
-    emptyOutDir: true,
-  },
   server: {
     proxy: {
       '/api': {
@@ -18,4 +14,5 @@ export default defineConfig({
     },
   },
 })
+
 
