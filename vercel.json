@@ -1,5 +1,7 @@
 {
   "version": 2,
+  "buildCommand": "cd frontend && npm install && npm run build",
+  "outputDirectory": "dist",
   "builds": [
     {
       "src": "api/index.py",
@@ -7,13 +9,6 @@
       "config": {
         "maxDuration": 60,
         "includeFiles": "app/**"
-      }
-    },
-    {
-      "src": "frontend/package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "dist"
       }
     }
   ],
@@ -23,24 +18,11 @@
       "dest": "/api/index.py"
     },
     {
-      "src": "/assets/(.*)",
-      "dest": "/frontend/assets/$1"
-    },
-    {
-      "src": "/robots.txt",
-      "dest": "/frontend/robots.txt"
-    },
-    {
-      "src": "/sitemap.xml",
-      "dest": "/frontend/sitemap.xml"
-    },
-    {
-      "src": "/(.*\\.(js|css|ico|png|jpg|svg|woff|woff2))",
-      "dest": "/frontend/$1"
+      "handle": "filesystem"
     },
     {
       "src": "/(.*)",
-      "dest": "/frontend/index.html"
+      "dest": "/index.html"
     }
   ]
 }
