@@ -22,12 +22,12 @@ class Settings:
     gemini_model: str = os.getenv("GEMINI_MODEL", "models/gemini-2.5-flash")
     supabase_url: str = (
         os.getenv("NEXT_PUBLIC_SUPABASE_URL")  # Shared with frontend
-        or os.getenv("SUPABASE_URL")            # Vercel integration default
+        or os.getenv("SUPABASE_URL")  # Vercel integration default
         or PLACEHOLDER
     )
     supabase_key: str = (
         os.getenv("SUPABASE_SERVICE_ROLE_KEY")  # Explicit write access
-        or os.getenv("SUPABASE_KEY")            # Fallback
+        or os.getenv("SUPABASE_KEY")  # Fallback
         or PLACEHOLDER
     )
 
