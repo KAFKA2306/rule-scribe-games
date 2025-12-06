@@ -180,7 +180,7 @@ function App() {
       {generating && (
         <div className="generating-banner">
           <div className="spinner"></div>
-          <span>🎲 新しいボードゲームを調査中... (30-60秒かかります)</span>
+          <span>🎲 AIがルールブックを読破中... (約30〜60秒)</span>
         </div>
       )}
 
@@ -193,29 +193,32 @@ function App() {
           </div>
 
           <div className="game-grid">
-            {games.map((game) => (
-              <div
-                key={game.slug}
-                className={`game-card ${selectedSlug === game.slug ? 'active' : ''}`}
-                onClick={() => setSelectedSlug(game.slug)}
-                style={{
-                  backgroundImage: game.image_url
-                    ? `linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.8)), url(${game.image_url})`
-                    : 'none',
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center',
-                }}
-              >
-                <h3 className="game-title">{game.title_ja}</h3>
-                <p className="game-summary">{game.description}</p>
-                <div className="game-tags">
-                  <span className="tag">
-                    {game.min_players}-{game.max_players}人用
-                  </span>
-                  <span className="tag">{game.play_time}分</span>
+            {games.map((game) => {
+              const title = game.title_ja || game.title || game.name || 'Untitled'
+              return (
+                <div
+                  key={game.slug}
+                  className={`game-card ${selectedSlug === game.slug ? 'active' : ''}`}
+                  onClick={() => setSelectedSlug(game.slug)}
+                  style={{
+                    backgroundImage: game.image_url
+                      ? `linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.8)), url(${game.image_url})`
+                      : 'none',
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                  }}
+                >
+                  <h3 className="game-title">{title}</h3>
+                  <p className="game-summary">{game.description}</p>
+                  <div className="game-tags">
+                    <span className="tag">
+                      {game.min_players}-{game.max_players}人用
+                    </span>
+                    <span className="tag">{game.play_time}分</span>
+                  </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
 
             {games.length === 0 && !loading && (
               <div className="empty-state">ゲームが見つかりませんでした。</div>
@@ -242,7 +245,7 @@ function App() {
             )}
 
             {loadingMore && (
-              <div style={{ textAlign: 'center', padding: '20px' }}>読み込み中...</div>
+              <div style={{ textAlign: 'center', padding: '20px' }}>📚 さらに読み込み中...</div>
             )}
           </div>
         </aside>

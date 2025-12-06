@@ -24,17 +24,23 @@ export default function GamePage({ slug: propSlug }) {
     if (!slug) return
 
     const fetchGame = async () => {
-      setLoading(true)
-      setError(null)
-      const res = await fetch(`/api/games/${slug}`)
-      if (!res.ok) throw new Error('Game not found')
+      try {
+        setLoading(true)
+        setError(null)
+        const res = await fetch(`/api/games/${slug}`)
+        if (!res.ok) throw new Error('Game not found')
 
-      const data = await res.json()
-      const gameData = Array.isArray(data) ? data[0] : data.game || data
+        const data = await res.json()
+        const gameData = Array.isArray(data) ? data[0] : data.game || data
 
-      if (!gameData) throw new Error('No game data')
-      setGame(gameData)
-      setLoading(false)
+        if (!gameData) throw new Error('No game data')
+        setGame(gameData)
+      } catch (err) {
+        console.error(err)
+        setError(err.message)
+      } finally {
+        setLoading(false)
+      }
     }
 
     fetchGame()
@@ -54,7 +60,7 @@ export default function GamePage({ slug: propSlug }) {
   }
 
   if (!slug) return <div className="p-4">Invalid Game URL</div>
-  if (loading) return <div className="loading-spinner">読み込み中...</div>
+  if (loading) return <div className="loading-spinner">⚡️ ルールを瞬時に要約中...</div>
   if (error) return <div className="error-message">{error}</div>
   if (!game) return <div className="not-found">ゲームが見つかりません</div>
 
@@ -106,7 +112,7 @@ export default function GamePage({ slug: propSlug }) {
         <meta name="description" content={description} />
         <link rel="canonical" href={gameUrl} />
 
-        { }
+        {}
         <meta property="og:type" content="article" />
         <meta property="og:url" content={gameUrl} />
         <meta property="og:title" content={pageTitle} />
@@ -114,7 +120,7 @@ export default function GamePage({ slug: propSlug }) {
         <meta property="og:image" content={imageUrl} />
         <meta property="og:site_name" content="ボドゲのミカタ" />
 
-        { }
+        {}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:url" content={gameUrl} />
         <meta name="twitter:title" content={pageTitle} />
@@ -161,7 +167,7 @@ export default function GamePage({ slug: propSlug }) {
 
       {game.summary && (
         <div className="info-section">
-          <h3>概要</h3>
+          <h3>💡 3行でわかる要約</h3>
           <p style={{ lineHeight: '1.7', color: 'var(--text-muted)' }}>{game.summary}</p>
         </div>
       )}
@@ -169,11 +175,21 @@ export default function GamePage({ slug: propSlug }) {
       {game.video_url && (
         <div className="info-section">
           <h3>ルール動画</h3>
-          <div className="video-container" style={{ position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden', borderRadius: '12px', border: '1px solid var(--border)' }}>
+          <div
+            className="video-container"
+            style={{
+              position: 'relative',
+              paddingBottom: '56.25%',
+              height: 0,
+              overflow: 'hidden',
+              borderRadius: '12px',
+              border: '1px solid var(--border)',
+            }}
+          >
             <iframe
               src={`https://www.youtube.com/embed/${(() => {
-                const match = game.video_url.match(/(?:youtu\.be\/|youtube\.com\/watch\?v=)([^&]+)/);
-                return match ? match[1] : '';
+                const match = game.video_url.match(/(?:youtu\.be\/|youtube\.com\/watch\?v=)([^&]+)/)
+                return match ? match[1] : ''
               })()}`}
               style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
               frameBorder="0"
@@ -186,7 +202,7 @@ export default function GamePage({ slug: propSlug }) {
       )}
 
       <div className="rules-section">
-        <h3>詳しいルール</h3>
+        <h3>📖 インスト用ルール</h3>
         {renderRules()}
       </div>
 
@@ -265,11 +281,6 @@ export default function GamePage({ slug: propSlug }) {
   if (isStandalone) {
     return (
       <div className="app-container standalone">
-        <header className="main-header">
-          <div className="brand">
-            <a href="/">♜ ボドゲのミカタ</a>
-          </div>
-        </header>
         <main className="main-layout single-col">
           <div className="game-detail-pane">{content}</div>
         </main>

@@ -17,6 +17,7 @@ metadata_generator:
        - rules_content: MUST be comprehensive. Include "Preparation (Setup)", "Game Flow (Turn Structure)", "End Game Conditions", and "Victory Conditions". Write in a clear, step-by-step format in Japanese Markdown.
        - summary: Catchy short summary in Japanese (1-2 sentences).
     3. URLS: Only include URLs if they are verified strong relation with the game title and working.
+    4. KEYWORDS: Generate 5-10 relevant Japanese keywords (e.g., genre, mechanic, theme). Format: {{ "term": "Keyword", "description": "Why it fits" }}.
 
     # Output JSON Schema
     {{
@@ -36,14 +37,22 @@ metadata_generator:
             "official_url": "string or null",
             "bgg_url": "string or null",
             "bga_url": "string or null",
-            "amazon_url": "string or null"
+            "bgg_url": "string or null",
+            "bga_url": "string or null",
+            "amazon_url": "string or null",
+            "structured_data": {{
+                "keywords": [
+                    {{ "term": "string", "description": "string" }}
+                ]
+            }}
         }},
         "data_confidence": {{
             "slug": float, "title": float, "title_ja": float, "title_en": float,
             "summary": float, "rules_content": float,
             "image_url": float, "min_players": float, "max_players": float,
             "play_time": float, "min_age": float, "published_year": float,
-            "official_url": float, "bgg_url": float, "bga_url": float, "amazon_url": float
+            "official_url": float, "bgg_url": float, "bga_url": float, "amazon_url": float,
+            "structured_data": float
         }},
         "issues": [
             {{"field": "field_name", "problem": "short reason (missing/uncertain/contradictory)", "confidence": float}}
