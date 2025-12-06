@@ -41,6 +41,8 @@
 ## ロギング / オブザーバビリティ
 - `event=regenerate`, `slug`, `mode`, `task_id`, `status`, `duration_ms`, `error` を構造化ログで残す。
 - 429/5xx はリトライせず失敗として記録（将来は指数バックオフを検討）。
+- **ログ配置（現状）**: `uvicorn` 標準出力＋`logs/app.log`（リダイレクト/uvicorn設定依存）。Serena MCP は `~/.serena/logs/YYYY-MM-DD/mcp_*.txt`。LLM ハーネスは `tests/logs/*.json`。
+- **推奨**: `app/core/logger.py` にファイルハンドラ（例: `logs/app.log`）を追加し、再生成タスクの構造化ログを確実にファイルへ残す。起動時に log path を env で切り替えられるようにする。
 
 ## 既知の失敗モード（仮説含む）
 - **Gemini応答不正**: JSON崩れ・必須欠損 → `_validate` で無音失敗。  
