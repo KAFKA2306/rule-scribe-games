@@ -838,3 +838,18 @@ body {
   background: rgba(255, 255, 255, 0.05);
   color: var(--text-main);
 }
+
+.stat-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 24px;
+}
+
+.stat-card h3 {
+  margin: 0 0 16px;
+  color: var(--text-muted);
+  font-size: 14px;
+  font-weight: 600;
+}
+
