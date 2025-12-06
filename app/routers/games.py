@@ -57,9 +57,12 @@ async def update_game(
     slug: str,
     background_tasks: BackgroundTasks,
     regenerate: bool = False,
+    fill_missing_only: bool = False,
     service: GameService = Depends(get_game_service),
 ):
     if regenerate:
-        return await service.update_game_content(slug, background_tasks)
+        return await service.update_game_content(
+            slug, background_tasks, fill_missing_only=fill_missing_only
+        )
 
     return {"status": "ok", "message": "No action taken (regenerate=False)"}
