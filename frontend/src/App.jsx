@@ -144,30 +144,43 @@ function App() {
 
   return (
     <div className="app-container">
-      <div
-        className="minimal-home"
-        onClick={handleClear}
-        style={{
-          position: 'fixed',
-          top: '20px',
-          left: '20px',
-          cursor: 'pointer',
-          fontSize: '1.5rem',
-          zIndex: 1000,
-          background: 'rgba(30, 30, 30, 0.8)',
-          color: 'white',
-          width: '48px',
-          height: '48px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          borderRadius: '50%',
-          boxShadow: '0 4px 6px rgba(0,0,0,0.3)',
-          backdropFilter: 'blur(4px)',
-          border: '1px solid rgba(255,255,255,0.1)',
-        }}
-      >
-        ♜
+      {error && <div className="error-banner">{error}</div>}
+      {generating && (
+        <div className="generating-banner">
+          <div className="spinner"></div>
+          <span>🎲 AIがルールブックを読破中... (約30〜60秒)</span>
+        </div>
+      )}
+
+      <header className="main-header">
+        <div className="brand" onClick={handleClear}>
+          <span className="logo-icon">♜</span>
+          <h1>ボドゲのミカタ</h1>
+        </div>
+        <nav style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <a href="/data" className="nav-link">
+            📊 データ
+          </a>
+        </nav>
+      </header>
+
+      <div className="search-section">
+        <form onSubmit={handleSearch} className="search-form">
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="ゲーム名を入力 (例: カタン, スプレンダー)"
+            className="search-input"
+          />
+          <button type="submit" className="btn-primary" disabled={loading}>
+            {loading ? '検索中...' : '検索'}
+          </button>
+          {query && (
+            <button type="button" onClick={handleClear} className="btn-ghost">
+              クリア
+            </button>
+          )}
+        </form>
       </div>
 
       {error && <div className="error-banner">{error}</div>}
