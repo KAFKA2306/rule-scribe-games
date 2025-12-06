@@ -19,7 +19,7 @@ def _env(name: str) -> str:
 
 class Settings:
     gemini_api_key: str = _env("GEMINI_API_KEY")
-    gemini_model: str = os.getenv("GEMINI_MODEL", "models/gemini-2.5-flash")
+    gemini_model: str = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
     supabase_url: str = (
         os.getenv("NEXT_PUBLIC_SUPABASE_URL")  # Shared with frontend
         or os.getenv("SUPABASE_URL")  # Vercel integration default

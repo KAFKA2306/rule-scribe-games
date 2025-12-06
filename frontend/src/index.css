@@ -179,10 +179,11 @@ body {
 
 .pane-header h2 {
   margin: 0;
-  font-size: 16px;
-  color: var(--text-muted);
+  font-size: 18px;
+  color: var(--text-main);
   display: flex;
   justify-content: space-between;
+  align-items: center;
 }
 
 .game-grid {
@@ -648,15 +649,33 @@ body {
 
 /* Generation Status Banner */
 .generating-banner {
-  background: linear-gradient(135deg, rgba(78, 240, 199, 0.1), rgba(142, 197, 255, 0.1));
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 2000;
+  background: rgba(11, 18, 33, 0.9);
   border: 1px solid var(--accent);
   border-radius: 12px;
-  padding: 16px 20px;
-  margin-bottom: 20px;
+  padding: 16px 24px;
   display: flex;
   align-items: center;
-  gap: 12px;
-  animation: pulse 2s ease-in-out infinite;
+  gap: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(8px);
+  animation: slide-up 0.3s ease-out forwards;
+  max-width: 400px;
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .generating-banner span {
@@ -665,6 +684,7 @@ body {
 }
 
 @keyframes pulse {
+
   0%,
   100% {
     opacity: 1;
