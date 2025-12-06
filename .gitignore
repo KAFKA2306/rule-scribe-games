@@ -44,3 +44,6 @@ pnpm-debug.log*
 # Testing
 coverage/
 .nyc_output/backend/logs/
+tests/logs/
+.gemini/
+
