@@ -116,6 +116,7 @@ function App() {
     try {
       setLoading(true)
       setGenerating(true)
+      setError(null)
 
       const data = await api.post('/api/search', { query, generate: true })
       const list = Array.isArray(data) ? data : data.games || []
@@ -148,14 +149,6 @@ function App() {
 
   return (
     <div className="app-container">
-      {error && <div className="error-banner">{error}</div>}
-      {generating && (
-        <div className="generating-banner">
-          <div className="spinner"></div>
-          <span>🎲 AIがルールブックを読破中... (約30〜60秒)</span>
-        </div>
-      )}
-
       <header className="main-header">
         <div className="brand" onClick={handleClear}>
           <span className="logo-icon">♜</span>
