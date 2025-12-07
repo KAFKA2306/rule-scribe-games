@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Query, BackgroundTasks, Depends
+from fastapi import APIRouter, HTTPException, Query, Depends
 from typing import List
 from pydantic import BaseModel
 from app.models import GameDetail
@@ -26,11 +26,10 @@ async def search_games(
 @router.post("/search", response_model=List[GameDetail])
 async def search_games_post(
     body: SearchRequest,
-    background_tasks: BackgroundTasks,
     service: GameService = Depends(get_game_service),
 ):
     if body.generate:
-        new_game = await service.create_game_from_query(body.query, background_tasks)
+        new_game = await service.create_game_from_query(body.query)
         if new_game and new_game.get("slug"):
             return [new_game]
 
@@ -55,14 +54,13 @@ async def get_game_details(slug: str, service: GameService = Depends(get_game_se
 @router.patch("/games/{slug}")
 async def update_game(
     slug: str,
-    background_tasks: BackgroundTasks,
     regenerate: bool = False,
     fill_missing_only: bool = False,
     service: GameService = Depends(get_game_service),
 ):
     if regenerate:
         return await service.update_game_content(
-            slug, background_tasks, fill_missing_only=fill_missing_only
+            slug, fill_missing_only=fill_missing_only
         )
 
     return {"status": "ok", "message": "No action taken (regenerate=False)"}
