@@ -21,10 +21,16 @@ async def search(query: str) -> List[Dict[str, Any]]:
     return await anyio.to_thread.run_sync(_q)
 
 
+_URL_FIELDS = ["bgg_url", "bga_url", "official_url", "image_url", "amazon_url", "audio_url", "source_url"]
+
+
 async def upsert(data: Dict[str, Any]) -> List[Dict[str, Any]]:
     def _q():
         if data.get("title"):
             data["slug"] = slugify(data["title"])
+        for f in _URL_FIELDS:
+            if data.get(f) == "":
+                data[f] = None
         key = "source_url" if data.get("source_url") else "slug"
         return _client.table(_TABLE).upsert(data, on_conflict=key).execute().data
 
