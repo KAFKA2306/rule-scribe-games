@@ -1,6 +1,5 @@
 from typing import List, Dict, Any, Optional
 from datetime import datetime, timezone
-import json
 import yaml
 from pathlib import Path
 from fastapi import HTTPException
@@ -44,11 +43,8 @@ async def generate_metadata(
     )
     result = await _gemini.generate_structured_json(prompt)
 
-    # Crash if error
     if isinstance(result, dict) and "error" in result:
         raise RuntimeError(f"Gemini error: {result['error']}")
-
-    result = await _improve_metadata(query, result, context)
 
     data = result.get("data", result) if isinstance(result, dict) else {}
 
@@ -63,35 +59,6 @@ async def generate_metadata(
     data["amazon_url"] = amazon_search_url(data.get("title") or query)
 
     return data
-
-
-async def _improve_metadata(
-    query: str, draft: Dict[str, Any], context: str
-) -> Dict[str, Any]:
-    data = draft.get("data", draft)
-    confidence = draft.get("data_confidence", {})
-    issues = draft.get("issues", [])
-
-    protected = [
-        k for k, v in confidence.items() if isinstance(v, (int, float)) and v >= 0.7
-    ]
-
-    prompt = _load_prompt("metadata_critic.improve").format(
-        query=query,
-        draft_json=json.dumps(data, ensure_ascii=False),
-        data_confidence=json.dumps(confidence, ensure_ascii=False),
-        issues=json.dumps(issues, ensure_ascii=False),
-        context=context,
-        fix_requests=json.dumps([], ensure_ascii=False),
-        protected_fields=json.dumps(protected, ensure_ascii=False),
-    )
-
-    critic_output = await _gemini.generate_structured_json(prompt)
-
-    if not isinstance(critic_output, dict) or "data" not in critic_output:
-        return draft
-
-    return critic_output
 
 
 class GameService:
@@ -116,7 +83,7 @@ class GameService:
         if not game:
             raise HTTPException(status_code=404, detail="Game not found")
 
-        ctx = json.dumps(game, ensure_ascii=False)
+        ctx = f"{game.get('title')}: {game.get('summary')}"
         result = await generate_metadata(game.get("title"), ctx)
 
         merged = _merge_fields(game, result, fill_missing_only)
@@ -141,13 +108,11 @@ def _merge_fields(
     merged = dict(original)
     for key, value in incoming.items():
         current = merged.get(key)
-        # Treat None or empty string as missing; keep zeros and False as intentional values.
         is_missing = current is None or (
             isinstance(current, str) and current.strip() == ""
         )
         if is_missing:
             merged[key] = value
-        # Shallow merge for structured_data if it's missing or empty dict
         if key == "structured_data":
             if current is None or current == {}:
                 merged[key] = value
