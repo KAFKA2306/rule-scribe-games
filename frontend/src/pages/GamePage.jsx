@@ -5,7 +5,7 @@ import ReactMarkdown from 'react-markdown'
 import EditGameModal from '../components/EditGameModal'
 
 import { ShareButton, TwitterShareButton } from '../components/game/ShareButtons'
-import { RefreshButton } from '../components/game/RefreshButton'
+import { RegenerateButton } from '../components/game/RegenerateButton'
 import { TextToSpeech } from '../components/game/TextToSpeech'
 import { ExternalLinks } from '../components/game/ExternalLinks'
 
@@ -152,18 +152,18 @@ export default function GamePage({ slug: propSlug }) {
           className="header-actions"
           style={{ display: 'flex', alignItems: 'center', gap: '12px' }}
         >
+          <TextToSpeech text={description} />
+          <TwitterShareButton slug={slug} title={title} />
+          <ShareButton slug={slug} />
           <button
             className="share-btn"
             onClick={() => setIsEditOpen(true)}
             title="編集"
             aria-label="Edit game"
           >
-            ✏️
+            ✏️ 編集
           </button>
-          <TextToSpeech text={description} />
-          <RefreshButton slug={slug} onRefresh={() => window.location.reload()} />
-          <TwitterShareButton slug={slug} title={title} />
-          <ShareButton slug={slug} />
+          <RegenerateButton title={title} onRegenerate={(updatedGame) => setGame(updatedGame)} />
         </div>
       </div>
 

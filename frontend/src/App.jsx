@@ -214,7 +214,7 @@ function App() {
                   }}
                 >
                   <h3 className="game-title">{title}</h3>
-                  <p className="game-summary">{game.description}</p>
+                  <p className="game-summary">{game.summary || game.description}</p>
                   <div className="game-tags">
                     <span className="tag">
                       {game.min_players}-{game.max_players}人用

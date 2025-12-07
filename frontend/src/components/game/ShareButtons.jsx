@@ -19,7 +19,7 @@ export const ShareButton = ({ slug }) => {
       title={copied ? 'コピーしました' : 'リンクをコピー'}
       aria-label="Share this game"
     >
-      {copied ? '✓' : '🔗'}
+      {copied ? '✓ 完了' : '🔗 コピー'}
     </button>
   )
 }
@@ -40,7 +40,7 @@ export const TwitterShareButton = ({ slug, title }) => {
       title="X(Twitter)でシェア"
       aria-label="Share on X"
     >
-      𝕏
+      𝕏 共有
     </button>
   )
 }

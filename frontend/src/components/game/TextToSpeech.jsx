@@ -32,7 +32,7 @@ export const TextToSpeech = ({ text }) => {
       aria-label="Text to speech"
       style={speaking ? { backgroundColor: '#e7f5ff', color: '#007bff' } : {}}
     >
-      {speaking ? '⏹️' : '🔊'}
+      {speaking ? '⏹️ 停止' : '🔊 読上'}
     </button>
   )
 }

@@ -56,7 +56,7 @@ async def generate_metadata(
 
     from app.utils.affiliate import amazon_search_url
 
-    data["amazon_url"] = amazon_search_url(data.get("title") or query)
+    data["amazon_url"] = amazon_search_url(data.get("title_ja") or query)
 
     return data
 
