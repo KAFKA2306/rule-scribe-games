@@ -1,5 +1,4 @@
 import json
-import re
 import httpx
 from app.core.settings import settings
 
@@ -18,7 +17,7 @@ class GeminiClient:
         data = {
             "contents": [{"parts": [{"text": prompt}]}],
             "generationConfig": {
-                "temperature": 0.1,
+                "temperature": 0,
                 "response_mime_type": "application/json",
             },
         }
@@ -36,9 +35,8 @@ class GeminiClient:
         return json.loads(self._clean(text))
 
     def _clean(self, text: str) -> str:
-        if "```" in text:
-            m = re.search(r"```(?:json)?\s*(.*?)\s*```", text, re.DOTALL)
-            if m:
-                return m.group(1)
-        m = re.search(r"\{.*\}", text, re.DOTALL)
-        return m.group(0).strip() if m else text.strip()
+        start = text.find("{")
+        end = text.rfind("}")
+        if start != -1 and end != -1 and end > start:
+            text = text[start : end + 1]
+        return text.replace("```json", "").replace("```", "").strip()
