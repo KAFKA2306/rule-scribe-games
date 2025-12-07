@@ -34,8 +34,6 @@ metadata_generator:
             "min_age": int,
             "published_year": int,
             "official_url": "string or null",
-            "bgg_url": "string or null",
-            "bga_url": "string or null",
             "amazon_url": "string or null",
             "structured_data": {{
                 "keywords": [

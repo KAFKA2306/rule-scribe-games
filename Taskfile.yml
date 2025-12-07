@@ -84,3 +84,7 @@ tasks:
   issues:critical:
     desc: 重要なIssueを表示 (開発ループの優先順位)
     cmd: gh issue list --label "critical" --limit 10 || gh issue list --limit 5
+
+  validate-urls:
+    desc: DBの全ゲームURLを検証し、無効なものをNULL化
+    cmd: uv run python -m app.scripts.validate_urls
