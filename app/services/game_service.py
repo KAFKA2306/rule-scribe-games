@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 import json
 import yaml
 from pathlib import Path
-from fastapi import HTTPException, BackgroundTasks
+from fastapi import HTTPException
 from app.core.gemini import GeminiClient
 from app.core import supabase
 from app.utils.slugify import slugify
@@ -20,8 +20,9 @@ def _load_prompt(key: str) -> str:
     return str(data).strip()
 
 
-def _validate(data: Dict[str, Any]) -> bool:
-    return all(data.get(f) for f in _REQUIRED)
+def _validate(data: Dict[str, Any]) -> None:
+    if not all(data.get(f) for f in _REQUIRED):
+        raise ValueError(f"Validation failed. Missing required fields: {_REQUIRED}")
 
 
 async def generate_metadata(
@@ -38,28 +39,27 @@ async def generate_metadata(
             else "No matches."
         )
 
-
     prompt = _load_prompt("metadata_generator.generate").format(
         query=query, context=context
     )
     result = await _gemini.generate_structured_json(prompt)
 
+    # Crash if error
     if isinstance(result, dict) and "error" in result:
-        return result
-
+        raise RuntimeError(f"Gemini error: {result['error']}")
 
     result = await _improve_metadata(query, result, context)
 
     data = result.get("data", result) if isinstance(result, dict) else {}
 
-    if not _validate(data):
-        return {"error": "validation_failed"}
+    _validate(data)
 
     if not data.get("slug"):
         data["slug"] = slugify(data.get("title") or query)
     data["updated_at"] = datetime.now(timezone.utc).isoformat()
-    
+
     from app.utils.affiliate import amazon_search_url
+
     data["amazon_url"] = amazon_search_url(data.get("title") or query)
 
     return data
@@ -71,11 +71,9 @@ async def _improve_metadata(
     data = draft.get("data", draft)
     confidence = draft.get("data_confidence", {})
     issues = draft.get("issues", [])
-    
 
     protected = [
-        k for k, v in confidence.items() 
-        if isinstance(v, (int, float)) and v >= 0.7
+        k for k, v in confidence.items() if isinstance(v, (int, float)) and v >= 0.7
     ]
 
     prompt = _load_prompt("metadata_critic.improve").format(
@@ -87,13 +85,12 @@ async def _improve_metadata(
         fix_requests=json.dumps([], ensure_ascii=False),
         protected_fields=json.dumps(protected, ensure_ascii=False),
     )
-    
+
     critic_output = await _gemini.generate_structured_json(prompt)
-    
 
     if not isinstance(critic_output, dict) or "data" not in critic_output:
         return draft
-        
+
     return critic_output
 
 
@@ -113,30 +110,24 @@ class GameService:
         return game
 
     async def update_game_content(
-        self, slug: str, bg: BackgroundTasks, fill_missing_only: bool = False
+        self, slug: str, fill_missing_only: bool = False
     ) -> Dict[str, Any]:
         game = await supabase.get_by_slug(slug)
         if not game:
             raise HTTPException(status_code=404, detail="Game not found")
 
-        async def _task():
-            ctx = json.dumps(game, ensure_ascii=False)
-            result = await generate_metadata(game.get("title"), ctx)
-            if "error" not in result:
-                merged = _merge_fields(game, result, fill_missing_only)
-                merged["id"], merged["slug"] = game["id"], slug
-                merged["data_version"] = game.get("data_version", 0) + 1
-                await supabase.upsert(merged)
+        ctx = json.dumps(game, ensure_ascii=False)
+        result = await generate_metadata(game.get("title"), ctx)
 
-        bg.add_task(_task)
-        return {"status": "accepted"}
+        merged = _merge_fields(game, result, fill_missing_only)
+        merged["id"], merged["slug"] = game["id"], slug
+        merged["data_version"] = game.get("data_version", 0) + 1
 
-    async def create_game_from_query(
-        self, query: str, bg: BackgroundTasks
-    ) -> Dict[str, Any]:
+        out = await supabase.upsert(merged)
+        return out[0] if out else {}
+
+    async def create_game_from_query(self, query: str) -> Dict[str, Any]:
         result = await generate_metadata(query)
-        if "error" in result:
-            return {}
         out = await supabase.upsert(result)
         return out[0] if out else {}
 
@@ -151,7 +142,9 @@ def _merge_fields(
     for key, value in incoming.items():
         current = merged.get(key)
         # Treat None or empty string as missing; keep zeros and False as intentional values.
-        is_missing = current is None or (isinstance(current, str) and current.strip() == "")
+        is_missing = current is None or (
+            isinstance(current, str) and current.strip() == ""
+        )
         if is_missing:
             merged[key] = value
         # Shallow merge for structured_data if it's missing or empty dict
