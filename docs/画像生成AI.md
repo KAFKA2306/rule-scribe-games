@@ -110,14 +110,9 @@ class ImagePromptGenerator:
             components_hint = game.structured_data.get('components', 'Standard board game components')
             theme_hint = game.structured_data.get('theme', 'Board game world')
 
-        # 欠損値のフォールバック処理
-        display_title = game.title_ja if game.title_ja else game.title
-        players_text = f"{game.min_players}-{game.max_players}" if game.min_players and game.max_players else "2-4"
-        time_text = str(game.play_time) if game.play_time else "30-60"
-
         context = f"""
         Target Game Data:
-        - Title (JA): {display_title}
+        - Title (JA): {game.title_ja}
         - Title (EN): {game.title}
         - Description: {game.summary or game.description}
         - Key Components: {components_hint}
@@ -168,4 +163,3 @@ game = GameDetail(**carcassonne_data)
 # prompt = agent.generate(game)
 # print(prompt)
 ```
-
