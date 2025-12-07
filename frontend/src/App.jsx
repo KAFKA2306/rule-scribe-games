@@ -126,7 +126,11 @@ function App() {
       }
     } catch (e) {
       console.error('Search failed:', e)
-      setError('検索に失敗しました。')
+      if (e.message === 'RATE_LIMIT') {
+        setError('⚠️ AI生成のレート制限に達しました。数分後に再試行してください。')
+      } else {
+        setError('検索に失敗しました。')
+      }
     } finally {
       setLoading(false)
       setGenerating(false)
