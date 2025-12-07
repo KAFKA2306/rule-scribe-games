@@ -4,6 +4,10 @@ import httpx
 from app.core.settings import settings
 
 
+class RateLimitError(Exception):
+    pass
+
+
 class GeminiClient:
     def __init__(self):
         self.api_key = settings.gemini_api_key
@@ -25,6 +29,8 @@ class GeminiClient:
                 params={"key": self.api_key},
                 json=data,
             )
+        if resp.status_code == 429:
+            raise RateLimitError("Gemini API rate limit exceeded")
         resp.raise_for_status()
         text = resp.json()["candidates"][0]["content"]["parts"][0]["text"]
         return json.loads(self._clean(text))

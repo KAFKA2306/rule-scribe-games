@@ -1,7 +1,9 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from app.routers import games
 from app.core.logger import setup_logging
+from app.core.gemini import RateLimitError
 
 setup_logging()
 
@@ -14,6 +16,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.include_router(games.router, prefix="/api", tags=["games"])
+
+
+@app.exception_handler(RateLimitError)
+async def rate_limit_handler(request: Request, exc: RateLimitError):
+    return JSONResponse(status_code=429, content={"detail": "rate_limit"})
 
 
 @app.get("/health")
