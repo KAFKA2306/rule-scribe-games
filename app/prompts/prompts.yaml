@@ -37,82 +37,11 @@ metadata_generator:
             "official_url": "string or null",
             "bgg_url": "string or null",
             "bga_url": "string or null",
-            "bgg_url": "string or null",
-            "bga_url": "string or null",
             "amazon_url": "string or null",
             "structured_data": {{
                 "keywords": [
                     {{ "term": "string", "description": "string" }}
                 ]
             }}
-        }},
-        "data_confidence": {{
-            "slug": float, "title": float, "title_ja": float, "title_en": float,
-            "summary": float, "rules_content": float,
-            "image_url": float, "min_players": float, "max_players": float,
-            "play_time": float, "min_age": float, "published_year": float,
-            "official_url": float, "bgg_url": float, "bga_url": float, "amazon_url": float,
-            "structured_data": float
-        }},
-        "issues": [
-            {{"field": "field_name", "problem": "short reason (missing/uncertain/contradictory)", "confidence": float}}
-        ]
-    }}
-    Rules:
-    - data_confidence must include every field above.
-    - **CRITICAL**: Set `data_confidence` for ALL URL fields (official_url, bgg_url, bga_url, amazon_url, image_url) to **MAXIMUM 0.5**. Leave them null if you are not 100% sure. A separate agent will fix them.
-    - issues only for fields that are missing/uncertain/contradictory; keep message under 120 chars.
-
-metadata_critic:
-  improve: |
-    Role: Board Game Data Auditor and Fixer
-    Inputs:
-      - query: "{query}"
-      - draft_json: {draft_json}
-      - data_confidence: {data_confidence}
-      - issues: {issues}
-      - context (database/search snippets): {context}
-      - fix_requests (validator feedback): {fix_requests}
-      - protected_fields (high-confidence; avoid overwriting): {protected_fields}
-
-    Mission:
-      1. Repair ONLY the fields that are missing, low-confidence (<0.7), or flagged in issues/fix_requests.
-      2. Preserve protected_fields unless you find strong contradictory evidence (explain in notes).
-      3. Enforce Japanese for summary/rules_content; keep schema identical to the draft.
-      4. For URLs: include only verifiable/official links; if unsure, use null and add an unresolved issue.
-      5. Never invent a non-existent game. If evidence is insufficient, return {{"data": null, "unresolved_issues": ["Game not found or unverifiable"]}}.
-
-    Checklist:
-      - Does slug exist and stay kebab-case?
-      - Are summary and rules_content present and Japanese?
-      - Are numeric fields integers (min_players, play_time, min_age, published_year)?
-      - Do URLs look valid and match the game title?
-
-    Output JSON only:
-    {{
-      "data": {{ ...final game object... }},
-      "changed_fields": ["field_a", "field_b"],
-      "notes": ["what was changed and why"],
-      "unresolved_issues": ["still missing/uncertain fields"]
-    }}
-
-link_resolve:
-  resolve: |
-    Role: Board Game Link Verifier
-    Target: "{title}"
-
-    Task: Find accurate, valid, and working URLs. 
-    1. official_url: Publisher or Official Site (ページが実在し、会社名がタイトルに含まれることを確認)。
-    2. amazon_url: Amazon.co.jp の商品ページを最優先。日本から見て「何かお探しですか？」などのエラーページは無効。商品ページが見つからない場合は `https://www.amazon.co.jp/s?k=<ゲームタイトル>` の検索URLを返す。
-    3. image_url: 直リンクの高解像度ボックスアート (.jpg/.png)。公式または Amazon の高解像度画像を優先。
-
-    Current Data:
-    {current_json}
-
-    Output JSON Only:
-    {{
-        "official_url": "string or null",
-        "amazon_url": "string or null",
-        "image_url": "string or null",
-        "notes": ["why each URL was accepted or null"]
+        }}
     }}
