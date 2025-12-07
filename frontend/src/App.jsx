@@ -38,6 +38,7 @@ function App() {
 
   const loadGames = async (currentOffset = 0, append = false) => {
     try {
+      setError(null)
       if (!append) setLoading(true)
       else setLoadingMore(true)
 
