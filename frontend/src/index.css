@@ -239,6 +239,11 @@ body {
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
 }
 
+h1.game-title {
+  font-size: 28px;
+  margin-bottom: 16px;
+}
+
 .game-summary {
   margin: 0 0 12px;
   font-size: 13px;
@@ -319,15 +324,17 @@ body {
   background: transparent;
   border: 1px solid var(--border);
   color: var(--text-muted);
-  width: 32px;
   height: 32px;
-  border-radius: 50%;
-  display: flex;
+  padding: 0 12px;
+  border-radius: 8px;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 4px;
   cursor: pointer;
   transition: all 0.2s;
-  font-size: 14px;
+  font-size: 13px;
+  white-space: nowrap;
 }
 
 .share-btn:hover {
@@ -684,7 +691,6 @@ body {
 }
 
 @keyframes pulse {
-
   0%,
   100% {
     opacity: 1;
