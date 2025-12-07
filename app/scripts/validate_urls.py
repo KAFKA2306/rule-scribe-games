@@ -1,6 +1,10 @@
+import sys
+from datetime import datetime, timedelta, timezone
+
 import httpx
 from dotenv import load_dotenv
-from app.core.supabase import _client, _TABLE
+
+from app.core.supabase import _TABLE, _client
 
 load_dotenv()
 
@@ -25,12 +29,12 @@ def validate_url(url: str) -> tuple[str, bool]:
     return f"http_{resp.status_code}", False
 
 
-def run():
-    result = (
-        _client.table(_TABLE)
-        .select("id,slug,title," + ",".join(_VALIDATE_FIELDS))
-        .execute()
-    )
+def run(hours: int | None = None):
+    query = _client.table(_TABLE).select("id,slug,title," + ",".join(_VALIDATE_FIELDS))
+    if hours:
+        cutoff = (datetime.now(timezone.utc) - timedelta(hours=hours)).isoformat()
+        query = query.gte("updated_at", cutoff)
+    result = query.execute()
     games = result.data
 
     errors = []
@@ -64,4 +68,8 @@ def run():
 
 
 if __name__ == "__main__":
-    run()
+    hours = None
+    if "--hours" in sys.argv:
+        idx = sys.argv.index("--hours")
+        hours = int(sys.argv[idx + 1])
+    run(hours)
