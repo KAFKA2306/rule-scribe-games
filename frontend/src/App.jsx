@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import GamePage from './pages/GamePage'
 import { supabase } from './lib/supabase'
-import LoginButton from './components/LoginButton'
+
 
 import { api } from './lib/api'
 
@@ -15,7 +15,7 @@ function App() {
   const [loadingMore, setLoadingMore] = useState(false)
   const [generating, setGenerating] = useState(false)
   const [error, setError] = useState(null)
-  const [session, setSession] = useState(null)
+  const [_session, setSession] = useState(null)
 
   useEffect(() => {
     if (!supabase) return
@@ -131,7 +131,7 @@ function App() {
       if (e.message === 'RATE_LIMIT') {
         setError('⚠️ AI生成のレート制限に達しました。数分後に再試行してください。')
       } else {
-      } else {
+
         setError(`検索に失敗しました: ${e.message}`)
       }
     } finally {
@@ -153,6 +153,11 @@ function App() {
     <div className="app-container">
       <header className="main-header">
         <div className="brand" onClick={handleClear}>
+          <img
+            src="/assets/header-icon.png"
+            alt="Meeple"
+            style={{ width: '32px', height: 'auto', marginRight: '8px' }}
+          />
           <span className="logo-icon">♜</span>
           <h1>ボドゲのミカタ</h1>
         </div>
@@ -207,9 +212,9 @@ function App() {
                   className={`game-card ${selectedSlug === game.slug ? 'active' : ''}`}
                   onClick={() => setSelectedSlug(game.slug)}
                   style={{
-                    backgroundImage: game.image_url
-                      ? `linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.8)), url(${game.image_url})`
-                      : 'none',
+                    backgroundImage: `linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.8)), url(/assets/games/${game.slug}.png)${
+                      game.image_url ? `, url(${game.image_url})` : ''
+                    }`,
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',
                   }}
@@ -267,7 +272,14 @@ function App() {
         </section>
       </main>
 
-      <footer className="main-footer">© {new Date().getFullYear()} ボドゲのミカタ</footer>
+      <footer className="main-footer" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
+        <span>© {new Date().getFullYear()} ボドゲのミカタ</span>
+        <img
+          src="/assets/footer-logo.jpg"
+          alt="Bodoge no Mikata Logo"
+          style={{ width: '80px', height: 'auto', borderRadius: '8px', opacity: 0.8 }}
+        />
+      </footer>
     </div>
   )
 }
