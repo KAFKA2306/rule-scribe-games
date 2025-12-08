@@ -16,6 +16,7 @@ export default function GamePage({ slug: propSlug }) {
   const [game, setGame] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [heroSrc, setHeroSrc] = useState(null)
   const [isEditOpen, setIsEditOpen] = useState(false)
 
   const isStandalone = !propSlug
@@ -44,6 +45,12 @@ export default function GamePage({ slug: propSlug }) {
     }
 
     fetchGame()
+  }, [slug])
+
+  useEffect(() => {
+    if (slug) {
+      setHeroSrc(`/assets/games/${slug}.png`)
+    }
   }, [slug])
 
   const handleSave = async (updatedData) => {
@@ -136,12 +143,19 @@ export default function GamePage({ slug: propSlug }) {
         <meta name="twitter:description" content={description} />
         <meta name="twitter:image" content={imageUrl} />
       </Helmet>
-      {game.image_url && (
+      {(heroSrc || game.image_url) && (
         <div className="game-hero-image">
           <img
-            src={game.image_url}
+            src={heroSrc || game.image_url}
             alt={title}
-            onError={(e) => (e.target.style.display = 'none')}
+            onError={(e) => {
+              if (heroSrc && game.image_url && heroSrc !== game.image_url) {
+                setHeroSrc(game.image_url)
+              } else {
+                e.target.style.display = 'none'
+                e.target.parentElement.style.display = 'none'
+              }
+            }}
           />
         </div>
       )}
@@ -290,10 +304,36 @@ export default function GamePage({ slug: propSlug }) {
   if (isStandalone) {
     return (
       <div className="app-container standalone">
+        <header className="main-header">
+          <div className="brand">
+            <a href="/" style={{ display: 'flex', alignItems: 'center', gap: '12px', textDecoration: 'none' }}>
+              <img
+                src="/assets/header-icon.png"
+                alt="Meeple"
+                style={{ width: '32px', height: 'auto', marginRight: '-4px' }}
+              />
+              <span className="logo-icon">♜</span>
+              <h1>ボドゲのミカタ</h1>
+            </a>
+          </div>
+          <nav style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <a href="/data" className="nav-link">
+              📊 データ
+            </a>
+          </nav>
+        </header>
+
         <main className="main-layout single-col">
           <div className="game-detail-pane">{content}</div>
         </main>
-        <footer className="main-footer">© {new Date().getFullYear()} ボドゲのミカタ</footer>
+        <footer className="main-footer" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
+          <span>© {new Date().getFullYear()} ボドゲのミカタ</span>
+          <img
+            src="/assets/footer-logo.jpg"
+            alt="Bodoge no Mikata Logo"
+            style={{ width: '80px', height: 'auto', borderRadius: '8px', opacity: 0.8 }}
+          />
+        </footer>
       </div>
     )
   }
