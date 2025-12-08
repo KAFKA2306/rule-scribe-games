@@ -4,9 +4,9 @@ export const EmptyMeeple = ({ query }) => {
   return (
     <div className="mascot-state">
       <img
-        src="/assets/header-icon.png"
+        src="/assets/empty-meeple.png"
         alt="Empty Meeple"
-        style={{ width: '80px', height: 'auto', marginBottom: '16px', opacity: 0.7, filter: 'grayscale(50%)' }}
+        style={{ width: '80px', height: 'auto', marginBottom: '16px', opacity: 0.9 }}
       />
       <p className="mascot-text">
         「{query}」は見つかりませんでした...

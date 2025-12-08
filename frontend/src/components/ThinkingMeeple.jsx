@@ -6,7 +6,7 @@ export const ThinkingMeeple = ({ text = "ルールブックを読んでいます
     <div className="mascot-state">
       <div className="mascot-image-container">
         <img
-          src="/assets/header-icon.png"
+          src="/assets/thinking-meeple.png"
           alt="Thinking Meeple"
           className="mascot-bounce"
           style={{ width: '80px', height: 'auto', marginBottom: '16px' }}
