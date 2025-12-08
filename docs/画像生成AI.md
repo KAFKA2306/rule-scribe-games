@@ -163,3 +163,15 @@ game = GameDetail(**carcassonne_data)
 # prompt = agent.generate(game)
 # print(prompt)
 ```
+
+### 3. 画像のデプロイ自動化
+
+生成された画像は以下のフローで自動デプロイされます。
+
+1.  **ローカル保存**: 生成画像は `frontend/public/assets/games/{slug}.png` に保存されます。
+2.  **Supabase Storageへのアップロード**: `scripts/deploy_images.py` スクリプトがローカルの画像をスキャンし、Supabaseの `game-images` バケット（public）にアップロードします。
+3.  **データベース更新**: 同スクリプトが `games` テーブルの `image_url` カラムを、アップロードされた画像の公開URLで更新します。
+
+```bash
+uv run python scripts/deploy_images.py
+```

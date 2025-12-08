@@ -27,6 +27,8 @@ AI-Powered board game rule wiki & summarizer — 「世界中のボードゲー�
 - Frontend: React 18 + Vite + Vanilla CSS variables (`frontend/src`).
 - Backend: FastAPI (`app/main.py`) with async Supabase client and Gemini HTTP client (`app/core/gemini.py`).
 - Database: Supabase Postgres `games` table (schema in `backend/init_db.sql` and master guide).
+- Storage: Supabase Storage `game-images` bucket (public).
+- Assets: Local image support (`frontend/public/assets/games/`) with automated deployment to Supabase.
 - Deployment: Vercel serverless (Python), wide-open CORS for the app.
 
 ## Prerequisites
@@ -58,6 +60,7 @@ Defaults in `app/core/settings.py`; missing keys will break requests.
 - `task dev:backend` / `task dev:frontend` — run individually.
 - `task build` → `task preview` — production build & preview frontend.
 - `task lint` — Ruff + Prettier + ESLint (`lint:backend`, `lint:frontend` available).
+- `uv run python scripts/deploy_images.py` — Upload local game images to Supabase Storage and update DB.
 
 ## API Surface
 - `GET /api/health` — liveness.
