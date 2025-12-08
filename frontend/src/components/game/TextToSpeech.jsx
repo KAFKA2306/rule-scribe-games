@@ -1,8 +1,16 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 export const TextToSpeech = ({ text }) => {
   const [speaking, setSpeaking] = useState(false)
   const [supported] = useState(() => typeof window !== 'undefined' && 'speechSynthesis' in window)
+
+  useEffect(() => {
+    return () => {
+      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+        window.speechSynthesis.cancel()
+      }
+    }
+  }, [])
 
   const handleSpeak = () => {
     if (!supported) return

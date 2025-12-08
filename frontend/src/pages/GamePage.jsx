@@ -121,6 +121,24 @@ export default function GamePage({ slug: propSlug }) {
     return <p className="no-rules">ルール情報がありません</p>
   }
 
+  const speechText = (() => {
+    let text = `${title}。`
+    if (game.summary) text += `${game.summary}。`
+    else if (game.description) text += `${game.description}。`
+
+    if (isStringRules) {
+      // Simple markdown stripping for speech
+      const cleanRules = rules
+        .replace(/[#*`_~]/g, '') // Remove formatting chars
+        .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // Keep link text
+        .replace(/!\[([^\]]*)\]\([^)]+\)/g, '') // Remove images
+        .replace(/^\s*[-+]\s+/gm, '') // Remove list bullets
+        .replace(/\n+/g, ' ') // Collapse newlines
+      text += ` ルール: ${cleanRules}`
+    }
+    return text
+  })()
+
   const content = (
     <div className="game-detail-content">
       <Helmet>
@@ -128,7 +146,7 @@ export default function GamePage({ slug: propSlug }) {
         <meta name="description" content={description} />
         <link rel="canonical" href={gameUrl} />
 
-        { }
+        {/* Open Graph / Facebook */}
         <meta property="og:type" content="article" />
         <meta property="og:url" content={gameUrl} />
         <meta property="og:title" content={pageTitle} />
@@ -136,7 +154,7 @@ export default function GamePage({ slug: propSlug }) {
         <meta property="og:image" content={imageUrl} />
         <meta property="og:site_name" content="ボドゲのミカタ" />
 
-        { }
+        {/* Twitter */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:url" content={gameUrl} />
         <meta name="twitter:title" content={pageTitle} />
@@ -166,7 +184,7 @@ export default function GamePage({ slug: propSlug }) {
           className="header-actions"
           style={{ display: 'flex', alignItems: 'center', gap: '12px' }}
         >
-          <TextToSpeech text={description} />
+          <TextToSpeech text={speechText} />
           <TwitterShareButton slug={slug} title={title} />
           <ShareButton slug={slug} />
           <button

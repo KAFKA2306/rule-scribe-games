@@ -675,6 +675,49 @@ h1.game-title {
   max-width: 400px;
 }
 
+/* Mascot State Components */
+.mascot-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  text-align: center;
+  color: var(--text-muted);
+  width: 100%;
+}
+
+.mascot-bounce {
+  animation: bounce 2s infinite ease-in-out;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.mascot-text {
+  font-size: 1.1rem;
+  line-height: 1.6;
+  font-weight: 500;
+  color: var(--text-main);
+}
+
+.spinner-dots span {
+  animation: blink 1.4s infinite both;
+  font-size: 1.5rem;
+  margin: 0 2px;
+}
+
+.spinner-dots span:nth-child(2) { animation-delay: 0.2s; }
+.spinner-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes blink {
+  0% { opacity: 0.2; }
+  20% { opacity: 1; }
+  100% { opacity: 0.2; }
+}
+
 @keyframes slide-up {
   from {
     opacity: 0;
