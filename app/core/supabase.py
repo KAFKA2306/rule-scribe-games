@@ -10,10 +10,14 @@ _TABLE = "games"
 
 async def search(query: str) -> List[Dict[str, Any]]:
     def _q():
+        # Escape double quotes in the query to prevent breaking the quoted string
+        safe_query = query.replace('"', '\\"')
+        # Wrap in double quotes to handle special characters (like commas) safely
+        term = f"*{safe_query}*"
         return (
             _client.table(_TABLE)
             .select("*")
-            .or_(f"title.ilike.*{query}*,description.ilike.*{query}*")
+            .or_(f'title.ilike."{term}",description.ilike."{term}"')
             .execute()
             .data
         )
@@ -21,7 +25,15 @@ async def search(query: str) -> List[Dict[str, Any]]:
     return await anyio.to_thread.run_sync(_q)
 
 
-_URL_FIELDS = ["bgg_url", "bga_url", "official_url", "image_url", "amazon_url", "audio_url", "source_url"]
+_URL_FIELDS = [
+    "bgg_url",
+    "bga_url",
+    "official_url",
+    "image_url",
+    "amazon_url",
+    "audio_url",
+    "source_url",
+]
 
 
 async def upsert(data: Dict[str, Any]) -> List[Dict[str, Any]]:

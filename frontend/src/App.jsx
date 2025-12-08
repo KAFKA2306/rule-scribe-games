@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { Helmet } from 'react-helmet-async'
 import GamePage from './pages/GamePage'
+import { ThinkingMeeple } from './components/ThinkingMeeple'
+import { EmptyMeeple } from './components/EmptyMeeple'
 import { supabase } from './lib/supabase'
 
 
@@ -189,9 +192,8 @@ function App() {
 
       {error && <div className="error-banner">{error}</div>}
       {generating && (
-        <div className="generating-banner">
-          <div className="spinner"></div>
-          <span>🎲 AIがルールブックを読破中... (約30〜60秒)</span>
+        <div style={{ marginBottom: '24px', background: 'var(--card-bg)', border: '1px solid var(--primary)', borderRadius: '12px', padding: '16px' }}>
+          <ThinkingMeeple text="AIがルールブックを読破中... (30〜60秒ほどお待ちください)" />
         </div>
       )}
 
@@ -204,6 +206,11 @@ function App() {
           </div>
 
           <div className="game-grid">
+            {loading && (
+              <div style={{ display: 'flex', justifyContent: 'center', padding: '48px', width: '100%' }}>
+                <ThinkingMeeple />
+              </div>
+            )}
             {games.map((game) => {
               const title = game.title_ja || game.title || game.name || 'Untitled'
               return (
@@ -231,9 +238,7 @@ function App() {
               )
             })}
 
-            {games.length === 0 && !loading && (
-              <div className="empty-state">ゲームが見つかりませんでした。</div>
-            )}
+            {games.length === 0 && !loading && <EmptyMeeple query={query} />}
 
             {hasMore && !query && !loading && (
               <div
