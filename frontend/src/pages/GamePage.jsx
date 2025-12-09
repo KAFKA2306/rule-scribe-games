@@ -92,7 +92,11 @@ export default function GamePage({ slug: propSlug }) {
     game.description ||
     `「${title}」のルールをAIが日本語で瞬時に要約。セットアップから勝利条件まで、インスト時間を短縮しながらサクッと確認できます。`
   const gameUrl = `https://bodoge-no-mikata.vercel.app/games/${slug}`
-  const imageUrl = game.image_url || 'https://bodoge-no-mikata.vercel.app/og-image.png'
+  const imageUrl = (() => {
+    if (!game.image_url) return 'https://bodoge-no-mikata.vercel.app/og-image.png'
+    if (game.image_url.startsWith('http')) return game.image_url
+    return `https://bodoge-no-mikata.vercel.app${game.image_url}`
+  })()
 
   const renderRules = () => {
     if (isStringRules) {
