@@ -14,7 +14,7 @@ test('should allow manual editing of game details', async ({ page }) => {
   await page.click('button[title="編集"]')
 
   const uniqueTitle = `Updated Title ${Date.now()}`
-  
+
   // 3. Fill in new data
   await page.fill('input[name="title"]', uniqueTitle)
   await page.fill('input[name="title_ja"]', uniqueTitle)
@@ -25,10 +25,10 @@ test('should allow manual editing of game details', async ({ page }) => {
 
   // 5. Verify modal closes
   await expect(page.locator('.modal-overlay')).not.toBeVisible()
-  
+
   // Verify UI update immediately
   await expect(page.locator('h1.game-title')).toHaveText(uniqueTitle)
-  
+
   // 6. Verify persistence by reloading
   // Note: Changing title changes slug, so reload on old URL leads to 404.
   // We rely on the immediate UI update which confirms backend returned the updated data.

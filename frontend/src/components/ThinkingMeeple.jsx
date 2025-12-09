@@ -1,7 +1,7 @@
 import React from 'react'
 import '../index.css'
 
-export const ThinkingMeeple = ({ text = "ルールブックを読んでいます..." }) => {
+export const ThinkingMeeple = ({ text = 'ルールブックを読んでいます...' }) => {
   return (
     <div className="mascot-state">
       <div className="mascot-image-container">
@@ -14,7 +14,9 @@ export const ThinkingMeeple = ({ text = "ルールブックを読んでいます
       </div>
       <p className="mascot-text">{text}</p>
       <div className="spinner-dots">
-        <span>.</span><span>.</span><span>.</span>
+        <span>.</span>
+        <span>.</span>
+        <span>.</span>
       </div>
     </div>
   )

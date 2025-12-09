@@ -23,8 +23,8 @@ const PUBLIC_URL = 'https://bodoge-no-mikata.vercel.app'
 async function generateSitemap() {
   if (!SUPABASE_URL || !SUPABASE_KEY) {
     console.error('Error: Supabase environment variables are missing.')
-    // In CI/Build environments, we might want to fallback or fail. 
-    // For now, let's fail to ensure we know something is wrong, 
+    // In CI/Build environments, we might want to fallback or fail.
+    // For now, let's fail to ensure we know something is wrong,
     // unless it's strictly build-time without envs (which shouldn't happen for sitemap gen).
     process.exit(1)
   }
@@ -38,7 +38,7 @@ async function generateSitemap() {
   const { data: games, error } = await supabase
     .from('games')
     .select('slug, updated_at, title, title_ja, image_url')
-    
+
   if (error) {
     console.error('Error fetching games:', error)
     process.exit(1)
@@ -62,8 +62,8 @@ async function generateSitemap() {
   </url>
 ${games
   .map((game) => {
-    const lastMod = game.updated_at 
-      ? game.updated_at.split('T')[0] 
+    const lastMod = game.updated_at
+      ? game.updated_at.split('T')[0]
       : new Date().toISOString().split('T')[0]
     const title = game.title_ja || game.title || game.slug
     const imageUrl = game.image_url || `${PUBLIC_URL}/assets/games/${game.slug}.png`
