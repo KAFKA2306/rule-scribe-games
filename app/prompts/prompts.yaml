@@ -18,6 +18,7 @@ metadata_generator:
        - summary: Catchy short summary in Japanese (1-2 sentences).
     3. URLS: Only include URLs if they are verified strong relation with the game title and working.
     4. KEYWORDS: Generate 5-10 relevant Japanese keywords (e.g., genre, mechanic, theme). Format: {{ "term": "Keyword", "description": "Why it fits" }}.
+    5. CLEANLINESS: Do not create games with temporary names (e.g., "Updated Title", "Test Game"). All output must be final, production-ready content based on real games.
 
     # Output JSON Schema
     {{

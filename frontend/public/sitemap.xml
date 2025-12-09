@@ -123,6 +123,16 @@
     </image:image>
   </url>
   <url>
+    <loc>https://bodoge-no-mikata.vercel.app/games/splendor</loc>
+    <lastmod>2025-12-09</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <image:image>
+      <image:loc>https://wazgoplarevypdfbgeau.supabase.co/storage/v1/object/public/game-images/splendor.png</image:loc>
+      <image:title>宝石の煌き</image:title>
+    </image:image>
+  </url>
+  <url>
     <loc>https://bodoge-no-mikata.vercel.app/games/l-l-a-m-a</loc>
     <lastmod>2025-12-08</lastmod>
     <changefreq>weekly</changefreq>
@@ -130,16 +140,6 @@
     <image:image>
       <image:loc>https://wazgoplarevypdfbgeau.supabase.co/storage/v1/object/public/game-images/l-l-a-m-a.png</image:loc>
       <image:title>ラマ</image:title>
-    </image:image>
-  </url>
-  <url>
-    <loc>https://bodoge-no-mikata.vercel.app/games/splendor</loc>
-    <lastmod>2025-12-08</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-    <image:image>
-      <image:loc>https://wazgoplarevypdfbgeau.supabase.co/storage/v1/object/public/game-images/splendor.png</image:loc>
-      <image:title>宝石の煌き</image:title>
     </image:image>
   </url>
   <url>
@@ -173,16 +173,6 @@
     </image:image>
   </url>
   <url>
-    <loc>https://bodoge-no-mikata.vercel.app/games/updated-title</loc>
-    <lastmod>2025-12-09</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-    <image:image>
-      <image:loc>https://bodoge-no-mikata.vercel.app/assets/games/updated-title.png</image:loc>
-      <image:title>テスト編集ゲーム</image:title>
-    </image:image>
-  </url>
-  <url>
     <loc>https://bodoge-no-mikata.vercel.app/games/dominion</loc>
     <lastmod>2025-12-08</lastmod>
     <changefreq>weekly</changefreq>
@@ -213,16 +203,6 @@
     </image:image>
   </url>
   <url>
-    <loc>https://bodoge-no-mikata.vercel.app/games/updated-title-1765250070993</loc>
-    <lastmod>2025-12-09</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-    <image:image>
-      <image:loc>https://bodoge-no-mikata.vercel.app/assets/games/updated-title-1765250070993.png</image:loc>
-      <image:title>Updated Title 1765250070993</image:title>
-    </image:image>
-  </url>
-  <url>
     <loc>https://bodoge-no-mikata.vercel.app/games/trick-meister</loc>
     <lastmod>2025-12-08</lastmod>
     <changefreq>weekly</changefreq>
@@ -243,13 +223,13 @@
     </image:image>
   </url>
   <url>
-    <loc>https://bodoge-no-mikata.vercel.app/games/updated-title-1765250115500</loc>
+    <loc>https://bodoge-no-mikata.vercel.app/games/heart-of-crown</loc>
     <lastmod>2025-12-09</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
     <image:image>
-      <image:loc>https://bodoge-no-mikata.vercel.app/assets/games/updated-title-1765250115500.png</image:loc>
-      <image:title>Updated Title 1765250115500</image:title>
+      <image:loc>https://wazgoplarevypdfbgeau.supabase.co/storage/v1/object/public/game-images/heart-of-crown.png</image:loc>
+      <image:title>ハートオブクラウン ～Heart of Crown～ 2nd Edition</image:title>
     </image:image>
   </url>
   <url>
@@ -283,16 +263,6 @@
     </image:image>
   </url>
   <url>
-    <loc>https://bodoge-no-mikata.vercel.app/games/heart-of-crown</loc>
-    <lastmod>2025-12-09</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-    <image:image>
-      <image:loc>https://wazgoplarevypdfbgeau.supabase.co/storage/v1/object/public/game-images/heart-of-crown.png</image:loc>
-      <image:title>ハートオブクラウン ～Heart of Crown～ 2nd Edition</image:title>
-    </image:image>
-  </url>
-  <url>
     <loc>https://bodoge-no-mikata.vercel.app/games/heart-of-crown-2nd-edition</loc>
     <lastmod>2025-12-08</lastmod>
     <changefreq>weekly</changefreq>
@@ -323,6 +293,16 @@
     </image:image>
   </url>
   <url>
+    <loc>https://bodoge-no-mikata.vercel.app/games/azul-stained-glass-of-sintra</loc>
+    <lastmod>2025-12-09</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <image:image>
+      <image:loc>https://wazgoplarevypdfbgeau.supabase.co/storage/v1/object/public/game-images/azul-stained-glass-of-sintra.png</image:loc>
+      <image:title>アズール：シントラのステンドグラス</image:title>
+    </image:image>
+  </url>
+  <url>
     <loc>https://bodoge-no-mikata.vercel.app/games/agricola</loc>
     <lastmod>2025-12-08</lastmod>
     <changefreq>weekly</changefreq>
@@ -330,16 +310,6 @@
     <image:image>
       <image:loc>https://wazgoplarevypdfbgeau.supabase.co/storage/v1/object/public/game-images/agricola.png</image:loc>
       <image:title>Agricola (アグリコラ)</image:title>
-    </image:image>
-  </url>
-  <url>
-    <loc>https://bodoge-no-mikata.vercel.app/games/azul-stained-glass-of-sintra</loc>
-    <lastmod>2025-12-08</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-    <image:image>
-      <image:loc>https://wazgoplarevypdfbgeau.supabase.co/storage/v1/object/public/game-images/azul-stained-glass-of-sintra.png</image:loc>
-      <image:title>アズール：シントラのステンドグラス</image:title>
     </image:image>
   </url>
   <url>
@@ -414,7 +384,7 @@
   </url>
   <url>
     <loc>https://bodoge-no-mikata.vercel.app/games/everdell</loc>
-    <lastmod>2025-12-08</lastmod>
+    <lastmod>2025-12-09</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
     <image:image>

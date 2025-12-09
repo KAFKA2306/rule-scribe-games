@@ -1,12 +1,12 @@
 import React from 'react'
 import '../index.css'
 
-export const ThinkingMeeple = ({ text = 'ルールブックを読んでいます...' }) => {
+export const ThinkingMeeple = ({ text = 'ルールブックを読んでいます...', imageSrc = '/assets/thinking-meeple.png' }) => {
   return (
     <div className="mascot-state">
       <div className="mascot-image-container">
         <img
-          src="/assets/thinking-meeple.png"
+          src={imageSrc}
           alt="Thinking Meeple"
           className="mascot-bounce"
           style={{ width: '80px', height: 'auto', marginBottom: '16px' }}
