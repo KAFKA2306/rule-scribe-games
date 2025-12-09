@@ -53,6 +53,16 @@
     </image:image>
   </url>
   <url>
+    <loc>https://bodoge-no-mikata.vercel.app/games/little-town</loc>
+    <lastmod>2025-12-09</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <image:image>
+      <image:loc>https://bodoge-no-mikata.vercel.app/assets/games/little-town.png</image:loc>
+      <image:title>リトルタウンビルダーズ</image:title>
+    </image:image>
+  </url>
+  <url>
     <loc>https://bodoge-no-mikata.vercel.app/games/uno</loc>
     <lastmod>2025-12-08</lastmod>
     <changefreq>weekly</changefreq>
@@ -60,6 +70,16 @@
     <image:image>
       <image:loc>https://wazgoplarevypdfbgeau.supabase.co/storage/v1/object/public/game-images/uno.png</image:loc>
       <image:title>ウノ</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://bodoge-no-mikata.vercel.app/games/scout</loc>
+    <lastmod>2025-12-09</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <image:image>
+      <image:loc>https://bodoge-no-mikata.vercel.app/assets/games/scout.png</image:loc>
+      <image:title>スカウト！</image:title>
     </image:image>
   </url>
   <url>
