@@ -27,3 +27,12 @@ async def rate_limit_handler(request: Request, exc: RateLimitError):
 @app.get("/api/health")
 def health_check():
     return {"status": "ok"}
+
+@app.get("/api/debug/env")
+def debug_env():
+    import os
+    return {
+        "gemini_key_present": bool(os.getenv("GEMINI_API_KEY")),
+        "supabase_url_present": bool(os.getenv("NEXT_PUBLIC_SUPABASE_URL") or os.getenv("SUPABASE_URL")),
+        "supabase_key_present": bool(os.getenv("SUPABASE_SERVICE_ROLE_KEY") or os.getenv("SUPABASE_KEY")),
+    }
