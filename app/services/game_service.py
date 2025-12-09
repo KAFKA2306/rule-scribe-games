@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 from app.prompts.prompts import PROMPTS
 
 from fastapi import HTTPException
+import httpx
 from app.core.gemini import GeminiClient
 from app.core import supabase
 from app.utils.slugify import slugify
@@ -39,7 +40,13 @@ async def generate_metadata(
     prompt = _load_prompt("metadata_generator.generate").format(
         query=query, context=context
     )
-    result = await _gemini.generate_structured_json(prompt)
+    try:
+        result = await _gemini.generate_structured_json(prompt)
+    except httpx.HTTPStatusError as e:
+        raise HTTPException(
+            status_code=e.response.status_code,
+            detail=f"Upstream AI Error: {e.response.text}"
+        )
 
     data = result.get("data", result) if isinstance(result, dict) else {}
 
