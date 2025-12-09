@@ -328,7 +328,10 @@ export default function GamePage({ slug: propSlug }) {
       <div className="app-container standalone">
         <header className="main-header">
           <div className="brand">
-            <a href="/" style={{ display: 'flex', alignItems: 'center', gap: '12px', textDecoration: 'none' }}>
+            <a
+              href="/"
+              style={{ display: 'flex', alignItems: 'center', gap: '12px', textDecoration: 'none' }}
+            >
               <img
                 src="/assets/header-icon.png"
                 alt="Meeple"
@@ -348,7 +351,10 @@ export default function GamePage({ slug: propSlug }) {
         <main className="main-layout single-col">
           <div className="game-detail-pane">{content}</div>
         </main>
-        <footer className="main-footer" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
+        <footer
+          className="main-footer"
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}
+        >
           <span>© {new Date().getFullYear()} ボドゲのミカタ</span>
           <img
             src="/assets/footer-logo.jpg"

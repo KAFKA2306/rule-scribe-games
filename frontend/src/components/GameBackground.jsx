@@ -1,25 +1,25 @@
 import { useMemo } from 'react'
 
 export const GameBackground = ({ games }) => {
-  // Shuffle games to make the background look more interesting/random
-  // Memoize so it doesn't reshuffle on every render
+  // Use a deterministic shuffle based on content so it's pure (SSR safe) and stable
   const shuffledGames = useMemo(() => {
     if (!games || games.length === 0) return []
-    // Create a copy and shuffle
+
     const list = [...games]
-    // If we have few games, duplicate them to fill the screen
     if (list.length < 50) {
       while (list.length < 50) {
         list.push(...games)
       }
     }
-    
-    // Simple shuffle
-    for (let i = list.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1))
-      ;[list[i], list[j]] = [list[j], list[i]]
-    }
-    return list.slice(0, 80) // Limit to a reasonable number to cover screen
+
+    // Sort pseudo-randomly based on string hash
+    list.sort((a, b) => {
+      const hashA = a.slug.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
+      const hashB = b.slug.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
+      return (hashA % 100) - (hashB % 100)
+    })
+
+    return list.slice(0, 80)
   }, [games])
 
   if (!games || games.length === 0) return null
@@ -28,15 +28,12 @@ export const GameBackground = ({ games }) => {
     <div className="game-background-container">
       <div className="game-background-grid">
         {shuffledGames.map((game, index) => (
-          <div 
-            key={`${game.slug}-${index}`} 
-            className="bg-game-tile"
-          >
-            <img 
+          <div key={`${game.slug}-${index}`} className="bg-game-tile">
+            <img
               src={`/assets/games/${game.slug}.png`}
               alt=""
               loading="lazy"
-              onError={(e) => e.target.style.opacity = 0}
+              onError={(e) => (e.target.style.opacity = 0)}
             />
           </div>
         ))}

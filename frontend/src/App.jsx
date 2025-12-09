@@ -1,11 +1,10 @@
+import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Helmet } from 'react-helmet-async'
 import GamePage from './pages/GamePage'
 import { ThinkingMeeple } from './components/ThinkingMeeple'
 import { EmptyMeeple } from './components/EmptyMeeple'
 import { GameBackground } from './components/GameBackground'
 import { supabase } from './lib/supabase'
-
 
 import { api } from './lib/api'
 
@@ -134,7 +133,6 @@ function App() {
       if (e.message === 'RATE_LIMIT') {
         setError('⚠️ AI生成のレート制限に達しました。数分後に再試行してください。')
       } else {
-
         setError(`検索に失敗しました: ${e.message}`)
       }
     } finally {
@@ -193,7 +191,15 @@ function App() {
 
       {error && <div className="error-banner">{error}</div>}
       {generating && (
-        <div style={{ marginBottom: '24px', background: 'var(--card-bg)', border: '1px solid var(--primary)', borderRadius: '12px', padding: '16px' }}>
+        <div
+          style={{
+            marginBottom: '24px',
+            background: 'var(--card-bg)',
+            border: '1px solid var(--primary)',
+            borderRadius: '12px',
+            padding: '16px',
+          }}
+        >
           <ThinkingMeeple text="AIがルールブックを読破中... (30〜60秒ほどお待ちください)" />
         </div>
       )}
@@ -208,7 +214,14 @@ function App() {
 
           <div className="game-grid">
             {loading && (
-              <div style={{ display: 'flex', justifyContent: 'center', padding: '48px', width: '100%' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  padding: '48px',
+                  width: '100%',
+                }}
+              >
                 <ThinkingMeeple />
               </div>
             )}
@@ -278,7 +291,10 @@ function App() {
         </section>
       </main>
 
-      <footer className="main-footer" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
+      <footer
+        className="main-footer"
+        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}
+      >
         <span>© {new Date().getFullYear()} ボドゲのミカタ</span>
         <img
           src="/assets/footer-logo.jpg"
