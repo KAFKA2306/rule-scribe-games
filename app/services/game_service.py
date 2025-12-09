@@ -2,14 +2,15 @@ from typing import List, Dict, Any, Optional
 from datetime import datetime, timezone
 from app.prompts.prompts import PROMPTS
 
+
 from fastapi import HTTPException
-import httpx
 from app.core.gemini import GeminiClient
 from app.core import supabase
 from app.utils.slugify import slugify
 
 _gemini = GeminiClient()
 _REQUIRED = ["title", "summary", "rules_content"]
+
 
 def _load_prompt(key: str) -> str:
     data = PROMPTS
@@ -40,18 +41,7 @@ async def generate_metadata(
     prompt = _load_prompt("metadata_generator.generate").format(
         query=query, context=context
     )
-    try:
-        result = await _gemini.generate_structured_json(prompt)
-    except httpx.HTTPStatusError as e:
-        raise HTTPException(
-            status_code=e.response.status_code,
-            detail=f"Upstream AI Error: {e.response.text}"
-        )
-    except httpx.TimeoutException:
-        raise HTTPException(
-            status_code=504,
-            detail="Upstream AI Timeout: The request to Gemini took too long."
-        )
+    result = await _gemini.generate_structured_json(prompt)
 
     data = result.get("data", result) if isinstance(result, dict) else {}
 

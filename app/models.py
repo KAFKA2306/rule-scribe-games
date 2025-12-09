@@ -50,6 +50,8 @@ class GameUpdate(BaseSchema):
     image_url: Optional[str] = None
     official_url: Optional[str] = None
     bgg_url: Optional[str] = None
+    structured_data: Optional[Dict[str, Any]] = None
+    rules_content: Optional[str] = None
 
 
 SearchResult = GameDetail
