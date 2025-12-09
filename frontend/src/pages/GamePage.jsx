@@ -83,7 +83,7 @@ export default function GamePage({ slug: propSlug }) {
       <div className="loading-container" style={{ padding: '48px', display: 'flex', justifyContent: 'center' }}>
         <ThinkingMeeple
           text="ミープル君がルールブックを読んでいます... 少々お待ちください"
-          imageSrc="/assets/reading-meeple.png"
+          imageSrc="/assets/thinking-meeple.png"
         />
       </div>
     )
