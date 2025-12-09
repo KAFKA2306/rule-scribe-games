@@ -3,14 +3,24 @@ import { useState, useEffect } from 'react'
 export default function EditGameModal({ game, isOpen, onClose, onSave }) {
   const [formData, setFormData] = useState({})
   const [saving, setSaving] = useState(false)
+  const [newKeyword, setNewKeyword] = useState({ term: '', description: '' })
 
   useEffect(() => {
     if (game) {
+      // Normalize structured_data to ensure it's an object with keywords array
+      let structuredData = game.structured_data
+      if (!structuredData || Array.isArray(structuredData)) {
+        structuredData = { keywords: [] }
+      } else if (!structuredData.keywords) {
+        structuredData.keywords = []
+      }
+
       setFormData({
         title: game.title || '',
         title_ja: game.title_ja || '',
         description: game.description || '',
         summary: game.summary || '',
+        rules_content: game.rules_content || '',
         min_players: game.min_players || '',
         max_players: game.max_players || '',
         play_time: game.play_time || '',
@@ -19,6 +29,7 @@ export default function EditGameModal({ game, isOpen, onClose, onSave }) {
         image_url: game.image_url || '',
         official_url: game.official_url || '',
         bgg_url: game.bgg_url || '',
+        structured_data: structuredData,
       })
     }
   }, [game])
@@ -26,6 +37,29 @@ export default function EditGameModal({ game, isOpen, onClose, onSave }) {
   const handleChange = (e) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
+  }
+
+  const handleAddKeyword = () => {
+    if (!newKeyword.term) return
+    setFormData((prev) => ({
+      ...prev,
+      structured_data: {
+        ...prev.structured_data,
+        keywords: [...(prev.structured_data?.keywords || []), newKeyword],
+      },
+    }))
+    setNewKeyword({ term: '', description: '' })
+  }
+
+  const handleRemoveKeyword = (index) => {
+    setFormData((prev) => {
+      const keywords = [...(prev.structured_data?.keywords || [])]
+      keywords.splice(index, 1)
+      return {
+        ...prev,
+        structured_data: { ...prev.structured_data, keywords },
+      }
+    })
   }
 
   const handleSubmit = async (e) => {
@@ -137,6 +171,73 @@ export default function EditGameModal({ game, isOpen, onClose, onSave }) {
               onChange={handleChange}
               rows={5}
             />
+          </div>
+
+          <div className="form-group">
+            <label>ルール詳細 (Rules Content Markdown)</label>
+            <textarea
+              name="rules_content"
+              value={formData.rules_content}
+              onChange={handleChange}
+              rows={8}
+            />
+          </div>
+
+          <div className="form-group">
+            <label>キーワード (Keywords)</label>
+            <div style={{ marginBottom: '10px' }}>
+              {(formData.structured_data?.keywords || []).map((k, i) => (
+                <div
+                  key={i}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    marginBottom: '5px',
+                  }}
+                >
+                  <input
+                    readOnly
+                    value={k.term}
+                    style={{ width: '120px', background: '#f5f5f5' }}
+                  />
+                  <input
+                    readOnly
+                    value={k.description}
+                    style={{ flex: 1, background: '#f5f5f5' }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveKeyword(i)}
+                    style={{ color: 'red', border: 'none', background: 'none', cursor: 'pointer' }}
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <input
+                placeholder="用語 (例: デッキ構築)"
+                value={newKeyword.term}
+                onChange={(e) => setNewKeyword({ ...newKeyword, term: e.target.value })}
+                style={{ width: '120px' }}
+              />
+              <input
+                placeholder="説明"
+                value={newKeyword.description}
+                onChange={(e) => setNewKeyword({ ...newKeyword, description: e.target.value })}
+                style={{ flex: 1 }}
+              />
+              <button
+                type="button"
+                onClick={handleAddKeyword}
+                className="btn-secondary"
+                style={{ padding: '0 15px' }}
+              >
+                追加
+              </button>
+            </div>
           </div>
 
           <div className="form-group">
