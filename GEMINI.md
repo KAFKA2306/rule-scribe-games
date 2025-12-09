@@ -1,3 +1,5 @@
 @AGENTS.md
 @.serena/memories/*.md
 @README.md
+
+WE MUST ALWAYS USE GEMINI-2.5-FLASH IN ALL TIME AT ANYWHERE.

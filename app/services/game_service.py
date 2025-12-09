@@ -41,9 +41,6 @@ async def generate_metadata(
     )
     result = await _gemini.generate_structured_json(prompt)
 
-    if isinstance(result, dict) and "error" in result:
-        raise RuntimeError(f"Gemini error: {result['error']}")
-
     data = result.get("data", result) if isinstance(result, dict) else {}
 
     _validate(data)
