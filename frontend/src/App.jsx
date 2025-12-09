@@ -175,7 +175,7 @@ function App() {
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="ボードゲーム名を入れてね。リストになければAIが調べてまとめるよ！"
+            placeholder="ボードゲーム名を入れてね。なければ調べるよ！"
             className="search-input"
           />
           <button type="submit" className="btn-primary" disabled={loading}>
@@ -233,9 +233,8 @@ function App() {
                   className={`game-card ${selectedSlug === game.slug ? 'active' : ''}`}
                   onClick={() => setSelectedSlug(game.slug)}
                   style={{
-                    backgroundImage: `linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.8)), url(/assets/games/${game.slug}.png)${
-                      game.image_url ? `, url(${game.image_url})` : ''
-                    }`,
+                    backgroundImage: `linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.8)), url(/assets/games/${game.slug}.png)${game.image_url ? `, url(${game.image_url})` : ''
+                      }`,
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',
                   }}

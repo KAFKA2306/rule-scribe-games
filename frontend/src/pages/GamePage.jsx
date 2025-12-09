@@ -9,6 +9,8 @@ import { RegenerateButton } from '../components/game/RegenerateButton'
 import { TextToSpeech } from '../components/game/TextToSpeech'
 import { ExternalLinks } from '../components/game/ExternalLinks'
 
+import { ThinkingMeeple } from '../components/ThinkingMeeple'
+
 export default function GamePage({ slug: propSlug }) {
   const { slug: urlSlug } = useParams()
   const slug = propSlug || urlSlug
@@ -76,7 +78,15 @@ export default function GamePage({ slug: propSlug }) {
         Invalid Game URL
       </div>
     )
-  if (loading) return <div className="loading-spinner">⚡️ ルールを瞬時に要約中...</div>
+  if (loading)
+    return (
+      <div className="loading-container" style={{ padding: '48px', display: 'flex', justifyContent: 'center' }}>
+        <ThinkingMeeple
+          text="ミープル君がルールブックを読んでいます... 少々お待ちください"
+          imageSrc="/assets/reading-meeple.png"
+        />
+      </div>
+    )
   if (error) return <div className="error-message">{error}</div>
   if (!game) return <div className="not-found">ゲームが見つかりません</div>
 
