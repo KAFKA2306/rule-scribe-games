@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import httpx
 
-from fastapi.responses import JSONResponse
+
 from app.routers import games
 from app.core.logger import setup_logging
 from app.core.gemini import RateLimitError
