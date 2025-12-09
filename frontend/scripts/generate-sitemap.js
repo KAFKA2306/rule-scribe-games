@@ -37,7 +37,7 @@ async function generateSitemap() {
   // Fetch all games
   const { data: games, error } = await supabase
     .from('games')
-    .select('slug, updated_at')
+    .select('slug, updated_at, title, title_ja, image_url')
     
   if (error) {
     console.error('Error fetching games:', error)
@@ -47,7 +47,7 @@ async function generateSitemap() {
   console.log(`Found ${games.length} games.`)
 
   const sitemapContent = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
   <url>
     <loc>${PUBLIC_URL}/</loc>
     <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
@@ -65,11 +65,17 @@ ${games
     const lastMod = game.updated_at 
       ? game.updated_at.split('T')[0] 
       : new Date().toISOString().split('T')[0]
+    const title = game.title_ja || game.title || game.slug
+    const imageUrl = game.image_url || `${PUBLIC_URL}/assets/games/${game.slug}.png`
     return `  <url>
     <loc>${PUBLIC_URL}/games/${game.slug}</loc>
     <lastmod>${lastMod}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
+    <image:image>
+      <image:loc>${imageUrl}</image:loc>
+      <image:title>${title}</image:title>
+    </image:image>
   </url>`
   })
   .join('\n')}

@@ -177,7 +177,7 @@ function App() {
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="ゲーム名を入力 (例: カタン, スプレンダー)"
+            placeholder="ボードゲーム名を入れてね。リストになければAIが調べてまとめるよ！"
             className="search-input"
           />
           <button type="submit" className="btn-primary" disabled={loading}>
