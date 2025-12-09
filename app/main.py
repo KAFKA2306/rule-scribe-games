@@ -21,11 +21,6 @@ app.add_middleware(
 app.include_router(games.router, prefix="/api", tags=["games"])
 
 
-@app.exception_handler(RateLimitError)
-async def rate_limit_handler(request: Request, exc: RateLimitError):
-    return JSONResponse(status_code=429, content={"detail": "rate_limit"})
-
-
 @app.get("/health")
 @app.get("/api/health")
 def health_check():
