@@ -29,10 +29,24 @@ def health_check():
     return {"status": "ok"}
 
 @app.get("/api/debug/env")
-def debug_env():
+async def debug_env():
     import os
+    from app.core.gemini import GeminiClient
+    
+    gemini_works = False
+    gemini_error = None
+    try:
+        client = GeminiClient()
+        # Direct generation test
+        await client.generate_structured_json("Return strictly valid JSON: {\"test\": \"ok\"}")
+        gemini_works = True
+    except Exception as e:
+        gemini_error = str(e)
+
     return {
         "gemini_key_present": bool(os.getenv("GEMINI_API_KEY")),
         "supabase_url_present": bool(os.getenv("NEXT_PUBLIC_SUPABASE_URL") or os.getenv("SUPABASE_URL")),
         "supabase_key_present": bool(os.getenv("SUPABASE_SERVICE_ROLE_KEY") or os.getenv("SUPABASE_KEY")),
+        "gemini_test_success": gemini_works,
+        "gemini_error": gemini_error
     }
