@@ -1,6 +1,9 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+import httpx
+
+from fastapi.responses import JSONResponse
 from app.routers import games
 from app.core.logger import setup_logging
 from app.core.gemini import RateLimitError
@@ -27,4 +30,11 @@ async def rate_limit_handler(request: Request, exc: RateLimitError):
 @app.get("/api/health")
 def health_check():
     return {"status": "ok"}
+
+@app.exception_handler(httpx.HTTPStatusError)
+async def httpx_exception_handler(request, exc):
+    return JSONResponse(
+        status_code=exc.response.status_code,
+        content={"detail": f"Upstream AI Error: {exc.response.text}"},
+    )
 
