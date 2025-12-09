@@ -43,7 +43,10 @@ async def upsert(data: Dict[str, Any]) -> List[Dict[str, Any]]:
         for f in _URL_FIELDS:
             if data.get(f) == "":
                 data[f] = None
-        key = "source_url" if data.get("source_url") else "slug"
+        if data.get("id"):
+            key = "id"
+        else:
+            key = "source_url" if data.get("source_url") else "slug"
         return _client.table(_TABLE).upsert(data, on_conflict=key).execute().data
 
     return await anyio.to_thread.run_sync(_q)
