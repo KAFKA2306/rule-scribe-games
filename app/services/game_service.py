@@ -47,6 +47,11 @@ async def generate_metadata(
             status_code=e.response.status_code,
             detail=f"Upstream AI Error: {e.response.text}"
         )
+    except httpx.TimeoutException:
+        raise HTTPException(
+            status_code=504,
+            detail="Upstream AI Timeout: The request to Gemini took too long."
+        )
 
     data = result.get("data", result) if isinstance(result, dict) else {}
 
