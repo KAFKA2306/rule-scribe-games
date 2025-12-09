@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Query, Depends
-from typing import List
+from typing import List, Optional
 from pydantic import BaseModel
-from app.models import GameDetail
+from app.models import GameDetail, GameUpdate
 from app.services.game_service import GameService
 
 router = APIRouter()
@@ -54,6 +54,7 @@ async def get_game_details(slug: str, service: GameService = Depends(get_game_se
 @router.patch("/games/{slug}")
 async def update_game(
     slug: str,
+    game_update: Optional[GameUpdate] = None,
     regenerate: bool = False,
     fill_missing_only: bool = False,
     service: GameService = Depends(get_game_service),
@@ -63,4 +64,9 @@ async def update_game(
             slug, fill_missing_only=fill_missing_only
         )
 
-    return {"status": "ok", "message": "No action taken (regenerate=False)"}
+    if game_update:
+        updates = game_update.model_dump(exclude_unset=True)
+        if updates:
+            return await service.update_game_manual(slug, updates)
+
+    return {"status": "ok", "message": "No action taken (regenerate=False, no body)"}

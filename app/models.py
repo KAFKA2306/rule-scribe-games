@@ -37,4 +37,19 @@ class GameDetail(BaseSchema):
     updated_at: Optional[str] = None
 
 
+class GameUpdate(BaseSchema):
+    title: Optional[str] = None
+    title_ja: Optional[str] = None
+    description: Optional[str] = None
+    summary: Optional[str] = None
+    min_players: Optional[int] = None
+    max_players: Optional[int] = None
+    play_time: Optional[int] = None
+    min_age: Optional[int] = None
+    published_year: Optional[int] = None
+    image_url: Optional[str] = None
+    official_url: Optional[str] = None
+    bgg_url: Optional[str] = None
+
+
 SearchResult = GameDetail

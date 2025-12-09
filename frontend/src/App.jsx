@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
 import GamePage from './pages/GamePage'
 import { ThinkingMeeple } from './components/ThinkingMeeple'
 import { EmptyMeeple } from './components/EmptyMeeple'
+import { GameBackground } from './components/GameBackground'
 import { supabase } from './lib/supabase'
 
 
@@ -154,6 +154,7 @@ function App() {
 
   return (
     <div className="app-container">
+      <GameBackground games={initialGames} />
       <header className="main-header">
         <div className="brand" onClick={handleClear}>
           <img

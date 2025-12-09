@@ -20,12 +20,60 @@
 body {
   margin: 0;
   background-color: var(--bg-dark);
-  background-image:
+  /* background-image:
     radial-gradient(circle at 10% 20%, rgba(78, 240, 199, 0.05), transparent 40%),
-    radial-gradient(circle at 90% 80%, rgba(142, 197, 255, 0.05), transparent 40%);
+    radial-gradient(circle at 90% 80%, rgba(142, 197, 255, 0.05), transparent 40%); */
   color: var(--text-main);
   font-family: var(--font-main);
   min-height: 100vh;
+}
+
+/* Game Background Mosaic */
+.game-background-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.game-background-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 8px;
+  width: 110%; /* Slightly wider to cover edges */
+  height: 110%;
+  margin: -2%;
+  opacity: 0.25; /* Low opacity for texture effect */
+  filter: grayscale(60%) sepia(20%) blur(0.5px);
+  transform: rotate(-2deg); /* Slight tint for style */
+}
+
+.bg-game-tile {
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: 8px;
+}
+
+.bg-game-tile img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.8;
+  transition: opacity 1s;
+}
+
+.game-background-overlay {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle at center,
+    rgba(11, 18, 33, 0.7) 0%,
+    rgba(11, 18, 33, 0.95) 100%
+  );
 }
 
 /* Layout */
@@ -692,8 +740,13 @@ h1.game-title {
 }
 
 @keyframes bounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
 }
 
 .mascot-text {
@@ -709,13 +762,23 @@ h1.game-title {
   margin: 0 2px;
 }
 
-.spinner-dots span:nth-child(2) { animation-delay: 0.2s; }
-.spinner-dots span:nth-child(3) { animation-delay: 0.4s; }
+.spinner-dots span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.spinner-dots span:nth-child(3) {
+  animation-delay: 0.4s;
+}
 
 @keyframes blink {
-  0% { opacity: 0.2; }
-  20% { opacity: 1; }
-  100% { opacity: 0.2; }
+  0% {
+    opacity: 0.2;
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.2;
+  }
 }
 
 @keyframes slide-up {

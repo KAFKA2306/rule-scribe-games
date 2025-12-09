@@ -98,6 +98,23 @@ class GameService:
         out = await supabase.upsert(result)
         return out[0] if out else {}
 
+    async def update_game_manual(
+        self, slug: str, updates: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        game = await supabase.get_by_slug(slug)
+        if not game:
+            raise HTTPException(status_code=404, detail="Game not found")
+
+        merged = {**game, **updates}
+        merged["updated_at"] = datetime.now(timezone.utc).isoformat()
+
+        # Remove keys that might be in game but not valid for upsert if schema has changed,
+        # or if we are strict. But usually Supabase handles it or we should be careful.
+        # For now, we trust the model and existing data.
+
+        out = await supabase.upsert(merged)
+        return out[0] if out else {}
+
 
 def _merge_fields(
     original: Dict[str, Any], incoming: Dict[str, Any], fill_missing_only: bool
