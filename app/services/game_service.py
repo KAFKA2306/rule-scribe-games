@@ -42,12 +42,10 @@ async def generate_metadata(
     )
     try:
         result = await _gemini.generate_structured_json(prompt)
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
+    except httpx.HTTPStatusError as e:
         raise HTTPException(
-            status_code=400,
-            detail=f"Destructive Debug Error: {str(e)} Type: {type(e).__name__}"
+            status_code=e.response.status_code,
+            detail=f"Upstream AI Error: {e.response.text}"
         )
 
     data = result.get("data", result) if isinstance(result, dict) else {}
