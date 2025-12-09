@@ -2,7 +2,7 @@ name: Validate URLs
 
 on:
   schedule:
-    - cron: "0 18 * * *" # 毎日 3:00 JST
+    - cron: "0 9,21 * * *" # 毎日 6:00, 18:00 JST
   workflow_dispatch:
 
 jobs:

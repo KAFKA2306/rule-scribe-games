@@ -1,7 +1,7 @@
 from typing import List, Dict, Any, Optional
 from datetime import datetime, timezone
-import yaml
-from pathlib import Path
+from app.prompts.prompts import PROMPTS
+
 from fastapi import HTTPException
 from app.core.gemini import GeminiClient
 from app.core import supabase
@@ -10,10 +10,8 @@ from app.utils.slugify import slugify
 _gemini = GeminiClient()
 _REQUIRED = ["title", "summary", "rules_content"]
 
-
 def _load_prompt(key: str) -> str:
-    path = Path(__file__).resolve().parent.parent / "prompts" / "prompts.yaml"
-    data = yaml.safe_load(open(path, encoding="utf-8"))
+    data = PROMPTS
     for part in key.split("."):
         data = data[part]
     return str(data).strip()
