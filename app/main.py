@@ -6,7 +6,7 @@ import httpx
 
 from app.routers import games
 from app.core.logger import setup_logging
-from app.core.gemini import RateLimitError
+
 
 setup_logging()
 
