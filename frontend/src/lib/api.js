@@ -11,7 +11,10 @@ export const api = {
       body: JSON.stringify(body),
     })
     if (res.status === 429) throw new Error('RATE_LIMIT')
-    if (!res.ok) throw new Error(`API Error: ${res.status}`)
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}))
+      throw new Error(err.detail || `API Error: ${res.status}`)
+    }
     return res.json()
   },
 }
