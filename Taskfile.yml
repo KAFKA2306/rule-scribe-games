@@ -92,3 +92,4 @@ tasks:
   validate-urls:recent:
     desc: 過去24時間更新のゲームのみURL検証
     cmd: uv run python -m app.scripts.validate_urls --hours 24
+

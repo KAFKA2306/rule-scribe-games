@@ -7,6 +7,10 @@
       "destination": "/api/index.py"
     },
     {
+      "source": "/sitemap.xml",
+      "destination": "/api/index.py"
+    },
+    {
       "source": "/((?!assets|api).*)",
       "destination": "/index.html"
     }

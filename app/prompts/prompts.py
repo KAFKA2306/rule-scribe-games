@@ -33,5 +33,5 @@ Review the following board game metadata:
 Identify any factual errors or missing important details.
 Return the improved JSON.
 """
-    }
+    },
 }
