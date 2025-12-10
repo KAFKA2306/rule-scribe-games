@@ -233,8 +233,9 @@ function App() {
                   className={`game-card ${selectedSlug === game.slug ? 'active' : ''}`}
                   onClick={() => setSelectedSlug(game.slug)}
                   style={{
-                    backgroundImage: `linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.8)), url(/assets/games/${game.slug}.png)${game.image_url ? `, url(${game.image_url})` : ''
-                      }`,
+                    backgroundImage: `linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.8)), url(/assets/games/${game.slug}.png)${
+                      game.image_url ? `, url(${game.image_url})` : ''
+                    }`,
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',
                   }}

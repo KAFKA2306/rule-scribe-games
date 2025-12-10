@@ -1,7 +1,10 @@
 import React from 'react'
 import '../index.css'
 
-export const ThinkingMeeple = ({ text = 'ルールブックを読んでいます...', imageSrc = '/assets/thinking-meeple.png' }) => {
+export const ThinkingMeeple = ({
+  text = 'ルールブックを読んでいます...',
+  imageSrc = '/assets/thinking-meeple.png',
+}) => {
   return (
     <div className="mascot-state">
       <div className="mascot-image-container">

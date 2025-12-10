@@ -80,7 +80,10 @@ export default function GamePage({ slug: propSlug }) {
     )
   if (loading)
     return (
-      <div className="loading-container" style={{ padding: '48px', display: 'flex', justifyContent: 'center' }}>
+      <div
+        className="loading-container"
+        style={{ padding: '48px', display: 'flex', justifyContent: 'center' }}
+      >
         <ThinkingMeeple
           text="ミープル君がルールブックを読んでいます... 少々お待ちください"
           imageSrc="/assets/thinking-meeple.png"
@@ -172,11 +175,40 @@ export default function GamePage({ slug: propSlug }) {
         <meta property="og:site_name" content="ボドゲのミカタ" />
 
         {/* Twitter */}
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:url" content={gameUrl} />
-        <meta name="twitter:title" content={pageTitle} />
-        <meta name="twitter:description" content={description} />
         <meta name="twitter:image" content={imageUrl} />
+
+        {/* Structured Data (JSON-LD) */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'Game',
+            name: title,
+            description: description,
+            image: imageUrl,
+            url: gameUrl,
+            numberOfPlayers:
+              game.min_players || game.max_players
+                ? {
+                  '@type': 'QuantitativeValue',
+                  minValue: game.min_players,
+                  maxValue: game.max_players || game.min_players,
+                }
+                : undefined,
+            audience: game.min_age
+              ? {
+                '@type': 'PeopleAudience',
+                suggestedMinAge: game.min_age,
+              }
+              : undefined,
+            timeRequired: game.play_time
+              ? {
+                '@type': 'Duration',
+                value: `PT${game.play_time}M`,
+              }
+              : undefined,
+            datePublished: game.published_year ? `${game.published_year}` : undefined,
+          })}
+        </script>
       </Helmet>
       {(heroSrc || game.image_url) && (
         <div className="game-hero-image">

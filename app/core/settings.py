@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 
 import yaml
 
+
 def load_config():
     try:
         config_path = Path(__file__).resolve().parent.parent.parent / "config.yaml"
@@ -11,6 +12,7 @@ def load_config():
             return yaml.safe_load(f)
     except FileNotFoundError:
         return {}
+
 
 _config = load_config()
 
