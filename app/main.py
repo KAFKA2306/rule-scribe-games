@@ -35,6 +35,18 @@ def sitemap_xml():
     return Response(content=content, media_type="application/xml")
 
 
+from app.services.seo_renderer import generate_seo_html
+from fastapi.responses import HTMLResponse
+
+@app.get("/games/{slug}")
+def game_seo_page(slug: str):
+    """
+    Serve the game page with server-side injected SEO tags.
+    """
+    content = generate_seo_html(slug)
+    return HTMLResponse(content=content)
+
+
 @app.exception_handler(httpx.HTTPStatusError)
 async def httpx_exception_handler(request, exc):
     return JSONResponse(
