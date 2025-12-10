@@ -29,13 +29,9 @@ async def search_games_post(
     service: GameService = Depends(get_game_service),
 ):
     if body.generate:
-        try:
-            new_game = await service.create_game_from_query(body.query)
-            if new_game and new_game.get("slug"):
-                return [new_game]
-        except Exception as e:
-            import logging
-            logging.error(f"Failed to generate game: {e}")
+        new_game = await service.create_game_from_query(body.query)
+        if new_game and new_game.get("slug"):
+            return [new_game]
 
     return await service.search_games(body.query)
 
