@@ -11,7 +11,7 @@
       "destination": "/api/index.py"
     },
     {
-      "source": "/games/(.*)",
+      "source": "/games/:slug",
       "destination": "/api/index.py"
     },
     {
