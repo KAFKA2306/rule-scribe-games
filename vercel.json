@@ -11,6 +11,10 @@
       "destination": "/api/index.py"
     },
     {
+      "source": "/games/(.*)",
+      "destination": "/api/index.py"
+    },
+    {
       "source": "/((?!assets|api).*)",
       "destination": "/index.html"
     }
