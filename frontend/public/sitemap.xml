@@ -2,15 +2,25 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
   <url>
     <loc>https://bodoge-no-mikata.vercel.app/</loc>
-    <lastmod>2025-12-09</lastmod>
+    <lastmod>2025-12-10</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
     <loc>https://bodoge-no-mikata.vercel.app/data</loc>
-    <lastmod>2025-12-09</lastmod>
+    <lastmod>2025-12-10</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://bodoge-no-mikata.vercel.app/games/root-a-game-of-woodland-might-and-right</loc>
+    <lastmod>2025-12-09</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <image:image>
+      <image:loc>https://bodoge-no-mikata.vercel.app/assets/games/root-a-game-of-woodland-might-and-right.png</image:loc>
+      <image:title>ルート ～はるけき森のどうぶつ戦記～</image:title>
+    </image:image>
   </url>
   <url>
     <loc>https://bodoge-no-mikata.vercel.app/games/monopoly</loc>
@@ -53,16 +63,6 @@
     </image:image>
   </url>
   <url>
-    <loc>https://bodoge-no-mikata.vercel.app/games/little-town</loc>
-    <lastmod>2025-12-09</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-    <image:image>
-      <image:loc>https://bodoge-no-mikata.vercel.app/assets/games/little-town.png</image:loc>
-      <image:title>リトルタウンビルダーズ</image:title>
-    </image:image>
-  </url>
-  <url>
     <loc>https://bodoge-no-mikata.vercel.app/games/uno</loc>
     <lastmod>2025-12-08</lastmod>
     <changefreq>weekly</changefreq>
@@ -73,13 +73,23 @@
     </image:image>
   </url>
   <url>
-    <loc>https://bodoge-no-mikata.vercel.app/games/scout</loc>
+    <loc>https://bodoge-no-mikata.vercel.app/games/little-town</loc>
     <lastmod>2025-12-09</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
     <image:image>
-      <image:loc>https://bodoge-no-mikata.vercel.app/assets/games/scout.png</image:loc>
-      <image:title>スカウト！</image:title>
+      <image:loc>https://bodoge-no-mikata.vercel.app/assets/games/little-town.png</image:loc>
+      <image:title>リトルタウンビルダーズ</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://bodoge-no-mikata.vercel.app/games/disney-lorcana</loc>
+    <lastmod>2025-12-09</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <image:image>
+      <image:loc>https://wazgoplarevypdfbgeau.supabase.co/storage/v1/object/public/game-images/disney-lorcana.png</image:loc>
+      <image:title>ディズニーロルカナ</image:title>
     </image:image>
   </url>
   <url>
@@ -103,6 +113,16 @@
     </image:image>
   </url>
   <url>
+    <loc>https://bodoge-no-mikata.vercel.app/games/scout</loc>
+    <lastmod>2025-12-09</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <image:image>
+      <image:loc>https://bodoge-no-mikata.vercel.app/assets/games/scout.png</image:loc>
+      <image:title>スカウト！</image:title>
+    </image:image>
+  </url>
+  <url>
     <loc>https://bodoge-no-mikata.vercel.app/games/chess</loc>
     <lastmod>2025-12-08</lastmod>
     <changefreq>weekly</changefreq>
@@ -120,26 +140,6 @@
     <image:image>
       <image:loc>https://wazgoplarevypdfbgeau.supabase.co/storage/v1/object/public/game-images/pandemic.png</image:loc>
       <image:title>パンデミック</image:title>
-    </image:image>
-  </url>
-  <url>
-    <loc>https://bodoge-no-mikata.vercel.app/games/root-a-game-of-woodland-might-and-right</loc>
-    <lastmod>2025-12-08</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-    <image:image>
-      <image:loc>https://bodoge-no-mikata.vercel.app/assets/games/root-a-game-of-woodland-might-and-right.png</image:loc>
-      <image:title>Root: A Game of Woodland Might and Right (ルート ～はるけき森のどうぶつ戦記～)</image:title>
-    </image:image>
-  </url>
-  <url>
-    <loc>https://bodoge-no-mikata.vercel.app/games/heart-of-crown-fairy-garden</loc>
-    <lastmod>2025-12-08</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-    <image:image>
-      <image:loc>https://wazgoplarevypdfbgeau.supabase.co/storage/v1/object/public/game-images/heart-of-crown-fairy-garden.png</image:loc>
-      <image:title>ハートオブクラウン ～フェアリーガーデン～</image:title>
     </image:image>
   </url>
   <url>
@@ -163,16 +163,6 @@
     </image:image>
   </url>
   <url>
-    <loc>https://bodoge-no-mikata.vercel.app/games/disney-lorcana</loc>
-    <lastmod>2025-12-08</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-    <image:image>
-      <image:loc>https://wazgoplarevypdfbgeau.supabase.co/storage/v1/object/public/game-images/disney-lorcana.png</image:loc>
-      <image:title>Disney Lorcana (ディズニーロルカナ)</image:title>
-    </image:image>
-  </url>
-  <url>
     <loc>https://bodoge-no-mikata.vercel.app/games/coyote</loc>
     <lastmod>2025-12-08</lastmod>
     <changefreq>weekly</changefreq>
@@ -180,6 +170,36 @@
     <image:image>
       <image:loc>https://wazgoplarevypdfbgeau.supabase.co/storage/v1/object/public/game-images/coyote.png</image:loc>
       <image:title>コヨーテ</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://bodoge-no-mikata.vercel.app/games/everdell</loc>
+    <lastmod>2025-12-09</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <image:image>
+      <image:loc>https://wazgoplarevypdfbgeau.supabase.co/storage/v1/object/public/game-images/everdell.png</image:loc>
+      <image:title>エバーデール</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://bodoge-no-mikata.vercel.app/games/in-a-grove</loc>
+    <lastmod>2025-12-09</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <image:image>
+      <image:loc>https://bodoge-no-mikata.vercel.app/assets/games/in-a-grove.png</image:loc>
+      <image:title>藪の中</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://bodoge-no-mikata.vercel.app/games/heart-of-crown-fairy-garden</loc>
+    <lastmod>2025-12-09</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <image:image>
+      <image:loc>https://wazgoplarevypdfbgeau.supabase.co/storage/v1/object/public/game-images/heart-of-crown-fairy-garden.png</image:loc>
+      <image:title>ハートオブクラウン ～フェアリーガーデン～</image:title>
     </image:image>
   </url>
   <url>
@@ -224,7 +244,7 @@
   </url>
   <url>
     <loc>https://bodoge-no-mikata.vercel.app/games/trick-meister</loc>
-    <lastmod>2025-12-08</lastmod>
+    <lastmod>2025-12-09</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
     <image:image>
@@ -313,6 +333,26 @@
     </image:image>
   </url>
   <url>
+    <loc>https://bodoge-no-mikata.vercel.app/games/jaipur</loc>
+    <lastmod>2025-12-09</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <image:image>
+      <image:loc>https://bodoge-no-mikata.vercel.app/assets/games/jaipur.png</image:loc>
+      <image:title>ジャイプル</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://bodoge-no-mikata.vercel.app/games/century-spice-road</loc>
+    <lastmod>2025-12-09</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <image:image>
+      <image:loc>https://bodoge-no-mikata.vercel.app/assets/games/century-spice-road.png</image:loc>
+      <image:title>センチュリー：スパイスロード</image:title>
+    </image:image>
+  </url>
+  <url>
     <loc>https://bodoge-no-mikata.vercel.app/games/azul-stained-glass-of-sintra</loc>
     <lastmod>2025-12-09</lastmod>
     <changefreq>weekly</changefreq>
@@ -383,16 +423,6 @@
     </image:image>
   </url>
   <url>
-    <loc>https://bodoge-no-mikata.vercel.app/games/yokohama-duel</loc>
-    <lastmod>2025-12-08</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-    <image:image>
-      <image:loc>https://wazgoplarevypdfbgeau.supabase.co/storage/v1/object/public/game-images/yokohama-duel.png</image:loc>
-      <image:title>横濱紳商伝デュエル</image:title>
-    </image:image>
-  </url>
-  <url>
     <loc>https://bodoge-no-mikata.vercel.app/games/dune-imperium-uprising</loc>
     <lastmod>2025-12-08</lastmod>
     <changefreq>weekly</changefreq>
@@ -403,13 +433,13 @@
     </image:image>
   </url>
   <url>
-    <loc>https://bodoge-no-mikata.vercel.app/games/everdell</loc>
+    <loc>https://bodoge-no-mikata.vercel.app/games/yokohama-duel</loc>
     <lastmod>2025-12-09</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
     <image:image>
-      <image:loc>https://wazgoplarevypdfbgeau.supabase.co/storage/v1/object/public/game-images/everdell.png</image:loc>
-      <image:title>エバーデール</image:title>
+      <image:loc>https://wazgoplarevypdfbgeau.supabase.co/storage/v1/object/public/game-images/yokohama-duel.png</image:loc>
+      <image:title>横濱紳商伝デュエル</image:title>
     </image:image>
   </url>
 </urlset>
