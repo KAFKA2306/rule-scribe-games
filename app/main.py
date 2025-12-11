@@ -1,13 +1,13 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, HTMLResponse
 import httpx
+from app.services.seo_renderer import generate_seo_html
 
 
 from app.routers import games
 from app.core.logger import setup_logging
 from app.services.sitemap import get_sitemap_xml
-from fastapi import Response
 
 
 setup_logging()
@@ -34,9 +34,6 @@ def sitemap_xml():
     content = get_sitemap_xml()
     return Response(content=content, media_type="application/xml")
 
-
-from app.services.seo_renderer import generate_seo_html
-from fastapi.responses import HTMLResponse
 
 @app.get("/games/{slug}")
 def game_seo_page(slug: str):
