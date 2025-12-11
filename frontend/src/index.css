@@ -47,8 +47,8 @@ body {
   width: 110%; /* Slightly wider to cover edges */
   height: 110%;
   margin: -2%;
-  opacity: 0.25; /* Low opacity for texture effect */
-  filter: grayscale(60%) sepia(20%) blur(0.5px);
+  opacity: 0.35; /* Increased opacity for better visibility */
+  filter: grayscale(40%) sepia(20%); /* Reduced grayscale, removed blur */
   transform: rotate(-2deg); /* Slight tint for style */
 }
 
@@ -71,8 +71,8 @@ body {
   inset: 0;
   background: radial-gradient(
     circle at center,
-    rgba(11, 18, 33, 0.7) 0%,
-    rgba(11, 18, 33, 0.95) 100%
+    rgba(11, 18, 33, 0.6) 0%,
+    rgba(11, 18, 33, 0.9) 100%
   );
 }
 
@@ -300,6 +300,7 @@ h1.game-title {
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
+  line-clamp: 2;
   overflow: hidden;
   position: relative;
   z-index: 2;
@@ -350,6 +351,7 @@ h1.game-title {
   font-size: 32px;
   background: linear-gradient(to right, #fff, #aaa);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
