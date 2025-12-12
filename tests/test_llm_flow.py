@@ -35,7 +35,7 @@ async def call_gemini(api_key: str, model: str, prompt: str) -> dict:
         if m:
             text = m.group(1)
     m = re.search(r"\{.*\}", text, re.DOTALL)
-    m = re.search(r"\{.*\}", text, re.DOTALL)
+
     return json.loads(m.group(0) if m else text)
 
 

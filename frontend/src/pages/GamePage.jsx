@@ -105,7 +105,6 @@ export default function GamePage({ slug: propSlug }) {
       if (game.image_url.startsWith('http')) return game.image_url
       return `https://bodoge-no-mikata.vercel.app${game.image_url}`
     }
-    // Fallback to generated screenshot
     return `https://bodoge-no-mikata.vercel.app/assets/games/${slug}.png`
   })()
 
@@ -142,13 +141,12 @@ export default function GamePage({ slug: propSlug }) {
     else if (game.description) text += `${game.description}。`
 
     if (isStringRules) {
-      // Simple markdown stripping for speech
       const cleanRules = rules
-        .replace(/[#*`_~]/g, '') // Remove formatting chars
-        .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // Keep link text
-        .replace(/!\[([^\]]*)\]\([^)]+\)/g, '') // Remove images
-        .replace(/^\s*[-+]\s+/gm, '') // Remove list bullets
-        .replace(/\n+/g, ' ') // Collapse newlines
+        .replace(/[#*`_~]/g, '') 
+        .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') 
+        .replace(/!\[([^\]]*)\]\([^)]+\)/g, '') 
+        .replace(/^\s*[-+]\s+/gm, '') 
+        .replace(/\n+/g, ' ') 
       text += ` ルール: ${cleanRules}`
     }
     return text
@@ -161,7 +159,6 @@ export default function GamePage({ slug: propSlug }) {
         <meta name="description" content={description} />
         <link rel="canonical" href={gameUrl} />
 
-        {/* Open Graph / Facebook */}
         <meta property="og:type" content="article" />
         <meta property="og:url" content={gameUrl} />
         <meta property="og:title" content={pageTitle} />
@@ -169,10 +166,8 @@ export default function GamePage({ slug: propSlug }) {
         <meta property="og:image" content={imageUrl} />
         <meta property="og:site_name" content="ボドゲのミカタ" />
 
-        {/* Twitter */}
         <meta name="twitter:image" content={imageUrl} />
 
-        {/* Structured Data (JSON-LD) */}
         <script type="application/ld+json">
           {JSON.stringify({
             '@context': 'https://schema.org',
