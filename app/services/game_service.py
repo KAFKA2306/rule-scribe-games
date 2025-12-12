@@ -71,8 +71,6 @@ class GameService:
         self, slug: str, fill_missing_only: bool = False
     ) -> Dict[str, Any]:
         game = await supabase.get_by_slug(slug)
-        if not game:
-            raise HTTPException(status_code=404, detail="Game not found")
 
         ctx = f"{game.get('title')}: {game.get('summary')}"
         result = await generate_metadata(game.get("title"), ctx)
@@ -93,8 +91,6 @@ class GameService:
         self, slug: str, updates: Dict[str, Any]
     ) -> Dict[str, Any]:
         game = await supabase.get_by_slug(slug)
-        if not game:
-            raise HTTPException(status_code=404, detail="Game not found")
 
         merged = {**game, **updates}
         merged["updated_at"] = datetime.now(timezone.utc).isoformat()

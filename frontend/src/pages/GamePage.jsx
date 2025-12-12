@@ -18,24 +18,24 @@ export default function GamePage({ slug: propSlug }) {
   const [game, setGame] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [heroSrc, setHeroSrc] = useState(null)
+  const [heroSrc, setHeroSrc] = useState(slug ? `/assets/games/${slug}.webp` : null)
   const [isEditOpen, setIsEditOpen] = useState(false)
 
   const isStandalone = !propSlug
 
   useEffect(() => {
-    if (!slug) return
+
 
     const fetchGame = async () => {
         setLoading(true)
         setError(null)
         const res = await fetch(`/api/games/${slug}`)
-        if (!res.ok) throw new Error('Game not found')
+
 
         const data = await res.json()
         const gameData = Array.isArray(data) ? data[0] : data.game || data
 
-        if (!gameData) throw new Error('No game data')
+
         setGame(gameData)
       
         setLoading(false)
@@ -44,11 +44,7 @@ export default function GamePage({ slug: propSlug }) {
     fetchGame()
   }, [slug])
 
-  useEffect(() => {
-    if (slug) {
-      setHeroSrc(`/assets/games/${slug}.png`)
-    }
-  }, [slug])
+
 
   const handleSave = async (updatedData) => {
     const res = await fetch(`/api/games/${slug}`, {
@@ -57,22 +53,13 @@ export default function GamePage({ slug: propSlug }) {
       body: JSON.stringify(updatedData),
     })
 
-    if (!res.ok) throw new Error('Update failed')
+
 
     const data = await res.json()
     setGame(data)
   }
 
-  if (!slug)
-    return (
-      <div className="p-4">
-        <a href="/" className="home-link">
-          ♜ ボドゲのミカタ
-        </a>
-        <br />
-        Invalid Game URL
-      </div>
-    )
+
   if (loading)
     return (
       <div
@@ -85,8 +72,8 @@ export default function GamePage({ slug: propSlug }) {
         />
       </div>
     )
-  if (error) return <div className="error-message">{error}</div>
-  if (!game) return <div className="not-found">ゲームが見つかりません</div>
+
+
 
   const title = game.title_ja || game.title || game.name || 'Untitled'
   const rules = game.rules_content || game.rules || game.content || ''
@@ -105,7 +92,7 @@ export default function GamePage({ slug: propSlug }) {
       if (game.image_url.startsWith('http')) return game.image_url
       return `https://bodoge-no-mikata.vercel.app${game.image_url}`
     }
-    return `https://bodoge-no-mikata.vercel.app/assets/games/${slug}.png`
+    return `https://bodoge-no-mikata.vercel.app/assets/games/${slug}.webp`
   })()
 
   const renderRules = () => {
@@ -239,6 +226,7 @@ export default function GamePage({ slug: propSlug }) {
       </div>
 
       <EditGameModal
+        key={game.slug}
         game={game}
         isOpen={isEditOpen}
         onClose={() => setIsEditOpen(false)}

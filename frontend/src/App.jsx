@@ -65,7 +65,7 @@ function App() {
   }
 
   useEffect(() => {
-    loadGames(0, false)
+    setTimeout(() => loadGames(0, false), 0)
   }, [])
 
   const [debouncedQuery, setDebouncedQuery] = useState(query)
@@ -215,7 +215,7 @@ function App() {
                   className={`game-card ${selectedSlug === game.slug ? 'active' : ''}`}
                   onClick={() => setSelectedSlug(game.slug)}
                   style={{
-                    backgroundImage: `linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.8)), url(/assets/games/${game.slug}.png)${
+                    backgroundImage: `linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.8)), url(/assets/games/${game.slug}.webp)${
                       game.image_url ? `, url(${game.image_url})` : ''
                     }`,
                     backgroundSize: 'cover',
@@ -264,7 +264,7 @@ function App() {
 
         <section className="game-detail-pane">
           {selectedSlug ? (
-            <GamePage slug={selectedSlug} />
+            <GamePage key={selectedSlug} slug={selectedSlug} />
           ) : (
             <div className="empty-selection">
               <p>左のリストからゲームを選択してください</p>

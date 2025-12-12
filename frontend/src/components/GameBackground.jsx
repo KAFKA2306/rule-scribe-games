@@ -30,7 +30,7 @@ export const GameBackground = ({ games }) => {
         {shuffledGames.map((game, index) => (
           <div key={`${game.slug}-${index}`} className="bg-game-tile">
             <img
-              src={`/assets/games/${game.slug}.png`}
+              src={`/assets/games/${game.slug}.webp`}
               alt=""
               loading="lazy"
               onError={(e) => (e.target.style.opacity = 0)}

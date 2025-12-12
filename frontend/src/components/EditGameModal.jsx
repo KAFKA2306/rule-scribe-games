@@ -1,20 +1,14 @@
 import { useState, useEffect } from 'react'
 
 export default function EditGameModal({ game, isOpen, onClose, onSave }) {
-  const [formData, setFormData] = useState({})
-  const [saving, setSaving] = useState(false)
-  const [newKeyword, setNewKeyword] = useState({ term: '', description: '' })
-
-  useEffect(() => {
-    if (game) {
-      let structuredData = game.structured_data
-      if (!structuredData || Array.isArray(structuredData)) {
-        structuredData = { keywords: [] }
-      } else if (!structuredData.keywords) {
-        structuredData.keywords = []
-      }
-
-      setFormData({
+  const [formData, setFormData] = useState(() => {
+    if (!game) return {}
+    let structuredData = { keywords: [] }
+    if (game.structured_data && !Array.isArray(game.structured_data)) {
+        structuredData = { ...game.structured_data }
+        if (!structuredData.keywords) structuredData.keywords = []
+    }
+    return {
         title: game.title || '',
         title_ja: game.title_ja || '',
         description: game.description || '',
@@ -29,9 +23,10 @@ export default function EditGameModal({ game, isOpen, onClose, onSave }) {
         official_url: game.official_url || '',
         bgg_url: game.bgg_url || '',
         structured_data: structuredData,
-      })
     }
-  }, [game])
+  })
+  const [saving, setSaving] = useState(false)
+  const [newKeyword, setNewKeyword] = useState({ term: '', description: '' })
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -39,7 +34,7 @@ export default function EditGameModal({ game, isOpen, onClose, onSave }) {
   }
 
   const handleAddKeyword = () => {
-    if (!newKeyword.term) return
+
     setFormData((prev) => ({
       ...prev,
       structured_data: {

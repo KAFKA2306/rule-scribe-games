@@ -46,8 +46,7 @@ async def list_recent_games(
 @router.get("/games/{slug}", response_model=GameDetail)
 async def get_game_details(slug: str, service: GameService = Depends(get_game_service)):
     game = await service.get_game_by_slug(slug)
-    if not game:
-        raise HTTPException(status_code=404, detail="Game not found")
+
     return game
 
 
