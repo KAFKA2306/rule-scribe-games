@@ -35,11 +35,8 @@ async def call_gemini(api_key: str, model: str, prompt: str) -> dict:
         if m:
             text = m.group(1)
     m = re.search(r"\{.*\}", text, re.DOTALL)
-    try:
-        return json.loads(m.group(0) if m else text)
-    except json.JSONDecodeError as e:
-        print(f"FAILED JSON:\n{m.group(0) if m else text}")
-        raise e
+    m = re.search(r"\{.*\}", text, re.DOTALL)
+    return json.loads(m.group(0) if m else text)
 
 
 async def test_llm_flow(api_key: str, model: str, query: str, output_path: str | None):
@@ -62,34 +59,20 @@ async def test_llm_flow(api_key: str, model: str, query: str, output_path: str |
 
     from app.services.game_service import generate_metadata
 
-    try:
-        result = await generate_metadata(query, context="No matches.")
+    result = await generate_metadata(query, context="No matches.")
 
-        record["full_output"] = result
-        print(f"Output keys: {list(result.keys())}")
+    record["full_output"] = result
+    print(f"Output keys: {list(result.keys())}")
 
-        if "error" in result:
-            print(f"Error: {result['error']}")
-            record["validation"]["result"] = "FAIL"
-            record["validation"]["reason"] = result["error"]
-        else:
-            required = ["title", "summary", "rules_content"]
-            missing = [f for f in required if not result.get(f)]
+    required = ["title", "summary", "rules_content"]
+    missing = [f for f in required if not result.get(f)]
 
-            amazon_url = result.get("amazon_url")
-            print(f"Amazon URL: {amazon_url}")
+    amazon_url = result.get("amazon_url")
+    print(f"Amazon URL: {amazon_url}")
 
-            record["validation"]["result"] = "FAIL" if missing else "PASS"
-            record["validation"]["missing_fields"] = missing
-            print(
-                f"Validation: {'PASS' if not missing else 'FAIL - missing: ' + str(missing)}"
-            )
-
-    except Exception as e:
-        print(f"Exception during flow: {e}")
-        record["validation"]["result"] = "ERROR"
-        record["validation"]["message"] = str(e)
-        raise e
+    record["validation"]["result"] = "FAIL" if missing else "PASS"
+    record["validation"]["missing_fields"] = missing
+    print(f"Validation: {'PASS' if not missing else 'FAIL - missing: ' + str(missing)}")
 
     if output_path:
         Path(output_path).write_text(json.dumps(record, ensure_ascii=False, indent=2))

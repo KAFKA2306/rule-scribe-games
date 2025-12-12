@@ -65,7 +65,6 @@ export default function EditGameModal({ game, isOpen, onClose, onSave }) {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setSaving(true)
-    try {
       const payload = { ...formData }
       const numericFields = ['min_players', 'max_players', 'play_time', 'min_age', 'published_year']
 
@@ -76,12 +75,7 @@ export default function EditGameModal({ game, isOpen, onClose, onSave }) {
 
       await onSave(payload)
       onClose()
-    } catch (error) {
-      console.error('Save failed:', error)
-      alert('保存に失敗しました')
-    } finally {
       setSaving(false)
-    }
   }
 
   if (!isOpen) return null

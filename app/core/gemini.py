@@ -26,11 +26,4 @@ class GeminiClient:
             )
         resp.raise_for_status()
         text = resp.json()["candidates"][0]["content"]["parts"][0]["text"]
-        return json.loads(self._clean(text))
-
-    def _clean(self, text: str) -> str:
-        start = text.find("{")
-        end = text.rfind("}")
-        if start != -1 and end != -1 and end > start:
-            text = text[start : end + 1]
-        return text.replace("```json", "").replace("```", "").strip()
+        return json.loads(text)

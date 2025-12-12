@@ -27,7 +27,6 @@ export default function GamePage({ slug: propSlug }) {
     if (!slug) return
 
     const fetchGame = async () => {
-      try {
         setLoading(true)
         setError(null)
         const res = await fetch(`/api/games/${slug}`)
@@ -38,12 +37,8 @@ export default function GamePage({ slug: propSlug }) {
 
         if (!gameData) throw new Error('No game data')
         setGame(gameData)
-      } catch (err) {
-        console.error(err)
-        setError(err.message)
-      } finally {
+      
         setLoading(false)
-      }
     }
 
     fetchGame()

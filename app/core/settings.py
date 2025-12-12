@@ -6,12 +6,9 @@ import yaml
 
 
 def load_config():
-    try:
-        config_path = Path(__file__).resolve().parent.parent.parent / "config.yaml"
-        with open(config_path, "r") as f:
-            return yaml.safe_load(f)
-    except FileNotFoundError:
-        return {}
+    config_path = Path(__file__).resolve().parent.parent.parent / "config.yaml"
+    with open(config_path, "r") as f:
+        return yaml.safe_load(f)
 
 
 _config = load_config()

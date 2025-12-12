@@ -18,8 +18,6 @@ def _load_prompt(key: str) -> str:
         data = data[part]
     return str(data).strip()
 
-
-def _validate(data: Dict[str, Any]) -> None:
     if not all(data.get(f) for f in _REQUIRED):
         raise ValueError(f"Validation failed. Missing required fields: {_REQUIRED}")
 
@@ -44,8 +42,6 @@ async def generate_metadata(
     result = await _gemini.generate_structured_json(prompt)
 
     data = result
-
-    _validate(data)
 
     data["updated_at"] = datetime.now(timezone.utc).isoformat()
 

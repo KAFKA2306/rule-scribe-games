@@ -39,7 +39,6 @@ function App() {
   const [offset, setOffset] = useState(0)
 
   const loadGames = async (currentOffset = 0, append = false) => {
-    try {
       setError(null)
       if (!append) setLoading(true)
       else setLoadingMore(true)
@@ -60,13 +59,9 @@ function App() {
 
       setHasMore(list.length === 50)
       setOffset(currentOffset + list.length)
-    } catch (e) {
-      console.error('Load failed:', e)
-      setError('ゲームの読み込みに失敗しました。')
-    } finally {
+
       setLoading(false)
       setLoadingMore(false)
-    }
   }
 
   useEffect(() => {
@@ -97,13 +92,9 @@ function App() {
         return
       }
 
-      try {
         const data = await api.post('/api/search', { query: debouncedQuery, generate: false })
         const list = Array.isArray(data) ? data : data.games || []
         setGames(list)
-      } catch (e) {
-        console.error('Real-time search failed:', e)
-      }
     }
 
     searchRealtime()
@@ -116,7 +107,6 @@ function App() {
       return
     }
 
-    try {
       setLoading(true)
       setGenerating(true)
       setError(null)
@@ -128,17 +118,9 @@ function App() {
       if (list.length > 0) {
         setSelectedSlug(list[0].slug)
       }
-    } catch (e) {
-      console.error('Search failed:', e)
-      if (e.message === 'RATE_LIMIT') {
-        setError('⚠️ AI生成のレート制限に達しました。数分後に再試行してください。')
-      } else {
-        setError(`検索に失敗しました: ${e.message}`)
-      }
-    } finally {
+
       setLoading(false)
       setGenerating(false)
-    }
   }
 
   const handleClear = () => {
