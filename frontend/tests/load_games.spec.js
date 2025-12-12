@@ -15,7 +15,7 @@ test.describe('Game List Loading', () => {
 
     await page.goto('https://rule-scribe-games.vercel.app')
 
-    await page.goto('https://rule-scribe-games.vercel.app')
+    const gamesResponse = await page.request.get('https://rule-scribe-games.vercel.app/api/games')
     apiResponseStatus = gamesResponse.status()
       apiResponseBody = await gamesResponse.json()
 
