@@ -16,10 +16,7 @@ def upload_images():
     print(f"Starting deployment to bucket '{BUCKET_NAME}'...")
 
     # Ensure bucket exists (soft check, ignoring error if exists)
-    try:
-        _client.storage.create_bucket(BUCKET_NAME, options={"public": True})
-    except Exception:
-        pass
+    _client.storage.create_bucket(BUCKET_NAME, options={"public": True})
 
     # List files
     assets_dir = project_root / "frontend/public/assets/games"
@@ -37,17 +34,11 @@ def upload_images():
         destination = f"{slug}.png"
 
         print(f"Uploading {slug}...")
-        try:
-            _client.storage.from_(BUCKET_NAME).upload(
-                destination,
-                file_bytes,
-                file_options={"upsert": "true", "content-type": mime_type},
-            )
-        except Exception as e:
-            # Upsert might fail if implementation detail differs, but library usually handles strict 'upsert' option
-            print(f"Upload warning for {slug}: {e}")
-            # Try plain update if upload failed due to existence (though upsert should handle it)
-            # In supabase-py, upload with upsert=True is standard.
+        _client.storage.from_(BUCKET_NAME).upload(
+            destination,
+            file_bytes,
+            file_options={"upsert": "true", "content-type": mime_type},
+        )
 
         # Get Public URL
         public_url = _client.storage.from_(BUCKET_NAME).get_public_url(destination)
@@ -55,12 +46,9 @@ def upload_images():
         print(f"Updating DB for {slug} -> {public_url}")
 
         # Update DB
-        try:
-            _client.table(_TABLE).update({"image_url": public_url}).eq(
-                "slug", slug
-            ).execute()
-        except Exception as e:
-            print(f"Failed to update DB for {slug}: {e}")
+        _client.table(_TABLE).update({"image_url": public_url}).eq(
+            "slug", slug
+        ).execute()
 
     print("Deployment complete.")
 

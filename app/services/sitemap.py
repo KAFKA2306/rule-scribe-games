@@ -57,12 +57,8 @@ def get_sitemap_xml() -> str:
         lastmod = ET.SubElement(url_elem, f"{{{NS_SITEMAP}}}lastmod")
         updated = game.get("updated_at")
         if updated:
-            try:
-                # updated_at from supabase often looks like '2023-10-27T...'
-                dt = datetime.fromisoformat(updated.replace("Z", "+00:00"))
-                lastmod.text = dt.strftime("%Y-%m-%d")
-            except ValueError:
-                lastmod.text = datetime.now().strftime("%Y-%m-%d")
+            dt = datetime.fromisoformat(updated.replace("Z", "+00:00"))
+            lastmod.text = dt.strftime("%Y-%m-%d")
         else:
             lastmod.text = datetime.now().strftime("%Y-%m-%d")
 
