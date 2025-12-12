@@ -39,29 +39,29 @@ function App() {
   const [offset, setOffset] = useState(0)
 
   const loadGames = async (currentOffset = 0, append = false) => {
-      setError(null)
-      if (!append) setLoading(true)
-      else setLoadingMore(true)
+    setError(null)
+    if (!append) setLoading(true)
+    else setLoadingMore(true)
 
-      const data = await api.get(`/api/games?limit=50&offset=${currentOffset}`)
-      const list = Array.isArray(data) ? data : data.games || []
+    const data = await api.get(`/api/games?limit=50&offset=${currentOffset}`)
+    const list = Array.isArray(data) ? data : data.games || []
 
-      if (append) {
-        setGames((prev) => [...prev, ...list])
-        setInitialGames((prev) => [...prev, ...list])
-      } else {
-        setGames(list)
-        setInitialGames(list)
-        if (list.length > 0) {
-          setSelectedSlug(list[0].slug)
-        }
+    if (append) {
+      setGames((prev) => [...prev, ...list])
+      setInitialGames((prev) => [...prev, ...list])
+    } else {
+      setGames(list)
+      setInitialGames(list)
+      if (list.length > 0) {
+        setSelectedSlug(list[0].slug)
       }
+    }
 
-      setHasMore(list.length === 50)
-      setOffset(currentOffset + list.length)
+    setHasMore(list.length === 50)
+    setOffset(currentOffset + list.length)
 
-      setLoading(false)
-      setLoadingMore(false)
+    setLoading(false)
+    setLoadingMore(false)
   }
 
   useEffect(() => {
@@ -92,9 +92,9 @@ function App() {
         return
       }
 
-        const data = await api.post('/api/search', { query: debouncedQuery, generate: false })
-        const list = Array.isArray(data) ? data : data.games || []
-        setGames(list)
+      const data = await api.post('/api/search', { query: debouncedQuery, generate: false })
+      const list = Array.isArray(data) ? data : data.games || []
+      setGames(list)
     }
 
     searchRealtime()
@@ -107,20 +107,20 @@ function App() {
       return
     }
 
-      setLoading(true)
-      setGenerating(true)
-      setError(null)
+    setLoading(true)
+    setGenerating(true)
+    setError(null)
 
-      const data = await api.post('/api/search', { query, generate: true })
-      const list = Array.isArray(data) ? data : data.games || []
+    const data = await api.post('/api/search', { query, generate: true })
+    const list = Array.isArray(data) ? data : data.games || []
 
-      setGames(list)
-      if (list.length > 0) {
-        setSelectedSlug(list[0].slug)
-      }
+    setGames(list)
+    if (list.length > 0) {
+      setSelectedSlug(list[0].slug)
+    }
 
-      setLoading(false)
-      setGenerating(false)
+    setLoading(false)
+    setGenerating(false)
   }
 
   const handleClear = () => {

@@ -5,11 +5,10 @@ test.describe('Game List Loading', () => {
     let apiResponseStatus = 0
     let apiResponseBody = null
 
-
     page.on('response', async (response) => {
       if (response.url().includes('/api/games') && response.request().method() === 'GET') {
         apiResponseStatus = response.status()
-          apiResponseBody = await response.json()
+        apiResponseBody = await response.json()
       }
     })
 
@@ -17,7 +16,7 @@ test.describe('Game List Loading', () => {
 
     const gamesResponse = await page.request.get('https://rule-scribe-games.vercel.app/api/games')
     apiResponseStatus = gamesResponse.status()
-      apiResponseBody = await gamesResponse.json()
+    apiResponseBody = await gamesResponse.json()
 
     expect(apiResponseStatus).not.toBe(0)
 

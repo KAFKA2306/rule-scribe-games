@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Query, Depends
+from fastapi import APIRouter, Query, Depends
 from typing import List, Optional
 from pydantic import BaseModel
 from app.models import GameDetail, GameUpdate
