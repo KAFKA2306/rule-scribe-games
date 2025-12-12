@@ -7,18 +7,12 @@ def generate_seo_html(slug: str) -> str:
     response = _client.table(_TABLE).select("*").eq("slug", slug).single().execute()
     game = response.data
 
-    title = game.get("title_ja") or game.get("title") or game.get("name") or "Untitled"
-    description = (
-        game.get("summary")
-        or game.get("description")
-        or f"「{title}」のルールをAIが瞬時に要約。インスト時間を短縮。"
-    )
+    title = game.get("title_ja") or game.get("title") or game.get("name")
+    description = game.get("summary") or game.get("description")
     image_url = game.get("image_url")
 
     if image_url and not image_url.startswith("http"):
         image_url = f"https://bodoge-no-mikata.vercel.app{image_url}"
-    elif not image_url:
-        image_url = f"https://bodoge-no-mikata.vercel.app/assets/games/{slug}.png"
 
     structured_data = {
         "@context": "https://schema.org",

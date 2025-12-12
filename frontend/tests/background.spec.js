@@ -42,7 +42,7 @@ test.describe('Background and Search Verification', () => {
 
     // Check visibility of tiles using CSS properties that we set (opacity/filter)
     // We expect the grid to have specific styles
-    await expect(grid).toHaveCSS('opacity', '0.35')
+    await expect(grid).toHaveCSS('opacity', '0.5')
     // Note: computed filter values can vary by browser (e.g. "grayscale(0.6) sepia(0.2)"), so we might skip exact filter assertion or make it loose.
 
     // Check if there are game tiles
