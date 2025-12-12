@@ -5,24 +5,24 @@ export default function EditGameModal({ game, isOpen, onClose, onSave }) {
     if (!game) return {}
     let structuredData = { keywords: [] }
     if (game.structured_data && !Array.isArray(game.structured_data)) {
-        structuredData = { ...game.structured_data }
-        if (!structuredData.keywords) structuredData.keywords = []
+      structuredData = { ...game.structured_data }
+      if (!structuredData.keywords) structuredData.keywords = []
     }
     return {
-        title: game.title || '',
-        title_ja: game.title_ja || '',
-        description: game.description || '',
-        summary: game.summary || '',
-        rules_content: game.rules_content || '',
-        min_players: game.min_players || '',
-        max_players: game.max_players || '',
-        play_time: game.play_time || '',
-        min_age: game.min_age || '',
-        published_year: game.published_year || '',
-        image_url: game.image_url || '',
-        official_url: game.official_url || '',
-        bgg_url: game.bgg_url || '',
-        structured_data: structuredData,
+      title: game.title || '',
+      title_ja: game.title_ja || '',
+      description: game.description || '',
+      summary: game.summary || '',
+      rules_content: game.rules_content || '',
+      min_players: game.min_players || '',
+      max_players: game.max_players || '',
+      play_time: game.play_time || '',
+      min_age: game.min_age || '',
+      published_year: game.published_year || '',
+      image_url: game.image_url || '',
+      official_url: game.official_url || '',
+      bgg_url: game.bgg_url || '',
+      structured_data: structuredData,
     }
   })
   const [saving, setSaving] = useState(false)
@@ -34,7 +34,6 @@ export default function EditGameModal({ game, isOpen, onClose, onSave }) {
   }
 
   const handleAddKeyword = () => {
-
     setFormData((prev) => ({
       ...prev,
       structured_data: {
@@ -59,17 +58,17 @@ export default function EditGameModal({ game, isOpen, onClose, onSave }) {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setSaving(true)
-      const payload = { ...formData }
-      const numericFields = ['min_players', 'max_players', 'play_time', 'min_age', 'published_year']
+    const payload = { ...formData }
+    const numericFields = ['min_players', 'max_players', 'play_time', 'min_age', 'published_year']
 
-      numericFields.forEach((field) => {
-        if (payload[field] === '') payload[field] = null
-        else payload[field] = Number(payload[field])
-      })
+    numericFields.forEach((field) => {
+      if (payload[field] === '') payload[field] = null
+      else payload[field] = Number(payload[field])
+    })
 
-      await onSave(payload)
-      onClose()
-      setSaving(false)
+    await onSave(payload)
+    onClose()
+    setSaving(false)
   }
 
   if (!isOpen) return null

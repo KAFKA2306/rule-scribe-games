@@ -71,7 +71,7 @@ async def test_llm_flow(api_key: str, model: str, query: str, output_path: str |
         # Actually user said "delete all if not".
         # If we want to ensure value is there, we can assert.
         # But per "crash only", just accessing strict key is better than .get()
-        val = result[f]
+        _ = result[f]
 
     # If we got here, it's PASS
     record["validation"]["result"] = "PASS"
@@ -85,7 +85,7 @@ async def test_llm_flow(api_key: str, model: str, query: str, output_path: str |
 def main():
     parser = argparse.ArgumentParser(description="Test LLM agentic flow")
     parser.add_argument("--api-key", required=True, help="Gemini API key")
-    parser.add_argument("--model", default="gemini-2.5-flash", help="Model name")
+    parser.add_argument("--model", default="gemini-2.5-flash-lite", help="Model name")
     parser.add_argument("--query", default="カタン", help="Game query")
     args = parser.parse_args()
 

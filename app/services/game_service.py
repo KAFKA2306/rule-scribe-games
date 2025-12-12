@@ -3,7 +3,6 @@ from datetime import datetime, timezone
 from app.prompts.prompts import PROMPTS
 
 
-from fastapi import HTTPException
 from app.core.gemini import GeminiClient
 from app.core import supabase
 

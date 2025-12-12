@@ -17,34 +17,28 @@ export default function GamePage({ slug: propSlug }) {
 
   const [game, setGame] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
+
   const [heroSrc, setHeroSrc] = useState(slug ? `/assets/games/${slug}.webp` : null)
   const [isEditOpen, setIsEditOpen] = useState(false)
 
   const isStandalone = !propSlug
 
   useEffect(() => {
-
-
     const fetchGame = async () => {
-        setLoading(true)
-        setError(null)
-        const res = await fetch(`/api/games/${slug}`)
+      setLoading(true)
 
+      const res = await fetch(`/api/games/${slug}`)
 
-        const data = await res.json()
-        const gameData = Array.isArray(data) ? data[0] : data.game || data
+      const data = await res.json()
+      const gameData = Array.isArray(data) ? data[0] : data.game || data
 
+      setGame(gameData)
 
-        setGame(gameData)
-      
-        setLoading(false)
+      setLoading(false)
     }
 
     fetchGame()
   }, [slug])
-
-
 
   const handleSave = async (updatedData) => {
     const res = await fetch(`/api/games/${slug}`, {
@@ -53,12 +47,9 @@ export default function GamePage({ slug: propSlug }) {
       body: JSON.stringify(updatedData),
     })
 
-
-
     const data = await res.json()
     setGame(data)
   }
-
 
   if (loading)
     return (
@@ -72,8 +63,6 @@ export default function GamePage({ slug: propSlug }) {
         />
       </div>
     )
-
-
 
   const title = game.title_ja || game.title || game.name || 'Untitled'
   const rules = game.rules_content || game.rules || game.content || ''
@@ -129,11 +118,11 @@ export default function GamePage({ slug: propSlug }) {
 
     if (isStringRules) {
       const cleanRules = rules
-        .replace(/[#*`_~]/g, '') 
-        .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') 
-        .replace(/!\[([^\]]*)\]\([^)]+\)/g, '') 
-        .replace(/^\s*[-+]\s+/gm, '') 
-        .replace(/\n+/g, ' ') 
+        .replace(/[#*`_~]/g, '')
+        .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+        .replace(/!\[([^\]]*)\]\([^)]+\)/g, '')
+        .replace(/^\s*[-+]\s+/gm, '')
+        .replace(/\n+/g, ' ')
       text += ` ルール: ${cleanRules}`
     }
     return text
@@ -166,22 +155,22 @@ export default function GamePage({ slug: propSlug }) {
             numberOfPlayers:
               game.min_players || game.max_players
                 ? {
-                  '@type': 'QuantitativeValue',
-                  minValue: game.min_players,
-                  maxValue: game.max_players || game.min_players,
-                }
+                    '@type': 'QuantitativeValue',
+                    minValue: game.min_players,
+                    maxValue: game.max_players || game.min_players,
+                  }
                 : undefined,
             audience: game.min_age
               ? {
-                '@type': 'PeopleAudience',
-                suggestedMinAge: game.min_age,
-              }
+                  '@type': 'PeopleAudience',
+                  suggestedMinAge: game.min_age,
+                }
               : undefined,
             timeRequired: game.play_time
               ? {
-                '@type': 'Duration',
-                value: `PT${game.play_time}M`,
-              }
+                  '@type': 'Duration',
+                  value: `PT${game.play_time}M`,
+                }
               : undefined,
             datePublished: game.published_year ? `${game.published_year}` : undefined,
           })}
