@@ -47,8 +47,8 @@ body {
   width: 110%; /* Slightly wider to cover edges */
   height: 110%;
   margin: -2%;
-  opacity: 0.35; /* Increased opacity for better visibility */
-  filter: grayscale(40%) sepia(20%); /* Reduced grayscale, removed blur */
+  opacity: 0.5; /* Increased opacity for better visibility */
+  filter: grayscale(20%) sepia(20%); /* Reduced grayscale, removed blur */
   transform: rotate(-2deg); /* Slight tint for style */
 }
 

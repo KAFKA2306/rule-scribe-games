@@ -1,7 +1,6 @@
 from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, HTMLResponse
-import httpx
+from fastapi.responses import HTMLResponse
 from app.services.seo_renderer import generate_seo_html
 
 
@@ -42,11 +41,3 @@ def game_seo_page(slug: str):
     """
     content = generate_seo_html(slug)
     return HTMLResponse(content=content)
-
-
-@app.exception_handler(httpx.HTTPStatusError)
-async def httpx_exception_handler(request, exc):
-    return JSONResponse(
-        status_code=exc.response.status_code,
-        content={"detail": f"Upstream AI Error: {exc.response.text}"},
-    )

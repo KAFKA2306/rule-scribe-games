@@ -6,7 +6,7 @@ from app.prompts.prompts import PROMPTS
 from fastapi import HTTPException
 from app.core.gemini import GeminiClient
 from app.core import supabase
-from app.utils.slugify import slugify
+
 
 _gemini = GeminiClient()
 _REQUIRED = ["title", "summary", "rules_content"]
@@ -43,12 +43,10 @@ async def generate_metadata(
     )
     result = await _gemini.generate_structured_json(prompt)
 
-    data = result.get("data", result) if isinstance(result, dict) else {}
+    data = result
 
     _validate(data)
 
-    if not data.get("slug"):
-        data["slug"] = slugify(data.get("title") or query)
     data["updated_at"] = datetime.now(timezone.utc).isoformat()
 
     from app.utils.affiliate import amazon_search_url

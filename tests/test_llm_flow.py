@@ -55,36 +55,35 @@ async def test_llm_flow(api_key: str, model: str, query: str, output_path: str |
     print("\n=== LLM Agentic Flow Test (App Integration) ===")
     print(f"Query: {query}, Model: {model}")
 
-
     from app.core.settings import settings
+
     settings.gemini_api_key = api_key
     settings.gemini_model = model
 
     from app.services.game_service import generate_metadata
 
-
     try:
-        
         result = await generate_metadata(query, context="No matches.")
-        
+
         record["full_output"] = result
         print(f"Output keys: {list(result.keys())}")
 
         if "error" in result:
-             print(f"Error: {result['error']}")
-             record["validation"]["result"] = "FAIL"
-             record["validation"]["reason"] = result["error"]
+            print(f"Error: {result['error']}")
+            record["validation"]["result"] = "FAIL"
+            record["validation"]["reason"] = result["error"]
         else:
             required = ["title", "summary", "rules_content"]
             missing = [f for f in required if not result.get(f)]
-            
 
             amazon_url = result.get("amazon_url")
             print(f"Amazon URL: {amazon_url}")
-            
+
             record["validation"]["result"] = "FAIL" if missing else "PASS"
             record["validation"]["missing_fields"] = missing
-            print(f"Validation: {'PASS' if not missing else 'FAIL - missing: ' + str(missing)}")
+            print(
+                f"Validation: {'PASS' if not missing else 'FAIL - missing: ' + str(missing)}"
+            )
 
     except Exception as e:
         print(f"Exception during flow: {e}")
