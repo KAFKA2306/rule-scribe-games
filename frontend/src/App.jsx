@@ -182,7 +182,7 @@ function App() {
             padding: '16px',
           }}
         >
-          <ThinkingMeeple text="AIがルールブックを読破中... (30〜60秒ほどお待ちください)" />
+          <ThinkingMeeple text="探検家ミープル君がルールブックを読破中..." />
         </div>
       )}
 

@@ -7,7 +7,6 @@ export default function EditGameModal({ game, isOpen, onClose, onSave }) {
 
   useEffect(() => {
     if (game) {
-      // Normalize structured_data to ensure it's an object with keywords array
       let structuredData = game.structured_data
       if (!structuredData || Array.isArray(structuredData)) {
         structuredData = { keywords: [] }
