@@ -28,33 +28,7 @@ def health_check():
     return {"status": "ok"}
 
 
-@app.get("/api/debug_simple")
-def debug_simple():
-    return {"message": "Hello from updated deployment"}
 
-
-@app.get("/api/debug_gemini")
-async def debug_gemini():
-    import traceback
-    from app.services.game_service import GameService
-    
-    try:
-        service = GameService()
-        # Try to generate "Catan" (a known game) to test the full pipeline
-        # using create_game_from_query ("generate": true logic)
-        result = await service.create_game_from_query("Catan")
-        
-        return {
-            "status": "success",
-            "message": "Full generation pipeline succeeded",
-            "result": result
-        }
-    except Exception as e:
-        return {
-            "status": "error",
-            "error": str(e),
-            "traceback": traceback.format_exc()
-        }
 
 
 @app.get("/sitemap.xml")
