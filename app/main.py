@@ -28,6 +28,11 @@ def health_check():
     return {"status": "ok"}
 
 
+@app.get("/api/debug_simple")
+def debug_simple():
+    return {"message": "Hello from updated deployment"}
+
+
 @app.get("/api/debug_gemini")
 async def debug_gemini():
     import os

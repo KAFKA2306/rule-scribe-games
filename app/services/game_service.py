@@ -9,6 +9,36 @@ from app.core import supabase
 
 _gemini = GeminiClient()
 _REQUIRED = ["title", "summary", "rules_content"]
+_ALLOWED_FIELDS = {
+    "id",
+    "slug",
+    "title",
+    "title_ja",
+    "title_en",
+    "description",
+    "summary",
+    "rules_content",
+    "structured_data",
+    "source_url",
+    "affiliate_urls",
+    "view_count",
+    "search_count",
+    "data_version",
+    "is_official",
+    "min_players",
+    "max_players",
+    "play_time",
+    "min_age",
+    "published_year",
+    "image_url",
+    "official_url",
+    "bgg_url",
+    "bga_url",
+    "amazon_url",
+    "audio_url",
+    "created_at",
+    "updated_at",
+}
 
 
 def _load_prompt(key: str) -> str:
@@ -40,7 +70,8 @@ async def generate_metadata(
     )
     result = await _gemini.generate_structured_json(prompt)
 
-    data = result
+    # Drop fields not present in the DB schema to avoid PostgREST column errors
+    data = {k: v for k, v in result.items() if k in _ALLOWED_FIELDS}
 
     data["updated_at"] = datetime.now(timezone.utc).isoformat()
 
