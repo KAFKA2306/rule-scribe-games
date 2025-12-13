@@ -35,16 +35,6 @@ def debug_simple():
 
 @app.get("/api/debug_gemini")
 async def debug_gemini():
-    import os
-    import traceback
-    from app.core.settings import settings
-    from app.core.gemini import GeminiClient
-    
-    env_key = os.getenv("GEMINI_API_KEY")
-    masked_key = f"{env_key[:4]}...{env_key[-4:]}" if env_key else "None"
-    
-@app.get("/api/debug_gemini")
-async def debug_gemini():
     import traceback
     from app.services.game_service import GameService
     
@@ -62,14 +52,6 @@ async def debug_gemini():
     except Exception as e:
         return {
             "status": "error",
-            "error": str(e),
-            "traceback": traceback.format_exc()
-        }
-    except Exception as e:
-        return {
-            "status": "error",
-            "env_key_masked": masked_key,
-            "model": settings.gemini_model,
             "error": str(e),
             "traceback": traceback.format_exc()
         }
