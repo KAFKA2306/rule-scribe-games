@@ -28,6 +28,39 @@ def health_check():
     return {"status": "ok"}
 
 
+@app.get("/api/debug_gemini")
+async def debug_gemini():
+    import os
+    import traceback
+    from app.core.settings import settings
+    from app.core.gemini import GeminiClient
+    
+    env_key = os.getenv("GEMINI_API_KEY")
+    masked_key = f"{env_key[:4]}...{env_key[-4:]}" if env_key else "None"
+    
+    try:
+        client = GeminiClient()
+        # Simple prompt asking for JSON
+        prompt = "Return a JSON object with a key 'greeting' and value 'hello'."
+        result = await client.generate_structured_json(prompt)
+        
+        return {
+            "status": "success",
+            "env_key_masked": masked_key,
+            "settings_key_masked": f"{settings.gemini_api_key[:4]}..." if settings.gemini_api_key else "None",
+            "model": settings.gemini_model,
+            "result": result
+        }
+    except Exception as e:
+        return {
+            "status": "error",
+            "env_key_masked": masked_key,
+            "model": settings.gemini_model,
+            "error": str(e),
+            "traceback": traceback.format_exc()
+        }
+
+
 @app.get("/sitemap.xml")
 def sitemap_xml():
     content = get_sitemap_xml()
