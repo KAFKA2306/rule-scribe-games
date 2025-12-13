@@ -1,11 +1,13 @@
 import asyncio
 import argparse
 import json
+import os
 import re
 from datetime import datetime
 from pathlib import Path
 
 import httpx
+import pytest
 import yaml
 
 
@@ -37,6 +39,30 @@ async def call_gemini(api_key: str, model: str, prompt: str) -> dict:
     m = re.search(r"\{.*\}", text, re.DOTALL)
 
     return json.loads(m.group(0) if m else text)
+
+
+@pytest.fixture(scope="session")
+def api_key():
+    key = os.getenv("GEMINI_API_KEY")
+    if not key:
+        pytest.skip("GEMINI_API_KEY not set; skipping LLM flow integration test")
+    return key
+
+
+@pytest.fixture(scope="session")
+def model():
+    return os.getenv("GEMINI_MODEL", "gemini-2.5-flash-lite")
+
+
+@pytest.fixture(scope="session")
+def query():
+    return os.getenv("LLM_FLOW_QUERY", "カタン")
+
+
+@pytest.fixture(scope="session")
+def output_path():
+    path = os.getenv("LLM_FLOW_OUTPUT")
+    return path
 
 
 async def test_llm_flow(api_key: str, model: str, query: str, output_path: str | None):

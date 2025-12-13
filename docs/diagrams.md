@@ -7,45 +7,44 @@ This diagram illustrates the flow of a user search request, specifically focusin
 ```mermaid
 sequenceDiagram
     participant User
-    participant FE as Frontend (App.jsx)
-    participant API as Vercel API (main.py)
+    participant FE as Frontend App.jsx
+    participant API as Vercel API main.py
     participant DB as Supabase
     participant AI as Gemini API
 
-    User->>FE: Enters specific game name (e.g., "Catan")
-    FE->>API: POST /api/search (query="Catan", generate=true)
+    User->>FE: Enters specific game name e.g., "Catan"
+    FE->>API: POST /api/search query="Catan", generate=true
     activate API
     
     API->>DB: Search existing games
-    DB-->>API: Return matches (or empty)
+    DB-->>API: Return matches or empty
     
-    rect rgb(240, 240, 240)
-        note right of API: Metadata Generation Phase
-        API->>AI: generate_metadata(query)
+    rect rgb(255, 240, 240)
+        note right of API: Metadata Generation CRASH ONLY MODE
+        API->>AI: generate_metadata query
         activate AI
         
-        opt Standard Flow (Success)
-            AI-->>API: JSON Response (Title, Summary, Rules)
+        alt Success Process < 8s
+            AI-->>API: JSON Response Title, Summary, Rules
             deactivate AI
             API->>DB: Upsert Game Data
             DB-->>API: Success
             API-->>FE: Return Game List
             FE-->>User: Display Game Cards
-        end
-        
-        opt Failure: 503 Service Unavailable
+        else Failure: 503 Service Unavailable REAL
+            activate AI
             AI--xAPI: 503 Service Unavailable
             deactivate AI
-            note right of API: Crash Only: No try/except
-            API--xFE: 500 Internal Server Error (Raw Stack Trace)
-            FE--xUser: Error Banner (or Hang if missing finally)
-        end
-
-         opt Failure: Timeout (Vercel Limit)
-            AI-->>API: Processing... (>10s)
-            note right of API: Vercel Hard Timeout (10s)
-            API--xFE: 504 Gateway Timeout (or 500)
-            FE--xUser: Hangs (Loading Spinner forever)
+            note right of API: NO FALLBACK / NO RETRY
+            API--xFE: 500 Internal Server Error Raw Stack Trace
+            FE--xUser: Error Banner No recovery
+        else Failure: Timeout Vercel Limit > 10s DANGER
+            activate AI
+            AI-->>API: Processing... >10.0s
+            deactivate AI
+            note right of API: Vercel HARD TIMEOUT Process Killed
+            API--xFE: 504 Gateway Timeout or Connection Reset
+            FE--xUser: INFINITE LOADING Hang - No finally block
         end
     end
     deactivate API
@@ -71,7 +70,7 @@ graph TD
     end
     
     Ext_AI[Google Gemini API]
-    Ext_DB[(Supabase PostgreSQL)]
+    Ext_DB[Supabase PostgreSQL]
 
     User --> Search
     Search --> App
