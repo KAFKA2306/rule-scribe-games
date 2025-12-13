@@ -43,18 +43,27 @@ async def debug_gemini():
     env_key = os.getenv("GEMINI_API_KEY")
     masked_key = f"{env_key[:4]}...{env_key[-4:]}" if env_key else "None"
     
+@app.get("/api/debug_gemini")
+async def debug_gemini():
+    import traceback
+    from app.services.game_service import GameService
+    
     try:
-        client = GeminiClient()
-        # Simple prompt asking for JSON
-        prompt = "Return a JSON object with a key 'greeting' and value 'hello'."
-        result = await client.generate_structured_json(prompt)
+        service = GameService()
+        # Try to generate "Catan" (a known game) to test the full pipeline
+        # using create_game_from_query ("generate": true logic)
+        result = await service.create_game_from_query("Catan")
         
         return {
             "status": "success",
-            "env_key_masked": masked_key,
-            "settings_key_masked": f"{settings.gemini_api_key[:4]}..." if settings.gemini_api_key else "None",
-            "model": settings.gemini_model,
+            "message": "Full generation pipeline succeeded",
             "result": result
+        }
+    except Exception as e:
+        return {
+            "status": "error",
+            "error": str(e),
+            "traceback": traceback.format_exc()
         }
     except Exception as e:
         return {
