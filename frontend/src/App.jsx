@@ -152,6 +152,13 @@ function App() {
         </nav>
       </header>
 
+      <div style={{ textAlign: 'center', margin: '24px 16px', color: '#a0aec0', fontSize: '0.95rem', lineHeight: '1.6' }}>
+        <p style={{ margin: 0 }}>
+          「説明書を読むのが面倒」「インスト準備に時間がかかる」そんな悩みをAIが解決。<br />
+          ボドゲのミカタは、世界中のボードゲームのルールを瞬時に要約・検索できるツールです。
+        </p>
+      </div>
+
       <div className="search-section">
         <form onSubmit={handleSearch} className="search-form">
           <input
