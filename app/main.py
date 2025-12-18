@@ -28,9 +28,6 @@ def health_check():
     return {"status": "ok"}
 
 
-
-
-
 @app.get("/sitemap.xml")
 def sitemap_xml():
     content = get_sitemap_xml()

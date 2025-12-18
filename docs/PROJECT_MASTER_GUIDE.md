@@ -254,13 +254,13 @@ create index if not exists idx_games_title on games(title);
 
 ## 5. 設定値・環境変数 (Settings & Configurations)
 
-### 5.1 環境変数 (`backend/app/core/settings.py`)
+### 5.1 環境変数 (`app/core/settings.py`)
 システムが依存する全ての環境変数です。
 
 | 変数名 | デフォルト値 | 説明 |
 | :--- | :--- | :--- |
 | `GEMINI_API_KEY` | `None` (Required) | Google AI Studio APIキー。 |
-| `GEMINI_MODEL` | `models/gemini-2.5-flash` | 使用するAIモデル名。 |
+| `GEMINI_MODEL` | `models/gemini-3-flash-preview` | 使用するAIモデル名。 |
 | `SUPABASE_URL` | `None` (Required) | Supabase プロジェクトURL。 |
 | `SUPABASE_SERVICE_ROLE_KEY` | `None` (Recommended for Backend) | RLSをバイパスする管理者キー。バックエンド操作に推奨。 |
 | `SUPABASE_KEY` / `VITE_...` | `None` (Fallback) | `SERVICE_ROLE_KEY` がない場合、`SUPABASE_KEY` -> `NEXT_PUBLIC_...` -> `VITE_SUPABASE_ANON_KEY` の順でフォールバックします。 |

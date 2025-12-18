@@ -18,7 +18,7 @@ AI-Powered board game rule wiki & summarizer — 「世界中のボードゲー�
 - Taskfile command list: `task --list`
 
 ## What It Does
-- 🔍 Searches Supabase first; on cache miss, prompts Gemini 2.5 Flash (Google Search Grounding) to generate Japanese summaries.
+- 🔍 Searches Supabase first; on cache miss, prompts Gemini (`models/gemini-3-flash-preview`) to generate Japanese summaries.
 - 📚 Structures rules into setup / gameplay / end-game, plus keywords and verified outbound links (official, BGG, Amazon, image).
 - ⚡ Caches generated results back to Supabase so subsequent requests are instant.
 - 🖥️ React/Vite frontend with Supabase Auth optional; serverless-ready via Vercel (`api/index.py` mounts the same FastAPI app).
@@ -48,7 +48,7 @@ task dev                        # starts FastAPI :8000 and Vite :5173
 | Key | Purpose |
 | --- | --- |
 | `GEMINI_API_KEY` | Google Generative Language API key |
-| `GEMINI_MODEL` (optional) | defaults to `gemini-2.5-flash` |
+| `GEMINI_MODEL` (optional) | defaults to `models/gemini-3-flash-preview` |
 | `NEXT_PUBLIC_SUPABASE_URL` / `SUPABASE_URL` | Supabase project URL |
 | `SUPABASE_SERVICE_ROLE_KEY` (preferred) or `SUPABASE_KEY` | writes/reads for backend |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | frontend Auth + client queries |
@@ -71,7 +71,8 @@ Defaults in `app/core/settings.py`; missing keys will break requests.
 - `PATCH /api/games/{slug}?regenerate=true&fill_missing_only=false` — background refresh via Gemini; when `fill_missing_only=true`, only fills blank fields and keeps existing data.
 
 ## Testing
-- Backend LLM harness: `uv run pytest tests/test_llm_flow.py --api-key "$GEMINI_API_KEY" --query "カタン"` (writes logs to `tests/logs/`).
+- Gemini model verification (required for safe merge): `task gemini:verify`
+- Backend LLM harness: `uv run python tests/test_llm_flow.py --api-key "$GEMINI_API_KEY" --model "$GEMINI_MODEL" --query "カタン"` (writes logs to `tests/logs/`).
 - Frontend E2E (optional): `cd frontend && npx playwright test`.
 
 ## Troubleshooting

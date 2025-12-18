@@ -7,8 +7,12 @@ from datetime import datetime
 from pathlib import Path
 
 import httpx
-import pytest
 import yaml
+
+try:
+    import pytest  # type: ignore
+except ModuleNotFoundError:  # pragma: no cover
+    pytest = None  # type: ignore
 
 
 def load_prompt(key: str) -> str:
@@ -20,7 +24,7 @@ def load_prompt(key: str) -> str:
 
 
 async def call_gemini(api_key: str, model: str, prompt: str) -> dict:
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+    url = f"https://generativelanguage.googleapis.com/v1beta/{model}:generateContent"
     payload = {
         "contents": [{"parts": [{"text": prompt}]}],
         "generationConfig": {
@@ -29,7 +33,9 @@ async def call_gemini(api_key: str, model: str, prompt: str) -> dict:
         },
     }
     async with httpx.AsyncClient(timeout=300.0) as client:
-        resp = await client.post(url, params={"key": api_key}, json=payload)
+        resp = await client.post(
+            url, headers={"x-goog-api-key": api_key}, json=payload
+        )
     resp.raise_for_status()
     text = resp.json()["candidates"][0]["content"]["parts"][0]["text"]
     if "```" in text:
@@ -41,28 +47,27 @@ async def call_gemini(api_key: str, model: str, prompt: str) -> dict:
     return json.loads(m.group(0) if m else text)
 
 
-@pytest.fixture(scope="session")
-def api_key():
-    key = os.getenv("GEMINI_API_KEY")
-    if not key:
-        pytest.skip("GEMINI_API_KEY not set; skipping LLM flow integration test")
-    return key
+if pytest:
 
+    @pytest.fixture(scope="session")
+    def api_key():
+        key = os.getenv("GEMINI_API_KEY")
+        if not key:
+            pytest.skip("GEMINI_API_KEY not set; skipping LLM flow integration test")
+        return key
 
-@pytest.fixture(scope="session")
-def model():
-    return os.getenv("GEMINI_MODEL", "gemini-2.5-flash-lite")
+    @pytest.fixture(scope="session")
+    def model():
+        return os.getenv("GEMINI_MODEL", "models/gemini-3-flash-preview")
 
+    @pytest.fixture(scope="session")
+    def query():
+        return os.getenv("LLM_FLOW_QUERY", "カタン")
 
-@pytest.fixture(scope="session")
-def query():
-    return os.getenv("LLM_FLOW_QUERY", "カタン")
-
-
-@pytest.fixture(scope="session")
-def output_path():
-    path = os.getenv("LLM_FLOW_OUTPUT")
-    return path
+    @pytest.fixture(scope="session")
+    def output_path():
+        path = os.getenv("LLM_FLOW_OUTPUT")
+        return path
 
 
 async def test_llm_flow(api_key: str, model: str, query: str, output_path: str | None):
@@ -111,7 +116,9 @@ async def test_llm_flow(api_key: str, model: str, query: str, output_path: str |
 def main():
     parser = argparse.ArgumentParser(description="Test LLM agentic flow")
     parser.add_argument("--api-key", required=True, help="Gemini API key")
-    parser.add_argument("--model", default="gemini-2.5-flash-lite", help="Model name")
+    parser.add_argument(
+        "--model", default="models/gemini-3-flash-preview", help="Model name"
+    )
     parser.add_argument("--query", default="カタン", help="Game query")
     args = parser.parse_args()
 

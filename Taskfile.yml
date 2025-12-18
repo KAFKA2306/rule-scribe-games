@@ -93,3 +93,6 @@ tasks:
     desc: 過去24時間更新のゲームのみURL検証
     cmd: uv run python -m app.scripts.validate_urls --hours 24
 
+  gemini:verify:
+    desc: "Gemini model existence + generateContent smoke check"
+    cmd: bash scripts/verify_gemini_model.sh

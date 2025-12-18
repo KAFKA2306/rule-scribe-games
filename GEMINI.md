@@ -2,4 +2,4 @@
 @.serena/memories/*.md
 @README.md
 
-WE MUST ALWAYS USE GEMINI-2.5-FLASH IN ALL TIME AT ANYWHERE.
+WE MUST ALWAYS USE models/gemini-3-flash-preview IN ALL TIME AT ANYWHERE.

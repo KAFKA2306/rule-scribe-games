@@ -1,1 +1,1 @@
-gemini_model: "gemini-2.5-flash"
+gemini_model: "models/gemini-3-flash-preview"
