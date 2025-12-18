@@ -1,13 +1,18 @@
 import json
 import httpx
-from app.core.settings import settings
+from app.core.settings import CANONICAL_GEMINI_MODEL, settings
 
 
 class GeminiClient:
     def __init__(self):
         self.api_key = settings.gemini_api_key
         self.model = settings.gemini_model
-        self.url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.model}:generateContent"
+        if self.model != CANONICAL_GEMINI_MODEL:
+            raise ValueError(
+                f"Gemini model must be exactly `{CANONICAL_GEMINI_MODEL}` "
+                f"(got `{self.model}`)."
+            )
+        self.url = f"https://generativelanguage.googleapis.com/v1beta/{self.model}:generateContent"
 
     async def generate_structured_json(self, prompt: str) -> dict:
         data = {
@@ -20,8 +25,10 @@ class GeminiClient:
         async with httpx.AsyncClient(timeout=60.0) as client:
             resp = await client.post(
                 self.url,
-                headers={"Content-Type": "application/json"},
-                params={"key": self.api_key},
+                headers={
+                    "Content-Type": "application/json",
+                    "x-goog-api-key": self.api_key,
+                },
                 json=data,
             )
         resp.raise_for_status()
