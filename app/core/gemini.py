@@ -17,6 +17,7 @@ class GeminiClient:
     async def generate_structured_json(self, prompt: str) -> dict:
         data = {
             "contents": [{"parts": [{"text": prompt}]}],
+            "tools": [{"google_search": {}}],
             "generationConfig": {
                 "temperature": 0,
                 "response_mime_type": "application/json",
@@ -32,5 +33,6 @@ class GeminiClient:
                 json=data,
             )
         resp.raise_for_status()
+
         text = resp.json()["candidates"][0]["content"]["parts"][0]["text"]
         return json.loads(text)
