@@ -73,6 +73,8 @@ def generate_seo_html(slug: str) -> str:
     replacements = {
         'content="ボドゲのミカタ | AIでルールを瞬時に要約。インスト時間を短縮"': f'content="{title} | ボドゲのミカタ"',
         'content="https://bodoge-no-mikata.vercel.app/og-image.png"': f'content="{image_url}"',
+        'property="og:url" content="https://bodoge-no-mikata.vercel.app/"': f'property="og:url" content="https://bodoge-no-mikata.vercel.app/games/{slug}"',
+        'link rel="canonical" href="https://bodoge-no-mikata.vercel.app/"': f'link rel="canonical" href="https://bodoge-no-mikata.vercel.app/games/{slug}"',
     }
 
     for old, new in replacements.items():
