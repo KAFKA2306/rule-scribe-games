@@ -40,3 +40,31 @@
 - **Gemini Model Name**: STRICTLY use `models/gemini-3-flash-preview`. Do not change this to other versions (e.g., `gemini-2.0` or `1.5-pro`) without explicit user override, as this is the verified model for Vercel/production environment.
 - **Why**: Ensure consistency and avoid quota/availability issues associated with experimental models.
 
+## Claude Skills (AI Workflow Automation)
+
+Skills are reusable instruction packages in `.claude/skills/` that teach AI assistants how to perform specialized tasks.
+
+### Available Skills
+
+| Skill | File | Description |
+|-------|------|-------------|
+| **add-game** | `add-game.md` | Add new board games with image generation and database insertion |
+| **deploy** | `deploy.md` | Git commit, push, and Vercel deployment verification |
+| **fix-data** | `fix-data.md` | Fix database content issues (escaping, formatting) |
+| **search-verify** | `search-verify.md` | Research games and verify site content accuracy |
+
+### How Skills Work
+
+- **Invocation**: Model-invoked (AI decides when to use based on your request)
+- **Location**: `.claude/skills/[skill-name].md`
+- **Trigger**: AI analyzes your request and matches it to skill's "When to Use" section
+
+### Example Triggers
+
+| Your Request | Skill Used |
+|--------------|------------|
+| "Add テラフォーミングマーズ to the site" | `add-game` |
+| "Deploy to production" | `deploy` |
+| "The text looks broken" | `fix-data` |
+| "Is ドミニオン on our site?" | `search-verify` |
+
