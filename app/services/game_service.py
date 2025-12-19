@@ -7,6 +7,8 @@ from app.core.gemini import GeminiClient
 from app.core import supabase
 
 
+from app.core import logger
+
 _gemini = GeminiClient()
 _REQUIRED = ["title", "summary", "rules_content"]
 _ALLOWED_FIELDS = {
@@ -47,9 +49,6 @@ def _load_prompt(key: str) -> str:
         data = data[part]
     return str(data).strip()
 
-    if not all(data.get(f) for f in _REQUIRED):
-        raise ValueError(f"Validation failed. Missing required fields: {_REQUIRED}")
-
 
 async def generate_metadata(
     query: str, context: Optional[str] = None
@@ -69,6 +68,15 @@ async def generate_metadata(
         query=query, context=context
     )
     result = await _gemini.generate_structured_json(prompt)
+
+    # Validate required fields
+    if not all(result.get(f) for f in _REQUIRED):
+        logger.error(
+            f"Validation Failed: Missing required fields in LLM response. Got keys: {list(result.keys())}"
+        )
+        raise ValueError(f"Validation failed. Missing required fields: {_REQUIRED}")
+
+    logger.info(f"Metadata generation successful for: {query}")
 
     # Drop fields not present in the DB schema to avoid PostgREST column errors
     data = {k: v for k, v in result.items() if k in _ALLOWED_FIELDS}

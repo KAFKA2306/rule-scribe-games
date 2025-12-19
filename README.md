@@ -7,96 +7,114 @@
 [![Python 3.11](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/downloads/release/python-3110/)
 [![React](https://img.shields.io/badge/react-18.x-61dafb.svg)](https://reactjs.org/)
 
-AI-Powered board game rule wiki & summarizer — 「世界中のボードゲームのルールを、瞬時に正確に日本語で」。
+**AI駆動ボードゲームルール要約 & Wiki — 「世界中のボードゲームのルールを、瞬時に正確に日本語で」。**
 
 ---
 
-## Quick Links
-- Single Source of Truth: `docs/PROJECT_MASTER_GUIDE.md`
-- Live Demo: <https://rule-scribe-games.vercel.app>
-- API Health (local): `http://localhost:8000/health`
-- Taskfile command list: `task --list`
+## 📖 目次
 
-## What It Does
-- 🔍 Searches Supabase first; on cache miss, prompts Gemini (`models/gemini-3-flash-preview`) to generate Japanese summaries.
-- 📚 Structures rules into setup / gameplay / end-game, plus keywords and verified outbound links (official, BGG, Amazon, image).
-- ⚡ Caches generated results back to Supabase so subsequent requests are instant.
-- 🖥️ React/Vite frontend with Supabase Auth optional; serverless-ready via Vercel (`api/index.py` mounts the same FastAPI app).
+- [RuleScribe Games](#rulescribe-games)
+  - [📖 目次](#-目次)
+  - [プロジェクト概要](#プロジェクト概要)
+    - [主な機能](#主な機能)
+  - [アーキテクチャ](#アーキテクチャ)
+  - [ディレクトリ構成](#ディレクトリ構成)
+  - [環境構築](#環境構築)
+    - [前提条件](#前提条件)
+    - [セットアップ手順 (3 Steps)](#セットアップ手順-3-steps)
+  - [開発ガイド](#開発ガイド)
+  - [API仕様](#api仕様)
+  - [トラブルシューティング](#トラブルシューティング)
 
-## Architecture at a Glance
-- Frontend: React 18 + Vite + Vanilla CSS variables (`frontend/src`).
-- Backend: FastAPI (`app/main.py`) with async Supabase client and Gemini HTTP client (`app/core/gemini.py`).
-- Database: Supabase Postgres `games` table (schema in `backend/init_db.sql` and master guide).
-- Storage: Supabase Storage `game-images` bucket (public).
-- Assets: Local image support (`frontend/public/assets/games/`) with automated deployment to Supabase.
-- Deployment: Vercel serverless (Python), wide-open CORS for the app.
+---
 
-## Prerequisites
-- Python 3.11+, Node.js 18+
-- Supabase project (URL + anon key, service role key recommended)
-- Google Gemini API key (Google AI Studio)
-- `uv` and `task` installed
+## プロジェクト概要
 
-## Setup (3 Steps)
-```bash
-cp .env.example .env            # 填入 GEMINI_API_KEY, Supabase keys
-task setup                      # uv sync + npm install
-task dev                        # starts FastAPI :8000 and Vite :5173
-```
+本プロジェクトは、Gemini Pro/Flashを活用してボードゲームのルールを検索・要約し、日本語で提供するWebアプリケーションです。
 
-## Environment Variables (必須)
-| Key | Purpose |
-| --- | --- |
-| `GEMINI_API_KEY` | Google Generative Language API key |
-| `GEMINI_MODEL` (optional) | defaults to `models/gemini-3-flash-preview` |
-| `NEXT_PUBLIC_SUPABASE_URL` / `SUPABASE_URL` | Supabase project URL |
-| `SUPABASE_SERVICE_ROLE_KEY` (preferred) or `SUPABASE_KEY` | writes/reads for backend |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | frontend Auth + client queries |
+### 主な機能
+- **AI検索 & 要約**: ユーザーの検索クエリに対し、まずSupabase上のキャッシュを確認。存在しない場合はGemini (`models/gemini-3-flash-preview`) を呼び出し、高精度な日本語要約を生成します。
+- **構造化データ**: ルールを「準備」「ゲームプレイ」「終了条件」に構造化し、キーワードや外部リンク（公式サイト、BGG、Amazon等）と合わせて提示します。
+- **ハイブリッドキャッシュ**: 生成結果はSupabaseに保存され、次回のアクセスを高速化します。
+- **モダンなUI**: React/Viteによるレスポンシブなインターフェース。
 
-Defaults in `app/core/settings.py`; missing keys will break requests.
+## アーキテクチャ
 
-## Run & Develop
-- `task dev` — run both servers with hot reload (backend 8000, frontend 5173).
-- `task dev:backend` / `task dev:frontend` — run individually.
-- `task build` → `task preview` — production build & preview frontend.
-- `task lint` — Ruff + Prettier + ESLint (`lint:backend`, `lint:frontend` available).
-- `uv run python scripts/deploy_images.py` — Upload local game images to Supabase Storage and update DB.
+システムは以下の技術スタックで構成されています。
 
-## API Surface
-- `GET /api/health` — liveness.
-- `GET /api/games?limit=50&offset=0` — recent games.
-- `GET /api/games/{slug}` — details (increments `view_count`).
-- `GET /api/search?q=...` — Supabase search only.
-- `POST /api/search` `{ "query": "...", "generate": true|false }` — when `generate=true`, triggers Gemini + Supabase upsert and returns the new record.
-- `PATCH /api/games/{slug}?regenerate=true&fill_missing_only=false` — background refresh via Gemini; when `fill_missing_only=true`, only fills blank fields and keeps existing data.
+- **Frontend**: React 18 + Vite + Vanilla CSS (CSS Variables活用)。`frontend/` 配下。
+- **Backend API**: FastAPI。`app/` 配下に実装され、Vercel Serverless Functionとして動作。
+- **Database**: Supabase (PostgreSQL)。`games` テーブルに要約データを格納。
+- **AI Model**: Google Gemini 3 Flash Preview。
+- **Deploy**: Vercel (Frontend & Backend Serverless)。
 
-## Testing
-- Gemini model verification (required for safe merge): `task gemini:verify`
-- Backend LLM harness: `uv run python tests/test_llm_flow.py --api-key "$GEMINI_API_KEY" --model "$GEMINI_MODEL" --query "カタン"` (writes logs to `tests/logs/`).
-- Frontend E2E (optional): `cd frontend && npx playwright test`.
+## ディレクトリ構成
 
-## Troubleshooting
-- Gemini 401/404 → `GEMINI_API_KEY` 未設定 or typo。`.env` を再読み込みして `task dev` を再起動。
-- Gemini 429 (rate limit) → 数分待つ / 呼び出し頻度を下げる。追加キーを `GEMINI_API_KEY_2` などで用意し、将来のキー・ローテーション実装に備える。まず GET/POST検索のみでキャッシュを確認し、必要なときだけ `generate=true` を叩く。
-- Supabase 401/403 → `SUPABASE_SERVICE_ROLE_KEY` / `SUPABASE_KEY` が不足または誤り。`NEXT_PUBLIC_SUPABASE_URL` も合わせて確認。
-- Duplicate or missing rows → `title` が揺れると `slug` が変わり upsert が別行扱いに。`source_url` を安定キーにすると衝突が減る。
-- `PATCH ...?regenerate=true` で結果が反映されない → バックグラウンド実行のため即時反映されない。ログを確認し、必要なら `fill_missing_only=true` で安全補完に切替。
-- Frontend リストが空 → `NEXT_PUBLIC_SUPABASE_*` 未設定で `supabase` クライアントが `null`。環境変数をセットして再ビルド。
-- 画面が真っ白 / 表示されない → `npm install` 忘れ / `task dev` でフロントが起動していない / ブラウザコンソールのJSエラー。開発時は `http://localhost:5173` にアクセスし、`/api` が 8000 へ届くように相対パスのまま fetch する（別ポート直指定だとCORSで失敗）。環境変数変更後はフロントを再起動。
-- Supabase スキーマ不一致 → `backend/init_db.sql` を Supabase SQL エディタで再実行し、足りないカラムやインデックスを反映。RLS/ポリシーを有効にしている場合は適宜見直す。既存データがある場合はバックアップを取ってから適用。
-- Ports busy (8000/5173) → `task kill` で解放。
-- Vercel 502/timeout → コールドスタートや env 未設定が原因。Vercel の環境変数にも `.env` の内容を反映。
+各ディレクトリの詳細な役割とロジックについては、それぞれのREADMEを参照してください。
 
-## Project Structure
-```
-rule-scribe-games/
-├── app/                # FastAPI backend (core, routers, services, prompts, utils)
-├── api/index.py        # Vercel serverless entry
-├── frontend/           # React/Vite client (pages, components, lib, styles)
-├── docs/PROJECT_MASTER_GUIDE.md
-├── Taskfile.yml        # canonical commands
-└── tests/              # LLM flow harness logs
-```
+- **[`api/`](./api/README.md)**: Vercel Serverless Functionのエントリーポイント。
+- **[`app/`](./app/README.md)**: FastAPIバックエンドのアプリケーションロジック。
+    - [`app/core`](./app/core/README.md): 設定、シングルトンインスタンス。
+    - [`app/routers`](./app/routers/README.md): APIエンドポイント定義。
+    - [`app/services`](./app/services/README.md): ビジネスロジック、AI連携。
+- **[`frontend/`](./frontend/README.md)**: Reactフロントエンドアプリケーション。
+    - [`frontend/src`](./frontend/src/README.md): ソースコード詳細。
+- **[`scripts/`](./scripts/README.md)**: 運用・保守用スクリプト。
+- **[`tests/`](./tests/README.md)**: テストコード。
+- **[`docs/`](./docs/README.md)**: プロジェクトドキュメント。
 
-## License
-MIT © RuleScribe Games contributors
+## 環境構築
+
+### 前提条件
+- Python 3.11+
+- Node.js 18+
+- Supabase プロジェクト (URL, keys)
+- Google Gemini API Key
+- `uv` (Python package manager) および `task` (Taskfile)
+
+### セットアップ手順 (3 Steps)
+
+1. **環境変数の設定**
+   ```bash
+   cp .env.example .env
+   # .env を編集し、GEMINI_API_KEY, SUPABASE_URL などを設定
+   ```
+
+2. **依存関係のインストール**
+   ```bash
+   task setup  # uv sync と npm install を実行
+   ```
+
+3. **開発サーバーの起動**
+   ```bash
+   task dev    # Backend(:8000) と Frontend(:5173) を同時起動
+   ```
+
+## 開発ガイド
+
+Taskfileにより、主要な開発コマンドが標準化されています。
+
+- `task dev`: 開発サーバー起動（ホットリロード有効）。
+- `task lint`: コードフォーマットと静的解析 (Ruff, Prettier, ESLint)。
+- `task build`: フロントエンドのプロダクションビルド。
+- `task gemini:verify`: Geminiモデルの動作確認。
+
+## API仕様
+
+主要なエンドポイントは以下の通りです。詳細はコードおよびSwagger UI (`/docs` - ローカル起動時) を参照してください。
+
+- `GET /api/health`: サーバー稼働確認。
+- `GET /api/games`: ゲーム一覧取得。
+- `GET /api/games/{slug}`: ゲーム詳細取得。
+- `POST /api/search`: ゲーム検索およびAI生成トリガー。
+    - Body: `{ "query": "カタン", "generate": true }`
+
+## トラブルシューティング
+
+- **Gemini 401/404**: `.env` の `GEMINI_API_KEY` が正しいか確認してください。
+- **Supabase 401/403**: RLSポリシーまたはAPIキー (`SUPABASE_SERVICE_ROLE_KEY`) を確認してください。
+- **画面が真っ白**: フロントエンドの依存関係 (`npm install`) や環境変数 (`NEXT_PUBLIC_...`) を確認してください。
+
+---
+
+**License**: MIT © RuleScribe Games contributors

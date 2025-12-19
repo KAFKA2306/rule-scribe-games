@@ -1,6 +1,9 @@
 import json
+import logging
 import httpx
 from app.core.settings import CANONICAL_GEMINI_MODEL, settings
+
+logger = logging.getLogger(__name__)
 
 
 class GeminiClient:
@@ -32,7 +35,28 @@ class GeminiClient:
                 },
                 json=data,
             )
-        resp.raise_for_status()
+
+        try:
+            resp.raise_for_status()
+        except httpx.HTTPStatusError as e:
+            logger.error(
+                f"Gemini API Error {e.response.status_code}: {e.response.text}"
+            )
+            raise e
 
         text = resp.json()["candidates"][0]["content"]["parts"][0]["text"]
-        return json.loads(text)
+        logger.info(f"Gemini Raw Response: {text[:200]}...")  # Log first 200 chars
+
+        # Strip markdown if present
+        if "```" in text:
+            import re
+
+            match = re.search(r"```(?:json)?\s*(.*?)\s*```", text, re.DOTALL)
+            if match:
+                text = match.group(1)
+
+        try:
+            return json.loads(text)
+        except json.JSONDecodeError as e:
+            logger.error(f"Failed to parse JSON: {text}")
+            raise e

@@ -1,24 +1,20 @@
-# Prompts
+# Prompts (`app/prompts/`)
 
-LLM プロンプトテンプレート。
+このディレクトリは、AI (Gemini) に送信するプロンプトを一元管理します。コード内にプロンプト文字列を散在させず、ここでのみ定義することで、AIの挙動調整やバージョン管理を容易にします。
 
-## ファイル
+## [`prompts.py`](./prompts.py)
+プロンプトのテンプレートが定義された辞書オブジェクト `PROMPTS` をエクスポートします。
 
-| ファイル | 役割 |
-|---------|------|
-| `prompts.yaml` | 全プロンプトテンプレート |
+### プロンプト構造
+プロンプトは機能ごとにネストされた辞書で管理されます。
 
-## プロンプト一覧
+#### `metadata_generator.generate`
+ゲームのメタデータ生成用プロンプトです。以下の要素を含みます：
+- **Role**: "expert board game librarian" という役割を与えます。
+- **Task**: 入力されたクエリに対応するゲームの構造化JSONメタデータを生成するよう指示します。
+- **Schema Definition**: 出力すべきJSONのキー（`title_ja`, `summary`, `rules_content` 等）と、それぞれの期待される内容（データ型、日本語指定など）を厳密に定義しています。
+- **Context**: データベースからの検索結果などをコンテキストとして渡し、重複やハルシネーションを抑制します。
 
-| キー | 用途 |
-|-----|------|
-| `metadata_generator.generate` | ゲーム情報の初回生成 |
-| `metadata_critic.improve` | 生成結果の検証・修正 |
-| `link_resolve.resolve` | 外部URL検証 |
-
-## 使用方法
-
-```python
-from app.services.generator import _load_prompt
-prompt = _load_prompt("metadata_generator.generate")
-```
+### ベストプラクティス
+- **明確なスキーマ**: AIに対してフリーテキストではなく、特定のキーを持つJSONを要求することで、プログラムでのパースエラーを防ぎます。
+- **言語指定**: 日本語出力を明示的に指示し（"Japanese"）、翻訳ブレを防ぎます。
