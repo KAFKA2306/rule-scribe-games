@@ -1,30 +1,25 @@
-# Skill: Fix Database Content
+# Skill: Fix Data
 
-Fix data quality issues in the Supabase games table.
+## Trigger
+Content issues on game pages (broken text, missing fields).
 
-## When to Use
-
-- Text displays incorrectly (`\n` as literal text)
-- Missing fields (links, metadata)
-- User reports content issues
-
-## Database
-
-- Project ID: `wazgoplarevypdfbgeau`
-- Table: `games`
+## Project
+`wazgoplarevypdfbgeau`
 
 ## Common Fixes
 
-### Fix Escaped Newlines
-
+### Escaped Newlines
 ```sql
-UPDATE games 
-SET rules_content = REPLACE(rules_content, '\n', E'\n')
-WHERE slug = '[slug]';
+UPDATE games SET rules_content = REPLACE(rules_content, '\n', E'\n') WHERE slug = '[slug]';
 ```
 
-### Add Missing Links
+### Short Rules (< 500 chars)
+Re-research and expand:
+```sql
+UPDATE games SET rules_content = E'## 準備\n...\n\n## ゲームの流れ\n...' WHERE slug = '[slug]';
+```
 
+### Missing Links
 ```sql
 UPDATE games SET 
   bgg_url = 'https://boardgamegeek.com/boardgame/[id]',
@@ -32,30 +27,13 @@ UPDATE games SET
 WHERE slug = '[slug]';
 ```
 
-### Expand Short Rules
-
-If rules_content < 500 chars, research and rewrite with full structure:
-
+### Update structured_data
 ```sql
-UPDATE games SET rules_content = E'## 準備
-[detailed setup]
-
-## ゲームの流れ
-[turn structure]
-
-## 勝利条件
-[win conditions]'
-WHERE slug = '[slug]';
+UPDATE games SET structured_data = '{
+  "keywords": [...],
+  "key_elements": [...]
+}'::jsonb WHERE slug = '[slug]';
 ```
 
-### Fix Image URL
-
-```sql
-UPDATE games 
-SET image_url = '/assets/games/[slug].webp'
-WHERE slug = '[slug]';
-```
-
-## Verification
-
-Use browser_subagent to hard refresh and confirm fix.
+## Verify
+browser_subagent → Ctrl+Shift+R → confirm fix

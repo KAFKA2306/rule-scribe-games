@@ -1,44 +1,23 @@
 # Skill: Search and Verify
 
-Research board games and verify site content.
+## Trigger
+Check if game exists, verify accuracy.
 
-## When to Use
+## Steps
 
-- Verify game data accuracy
-- Check if game exists on site
-- Research before adding
-
-## Workflow
-
-### 1. Search
-
+### 1. Web Search
 ```
-search_web(query: "[game name] ボードゲーム ルール")
+search_web(query: "[game] ボードゲーム ルール")
 ```
 
-Gather: title, theme, player count, mechanics, BGG ID
-
-### 2. Check Database
-
+### 2. Database Check
 ```sql
-SELECT slug, title_ja, LENGTH(rules_content) as rules_len,
-  bgg_url IS NOT NULL as has_bgg
-FROM games 
-WHERE title ILIKE '%[name]%' OR title_ja ILIKE '%[name]%';
+SELECT slug, title_ja, LENGTH(rules_content), bgg_url IS NOT NULL 
+FROM games WHERE title_ja ILIKE '%[name]%';
 ```
 
-### 3. Check Site
-
-```
-browser_subagent: https://bodoge-no-mikata.vercel.app/games/[slug]
-```
+### 3. Site Check
+browser_subagent → https://bodoge-no-mikata.vercel.app/games/[slug]
 
 ### 4. Report
-
-- Exists? Data accurate? Links present? Rules detailed?
-
-## Data Sources
-
-- BoardGameGeek (BGG)
-- ボドゲーマ
-- JELLY JELLY CAFE
+- Exists? Accurate? Links? Rules detailed?
