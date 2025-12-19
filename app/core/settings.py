@@ -15,7 +15,7 @@ _config = load_config()
 
 load_dotenv(Path(__file__).resolve().parent.parent.parent / ".env")
 
-CANONICAL_GEMINI_MODEL = "models/gemini-2.0-flash-exp"
+CANONICAL_GEMINI_MODEL = "models/gemini-3-flash-preview"
 
 
 class Settings:
