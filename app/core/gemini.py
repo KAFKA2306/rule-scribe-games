@@ -10,11 +10,6 @@ class GeminiClient:
     def __init__(self):
         self.api_key = settings.gemini_api_key
         self.model = settings.gemini_model
-        if self.model != CANONICAL_GEMINI_MODEL:
-            raise ValueError(
-                f"Gemini model must be exactly `{CANONICAL_GEMINI_MODEL}` "
-                f"(got `{self.model}`)."
-            )
         self.url = f"https://generativelanguage.googleapis.com/v1beta/{self.model}:generateContent"
 
     async def generate_structured_json(self, prompt: str) -> dict:
