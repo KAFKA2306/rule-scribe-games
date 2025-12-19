@@ -15,7 +15,7 @@ _config = load_config()
 
 load_dotenv(Path(__file__).resolve().parent.parent.parent / ".env")
 
-CANONICAL_GEMINI_MODEL = "models/gemini-3-flash-preview"
+CANONICAL_GEMINI_MODEL = "models/gemini-2.0-flash-exp"
 
 
 class Settings:
@@ -27,12 +27,7 @@ class Settings:
         if not requested_model.startswith("models/"):
             raise ValueError(
                 "GEMINI_MODEL must include the `models/` prefix "
-                "(example: models/gemini-3-flash-preview)."
-            )
-        if requested_model != CANONICAL_GEMINI_MODEL:
-            raise ValueError(
-                f"GEMINI_MODEL must be exactly `{CANONICAL_GEMINI_MODEL}` "
-                f"(got `{requested_model}`)."
+                "(example: models/gemini-2.0-flash-exp)."
             )
 
         self.gemini_model = requested_model
