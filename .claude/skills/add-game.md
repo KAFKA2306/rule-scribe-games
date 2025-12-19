@@ -3,18 +3,32 @@
 Add a new board game to the bodoge-no-mikata site with AI-generated content and images.
 
 ## When to Use
+
 - User requests adding a new board game
 - User provides a game name (Japanese or English)
 - User wants to populate the database with game data
 
-## Workflow
+## Workflow (SEQUENTIAL - DO NOT PARALLELIZE)
 
-### 1. Research Game
-- Search web for the game's official information
-- Gather: title (Japanese/English), player count, play time, age, published year
-- Understand core mechanics and rules
+### 1. Research Game (MUST COMPLETE FIRST)
 
-### 2. Generate Image
+Search web for accurate information:
+```
+search_web(query: "[game name] ボードゲーム ルール 概要")
+```
+
+Gather and verify:
+- Official title (Japanese AND English)
+- Theme and visual style (critical for image generation)
+- Player count, play time, age
+- Core mechanics and rules
+- Publisher and release year
+
+**DO NOT proceed to step 2 until you have accurate theme/visual info.**
+
+### 2. Generate Image (AFTER research is complete)
+
+Use the ACTUAL theme from research, not assumptions:
 ```
 generate_image(
   Prompt: "[Game name] board game box art style, [key visual elements], vibrant colors, title [Game name]",
