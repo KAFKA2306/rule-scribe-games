@@ -168,7 +168,7 @@ function App() {
             className="search-input"
           />
           <button type="submit" className="btn-primary" disabled={loading}>
-            {loading ? '検索中...' : '検索'}
+            {loading ? '生成中...' : '生成'}
           </button>
           {query && (
             <button type="button" onClick={handleClear} className="btn-ghost">
@@ -222,9 +222,8 @@ function App() {
                   className={`game-card ${selectedSlug === game.slug ? 'active' : ''}`}
                   onClick={() => setSelectedSlug(game.slug)}
                   style={{
-                    backgroundImage: `linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.8)), url(/assets/games/${game.slug}.webp)${
-                      game.image_url ? `, url(${game.image_url})` : ''
-                    }`,
+                    backgroundImage: `linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.8)), url(/assets/games/${game.slug}.webp)${game.image_url ? `, url(${game.image_url})` : ''
+                      }`,
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',
                   }}
