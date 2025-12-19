@@ -1,13 +1,10 @@
 from typing import List, Dict, Any, Optional
 from datetime import datetime, timezone
-from app.prompts.prompts import PROMPTS
 
-
+from app.core import logger, supabase
 from app.core.gemini import GeminiClient
-from app.core import supabase
-
-
-from app.core import logger
+from app.models import GeneratedGameMetadata
+from app.prompts.prompts import PROMPTS
 
 _gemini = GeminiClient()
 _REQUIRED = ["title", "summary", "rules_content"]
@@ -69,17 +66,22 @@ async def generate_metadata(
     )
     result = await _gemini.generate_structured_json(prompt)
 
-    # Validate required fields
-    if not all(result.get(f) for f in _REQUIRED):
-        logger.error(
-            f"Validation Failed: Missing required fields in LLM response. Got keys: {list(result.keys())}"
-        )
-        raise ValueError(f"Validation failed. Missing required fields: {_REQUIRED}")
+    try:
+        # Strict validation with Pydantic
+        validated_data = GeneratedGameMetadata.model_validate(result)
+        logger.info(f"Metadata validation successful for: {query}")
 
-    logger.info(f"Metadata generation successful for: {query}")
+        # Convert back to dict for processing
+        data = validated_data.model_dump()
+
+    except Exception as e:
+        logger.error(f"Validation Failed for {query}: {e}")
+        # Re-raise to trigger crash-only behavior (500)
+        raise ValueError(f"AI response did not match schema: {e}")
 
     # Drop fields not present in the DB schema to avoid PostgREST column errors
-    data = {k: v for k, v in result.items() if k in _ALLOWED_FIELDS}
+    # (Pydantic model matches schema mostly, but _ALLOWED_FIELDS is the ultimate source of truth for DB)
+    data = {k: v for k, v in data.items() if k in _ALLOWED_FIELDS}
 
     data["updated_at"] = datetime.now(timezone.utc).isoformat()
 

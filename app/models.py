@@ -1,4 +1,4 @@
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 from pydantic import BaseModel, ConfigDict
 
 
@@ -55,3 +55,38 @@ class GameUpdate(BaseSchema):
 
 
 SearchResult = GameDetail
+
+
+# --- AI Generation Models ---
+
+class Keyword(BaseSchema):
+    term: str
+    description: str
+
+
+class KeyElement(BaseSchema):
+    name: str
+    type: str  # e.g. "Card", "Token", "Action"
+    reason: str
+
+
+class StructuredData(BaseSchema):
+    keywords: List[Keyword] = []
+    key_elements: List[KeyElement] = []
+    # Add other flexible fields if needed, but these 2 are strict for Frontend
+    mechanics: List[str] = []
+    best_player_count: Optional[str] = None
+
+
+class GeneratedGameMetadata(BaseSchema):
+    title: str
+    title_ja: Optional[str] = None
+    summary: str
+    description: str
+    min_players: int
+    max_players: int
+    play_time: int
+    min_age: int
+    rules_content: str  # Markdown
+    structured_data: StructuredData
+
