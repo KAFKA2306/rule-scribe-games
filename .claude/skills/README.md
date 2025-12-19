@@ -1,11 +1,14 @@
 # Bodoge-no-Mikata Skills
 
-This directory contains AI-invocable skills for the project. Each skill is automatically invoked by Claude when relevant to your request.
+## Constants
+- **Project ID**: `wazgoplarevypdfbgeau`
+- **Affiliate Tag**: `bodogemikata-22`
+- **Production**: https://bodoge-no-mikata.vercel.app
 
-## Available Skills
+## Essential Skills
 
-| Skill | Description |
-|-------|-------------|
-| `add-game` | Add a new board game to the database with image generation |
-| `deploy` | Git commit, push, and Vercel deployment verification |
-| `fix-data` | Fix database content issues (escaping, formatting, missing fields) |
+| Skill | Trigger |
+|-------|---------|
+| `add-game` | "add [game]" → research, image, insert, deploy |
+| `fix-data` | "fix [issue]" → diagnose, update, verify |
+| `deploy` | "deploy" → git push, verify production |
