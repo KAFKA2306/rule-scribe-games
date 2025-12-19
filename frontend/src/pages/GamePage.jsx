@@ -70,11 +70,12 @@ export default function GamePage({ slug: propSlug }) {
   const isStringRules = typeof rules === 'string'
   const isObjectRules = typeof rules === 'object' && rules !== null
 
-  const pageTitle = `「${title}」のルールをAIで瞬時に要約 | ボドゲのミカタ`
+  const pageTitle = `「${title}」のルール・インストをAI要約 | 遊び方・3行解説`
+  const baseDescription = `「${title}」のルールをAIが瞬時に要約。インスト準備や遊び方の確認に。「${title}」のセットアップ、勝利条件、流れを3行で解説。`
   const description =
-    game.summary ||
-    game.description ||
-    `「${title}」のルールをAIが日本語で瞬時に要約。セットアップから勝利条件まで、インスト時間を短縮しながらサクッと確認できます。`
+    (game.summary || game.description)
+      ? `${baseDescription} ${game.summary || game.description}`
+      : baseDescription
   const gameUrl = `https://bodoge-no-mikata.vercel.app/games/${slug}`
   const imageUrl = (() => {
     if (game.image_url) {
@@ -155,22 +156,22 @@ export default function GamePage({ slug: propSlug }) {
             numberOfPlayers:
               game.min_players || game.max_players
                 ? {
-                    '@type': 'QuantitativeValue',
-                    minValue: game.min_players,
-                    maxValue: game.max_players || game.min_players,
-                  }
+                  '@type': 'QuantitativeValue',
+                  minValue: game.min_players,
+                  maxValue: game.max_players || game.min_players,
+                }
                 : undefined,
             audience: game.min_age
               ? {
-                  '@type': 'PeopleAudience',
-                  suggestedMinAge: game.min_age,
-                }
+                '@type': 'PeopleAudience',
+                suggestedMinAge: game.min_age,
+              }
               : undefined,
             timeRequired: game.play_time
               ? {
-                  '@type': 'Duration',
-                  value: `PT${game.play_time}M`,
-                }
+                '@type': 'Duration',
+                value: `PT${game.play_time}M`,
+              }
               : undefined,
             datePublished: game.published_year ? `${game.published_year}` : undefined,
           })}

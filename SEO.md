@@ -25,13 +25,32 @@ Since search engine crawlers (especially non-Google ones) can struggle with Clie
 
 ---
 
-## 2. On-Page Optimization
+## 2. Keyword Research & Strategy (Data-Driven)
+
+Based on search intent analysis for the Japanese board game market, we target two distinct user needs: **"Learning to Play"** and **"Teaching Others"**.
+
+### High-Value Keywords
+| Keyword | Intent | Volume | Priority |
+| :--- | :--- | :--- | :--- |
+| **ルール (Rules)** | Generic search for the manual or mechanics. | High | ★★★★★ |
+| **インスト (Inst)** | "Instruction". Users looking for **how to teach** or **quick explanation**. | High | ★★★★★ |
+| **遊び方 (How to play)** | Beginner-friendly term for rules. | Med/High | ★★★★☆ |
+| **要約 / あらすじ (Summary)** | Users who want to skip the long manual. | Medium | ★★★★☆ |
+| **説明書 (Manual)** | Users looking for the official PDF or lost manual. | Medium | ★★★☆☆ |
+
+### Optimization Targets
+- **Primary Goal**: Capture users who have the game but don't want to read the full manual ("Time-poor / Inst-prep users").
+- **Secondary Goal**: Users checking game complexity before buying.
+
+---
+
+## 3. On-Page Optimization
 
 ### Metadata Strategy
 | Tag | Pattern | Purpose |
 | :--- | :--- | :--- |
-| **Title** | `「{Game}」のルールをAIで瞬時に要約 | ボドゲのミカタ` | High CTR, keywords included. |
-| **Description** | AI-generated summary + boilerplate pitch. | Unique snippet for SERP. |
+| **Title** | `「{Game}」のルール・インストをAI要約 | 遊び方・3行解説` | Targets "Rule", "Inst", "How to play", and "Summary" in one line. |
+| **Description** | `「{Game}」のルールをAIが瞬時に要約。インスト準備や遊び方の確認に。「{Game}」のセットアップ、勝利条件、流れを3行で解説。` | Front-loads "Inst" and "How to play". |
 | **OG:Image** | Game Cover Art (or default hero). | High engagement on social shares (Twitter/X). |
 
 ### Structured Data (JSON-LD)
@@ -41,7 +60,7 @@ We implement **Schema.org** vocabulary to help Google understand our content con
     - `numberOfPlayers` (QuantitativeValue)
     - `audience` (minAge)
     - `timeRequired` (ISO 8601 Duration)
-    - `description` (AI Summary)
+    - `description` (AI Summary - **Important**: Matches on-page content)
 
 ---
 

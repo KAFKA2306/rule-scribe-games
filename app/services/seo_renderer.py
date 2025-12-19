@@ -42,6 +42,17 @@ def generate_seo_html(slug: str) -> str:
             "value": f"PT{game.get('play_time')}M",
         }
 
+    # Optimized SEO Title & Description based on Keyword Research
+    page_title = f"「{title}」のルール・インストをAI要約 | 遊び方・3行解説"
+    
+    # Construct a rich description that targets "Inst" and "How to play" intent
+    seo_description = f"「{title}」のルールをAIが瞬時に要約。インスト準備や遊び方の確認に。「{title}」のセットアップ、勝利条件、流れを3行で解説。"
+    if description:
+         seo_description += f" {description}"
+
+    # Update structured data to use the optimized description
+    structured_data["description"] = seo_description
+
     json_ld = json.dumps(structured_data, ensure_ascii=False)
 
     base_dir = os.path.dirname(
@@ -62,21 +73,23 @@ def generate_seo_html(slug: str) -> str:
 
     assert html_content, f"index.html template not found in {possible_paths}"
 
+    # Replace Title
     html_content = html_content.replace(
         "ボドゲのミカタ | AIでルールを瞬時に要約。インスト時間を短縮",
-        f"{title} | ボドゲのミカタ",
+        page_title,
     )
 
-    old_desc = "「説明書を読むのが面倒」「インスト準備に時間がかかる」そんな悩みをAIが解決。ボドゲのミカタは、世界中のボードゲームのルールを瞬時に要約・検索できるツールです。海外ゲームの和訳や、プレイ中のルール確認にも最適。"
-    html_content = html_content.replace(old_desc, description)
+    # Replace Description (Old boilerplate -> New optimized description)
+    old_desc_marker = "「説明書を読むのが面倒」「インスト準備に時間がかかる」そんな悩みをAIが解決。ボドゲのミカタは、世界中のボードゲームのルールを瞬時に要約・検索できるツールです。海外ゲームの和訳や、プレイ中のルール確認にも最適。"
+    html_content = html_content.replace(old_desc_marker, seo_description)
 
     replacements = {
-        'content="ボドゲのミカタ | AIでルールを瞬時に要約。インスト時間を短縮"': f'content="{title} | ボドゲのミカタ"',
+        'content="ボドゲのミカタ | AIでルールを瞬時に要約。インスト時間を短縮"': f'content="{page_title}"',
         'content="https://bodoge-no-mikata.vercel.app/og-image.png"': f'content="{image_url}"',
         'property="og:url" content="https://bodoge-no-mikata.vercel.app/"': f'property="og:url" content="https://bodoge-no-mikata.vercel.app/games/{slug}"',
         'link rel="canonical" href="https://bodoge-no-mikata.vercel.app/"': f'link rel="canonical" href="https://bodoge-no-mikata.vercel.app/games/{slug}"',
     }
-
+    
     for old, new in replacements.items():
         html_content = html_content.replace(old, new)
 
