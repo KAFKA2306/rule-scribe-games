@@ -35,3 +35,8 @@
 - Copy `.env.example` to `.env`; populate `GEMINI_API_KEY`, `NEXT_PUBLIC_SUPABASE_URL`, and keys before running the backend or Playwright tests.
 - Never commit secrets or generated logs under `logs/`. Prefer `.env` + environment variables in deployment.
 - Supabase service role keys (`SUPABASE_SERVICE_ROLE_KEY`) stay server-side only; frontend uses the public anon key from `.env`.
+
+## Critical Configuration Rules
+- **Gemini Model Name**: STRICTLY use `models/gemini-3-flash-preview`. Do not change this to other versions (e.g., `gemini-2.0` or `1.5-pro`) without explicit user override, as this is the verified model for Vercel/production environment.
+- **Why**: Ensure consistency and avoid quota/availability issues associated with experimental models.
+
