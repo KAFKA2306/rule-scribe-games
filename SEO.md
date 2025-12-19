@@ -1,106 +1,106 @@
-# SEO Strategy & Implementation
+# SEO 戦略と実装ガイド
 
-This document outlines the Search Engine Optimization (SEO) strategy for **Bodoge no Mikata (ボドゲのミカタ)**. It serves as a living document to track our technical implementation, content strategy, and operational best practices.
+本書は、**ボドゲのミカタ**におけるSEO（検索エンジン最適化）戦略をまとめたドキュメントです。技術的な実装詳細、コンテンツ戦略、および運用のベストプラクティスを管理するための生きた文書として機能します。
 
-## 1. Technical Architecture (The Core)
+## 1. 技術アーキテクチャ (コア部分)
 
-Our SEO relies on a **Hybrid Rendering** approach to ensure perfect indexability while maintaining a smooth SPA experience (React).
+当サイトのSEOは、**ハイブリッドレンダリング**アプローチを採用しており、快適なSPA体験 (React) を維持しつつ、完全なインデックス登録を実現しています。
 
-### Server-Side Rendering (SSR) Injection
-Since search engine crawlers (especially non-Google ones) can struggle with Client-Side Rendering (CSR), we explicitly handle SEO on the backend.
+### サーバーサイドレンダリング (SSR) インジェクション
+検索エンジンのクローラー（特にGoogle以外）がクライアントサイドレンダリング (CSR) の読み込みに失敗するリスクを回避するため、SEO関連の処理はバックエンドで明示的に行います。
 
-- **Mechanism**: FastAPI intercepts requests to `/games/{slug}`.
-- **Process**:
-    1. Fetches game data from Supabase.
-    2. Reads the `index.html` template.
-    3. **Injects** specific metadata (Title, Description, OGP, JSON-LD) directly into the HTML `<head>`.
-    4. Serves the pre-rendered HTML.
-- **Key File**: `app/services/seo_renderer.py`
+- **仕組み**: FastAPIが `/games/{slug}` へのリクエストをインターセプトします。
+- **プロセス**:
+    1. Supabaseからゲームデータを取得する。
+    2. `index.html` テンプレートを読み込む。
+    3. 特有のメタデータ（タイトル、概要、OGP、JSON-LD）をHTMLの `<head>` 内に直接**注入**する。
+    4. プリレンダリングされたHTMLをレスポンスとして返す。
+- **主要ファイル**: `app/services/seo_renderer.py`
 
-### Canonical URLs
-**Critical for preventing duplicate content issues.**
-- **Implementation**: Every game page defines a self-referencing canonical tag.
-- **Format**: `<link rel="canonical" href="https://bodoge-no-mikata.vercel.app/games/{slug}" />`
-- **Result**: Tells Google that this specific URL is the authoritative source for the content, distinguishing it from the homepage.
+### カノニカルURL (正規化)
+**重複コンテンツの問題を防ぐために不可欠です。**
+- **実装**: すべてのゲームページで、自分自身を参照するカノニカルタグを定義しています。
+- **形式**: `<link rel="canonical" href="https://bodoge-no-mikata.vercel.app/games/{slug}" />`
+- **効果**: Googleに対し、トップページではなく「この特定のURL」がコンテンツの正規のソースであることを明示します。
 
 ---
 
-## 2. Keyword Research & Strategy (Data-Driven)
+## 2. キーワード調査と戦略 (データ駆動)
 
-Based on search intent analysis for the Japanese board game market, we target two distinct user needs: **"Learning to Play"** and **"Teaching Others"**.
+日本のボードゲーム市場における検索意図の分析に基づき、**「遊び方を知りたい」** と **「他人に教えたい」** という2つの異なるユーザーニーズをターゲットにします。
 
-### High-Value Keywords
-| Keyword | Intent | Volume | Priority |
+### 高価値キーワード
+| キーワード | 意図 (Intent) | ボリューム | 優先度 |
 | :--- | :--- | :--- | :--- |
-| **ルール (Rules)** | Generic search for the manual or mechanics. | High | ★★★★★ |
-| **インスト (Inst)** | "Instruction". Users looking for **how to teach** or **quick explanation**. | High | ★★★★★ |
-| **遊び方 (How to play)** | Beginner-friendly term for rules. | Med/High | ★★★★☆ |
-| **要約 / あらすじ (Summary)** | Users who want to skip the long manual. | Medium | ★★★★☆ |
-| **説明書 (Manual)** | Users looking for the official PDF or lost manual. | Medium | ★★★☆☆ |
+| **ルール** | マニュアルやメカニクスそのものを探している一般的な検索。 | 高 | ★★★★★ |
+| **インスト** | 「インストラクション」の略。**教え方**や**短い解説**を求めているユーザー。 | 高 | ★★★★★ |
+| **遊び方** | ルールに対する初心者向けの用語。 | 中/高 | ★★★★☆ |
+| **要約 / あらすじ** | 長い説明書を読むのを飛ばしたいユーザー。 | 中 | ★★★★☆ |
+| **説明書** | ゲームに付属する公式PDFや、紛失したマニュアルを探している層。 | 中 | ★★★☆☆ |
 
-### Optimization Targets
-- **Primary Goal**: Capture users who have the game but don't want to read the full manual ("Time-poor / Inst-prep users").
-- **Secondary Goal**: Users checking game complexity before buying.
+### 最適化ターゲット
+- **主要ゴール**: ゲームを持っているが、説明書を全部読みたくないユーザー（「時間がない」「インスト準備中」の層）を獲得する。
+- **副次的ゴール**: 購入前にゲームの複雑さを確認したいユーザー。
 
 ---
 
-## 3. On-Page Optimization
+## 3. ページ内最適化 (On-Page SEO)
 
-### Metadata Strategy
-| Tag | Pattern | Purpose |
+### メタデータ戦略
+| タグ | パターン | 目的 |
 | :--- | :--- | :--- |
-| **Title** | `「{Game}」のルール・インストをAI要約 | 遊び方・3行解説` | Targets "Rule", "Inst", "How to play", and "Summary" in one line. |
-| **Description** | `「{Game}」のルールをAIが瞬時に要約。インスト準備や遊び方の確認に。「{Game}」のセットアップ、勝利条件、流れを3行で解説。` | Front-loads "Inst" and "How to play". |
-| **OG:Image** | Game Cover Art (or default hero). | High engagement on social shares (Twitter/X). |
+| **Title** | `「{Game}」のルール・インストをAI要約 | 遊び方・3行解説` | 「ルール」「インスト」「遊び方」「要約」を1行で狙い撃ちし、CTRを高める。 |
+| **Description** | `「{Game}」のルールをAIが瞬時に要約。インスト準備や遊び方の確認に。「{Game}」のセットアップ、勝利条件、流れを3行で解説。` | 「インスト」と「遊び方」を前方に配置し、検索結果での関連性を強調。 |
+| **OG:Image** | ゲームのカバーアート（なければデフォルト画像）。 | SNSシェア（Twitter/X）でのエンゲージメントを高める。 |
 
-### Structured Data (JSON-LD)
-We implement **Schema.org** vocabulary to help Google understand our content context.
-- **Type**: `Game`
-- **Properties**:
-    - `numberOfPlayers` (QuantitativeValue)
-    - `audience` (minAge)
-    - `timeRequired` (ISO 8601 Duration)
-    - `description` (AI Summary - **Important**: Matches on-page content)
+### 構造化データ (JSON-LD)
+Googleがコンテンツのコンテキストを理解しやすくするため、**Schema.org** の語彙を実装しています。
+- **タイプ**: `Game`
+- **プロパティ**:
+    - `numberOfPlayers` (プレイ人数 / QuantitativeValue)
+    - `audience` (対象年齢 / minAge)
+    - `timeRequired` (プレイ時間 / ISO 8601 Duration)
+    - `description` (AI要約 - **重要**: ページ上のコンテンツと一致させる)
 
 ---
 
-## 3. Crawling & Indexing
+## 4. クロールとインデックス登録
 
-### XML Sitemap
-- **Location**: `/sitemap.xml` (Dynamically generated).
-- **Handler**: `app/services/sitemap.py`
-- **Content**:
-    - Static Pages (`/`, `/data`)
-    - All Dynamic Game Pages (`/games/{slug}`)
-    - `<lastmod>` updated automatically based on DB timestamps.
+### XMLサイトマップ
+- **場所**: `/sitemap.xml` (動的に生成されます)。
+- **ハンドラ**: `app/services/sitemap.py`
+- **内容**:
+    - 静的ページ (`/`, `/data`)
+    - すべての動的ゲームページ (`/games/{slug}`)
+    - `<lastmod>` はDBのタイムスタンプに基づいて自動更新されます。
 
 ### Robots.txt
-- **Configuration**: Allows all crawlers (`User-agent: *`, `Allow: /`).
-- **Sitemap Link**: Explicitly point to the absolute URL of the sitemap.
+- **設定**: すべてのクローラーを許可 (`User-agent: *`, `Allow: /`)。
+- **サイトマップ連携**: robots.txt内でサイトマップの絶対URLを明示的に指定しています。
 
 ---
 
-## 4. Operational Strategy (Google Search Console)
+## 5. 運用戦略 (Google Search Console)
 
-### 1. Daily/Weekly Monitoring
-- Check **"Coverage"** report for errors (5xx, 4xx).
-- Monitor **"Sitemaps"** status to ensure successful fetch.
+### 1. 日次/週次モニタリング
+- **「カバレッジ (Coverage)」** レポートでエラー (5xx, 4xx) を確認する。
+- **「サイトマップ」** ステータスを確認し、取得が成功しているかチェックする。
 
-### 2. Manual Indexing (Speed Strategy)
-When adding new games or fixing critical SEO bugs:
-1. Go to **URL Inspection**.
-2. Enter the specific game URL (e.g., `/games/catan`).
-3. Click **"Request Indexing"**.
-*Why?* Sitemaps are passive; manual requests are active and prioritized.
+### 2. 手動インデックス登録 (スピード戦略)
+新しいゲームを追加した場合や、重要なSEO修正を行った場合：
+1. **URL検査 (URL Inspection)** ツールに移動する。
+2. 特定のゲームURL (例: `/games/catan`) を入力する。
+3. **「インデックス登録をリクエスト」** をクリックする。
+*理由*: サイトマップは受動的ですが、手動リクエストは能動的で優先順位が高いためです。
 
-### 3. Performance Tracking
-- Monitor **CTR (Click-Through Rate)** for keywords "ルール (Rules)", "要約 (Summary)", "インスト (Inst)".
-- If impressions are high but CTR is low, optimize the **Title** and **Meta Description** patterns.
+### 3. パフォーマンス追跡
+- 「ルール」「要約」「インスト」といったキーワードの **CTR (クリック率)** を監視する。
+- 表示回数は多いがCTRが低い場合は、**タイトル**と**メタディスクリプション**のパターンを改善する。
 
 ---
 
-## 5. Future Optimizations (Backlog)
+## 6. 今後の最適化 (バックログ)
 
-- [ ] **Breadcrumbs Structured Data**: Add `BreadcrumbList` schema for better SERP hierarchy.
-- [ ] **FAQ Schema**: Use `FAQPage` schema for the Rules section (e.g., "How to set up?", "Winning conditions?").
-- [ ] **Performance (Core Web Vitals)**: Optimize image loading (Next.js Image or raw `srcset` improvements) to improve LCP (Largest Contentful Paint).
+- [ ] **パンくずリストの構造化データ**: `BreadcrumbList` スキーマを追加し、検索結果での階層表示を改善する。
+- [ ] **FAQスキーマ**: ルールセクション（例: 「準備の仕方は？」「勝利条件は？」）に対して `FAQPage` スキーマを使用する。
+- [ ] **パフォーマンス (Core Web Vitals)**: 画像の読み込み（Next.js Image相当の最適化や `srcset` の改善）を行い、LCP (Largest Contentful Paint) を向上させる。
