@@ -1,46 +1,44 @@
 # Skill: Search and Verify
 
-Research board games and verify site content accuracy.
+Research board games and verify site content.
 
 ## When to Use
-- User asks about a specific board game
-- Need to verify game data accuracy
-- Checking if a game exists on the site
+
+- Verify game data accuracy
+- Check if game exists on site
+- Research before adding
 
 ## Workflow
 
-### 1. Search for Game Info
+### 1. Search
+
 ```
 search_web(query: "[game name] ボードゲーム ルール")
 ```
 
-Gather:
-- Official Japanese title
-- Player count, play time, age
-- Core mechanics and theme
-- Publisher and release year
+Gather: title, theme, player count, mechanics, BGG ID
 
 ### 2. Check Database
+
 ```sql
-SELECT * FROM games WHERE 
-  title ILIKE '%[name]%' OR 
-  title_ja ILIKE '%[name]%' OR
-  slug ILIKE '%[name]%';
+SELECT slug, title_ja, LENGTH(rules_content) as rules_len,
+  bgg_url IS NOT NULL as has_bgg
+FROM games 
+WHERE title ILIKE '%[name]%' OR title_ja ILIKE '%[name]%';
 ```
 
-### 3. Check Production Site
-Use browser_subagent to navigate to:
-- Search: `https://bodoge-no-mikata.vercel.app/?q=[name]`
-- Direct: `https://bodoge-no-mikata.vercel.app/games/[slug]`
+### 3. Check Site
 
-### 4. Compare and Report
-- Does the game exist in database?
-- Is the data accurate vs web search results?
-- Are images displaying correctly?
-- Is the content in proper Japanese?
+```
+browser_subagent: https://bodoge-no-mikata.vercel.app/games/[slug]
+```
+
+### 4. Report
+
+- Exists? Data accurate? Links present? Rules detailed?
 
 ## Data Sources
-- BoardGameGeek (BGG): International game database
-- ボドゲーマ / Bodoge.mafia: Japanese board game community
-- JELLY JELLY CAFE: Japanese rules explanations
-- Publisher official sites
+
+- BoardGameGeek (BGG)
+- ボドゲーマ
+- JELLY JELLY CAFE

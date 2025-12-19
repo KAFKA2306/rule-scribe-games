@@ -1,49 +1,44 @@
-# Skill: Deploy to Vercel
+# Skill: Deploy
 
-Commit changes, push to GitHub, and verify deployment on Vercel.
+Commit, push, and verify Vercel deployment.
 
 ## When to Use
-- After making code or asset changes
-- After database updates that need frontend verification
-- When user says "deploy" or "push"
+
+- After code/asset changes
+- After database updates
+- User says "deploy" or "push"
 
 ## Workflow
 
 ### 1. Check Status
+
 ```bash
 git status
 ```
 
-### 2. Stage and Commit
+### 2. Commit
+
 ```bash
 git add .
 git commit -m "[type]: [description]"
 ```
 
-Commit types:
-- `feat:` New feature or game
-- `fix:` Bug fix
-- `refactor:` Code improvement
-- `docs:` Documentation
-- `chore:` Maintenance
+Types: `feat:`, `fix:`, `refactor:`, `docs:`, `chore:`
 
 ### 3. Push
+
 ```bash
 git push
 ```
 
-### 4. Wait for Vercel
-Vercel auto-deploys on push. Wait ~60 seconds for build.
+### 4. Verify (after ~60s)
 
-### 5. Verify
-Use browser_subagent to visit production URL and confirm changes are live:
-- Main site: `https://rule-scribe-games.vercel.app`
-- Alias: `https://bodoge-no-mikata.vercel.app`
+```
+browser_subagent: visit https://bodoge-no-mikata.vercel.app/[path]
+```
 
-### 6. Report
-Confirm deployment success with screenshot or DOM content check.
+## Troubleshooting
 
-## Common Issues
-- Build fails: Check Vercel logs via dashboard
-- Assets not updated: Hard refresh (Ctrl+Shift+R) or check cache headers
-- API errors: Verify environment variables in Vercel dashboard
+- Build fail: Check Vercel dashboard
+- Cache: Hard refresh (Ctrl+Shift+R)
+- API error: Check env vars in Vercel

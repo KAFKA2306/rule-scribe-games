@@ -1,61 +1,61 @@
 # Skill: Fix Database Content
 
-Diagnose and fix data quality issues in the Supabase games table.
+Fix data quality issues in the Supabase games table.
 
 ## When to Use
-- Text displays incorrectly (escaped characters like `\n` showing as literal text)
-- Missing fields or broken formatting
-- User reports content issues on the site
 
-## Database Reference
+- Text displays incorrectly (`\n` as literal text)
+- Missing fields (links, metadata)
+- User reports content issues
+
+## Database
+
 - Project ID: `wazgoplarevypdfbgeau`
 - Table: `games`
-- Key columns: `slug`, `title`, `title_ja`, `summary`, `description`, `rules_content`, `structured_data`, `image_url`
 
 ## Common Fixes
 
 ### Fix Escaped Newlines
-When `\n` appears as literal text instead of line breaks:
+
 ```sql
 UPDATE games 
 SET rules_content = REPLACE(rules_content, '\n', E'\n')
 WHERE slug = '[slug]';
 ```
 
-### Fix Missing Image URL
-```sql
-UPDATE games 
-SET image_url = '/assets/games/[slug].webp'
-WHERE slug = '[slug]' AND image_url IS NULL;
-```
+### Add Missing Links
 
-### Verify Data
 ```sql
-SELECT slug, title_ja, 
-       LEFT(rules_content, 100) as rules_preview,
-       image_url
-FROM games 
+UPDATE games SET 
+  bgg_url = 'https://boardgamegeek.com/boardgame/[id]',
+  amazon_url = 'https://www.amazon.co.jp/s?k=[title_ja]&tag=bodogemikata-22'
 WHERE slug = '[slug]';
 ```
 
-### Update Structured Data
+### Expand Short Rules
+
+If rules_content < 500 chars, research and rewrite with full structure:
+
+```sql
+UPDATE games SET rules_content = E'## 準備
+[detailed setup]
+
+## ゲームの流れ
+[turn structure]
+
+## 勝利条件
+[win conditions]'
+WHERE slug = '[slug]';
+```
+
+### Fix Image URL
+
 ```sql
 UPDATE games 
-SET structured_data = '{
-  "keywords": [
-    {"term": "[keyword]", "description": "[desc]"}
-  ],
-  "key_elements": [
-    {"name": "[name]", "type": "[type]", "reason": "[reason]"}
-  ]
-}'::jsonb
+SET image_url = '/assets/games/[slug].webp'
 WHERE slug = '[slug]';
 ```
 
 ## Verification
-After fix, use browser_subagent to hard refresh the game page and confirm the content displays correctly.
 
-## Prevention
-- Always use actual newlines in SQL INSERT statements, not escaped `\n`
-- Test content locally before bulk inserts
-- Use `E'...'` escape syntax in PostgreSQL for special characters
+Use browser_subagent to hard refresh and confirm fix.
