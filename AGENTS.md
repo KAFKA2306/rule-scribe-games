@@ -68,3 +68,8 @@ Skills are reusable instruction packages in `.claude/skills/` that teach AI assi
 | "The text looks broken" | `fix-data` |
 | "Is ドミニオン on our site?" | `search-verify` |
 
+@AGENTS.md
+@.serena/memories/*.md
+@README.md
+
+WE MUST ALWAYS USE models/gemini-3-flash-preview IN ALL TIME AT ANYWHERE.
