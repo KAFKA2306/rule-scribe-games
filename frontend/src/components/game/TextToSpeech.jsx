@@ -23,6 +23,8 @@ export const TextToSpeech = ({ text }) => {
 
     const utterance = new SpeechSynthesisUtterance(text)
     utterance.lang = 'ja-JP'
+    utterance.rate = 0.9 // Slower for clarity
+    utterance.pitch = 1.0 // Neutral pitch
     utterance.onend = () => setSpeaking(false)
     utterance.onerror = () => setSpeaking(false)
 
