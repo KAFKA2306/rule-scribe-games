@@ -26,6 +26,7 @@ search_web(query: "[game] BoardGameGeek")
 
 **1.3 Collect Rules (600-800 chars):**
 
+- web search again for "[game] rules"
 - コンポーネント
 - セットアップ手順
 - ゲームの流れ
