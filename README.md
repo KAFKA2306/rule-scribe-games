@@ -62,6 +62,9 @@
 - **[`scripts/`](./scripts/README.md)**: 運用・保守用スクリプト。
 - **[`tests/`](./tests/README.md)**: テストコード。
 - **[`docs/`](./docs/README.md)**: プロジェクトドキュメント。
+    - [`NOTE_STRATEGY.md`](./docs/NOTE_STRATEGY.md): Note.com運用戦略・プロフィール設定。
+    - [`SEO.md`](./docs/SEO.md): SEO戦略。
+    - [`CONTENT_GUIDELINES.md`](./docs/CONTENT_GUIDELINES.md): コンテンツガイドライン。
 
 ## 環境構築
 
