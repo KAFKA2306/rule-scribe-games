@@ -47,4 +47,4 @@
 | image_url | text | 画像パス |
 | bgg_url | text | BoardGameGeek URL |
 | amazon_url | text | Amazonアフィリエイト |
-| structured_data | jsonb | SEO用キーワード |
+| structured_data | jsonb | キーワード(5-8個)・要素(4-6個) |

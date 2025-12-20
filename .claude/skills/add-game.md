@@ -25,7 +25,7 @@ VALUES (
   'https://boardgamegeek.com/boardgame/[bgg_id]',
   'https://www.amazon.co.jp/s?k=[title_ja]&tag=bodogemikata-22',
   E'## はじめに\n[概要]\n\n## コンポーネント\n[内容物]\n\n## セットアップ（[X]分）\n[手順]\n\n## ゲームの流れ\n[詳細]\n\n## 勝利条件\n[条件]\n\n## 初心者向けヒント\n[アドバイス]',
-  '{"keywords": [{"term": "...", "description": "..."}], "key_elements": [{"name": "...", "type": "component/mechanic", "reason": "..."}]}'::jsonb
+  '{"keywords": [{"term": "用語1", "description": "説明"}, {"term": "用語2", "description": "説明"}, {"term": "用語3", "description": "説明"}, {"term": "用語4", "description": "説明"}, {"term": "用語5", "description": "説明"}], "key_elements": [{"name": "要素1", "type": "component", "reason": "理由"}, {"name": "要素2", "type": "mechanic", "reason": "理由"}, {"name": "要素3", "type": "component", "reason": "理由"}, {"name": "要素4", "type": "mechanic", "reason": "理由"}]}'::jsonb
 );
 ```
 
