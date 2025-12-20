@@ -3,22 +3,18 @@ import xml.etree.ElementTree as ET
 from datetime import datetime
 from app.core.supabase import _client, _TABLE
 
-# Namespaces
 NS_SITEMAP = "http://www.sitemaps.org/schemas/sitemap/0.9"
 NS_IMAGE = "http://www.google.com/schemas/sitemap-image/1.1"
 
-# Register namespaces globally
 ET.register_namespace("", NS_SITEMAP)
 ET.register_namespace("image", NS_IMAGE)
 
+STATIC_LASTMOD = "2025-12-20"
+
 
 def get_sitemap_xml() -> str:
-    """
-    Generates a sitemap.xml string dynamically from the database.
-    """
     base_url = os.getenv("NEXT_PUBLIC_BASE_URL", "https://bodoge-no-mikata.vercel.app")
 
-    # Fetch games
     response = (
         _client.table(_TABLE).select("slug, title, updated_at, image_url").execute()
     )
@@ -26,7 +22,6 @@ def get_sitemap_xml() -> str:
 
     root = ET.Element(f"{{{NS_SITEMAP}}}urlset")
 
-    # 1. Static Pages
     static_pages = [
         {"loc": "/", "priority": "1.0", "changefreq": "daily"},
         {"loc": "/data", "priority": "0.8", "changefreq": "weekly"},
@@ -39,7 +34,7 @@ def get_sitemap_xml() -> str:
         loc.text = f"{base_url}{page['loc']}"
 
         lastmod = ET.SubElement(url_elem, f"{{{NS_SITEMAP}}}lastmod")
-        lastmod.text = datetime.now().strftime("%Y-%m-%d")
+        lastmod.text = STATIC_LASTMOD
 
         changefreq = ET.SubElement(url_elem, f"{{{NS_SITEMAP}}}changefreq")
         changefreq.text = page["changefreq"]
@@ -47,7 +42,6 @@ def get_sitemap_xml() -> str:
         priority = ET.SubElement(url_elem, f"{{{NS_SITEMAP}}}priority")
         priority.text = page["priority"]
 
-    # 2. Dynamic Game Pages
     for game in games:
         url_elem = ET.SubElement(root, f"{{{NS_SITEMAP}}}url")
 
@@ -60,7 +54,7 @@ def get_sitemap_xml() -> str:
             dt = datetime.fromisoformat(updated.replace("Z", "+00:00"))
             lastmod.text = dt.strftime("%Y-%m-%d")
         else:
-            lastmod.text = datetime.now().strftime("%Y-%m-%d")
+            lastmod.text = STATIC_LASTMOD
 
         changefreq = ET.SubElement(url_elem, f"{{{NS_SITEMAP}}}changefreq")
         changefreq.text = "weekly"
@@ -68,9 +62,11 @@ def get_sitemap_xml() -> str:
         priority = ET.SubElement(url_elem, f"{{{NS_SITEMAP}}}priority")
         priority.text = "0.7"
 
-        # Image extension
         image_url = game.get("image_url")
         if image_url:
+            if image_url.startswith("/"):
+                image_url = f"{base_url}{image_url}"
+
             img = ET.SubElement(url_elem, f"{{{NS_IMAGE}}}image")
 
             img_loc = ET.SubElement(img, f"{{{NS_IMAGE}}}loc")
@@ -79,4 +75,5 @@ def get_sitemap_xml() -> str:
             img_title = ET.SubElement(img, f"{{{NS_IMAGE}}}title")
             img_title.text = game.get("title", "")
 
-    return ET.tostring(root, encoding="unicode", method="xml")
+    xml_str = ET.tostring(root, encoding="unicode", method="xml")
+    return '<?xml version="1.0" encoding="UTF-8"?>\n' + xml_str
