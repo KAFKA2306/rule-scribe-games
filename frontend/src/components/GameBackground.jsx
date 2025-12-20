@@ -5,21 +5,28 @@ export const GameBackground = ({ games }) => {
   const shuffledGames = useMemo(() => {
     if (!games || games.length === 0) return []
 
-    const list = [...games]
-    if (list.length < 50) {
-      while (list.length < 50) {
-        list.push(...games)
-      }
+    // Minimum tiles needed to cover large screens (e.g. 1920x1080 needs ~150 tiles)
+    // We generate 300 to be safe for 4K or ultra-wide
+    const list = []
+    while (list.length < 300) {
+      list.push(...games)
     }
 
-    // Sort pseudo-randomly based on string hash
-    list.sort((a, b) => {
-      const hashA = a.slug.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
-      const hashB = b.slug.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
-      return (hashA % 100) - (hashB % 100)
-    })
-
-    return list.slice(0, 80)
+    // Deterministic shuffle with index awareness to separate duplicates
+    // Using FNV-1a hash variant for better distribution
+    return list
+      .map((game, index) => {
+        let h = 0x811c9dc5
+        const s = `${game.slug}-${index}`
+        for (let i = 0; i < s.length; i++) {
+          h ^= s.charCodeAt(i)
+          h = Math.imul(h, 0x01000193)
+        }
+        return { game, sort: h >>> 0 }
+      })
+      .sort((a, b) => a.sort - b.sort)
+      .map((item) => item.game)
+      .slice(0, 300)
   }, [games])
 
   if (!games || games.length === 0) return null
