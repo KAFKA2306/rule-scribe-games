@@ -1,20 +1,25 @@
 # Skill: Add New Board Game
 
 ## Trigger
+
 User requests adding a board game by name.
 
 ## Project ID
+
 `wazgoplarevypdfbgeau`
 
 ## Workflow
 
 ### Step 1: Research
+
 ```
 search_web(query: "[game] ボードゲーム ルール 遊び方 プレイ人数")
 ```
-Required info: title_ja, min/max players, play time, mechanics, theme, components.
 
-### Step 2: Insert Data (without image)
+Collect: title, min/max players, play time, mechanics, theme, components, key terms.
+
+### Step 2: Insert Data
+
 ```sql
 INSERT INTO games (slug, title, summary, min_players, max_players, play_time, bgg_url, amazon_url, rules_content, structured_data)
 VALUES (
@@ -24,55 +29,58 @@ VALUES (
   [min], [max], [play_time],
   'https://boardgamegeek.com/boardgame/[bgg_id]',
   'https://www.amazon.co.jp/s?k=[title_ja]&tag=bodogemikata-22',
-  E'## はじめに\n[概要]\n\n## コンポーネント\n[内容物]\n\n## セットアップ（[X]分）\n[手順]\n\n## ゲームの流れ\n[詳細]\n\n## 勝利条件\n[条件]\n\n## 初心者向けヒント\n[アドバイス]',
-  '{"keywords": [{"term": "用語1", "description": "説明"}, {"term": "用語2", "description": "説明"}, {"term": "用語3", "description": "説明"}, {"term": "用語4", "description": "説明"}, {"term": "用語5", "description": "説明"}], "key_elements": [{"name": "要素1", "type": "component", "reason": "理由"}, {"name": "要素2", "type": "mechanic", "reason": "理由"}, {"name": "要素3", "type": "component", "reason": "理由"}, {"name": "要素4", "type": "mechanic", "reason": "理由"}]}'::jsonb
+  E'[rules_content - see template below]',
+  '[structured_data - see template below]'::jsonb
 );
 ```
 
 ### Step 3: Generate Image
+
 ```
 generate_image(Prompt: "[theme] board game box art, vibrant colors", ImageName: "[slug]")
 ```
 
-### Step 4: Process Image
+### Step 4: Process & Update Image
+
 ```bash
-uv run --with pillow python -c "from PIL import Image; Image.open('[generated_path]').save('frontend/public/assets/games/[slug].webp', 'WEBP', quality=90)"
+uv run --with pillow python -c "from PIL import Image; Image.open('[path]').save('frontend/public/assets/games/[slug].webp', 'WEBP', quality=90)"
 ```
 
-### Step 5: Update Image URL
 ```sql
 UPDATE games SET image_url = '/assets/games/[slug].webp' WHERE slug = '[slug]';
 ```
 
-### Step 6: Deploy
+### Step 5: Deploy
+
 ```bash
 git add frontend/public/assets/games/*.webp && git commit -m "feat: add [game]" && git push
 ```
 
-### Step 7: Verify
-browser_subagent → https://bodoge-no-mikata.vercel.app/games/[slug]
-
 ## rules_content Template
-```
+
+```markdown
 ## はじめに
-[ゲームの概要と魅力]
+[ゲームの概要と魅力 2-3文]
 
 ## コンポーネント
-- [カード/ボード/トークン等]
+- [カード X枚]
+- [トークン Y個]
+- [ボード]
 
 ## セットアップ（[X]分）
 1. [手順1]
 2. [手順2]
+3. [手順3]
 
 ## ゲームの流れ
-### [フェーズ1名]
+### [フェーズ1]
 [詳細説明]
 
-### [フェーズ2名]
+### [フェーズ2]
 [詳細説明]
 
 ## 勝利条件
-[明確な条件]
+[明確な終了条件と勝者の決め方]
 
 ## 初心者向けヒント
 - [ヒント1]
@@ -80,7 +88,31 @@ browser_subagent → https://bodoge-no-mikata.vercel.app/games/[slug]
 - [ヒント3]
 ```
 
+## structured_data Template
+
+```json
+{
+  "keywords": [
+    {"term": "用語1", "description": "説明"},
+    {"term": "用語2", "description": "説明"},
+    {"term": "用語3", "description": "説明"},
+    {"term": "用語4", "description": "説明"},
+    {"term": "用語5", "description": "説明"}
+  ],
+  "key_elements": [
+    {"name": "要素1", "type": "component", "reason": "理由"},
+    {"name": "要素2", "type": "mechanic", "reason": "理由"},
+    {"name": "要素3", "type": "card", "reason": "理由"},
+    {"name": "要素4", "type": "token", "reason": "理由"}
+  ],
+  "mechanics": ["Deck Building", "Trick Taking"],
+  "best_player_count": "3-4"
+}
+```
+
 ## Notes
-- Image generation is done LAST to ensure data is ready first
-- If image fails, game data is still available (just without image)
-- Batch adding: insert all data first, then generate images together
+
+- Image generation is LAST (data first, image later)
+- Batch adding: insert all data → generate images together
+- keywords: 5-8 important game terms
+- key_elements: 4-6 fun components/mechanics
