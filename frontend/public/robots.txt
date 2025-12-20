@@ -1,3 +1,4 @@
 User-agent: *
 Allow: /
 Sitemap: https://bodoge-no-mikata.vercel.app/sitemap.xml
+Sitemap: https://rule-scribe-games.vercel.app/sitemap.xml
