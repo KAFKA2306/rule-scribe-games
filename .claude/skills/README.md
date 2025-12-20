@@ -13,6 +13,7 @@
 | `add-game` | "add [game]" | research → insert → image → deploy |
 | `fix-data` | "fix [issue]" | diagnose → update → verify |
 | `deploy` | "deploy" | git push → verify |
+| `seo` | "seo [action]" | URL検査 → インデックス登録 |
 
 ## Content Guidelines
 
