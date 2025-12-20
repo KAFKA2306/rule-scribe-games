@@ -19,9 +19,14 @@ _VALIDATE_FIELDS = [
 
 
 def validate_url(url: str) -> tuple[str, bool]:
-    resp = httpx.head(url, follow_redirects=True, timeout=10)
-    if resp.status_code == 405:
-        resp = httpx.get(url, follow_redirects=True, timeout=10)
+    if not url.startswith("http"):
+        return "skipped_relative", False
+    try:
+        resp = httpx.head(url, follow_redirects=True, timeout=10)
+        if resp.status_code == 405:
+            resp = httpx.get(url, follow_redirects=True, timeout=10)
+    except (httpx.ConnectError, httpx.TimeoutException) as e:
+        return f"network_error: {type(e).__name__}", False
     if resp.status_code == 200:
         return "ok", False
     if resp.status_code in [400, 404, 410]:

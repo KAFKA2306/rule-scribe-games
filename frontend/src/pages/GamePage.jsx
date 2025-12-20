@@ -3,12 +3,10 @@ import { useParams } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
 import ReactMarkdown from 'react-markdown'
 import EditGameModal from '../components/EditGameModal'
-
 import { ShareButton, TwitterShareButton } from '../components/game/ShareButtons'
 import { RegenerateButton } from '../components/game/RegenerateButton'
 import { TextToSpeech } from '../components/game/TextToSpeech'
 import { ExternalLinks } from '../components/game/ExternalLinks'
-
 import { ThinkingMeeple } from '../components/ThinkingMeeple'
 
 export default function GamePage({ slug: propSlug }) {
@@ -26,19 +24,16 @@ export default function GamePage({ slug: propSlug }) {
   useEffect(() => {
     const fetchGame = async () => {
       setLoading(true)
-
       const res = await fetch(`/api/games/${slug}`)
-
       const data = await res.json()
       const gameData = Array.isArray(data) ? data[0] : data.game || data
-
       setGame(gameData)
-
       setLoading(false)
     }
-
     fetchGame()
   }, [slug])
+
+  const BASE_URL = 'https://bodoge-no-mikata.vercel.app'
 
   const handleSave = async (updatedData) => {
     const res = await fetch(`/api/games/${slug}`, {
@@ -53,10 +48,7 @@ export default function GamePage({ slug: propSlug }) {
 
   if (loading)
     return (
-      <div
-        className="loading-container"
-        style={{ padding: '48px', display: 'flex', justifyContent: 'center' }}
-      >
+      <div className="loading-container">
         <ThinkingMeeple
           text="ミープル君がルールブックを読んでいます... 少々お待ちください"
           imageSrc="/assets/thinking-meeple.png"
@@ -76,14 +68,10 @@ export default function GamePage({ slug: propSlug }) {
     (game.summary || game.description)
       ? `${baseDescription} ${game.summary || game.description}`
       : baseDescription
-  const gameUrl = `https://bodoge-no-mikata.vercel.app/games/${slug}`
-  const imageUrl = (() => {
-    if (game.image_url) {
-      if (game.image_url.startsWith('http')) return game.image_url
-      return `https://bodoge-no-mikata.vercel.app${game.image_url}`
-    }
-    return `https://bodoge-no-mikata.vercel.app/assets/games/${slug}.webp`
-  })()
+  const gameUrl = `${BASE_URL}/games/${slug}`
+  const imageUrl = game.image_url
+    ? (game.image_url.startsWith('http') ? game.image_url : `${BASE_URL}${game.image_url}`)
+    : `${BASE_URL}/assets/games/${slug}.webp`
 
   const renderRules = () => {
     if (isStringRules) {
@@ -108,22 +96,13 @@ export default function GamePage({ slug: propSlug }) {
         </div>
       )
     }
-
     return <p className="no-rules">ルール情報がありません</p>
   }
 
   const speechText = (() => {
-    let text = `${title}。`
-    if (game.summary) text += `${game.summary}。`
-    else if (game.description) text += `${game.description}。`
-
+    let text = `${title}。${game.summary || game.description || ''}`
     if (isStringRules) {
-      const cleanRules = rules
-        .replace(/[#*`_~]/g, '')
-        .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
-        .replace(/!\[([^\]]*)\]\([^)]+\)/g, '')
-        .replace(/^\s*[-+]\s+/gm, '')
-        .replace(/\n+/g, ' ')
+      const cleanRules = rules.replace(/[#*`_~[\]()!]/g, '').replace(/\n+/g, ' ')
       text += ` ルール: ${cleanRules}`
     }
     return text
@@ -196,22 +175,14 @@ export default function GamePage({ slug: propSlug }) {
 
       <div className="game-content">
         <h1 className="game-title">{title}</h1>
-        <div
-          className="header-actions"
-          style={{ display: 'flex', alignItems: 'center', gap: '12px' }}
-        >
+        <div className="header-actions">
           <TextToSpeech text={speechText} />
           <TwitterShareButton slug={slug} title={title} />
           <ShareButton slug={slug} />
-          <button
-            className="share-btn"
-            onClick={() => setIsEditOpen(true)}
-            title="編集"
-            aria-label="Edit game"
-          >
+          <button className="share-btn" onClick={() => setIsEditOpen(true)} title="編集">
             ✏️ 編集
           </button>
-          <RegenerateButton title={title} onRegenerate={(updatedGame) => setGame(updatedGame)} />
+          <RegenerateButton title={title} onRegenerate={setGame} />
         </div>
       </div>
 
@@ -226,7 +197,7 @@ export default function GamePage({ slug: propSlug }) {
       {game.summary && (
         <div className="info-section">
           <h3>💡 3行でわかる要約</h3>
-          <p style={{ lineHeight: '1.7', color: 'var(--text-muted)' }}>{game.summary}</p>
+          <p className="summary-text">{game.summary}</p>
         </div>
       )}
 
