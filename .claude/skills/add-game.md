@@ -10,13 +10,31 @@ User requests adding a board game by name.
 
 ## Workflow
 
-### Step 1: Research
+### Step 1: Research (Official Sources Priority)
 
+**1.1 Find Official Page First:**
 ```
-search_web(query: "[game] ボードゲーム ルール 遊び方 プレイ人数")
+search_web(query: "[game] 公式 ルール")
+search_web(query: "[game] publisher official rules")
 ```
 
-Collect: title, min/max players, play time, mechanics, theme, components, key terms.
+**Priority Sources (in order):**
+1. 公式メーカーページ (e.g., arclightgames.jp, newgamesorder.jp, gp-inc.jp, gentosha-edu.co.jp)
+2. BoardGameGeek (bgg_url)
+3. jellyjellycafe.com, hoobby.net (レビュー・ルール解説)
+4. YouTube ルール解説動画
+
+**1.2 Collect Game Info:**
+- title (日本語タイトル優先)
+- min/max players, play time
+- mechanics, theme, components
+- key terms (専門用語)
+- **詳細ルール** (セットアップ、ゲームの流れ、特殊ルール、勝利条件)
+
+**1.3 Rules Content Target:**
+- 600-800文字を目標
+- 初心者が読んですぐ遊べる詳しさ
+- コンポーネント、セットアップ、ゲームの流れ、勝利条件、ヒントを含む
 
 ### Step 2: Insert Data
 
@@ -37,8 +55,13 @@ VALUES (
 ### Step 3: Generate Image
 
 ```
-generate_image(Prompt: "[theme] board game box art, vibrant colors", ImageName: "[slug]")
+generate_image(Prompt: "[theme] board game artwork, vibrant colors, no text, no title, no words, no letters, pure illustration", ImageName: "[slug]")
 ```
+
+**Image Guidelines:**
+- NO text, titles, keywords, or letters in the image
+- Pure visual artwork only (illustrations, symbols, game components)
+- Focus on theme and atmosphere, not branding
 
 ### Step 4: Process & Update Image
 
