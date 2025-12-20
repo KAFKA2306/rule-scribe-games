@@ -76,6 +76,7 @@ Googleがコンテンツのコンテキストを理解しやすくするため�
 
 ### Robots.txt
 - **設定**: すべてのクローラーを許可 (`User-agent: *`, `Allow: /`)。
+- **AIクローラー対応**: GPTBot、ChatGPT-User、OAI-SearchBot（OpenAI）、anthropic-ai、Claude-Web（Anthropic）、PerplexityBot、Bytespider（TikTok）を明示的に許可。
 - **サイトマップ連携**: robots.txt内でサイトマップの絶対URLを明示的に指定しています。
 
 ---
