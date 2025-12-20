@@ -10,45 +10,42 @@ User requests adding a board game by name.
 
 ## Workflow
 
-### Step 1: Research (Official Sources Priority)
+### Step 1: Find Official Page FIRST
 
-**1.1 Find Official Page First:**
+**1.1 Search for Official Page:**
+
+```text
+search_web(query: "[game] 日本語版 公式")
+search_web(query: "[game] BoardGameGeek")
 ```
-search_web(query: "[game] 公式 ルール")
-search_web(query: "[game] publisher official rules")
-```
 
-**Priority Sources (in order):**
-1. 公式メーカーページ (e.g., arclightgames.jp, newgamesorder.jp, gp-inc.jp, gentosha-edu.co.jp)
-2. BoardGameGeek (bgg_url)
-3. jellyjellycafe.com, hoobby.net (レビュー・ルール解説)
-4. YouTube ルール解説動画
+**1.2 Set official_url:**
 
-**1.2 Collect Game Info:**
-- title (日本語タイトル優先)
-- min/max players, play time
-- mechanics, theme, components
-- key terms (専門用語)
-- **詳細ルール** (セットアップ、ゲームの流れ、特殊ルール、勝利条件)
+- Find the official publisher/distributor page
+- If no official Japanese page exists, set to NULL
 
-**1.3 Rules Content Target:**
-- 600-800文字を目標
-- 初心者が読んですぐ遊べる詳しさ
-- コンポーネント、セットアップ、ゲームの流れ、勝利条件、ヒントを含む
+**1.3 Collect Rules (600-800 chars):**
+
+- コンポーネント
+- セットアップ手順
+- ゲームの流れ
+- 勝利条件
+- 初心者ヒント
 
 ### Step 2: Insert Data
 
 ```sql
-INSERT INTO games (slug, title, summary, min_players, max_players, play_time, bgg_url, amazon_url, rules_content, structured_data)
+INSERT INTO games (slug, title, summary, min_players, max_players, play_time, official_url, bgg_url, amazon_url, rules_content, structured_data)
 VALUES (
   '[slug]',
   '[title]',
   E'[1行サマリー]',
   [min], [max], [play_time],
-  'https://boardgamegeek.com/boardgame/[bgg_id]',
+  '[official_url or NULL]',
+  'https://boardgamegeek.com/boardgame/[bgg_id]/[name]',
   'https://www.amazon.co.jp/s?k=[title_ja]&tag=bodogemikata-22',
-  E'[rules_content - see template below]',
-  '[structured_data - see template below]'::jsonb
+  E'[rules_content]',
+  '[structured_data]'::jsonb
 );
 ```
 
