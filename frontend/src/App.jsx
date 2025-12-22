@@ -168,8 +168,8 @@ function App() {
             placeholder="ボードゲーム名を入れてね。なければ調べるよ！"
             className="search-input"
           />
-          <button type="submit" className="btn-primary" disabled={loading}>
-            {loading ? '生成中...' : '生成'}
+          <button type="submit" className="btn-primary" disabled={loading || generating}>
+            {generating ? '生成中...' : '生成'}
           </button>
           {query && (
             <button type="button" onClick={handleClear} className="btn-ghost">
