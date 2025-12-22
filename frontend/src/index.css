@@ -192,18 +192,16 @@ body {
   cursor: pointer;
 }
 
-/* Main Layout */
+/* Main Layout - Mobile First */
 .main-layout {
-  display: grid;
-  grid-template-columns: 400px 1fr;
-  gap: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
   flex: 1;
   min-height: 0;
-  /* Important for scrolling */
 }
 
 .main-layout.single-col {
-  grid-template-columns: 1fr;
   max-width: 600px;
   margin: 0 auto;
   width: 100%;
@@ -518,18 +516,34 @@ h1.game-title {
   margin-top: auto;
 }
 
-/* Responsive */
-@media (max-width: 600px) {
+/* Responsive - Mobile First */
+.game-list-pane {
+  max-height: 50vh;
+}
+
+.app-container {
+  height: auto;
+}
+
+@media (min-width: 768px) {
   .main-layout {
-    grid-template-columns: 1fr;
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 24px;
   }
 
   .game-list-pane {
-    max-height: 300px;
+    max-height: none;
   }
 
   .app-container {
-    height: auto;
+    height: 100vh;
+  }
+}
+
+@media (min-width: 1024px) {
+  .main-layout {
+    grid-template-columns: 400px 1fr;
   }
 }
 
