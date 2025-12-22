@@ -8,7 +8,7 @@ class BaseSchema(BaseModel):
 
 class GameDetail(BaseSchema):
     id: str
-    slug: str
+    slug: Optional[str] = None
     title: str
     description: Optional[str] = None
     rules_content: Optional[str] = None
