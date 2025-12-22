@@ -9,12 +9,12 @@ import { TextToSpeech } from '../components/game/TextToSpeech'
 import { ExternalLinks } from '../components/game/ExternalLinks'
 import { ThinkingMeeple } from '../components/ThinkingMeeple'
 
-export default function GamePage({ slug: propSlug }) {
+export default function GamePage({ slug: propSlug, initialGame }) {
   const { slug: urlSlug } = useParams()
   const slug = propSlug || urlSlug
 
-  const [game, setGame] = useState(null)
-  const [loading, setLoading] = useState(true)
+  const [game, setGame] = useState(initialGame || null)
+  const [loading, setLoading] = useState(!initialGame)
 
   const [heroSrc, setHeroSrc] = useState(slug ? `/assets/games/${slug}.webp` : null)
   const [isEditOpen, setIsEditOpen] = useState(false)
@@ -22,6 +22,7 @@ export default function GamePage({ slug: propSlug }) {
   const isStandalone = !propSlug
 
   useEffect(() => {
+    if (initialGame) return
     const fetchGame = async () => {
       setLoading(true)
       const res = await fetch(`/api/games/${slug}`)
@@ -31,7 +32,7 @@ export default function GamePage({ slug: propSlug }) {
       setLoading(false)
     }
     fetchGame()
-  }, [slug])
+  }, [slug, initialGame])
 
   const BASE_URL = 'https://bodoge-no-mikata.vercel.app'
 
