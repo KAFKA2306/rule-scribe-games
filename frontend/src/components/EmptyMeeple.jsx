@@ -4,8 +4,9 @@ export const EmptyMeeple = ({ query }) => {
   return (
     <div className="mascot-state">
       <img
-        src="/assets/empty-meeple.png"
+        src="/assets/empty-meeple.webp"
         alt="Empty Meeple"
+        loading="lazy"
         style={{ width: '80px', height: 'auto', marginBottom: '16px', opacity: 0.9 }}
       />
       <p className="mascot-text">

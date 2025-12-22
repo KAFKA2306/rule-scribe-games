@@ -51,7 +51,7 @@ export default function GamePage({ slug: propSlug }) {
       <div className="loading-container">
         <ThinkingMeeple
           text="ミープル君がルールブックを読んでいます... 少々お待ちください"
-          imageSrc="/assets/thinking-meeple.png"
+          imageSrc="/assets/thinking-meeple.webp"
         />
       </div>
     )
@@ -161,6 +161,7 @@ export default function GamePage({ slug: propSlug }) {
           <img
             src={heroSrc || game.image_url}
             alt={title}
+            loading="lazy"
             onError={(e) => {
               if (heroSrc && game.image_url && heroSrc !== game.image_url) {
                 setHeroSrc(game.image_url)
@@ -317,8 +318,9 @@ export default function GamePage({ slug: propSlug }) {
               style={{ display: 'flex', alignItems: 'center', gap: '12px', textDecoration: 'none' }}
             >
               <img
-                src="/assets/header-icon.png"
+                src="/assets/header-icon.webp"
                 alt="Meeple"
+                loading="lazy"
                 style={{ width: '32px', height: 'auto', marginRight: '-4px' }}
               />
               <span className="logo-icon">♜</span>
