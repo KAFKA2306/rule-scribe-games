@@ -5,6 +5,17 @@ export default defineConfig({
   envDir: '..',
   plugins: [react()],
   envPrefix: ['VITE_', 'NEXT_'],
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom', 'react-router-dom'],
+          supabase: ['@supabase/supabase-js'],
+          markdown: ['react-markdown']
+        }
+      }
+    }
+  },
   server: {
     proxy: {
       '/api': {
@@ -14,3 +25,4 @@ export default defineConfig({
     },
   },
 })
+

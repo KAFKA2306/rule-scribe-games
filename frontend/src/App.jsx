@@ -138,8 +138,9 @@ function App() {
       <header className="main-header">
         <div className="brand" onClick={handleClear}>
           <img
-            src="/assets/header-icon.png"
+            src="/assets/header-icon.webp"
             alt="Meeple"
+            loading="lazy"
             style={{ width: '32px', height: 'auto', marginRight: '8px' }}
           />
           <span className="logo-icon">♜</span>

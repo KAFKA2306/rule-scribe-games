@@ -3,7 +3,7 @@ import '../index.css'
 
 export const ThinkingMeeple = ({
   text = 'ルールブックを読んでいます...',
-  imageSrc = '/assets/thinking-meeple.png',
+  imageSrc = '/assets/thinking-meeple.webp',
 }) => {
   return (
     <div className="mascot-state">
@@ -12,6 +12,7 @@ export const ThinkingMeeple = ({
           src={imageSrc}
           alt="Thinking Meeple"
           className="mascot-bounce"
+          loading="lazy"
           style={{ width: '80px', height: 'auto', marginBottom: '16px' }}
         />
       </div>
