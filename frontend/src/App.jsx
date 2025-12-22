@@ -271,7 +271,7 @@ function App() {
 
         <section className="game-detail-pane">
           {selectedSlug ? (
-            <GamePage key={selectedSlug} slug={selectedSlug} />
+            <GamePage key={selectedSlug} slug={selectedSlug} initialGame={games.find(g => g.slug === selectedSlug)} />
           ) : (
             <div className="empty-selection">
               <p>左のリストからゲームを選択してください</p>
