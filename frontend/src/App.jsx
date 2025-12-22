@@ -43,25 +43,30 @@ function App() {
     if (!append) setLoading(true)
     else setLoadingMore(true)
 
-    const data = await api.get(`/api/games?limit=50&offset=${currentOffset}`)
-    const list = Array.isArray(data) ? data : data.games || []
+    try {
+      const data = await api.get(`/api/games?limit=50&offset=${currentOffset}`)
+      const list = Array.isArray(data) ? data : data.games || []
 
-    if (append) {
-      setGames((prev) => [...prev, ...list])
-      setInitialGames((prev) => [...prev, ...list])
-    } else {
-      setGames(list)
-      setInitialGames(list)
-      if (list.length > 0) {
-        setSelectedSlug(list[0].slug)
+      if (append) {
+        setGames((prev) => [...prev, ...list])
+        setInitialGames((prev) => [...prev, ...list])
+      } else {
+        setGames(list)
+        setInitialGames(list)
+        if (list.length > 0) {
+          setSelectedSlug(list[0].slug)
+        }
       }
+
+      setHasMore(list.length === 50)
+      setOffset(currentOffset + list.length)
+    } catch (err) {
+      console.error('Failed to load games:', err)
+      setError('ゲームの読み込みに失敗しました。しばらく経ってから再読み込みしてください。')
+    } finally {
+      setLoading(false)
+      setLoadingMore(false)
     }
-
-    setHasMore(list.length === 50)
-    setOffset(currentOffset + list.length)
-
-    setLoading(false)
-    setLoadingMore(false)
   }
 
   useEffect(() => {

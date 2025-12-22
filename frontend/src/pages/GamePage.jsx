@@ -15,6 +15,7 @@ export default function GamePage({ slug: propSlug, initialGame }) {
 
   const [game, setGame] = useState(initialGame || null)
   const [loading, setLoading] = useState(!initialGame)
+  const [error, setError] = useState(null)
 
   const [heroSrc, setHeroSrc] = useState(slug ? `/assets/games/${slug}.webp` : null)
   const [isEditOpen, setIsEditOpen] = useState(false)
@@ -25,11 +26,19 @@ export default function GamePage({ slug: propSlug, initialGame }) {
     if (initialGame) return
     const fetchGame = async () => {
       setLoading(true)
-      const res = await fetch(`/api/games/${slug}`)
-      const data = await res.json()
-      const gameData = Array.isArray(data) ? data[0] : data.game || data
-      setGame(gameData)
-      setLoading(false)
+      setError(null)
+      try {
+        const res = await fetch(`/api/games/${slug}`)
+        if (!res.ok) throw new Error('Game not found')
+        const data = await res.json()
+        const gameData = Array.isArray(data) ? data[0] : data.game || data
+        setGame(gameData)
+      } catch (err) {
+        console.error(err)
+        setError('ゲーム情報の取得に失敗しました')
+      } finally {
+        setLoading(false)
+      }
     }
     fetchGame()
   }, [slug, initialGame])
@@ -56,6 +65,19 @@ export default function GamePage({ slug: propSlug, initialGame }) {
         />
       </div>
     )
+
+  if (error) {
+    return (
+      <div className="error-container" style={{ padding: '2rem', textAlign: 'center' }}>
+        <p>{error}</p>
+        <button onClick={() => window.location.reload()} className="btn-primary">
+          再読み込み
+        </button>
+      </div>
+    )
+  }
+
+  if (!game) return null
 
   const title = game.title_ja || game.title || game.name || 'Untitled'
   const rules = game.rules_content || game.rules || game.content || ''
