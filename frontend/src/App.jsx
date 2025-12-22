@@ -96,7 +96,7 @@ function App() {
   useEffect(() => {
     if (initialGames.length === 0) return
 
-    const q = debouncedQuery.trim().toLowerCase()
+    const q = debouncedQuery.trim().normalize('NFKC').toLowerCase()
 
     if (!q) {
       setGames(initialGames)
@@ -107,12 +107,12 @@ function App() {
     console.log('Sample game:', initialGames[0])
 
     const filtered = initialGames.filter((game) => {
-      const title = (game.title || '').toLowerCase()
-      const titleJa = (game.title_ja || '').toLowerCase()
-      const titleEn = (game.title_en || '').toLowerCase()
-      const summary = (game.summary || '').toLowerCase()
-      const description = (game.description || '').toLowerCase()
-      const rules = (game.rules_content || '').toLowerCase()
+      const title = (game.title || '').normalize('NFKC').toLowerCase()
+      const titleJa = (game.title_ja || '').normalize('NFKC').toLowerCase()
+      const titleEn = (game.title_en || '').normalize('NFKC').toLowerCase()
+      const summary = (game.summary || '').normalize('NFKC').toLowerCase()
+      const description = (game.description || '').normalize('NFKC').toLowerCase()
+      const rules = (game.rules_content || '').normalize('NFKC').toLowerCase()
 
       if (game.slug === 'splendor') {
         console.log('Checking Splendor:', {
@@ -236,7 +236,7 @@ function App() {
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="ボードゲーム名を入れてね。なければ調べるよ！"
+            placeholder="ボードゲーム名を入れてね。なければ調べるよ！(v2)"
             className="search-input"
           />
           <button type="submit" className="btn-primary" disabled={loading || generating}>
