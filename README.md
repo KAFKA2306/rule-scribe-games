@@ -48,6 +48,12 @@
 - **AI Model**: Google Gemini 3 Flash Preview。
 - **Deploy**: Vercel (Frontend & Backend Serverless)。
 
+### パフォーマンス最適化
+
+- **画像**: 全PNG→WebP変換（98%削減）、`loading="lazy"`
+- **バンドル分割**: React.lazy + manualChunks（vendor/supabase/markdown）
+- **初期ロード**: 525KB→39KB (92%削減)
+
 ## ディレクトリ構成
 
 各ディレクトリの詳細な役割とロジックについては、それぞれのREADMEを参照してください。
