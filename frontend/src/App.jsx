@@ -14,7 +14,7 @@ function App() {
   const [initialGames, setInitialGames] = useState([])
   const [selectedSlug, setSelectedSlug] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [loadingMore, setLoadingMore] = useState(false)
+
   const [generating, setGenerating] = useState(false)
   const [error, setError] = useState(null)
   const [_session, setSession] = useState(null)
@@ -35,46 +35,47 @@ function App() {
   }, [])
 
   const [query, setQuery] = useState(searchParams.get('q') || '')
-  const [hasMore, setHasMore] = useState(true)
-  const [offset, setOffset] = useState(0)
-
-  const loadGames = async (currentOffset = 0, append = false) => {
-    setError(null)
-    if (!append) setLoading(true)
-    else setLoadingMore(true)
-
-    try {
-      const data = await api.get(`/api/games?limit=50&offset=${currentOffset}`)
-      const list = Array.isArray(data) ? data : data.games || []
-
-      if (append) {
-        setGames((prev) => [...prev, ...list])
-        setInitialGames((prev) => [...prev, ...list])
-      } else {
-        setGames(list)
-        setInitialGames(list)
-        if (list.length > 0) {
-          setSelectedSlug(list[0].slug)
-        }
-      }
-
-      setHasMore(list.length === 50)
-      setOffset(currentOffset + list.length)
-    } catch (err) {
-      console.error('Failed to load games:', err)
-      setError('ゲームの読み込みに失敗しました。しばらく経ってから再読み込みしてください。')
-    } finally {
-      setLoading(false)
-      setLoadingMore(false)
-    }
-  }
+  // HasMore/Offset are no longer needed for full client-side load
+  // const [hasMore, setHasMore] = useState(true)
+  // const [offset, setOffset] = useState(0)
 
   useEffect(() => {
-    setTimeout(() => loadGames(0, false), 0)
+    const loadAllGames = async () => {
+      setError(null)
+      setLoading(true)
+
+      try {
+        // Fetch a large number to ensure we get everything for client-side search
+        const data = await api.get(`/api/games?limit=1000&offset=0`)
+        const list = Array.isArray(data) ? data : data.games || []
+
+        setInitialGames(list)
+        // If there's an initial query from URL, filtered results will be set by the useEffect below
+        // Otherwise, show all
+        if (!searchParams.get('q')) {
+          setGames(list)
+          if (list.length > 0) {
+            setSelectedSlug(list[0].slug)
+          }
+        } else {
+          // Initial filter will happen in useEffect
+        }
+
+      } catch (err) {
+        console.error('Failed to load games:', err)
+        setError('ゲームの読み込みに失敗しました。しばらく経ってから再読み込みしてください。')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadAllGames()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const [debouncedQuery, setDebouncedQuery] = useState(query)
 
+  // Debounce input
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedQuery(query)
@@ -82,6 +83,7 @@ function App() {
     return () => clearTimeout(timer)
   }, [query])
 
+  // Sync with URL
   useEffect(() => {
     if (debouncedQuery) {
       setSearchParams({ q: debouncedQuery }, { replace: true })
@@ -90,42 +92,106 @@ function App() {
     }
   }, [debouncedQuery, setSearchParams])
 
+  // Client-side wide search
   useEffect(() => {
-    const searchRealtime = async () => {
-      if (!debouncedQuery.trim()) {
-        setGames(initialGames)
-        return
-      }
+    if (initialGames.length === 0) return
 
-      const data = await api.post('/api/search', { query: debouncedQuery, generate: false })
-      const list = Array.isArray(data) ? data : data.games || []
-      setGames(list)
-    }
+    const q = debouncedQuery.trim().toLowerCase()
 
-    searchRealtime()
-  }, [debouncedQuery, initialGames])
-
-  const handleSearch = async (e) => {
-    e.preventDefault()
-    if (!query.trim()) {
+    if (!q) {
       setGames(initialGames)
       return
     }
+
+    console.log('Filtering games with query:', q)
+    console.log('Sample game:', initialGames[0])
+
+    const filtered = initialGames.filter((game) => {
+      const title = (game.title || '').toLowerCase()
+      const titleJa = (game.title_ja || '').toLowerCase()
+      const titleEn = (game.title_en || '').toLowerCase()
+      const summary = (game.summary || '').toLowerCase()
+      const description = (game.description || '').toLowerCase()
+      const rules = (game.rules_content || '').toLowerCase()
+
+      if (game.slug === 'splendor') {
+        console.log('Checking Splendor:', {
+          title, titleJa, titleEn, summary, description, rules,
+          q,
+          match: title.includes(q) || titleJa.includes(q) || titleEn.includes(q)
+        })
+      }
+
+      return (
+        title.includes(q) ||
+        titleJa.includes(q) ||
+        titleEn.includes(q) ||
+        summary.includes(q) ||
+        description.includes(q) ||
+        rules.includes(q)
+      )
+    })
+
+    setGames(filtered)
+    // Optional: Select first result if current selection is not in list?
+    // For now, let's keep selection logic simple.
+  }, [debouncedQuery, initialGames])
+
+
+  const handleSearch = async (e) => {
+    e.preventDefault()
+    // For normal search, the useEffect handles it.
+    // This handler is now primarily for "Generate" (Force create new).
+
+    // If just searching existing, do nothing (handled by effect)
+    // But if we want to support "Generate" explicitly via button:
+    // We already filter. If user hits Enter, it's just submitting the form.
+
+    // However, the original code had "Generate" button logic associated with `generating` state.
+    // The UI shows a "Generate" button.
+
+    if (!query.trim()) {
+      return
+    }
+
+    // Check if we have results locally. If we do, usually we don't auto-generate.
+    // But the button says "Generate".
+    // Let's assume the button action is specifically to TRY generating if not found, 
+    // or if the user explicitly wants to find something new.
+
+    // Changing behavior: "Search" happens automatically. 
+    // "Generate" button should specifically trigger the API generation.
 
     setLoading(true)
     setGenerating(true)
     setError(null)
 
-    const data = await api.post('/api/search', { query, generate: true })
-    const list = Array.isArray(data) ? data : data.games || []
+    try {
+      // Use the generate=true flag
+      const data = await api.post('/api/search', { query, generate: true })
+      const list = Array.isArray(data) ? data : data.games || []
 
-    setGames(list)
-    if (list.length > 0) {
-      setSelectedSlug(list[0].slug)
+      // If a new game was generated, it usually returns just that game or a list.
+      // We should probably re-fetch all games or add this to our local list.
+      if (list.length > 0) {
+        const newGame = list[0]
+        // Check if we already have it
+        const exists = initialGames.find(g => g.slug === newGame.slug)
+        if (!exists) {
+          const newTotal = [newGame, ...initialGames]
+          setInitialGames(newTotal)
+          // The useEffect will re-filter and pick it up
+        }
+        setQuery(newGame.title_ja || newGame.title) // update query to match exact title? Maybe not.
+        setSelectedSlug(newGame.slug)
+      }
+    } catch (e) {
+      console.error(e)
+      setError("生成に失敗しました。")
+    } finally {
+      setLoading(false)
+      setGenerating(false)
     }
-
-    setLoading(false)
-    setGenerating(false)
   }
 
   const handleClear = () => {
@@ -248,29 +314,7 @@ function App() {
 
             {games.length === 0 && !loading && <EmptyMeeple query={query} />}
 
-            {hasMore && !query && !loading && (
-              <div
-                ref={(node) => {
-                  if (node && !loadingMore && !loading) {
-                    const observer = new IntersectionObserver(
-                      (entries) => {
-                        if (entries[0].isIntersecting) {
-                          loadGames(offset, true)
-                        }
-                      },
-                      { threshold: 0.1 }
-                    )
-                    observer.observe(node)
-                    return () => observer.disconnect()
-                  }
-                }}
-                style={{ height: '20px', margin: '10px 0' }}
-              />
-            )}
 
-            {loadingMore && (
-              <div style={{ textAlign: 'center', padding: '20px' }}>📚 さらに読み込み中...</div>
-            )}
           </div>
         </aside>
 
