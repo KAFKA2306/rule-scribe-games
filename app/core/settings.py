@@ -24,13 +24,13 @@ class Settings:
         requested_model = os.getenv("GEMINI_MODEL") or _config.get(
             "gemini_model", CANONICAL_GEMINI_MODEL
         )
-        if not requested_model.startswith("models/"):
+        if requested_model != CANONICAL_GEMINI_MODEL:
             raise ValueError(
-                "GEMINI_MODEL must include the `models/` prefix "
-                "(example: models/gemini-2.0-flash-exp)."
+                f"GEMINI_MODEL must be exactly '{CANONICAL_GEMINI_MODEL}'. "
+                f"Got: '{requested_model}'. Do not change the model name."
             )
 
-        self.gemini_model = requested_model
+        self.gemini_model = CANONICAL_GEMINI_MODEL
 
         self.supabase_url = os.getenv("NEXT_PUBLIC_SUPABASE_URL") or os.getenv(
             "SUPABASE_URL"

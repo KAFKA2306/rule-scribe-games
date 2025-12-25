@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, lazy, Suspense } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import GamePage from './pages/GamePage'
+// import GamePage from './pages/GamePage' // Changed to lazy
+const GamePage = lazy(() => import('./pages/GamePage'))
 import { ThinkingMeeple } from './components/ThinkingMeeple'
 import { EmptyMeeple } from './components/EmptyMeeple'
 import { GameBackground } from './components/GameBackground'
@@ -290,12 +291,11 @@ function App() {
               const title = game.title_ja || game.title || game.name || 'Untitled'
               return (
                 <div
-                  key={game.slug}
+                  key={game.id}
                   className={`game-card ${selectedSlug === game.slug ? 'active' : ''}`}
                   onClick={() => setSelectedSlug(game.slug)}
                   style={{
-                    backgroundImage: `linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.8)), url(/assets/games/${game.slug}.webp)${game.image_url ? `, url(${game.image_url})` : ''
-                      }`,
+                    backgroundImage: `linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.8)), url(/assets/games/${game.slug}.webp), url(${game.image_url || '/assets/no-image.webp'})`,
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',
                   }}
@@ -320,7 +320,9 @@ function App() {
 
         <section className="game-detail-pane">
           {selectedSlug ? (
-            <GamePage key={selectedSlug} slug={selectedSlug} initialGame={games.find(g => g.slug === selectedSlug)} />
+            <Suspense fallback={<div className="loading-pane">Loading game...</div>}>
+              <GamePage key={selectedSlug} slug={selectedSlug} initialGame={games.find(g => g.slug === selectedSlug)} />
+            </Suspense>
           ) : (
             <div className="empty-selection">
               <p>左のリストからゲームを選択してください</p>
@@ -335,7 +337,7 @@ function App() {
       >
         <span>© {new Date().getFullYear()} ボドゲのミカタ</span>
         <img
-          src="/assets/footer-logo.jpg"
+          src="/assets/footer-logo.webp"
           alt="Bodoge no Mikata Logo"
           style={{ width: '80px', height: 'auto', borderRadius: '8px', opacity: 0.8 }}
         />

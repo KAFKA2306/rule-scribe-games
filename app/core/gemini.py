@@ -21,7 +21,7 @@ class GeminiClient:
                 "response_mime_type": "application/json",
             },
         }
-        async with httpx.AsyncClient(timeout=60.0) as client:
+        async with httpx.AsyncClient() as client:
             resp = await client.post(
                 self.url,
                 headers={

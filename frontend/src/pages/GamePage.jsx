@@ -366,7 +366,7 @@ export default function GamePage({ slug: propSlug, initialGame }) {
         >
           <span>© {new Date().getFullYear()} ボドゲのミカタ</span>
           <img
-            src="/assets/footer-logo.jpg"
+            src="/assets/footer-logo.webp"
             alt="Bodoge no Mikata Logo"
             style={{ width: '80px', height: 'auto', borderRadius: '8px', opacity: 0.8 }}
           />
