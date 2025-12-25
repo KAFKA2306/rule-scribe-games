@@ -37,8 +37,12 @@
 - Supabase service role keys (`SUPABASE_SERVICE_ROLE_KEY`) stay server-side only; frontend uses the public anon key from `.env`.
 
 ## Critical Configuration Rules
-- **Gemini Model Name**: STRICTLY use `models/gemini-3-flash-preview`. Do not change this to other versions (e.g., `gemini-2.0` or `1.5-pro`) without explicit user override, as this is the verified model for Vercel/production environment.
-- **Why**: Ensure consistency and avoid quota/availability issues associated with experimental models.
+
+> [!CAUTION]
+> **NEVER change the Gemini model name.** The project strictly enforces `models/gemini-3-flash-preview`.
+
+- **Gemini Model Name**: The code in `app/core/settings.py` will **raise an error** if any other model is configured. This is enforced at startup.
+- **Why**: Ensures consistency, avoids quota/availability issues, and matches Vercel/production environment verification.
 
 ## Claude Skills (AI Workflow Automation)
 

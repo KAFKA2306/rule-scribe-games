@@ -8,6 +8,10 @@
 アプリケーションの設定と環境変数のロードを担当します。
 - `Settings` クラス: 環境変数 (`GEMINI_API_KEY`, `SUPABASE_URL` 等) を読み込み、検証します。
 - `CANONICAL_GEMINI_MODEL`: 使用するGeminiモデル名（`models/gemini-3-flash-preview`）を厳格に定義しています。config.yamlまたは環境変数で異なるモデルが指定された場合、エラーを発生させて意図しないモデル利用を防ぎます。
+
+> [!CAUTION]
+> **このモデル名は変更しないでください。** プロジェクトは `models/gemini-3-flash-preview` 専用に設計されています。
+
 - `_config`: プロジェクトルートの `config.yaml` をロードします。
 
 ### [`gemini.py`](./gemini.py)
