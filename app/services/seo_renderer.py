@@ -96,4 +96,37 @@ def generate_seo_html(slug: str) -> str:
     script_tag = f'<script type="application/ld+json">{json_ld}</script>'
     html_content = html_content.replace("</head>", f"{script_tag}</head>")
 
+    rules_content = game.get("rules_content") or ""
+    summary = game.get("summary") or ""
+
+    players_info = ""
+    if game.get("min_players"):
+        max_p = game.get("max_players") or game.get("min_players")
+        players_info = f'<p><strong>プレイ人数:</strong> {game.get("min_players")}-{max_p}人</p>'
+
+    time_info = ""
+    if game.get("play_time"):
+        time_info = f'<p><strong>プレイ時間:</strong> {game.get("play_time")}分</p>'
+
+    ssr_content = f'''<div id="root">
+  <article itemscope itemtype="https://schema.org/Game">
+    <h1 itemprop="name">{title}</h1>
+    <section>
+      <h2>3行でわかる要約</h2>
+      <p itemprop="description">{summary}</p>
+    </section>
+    <section>
+      <h2>基本情報</h2>
+      {players_info}
+      {time_info}
+    </section>
+    <section>
+      <h2>ルール</h2>
+      <div itemprop="text">{rules_content[:2000] if rules_content else ""}</div>
+    </section>
+  </article>
+</div>'''
+
+    html_content = html_content.replace('<div id="root"></div>', ssr_content)
+
     return html_content
