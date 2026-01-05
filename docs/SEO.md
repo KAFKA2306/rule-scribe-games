@@ -72,3 +72,29 @@
 
 - [sitemap.py](file:///home/kafka/projects/rule-scribe-games/app/services/sitemap.py)
 - [robots.txt](file:///home/kafka/projects/rule-scribe-games/frontend/public/robots.txt)
+
+---
+
+## note.com 連携戦略
+
+### 現状
+
+| 項目 | 値 |
+| :--- | :--- |
+| アカウント | [note.com/bodogenomikata](https://note.com/bodogenomikata) |
+| 投稿記事 | 2本 |
+| 自社リンク | プロフィール・記事内に設置済み |
+
+### SEO効果
+
+- **高ドメインパワー**: note.comは高DA（ドメインオーソリティ）
+- **nofollowリンク**: 直接SEO効果は限定的だが、間接効果あり
+- **SNS拡散**: 記事がX等でシェアされることで認知拡大
+- **検索流入**: note検索からの流入 → 自社サイト誘導
+
+### 記事一覧
+
+| ファイル | 内容 |
+| :--- | :--- |
+| [001_splendor.md](file:///home/kafka/projects/rule-scribe-games/articles/note/001_splendor.md) | 宝石の煌き紹介 |
+| [002_best3_time_thieves.md](file:///home/kafka/projects/rule-scribe-games/articles/note/002_best3_time_thieves.md) | 週末おすすめ3選 |

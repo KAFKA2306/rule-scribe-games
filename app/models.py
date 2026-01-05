@@ -33,6 +33,7 @@ class GameDetail(BaseSchema):
     bga_url: Optional[str] = None
     amazon_url: Optional[str] = None
     audio_url: Optional[str] = None
+    strategy_tier: Optional[str] = None  # e.g. "S", "A", "B"
     created_at: Optional[str] = None
     updated_at: Optional[str] = None
 
@@ -58,6 +59,7 @@ SearchResult = GameDetail
 
 
 # --- AI Generation Models ---
+
 
 class Keyword(BaseSchema):
     term: str
@@ -90,3 +92,11 @@ class GeneratedGameMetadata(BaseSchema):
     rules_content: str  # Markdown
     structured_data: StructuredData
 
+
+class StrategyTier(BaseSchema):
+    id: str
+    game_slug: str
+    tier_rating: str  # e.g. "S", "A"
+    strategy_content: str  # Markdown
+    author: Optional[str] = None
+    created_at: Optional[str] = None
