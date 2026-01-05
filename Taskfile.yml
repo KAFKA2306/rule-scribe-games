@@ -96,3 +96,11 @@ tasks:
   gemini:verify:
     desc: "Gemini model existence + generateContent smoke check"
     cmd: bash scripts/verify_gemini_model.sh
+
+  image:gen:ai:
+    desc: "Generate AI image (Usage: task image:gen:ai PROMPT='...' OUTPUT='path/to/img.png')"
+    cmd: uv run python scripts/generate_image_local.py "{{.PROMPT}}" "{{.OUTPUT}}" --width {{.WIDTH | default 1280}} --height {{.HEIGHT | default 670}}
+
+  image:gen:composite:
+    desc: "Create composite header (Usage: task image:gen:composite OUTPUT='...' INPUTS='img1 img2 ...')"
+    cmd: uv run python scripts/create_composite_header.py --output "{{.OUTPUT}}" {{.INPUTS}}
