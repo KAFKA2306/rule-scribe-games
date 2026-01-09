@@ -12,6 +12,7 @@ class GameDetail(BaseSchema):
     title: str
     description: Optional[str] = None
     rules_content: Optional[str] = None
+    rules_summary: Optional[str] = None
     image_url: Optional[str] = None
     summary: Optional[str] = None
     structured_data: Optional[Dict[str, Any]] = None
@@ -53,6 +54,7 @@ class GameUpdate(BaseSchema):
     bgg_url: Optional[str] = None
     structured_data: Optional[Dict[str, Any]] = None
     rules_content: Optional[str] = None
+    rules_summary: Optional[str] = None
 
 
 SearchResult = GameDetail
