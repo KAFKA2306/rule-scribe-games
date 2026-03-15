@@ -1,6 +1,8 @@
 uv.lock
 pyproject.toml
+.venv/
 .playwright_data/
 *.pdf
 assets/
+output_slides/
 backend/.ruff_cache/
