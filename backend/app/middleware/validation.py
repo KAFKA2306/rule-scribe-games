@@ -21,6 +21,6 @@ class ValidationMiddleware(BaseHTTPMiddleware):
                         json.loads(body)
                     except json.JSONDecodeError as e:
                         logger.warning(f"Malformed JSON in {request.url}: {e}")
-                        return JSONResponse(status_code=400, content={"error": f"Invalid JSON: {str(e)}"})
+                        return JSONResponse(status_code=400, content={"error": f"Invalid JSON: {e!s}"})
 
         return await call_next(request)

@@ -1,7 +1,7 @@
 import asyncio
+import logging
 import os
 import sys
-import logging
 
 from dotenv import load_dotenv
 
@@ -13,7 +13,7 @@ from app.services.game_service import GameService
 load_dotenv()
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
 GAMES_TO_GENERATE = [
     "Sweetland",
@@ -24,6 +24,7 @@ GAMES_TO_GENERATE = [
     "Bean to Bar",
     "Libertalia",
 ]
+
 
 async def main():
     """
@@ -47,6 +48,7 @@ async def main():
         logging.info("--- Finished game: %s ---", game_name)
 
     logging.info("Batch generation process completed.")
+
 
 if __name__ == "__main__":
     asyncio.run(main())

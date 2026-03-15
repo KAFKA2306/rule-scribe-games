@@ -8,7 +8,6 @@ from dotenv import load_dotenv
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../")))
 from app.core import supabase
-from app.models import GameDetail
 
 load_dotenv()
 
@@ -18,7 +17,7 @@ async def import_game(file_path: str):
         print(f"File not found: {file_path}")
         return
 
-    with open(file_path, "r", encoding="utf-8") as f:
+    with open(file_path, encoding="utf-8") as f:
         data = json.load(f)
 
     # Ensure metadata
@@ -44,9 +43,22 @@ async def import_game(file_path: str):
     # rules_summary is standard, keep it if it exists and we're sure
     # But for now, let's be extremely safe and only keep core fields
     core_fields = {
-        "title", "title_ja", "title_en", "slug", "summary", "description",
-        "rules_content", "structured_data", "min_players", "max_players",
-        "play_time", "min_age", "published_year", "official_url", "bgg_url", "source_url"
+        "title",
+        "title_ja",
+        "title_en",
+        "slug",
+        "summary",
+        "description",
+        "rules_content",
+        "structured_data",
+        "min_players",
+        "max_players",
+        "play_time",
+        "min_age",
+        "published_year",
+        "official_url",
+        "bgg_url",
+        "source_url",
     }
     safe_data = {k: v for k, v in safe_data.items() if k in core_fields}
 

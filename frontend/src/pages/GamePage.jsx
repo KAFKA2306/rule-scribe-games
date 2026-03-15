@@ -290,7 +290,7 @@ export default function GamePage({ slug: propSlug, initialGame }) {
         {activeTab === 'infographics' &&
           game.infographics &&
           Object.keys(game.infographics).length > 0 && (
-            <InfographicsGallery slug={slug} infographics={game.infographics} />
+            <InfographicsGallery infographics={game.infographics} />
           )}
 
         {activeTab === 'data' && (

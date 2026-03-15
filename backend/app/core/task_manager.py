@@ -23,11 +23,7 @@ class TaskManager:
     def cleanup(self):
         now = datetime.now(UTC)
         cutoff = now - timedelta(hours=self.retention_hours)
-        expired = [
-            tid
-            for tid, tdata in self._tasks.items()
-            if tdata.get("created_at", now) < cutoff
-        ]
+        expired = [tid for tid, tdata in self._tasks.items() if tdata.get("created_at", now) < cutoff]
         for tid in expired:
             del self._tasks[tid]
 
