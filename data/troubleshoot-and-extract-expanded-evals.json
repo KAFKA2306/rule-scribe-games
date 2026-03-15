@@ -1,0 +1,29 @@
+{
+  "skill_name": "troubleshoot-and-extract",
+  "original_evals": 4,
+  "expanded_evals": 7,
+  "new_scenarios": [
+    {
+      "id": 5,
+      "prompt": "Our Supabase database connection keeps timing out during the batch PDF extraction script. We're processing 50+ games and hitting 'connection pool exceeded' errors around game 15-20. The script hangs and we have to manually kill it. How do I debug and fix this?",
+      "expected_output": "Diagnosis of connection pool exhaustion, steps to increase pool size, query optimization suggestions, async connection management best practices, monitoring for future issues",
+      "category": "database-infrastructure",
+      "files": []
+    },
+    {
+      "id": 6,
+      "prompt": "The Gemini prompts we're using to generate game metadata are returning inconsistent results. Sometimes the rules summary is great, sometimes it's missing key information or includes irrelevant details. The generated JSON structure is valid but the content quality varies wildly. How do I improve the prompt and validate the output?",
+      "expected_output": "Gemini prompt engineering techniques, how to test and iterate on prompts, validation rules for metadata quality, examples of good vs bad outputs, systematic approach to prompt optimization",
+      "category": "ai-optimization",
+      "files": []
+    },
+    {
+      "id": 7,
+      "prompt": "Users are reporting that the game detail page looks broken on mobile devices. The rules text overflows, images don't scale, and the Japanese text rendering is sometimes illegible. The frontend CSS seems to have responsive design but it's not working correctly. How do I systematically debug and fix this?",
+      "expected_output": "Responsive design debugging methodology, CSS media query issues, text overflow solutions, image scaling for multiple devices, Japanese font rendering on mobile, DevTools approach to finding the root cause",
+      "category": "frontend-design",
+      "files": []
+    }
+  ],
+  "expansion_rationale": "Original 4 tests covered main pain points (frontend API, PDF extraction, image generation, issue tracking). New 3 scenarios address infrastructure, AI optimization, and frontend rendering—broader troubleshooting scope"
+}

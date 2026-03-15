@@ -1,0 +1,29 @@
+{
+  "skill_name": "troubleshoot-and-extract",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Frontend issue: When I try to search for a game on the home page and click 'Generate', the API returns a 500 error. The backend console shows something about Gemini, but I'm not sure what's wrong. Help me debug this step by step.",
+      "expected_output": "A systematic diagnosis that checks environment variables (GEMINI_API_KEY), verifies the backend is running, tests the API endpoint directly with curl, and isolates whether the issue is with Gemini authentication or another component.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "I have an official PDF rulebook for 'Ticket to Ride' that I want to add to our database. The PDF has English setup instructions and gameplay rules. I need to extract the content and create a structured game record with Japanese summaries. How do I do this?",
+      "expected_output": "Step-by-step instructions on: extracting text from the PDF using Python/pdfplumber, parsing sections (setup/gameplay/end-game), calling Gemini to translate to Japanese, validating the output, and creating the record in Supabase.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "I want to create a Japanese cover image for a strategy board game. The game is called 'Splendor' and it's about Renaissance gem trading. I need a visually appealing image with Japanese text overlay. What's the exact command and what should my prompt look like?",
+      "expected_output": "The exact `task image:gen:ai` command with a well-crafted Japanese prompt that describes the game theme (gem trading, Renaissance, strategy) and includes instructions for Japanese text overlay.",
+      "files": []
+    },
+    {
+      "id": 4,
+      "prompt": "I keep running into the same issue with the frontend not connecting to the API when I restart the dev servers. It happens intermittently. Should I create a GitHub issue to track this, and how should I document it for future debugging?",
+      "expected_output": "Guidance on creating a GitHub issue with proper format (reproducible steps, environment details, error logs), plus suggestions on what to include in a troubleshooting wiki or documentation.",
+      "files": []
+    }
+  ]
+}
