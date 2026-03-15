@@ -1,3 +1,8 @@
+---
+name: architect
+description: Skill Architect
+---
+
 # Skill Architect
 
 The Skill Architect is a meta-skill designed to guide the Antigravity agent in creating, modifying, and maintaining high-quality, professional-grade skills.

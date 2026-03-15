@@ -1,3 +1,8 @@
+---
+name: rules
+description: Executive Rules
+---
+
 # Executive Rules
 
 This skill acts as the "Project Constitution" or the "Executive Branch" of the Antigravity agent's decision-making process. These rules are non-negotiable and override standard heuristics.

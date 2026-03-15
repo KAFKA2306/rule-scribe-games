@@ -1,3 +1,8 @@
+---
+name: auditor
+description: Documentation Auditor
+---
+
 # Documentation Auditor
 
 DESCRIPTION
