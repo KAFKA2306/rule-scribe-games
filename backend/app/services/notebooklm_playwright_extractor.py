@@ -9,6 +9,7 @@ from playwright.async_api import async_playwright
 
 logger = logging.getLogger("agents.notebooklm_extractor")
 
+
 class NotebookLMPlaywrightExtractor:
     def __init__(self, cookies_path: str = ".cookies.json"):
         self.cookies_path = cookies_path
@@ -18,8 +19,7 @@ class NotebookLMPlaywrightExtractor:
         async with async_playwright() as p:
             async with httpx.AsyncClient() as client:
                 resp = await client.get(pdf_url)
-                if resp.status_code != 200:
-                    raise ValueError(f"Failed to download PDF: {resp.status_code}")
+                resp.raise_for_status()
 
                 with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp:
                     tmp.write(resp.content)

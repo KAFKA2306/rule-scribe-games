@@ -48,6 +48,15 @@ tasks:
     cmds:
       - task: lint:backend
       - task: lint:frontend
+      - cmd: |
+          cache_dir="/tmp/claude-statusline-$(whoami)"
+          mkdir -p "$cache_dir"
+          ruff_out=$(cd backend && uv run ruff check app api scripts tests --quiet 2>/dev/null)
+          if [ $? -eq 0 ]; then
+            echo "ok" > "$cache_dir/lint"
+          else
+            echo "$ruff_out" | grep -c "^" > "$cache_dir/lint" 2>/dev/null || echo "?" > "$cache_dir/lint"
+          fi
 
   format:
     desc: "Format and check Python code (app, api, scripts, tests)"
@@ -99,6 +108,19 @@ tasks:
   issues:critical:
     desc: 重要なIssueを表示 (開発ループの優先順位)
     cmd: gh issue list --label "critical" --limit 10 || gh issue list --limit 5
+
+  test:
+    desc: Run backend tests and cache result for status line
+    dir: backend
+    cmds:
+      - cmd: |
+          cache_dir="/tmp/claude-statusline-$(whoami)"
+          mkdir -p "$cache_dir"
+          if uv run pytest tests/ -q 2>&1; then
+            echo "pass" > "$cache_dir/test"
+          else
+            echo "fail" > "$cache_dir/test"
+          fi
 
   validate-urls:
     desc: DBの全ゲームURLを検証し、無効なものをNULL化

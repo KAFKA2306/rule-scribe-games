@@ -9,6 +9,7 @@ import { RegenerateButton } from '../components/game/RegenerateButton'
 import { TextToSpeech } from '../components/game/TextToSpeech'
 import { ExternalLinks } from '../components/game/ExternalLinks'
 import { ThinkingMeeple } from '../components/ThinkingMeeple'
+import { InfographicsGallery } from '../components/game/InfographicsGallery'
 
 export default function GamePage({ slug: propSlug, initialGame }) {
   const { slug: urlSlug } = useParams()
@@ -17,6 +18,7 @@ export default function GamePage({ slug: propSlug, initialGame }) {
   const [game, setGame] = useState(initialGame || null)
   const [loading, setLoading] = useState(!initialGame)
   const [error, setError] = useState(null)
+  const [activeTab, setActiveTab] = useState('rules')
 
   const [heroSrc, setHeroSrc] = useState(slug ? `/assets/games/${slug}.webp` : null)
   const [isEditOpen, setIsEditOpen] = useState(false)
@@ -255,8 +257,48 @@ export default function GamePage({ slug: propSlug, initialGame }) {
       )}
 
       <div className="rules-section">
-        <h3>📖 インスト用ルール</h3>
-        {renderRules()}
+        <div className="rules-tabs">
+          <button
+            className={activeTab === 'rules' ? 'active' : ''}
+            onClick={() => setActiveTab('rules')}
+          >
+            📖 ルール
+          </button>
+          {game.infographics && Object.keys(game.infographics).length > 0 && (
+            <button
+              className={activeTab === 'infographics' ? 'active' : ''}
+              onClick={() => setActiveTab('infographics')}
+            >
+              📊 図解
+            </button>
+          )}
+          <button
+            className={activeTab === 'data' ? 'active' : ''}
+            onClick={() => setActiveTab('data')}
+          >
+            📋 データ
+          </button>
+        </div>
+
+        {activeTab === 'rules' && (
+          <div>
+            <h3>📖 インスト用ルール</h3>
+            {renderRules()}
+          </div>
+        )}
+
+        {activeTab === 'infographics' &&
+          game.infographics &&
+          Object.keys(game.infographics).length > 0 && (
+            <InfographicsGallery slug={slug} infographics={game.infographics} />
+          )}
+
+        {activeTab === 'data' && (
+          <div className="data-view">
+            <h3>📋 ゲームデータ</h3>
+            <pre>{JSON.stringify(game, null, 2)}</pre>
+          </div>
+        )}
       </div>
 
       {(game.min_players || game.play_time || game.min_age || game.published_year) && (

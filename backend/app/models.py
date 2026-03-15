@@ -38,6 +38,7 @@ class GameDetail(BaseSchema):
     image_url: str | None = None
     summary: str | None = None
     structured_data: StructuredData | None = None
+    infographics: dict[str, str] | None = None
     source_url: str | None = None
     affiliate_urls: dict[str, str | None] | None = None
     view_count: int | None = 0
@@ -93,6 +94,7 @@ class GeneratedGameMetadata(BaseSchema):
     min_age: int
     rules_content: str
     structured_data: StructuredData
+    infographics: dict[str, str] | None = None
 
 
 class StrategyTier(BaseSchema):

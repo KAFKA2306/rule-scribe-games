@@ -9,6 +9,7 @@ from app.core.gemini import GeminiClient
 
 logger = logging.getLogger("agents.pipeline_orchestrator")
 
+
 class PipelineOrchestrator:
     def __init__(self):
         self.discovery = PDFDiscoveryService()

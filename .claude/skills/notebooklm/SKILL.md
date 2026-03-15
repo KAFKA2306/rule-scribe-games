@@ -1,51 +1,118 @@
 ---
 name: notebooklm
-description: ボードゲーム専門NotebookLMスキル。「ボドゲのミカタ」プロジェクト専用。ルール解析・パーソナライズドインスト・根拠付きQ&Aに加え、各ゲームのインフォグラフィックス画像を自動生成。
-tags: [boardgame, rule-ingestion, personalized-guide, evidence-qa, infographic]
-version: 2.0
+description: NotebookLM + Gemini pipeline for board game rule extraction and Japanese localization. Extract PDF rulebooks → structure as JSON → translate to Japanese → store in Supabase. Use when ingesting new games or regenerating rule content from source PDFs.
+tags: [boardgame, rule-extraction, pdf-parsing, japanese-translation, pipeline]
+version: 2.1
 ---
 
-# ボドゲのミカタ (RuleScribe Games) NotebookLM Skill v2.1
+# NotebookLM Skill: Board Game Rule Extraction Pipeline
 
-あなたは「ボドゲ의ミカタ」の専門研究・実行エージェントです。NotebookLMに蓄積されたボードゲーム資料を厳密に参照し、**日本語のみ**でコンテンツを生成・操作してください。
+Board game rule ingestion via PDF discovery, Playwright extraction, and Gemini Japanese refinement.
 
-## 主要タスク
-1. **日本語ルール・インジェクション**：PDF/動画等から構造化された日本語ルールを抽出。
-2. **インフォグラフィックス自動生成（日本語必須）**：
-   - 生成される画像内のテキストは**必ず日本語**にすること。
-   - 各ゲームで以下のバリエーションを網羅すること：
-     - `rule_summary`: 全体ルールの要約
-     - `turn_summary`: 手番の流れ
-     - `action_summary`: 可能なアクションの詳細
-     - `score_summary`: 得点計算・勝利条件
-   - スタイル例：`professional`, `instructional`, `bento_grid`, `sketch_note`, `kawaii` 等11種類。
-   - コマンド例: `nlm infographic generate <notebook_id> --style professional --prompt "日本語で手番の流れを要約"`
-3. **根拠に基づく日本語Q&A**：必ず「ソース引用」付きで回答。
-4. **パーソナライズド・日本語インスト**：対象に合わせた特化型ガイド。
-5. **自律更新**：新エラッタ検知 → 日本語でのWiki提案。
+## When to Invoke
 
-## 使用ルール（厳守）
-- **言語設定**: 出力およびインフォグラフィック内のテキストは**100%日本語**に限定する。
-- 常に `nlm` コマンドまたはMCPツールを優先使用。
-- ハルシネーションゼロ。ソース不足時は日本語でその旨を明記。
-- 出力はMarkdown形式。
-- **モデル制約**: 常に最速・最新のモデルを意識して動作。
+- **New game ingestion**: "Extract rules from official PDF and create Japanese game record"
+- **Rule regeneration**: "Regenerate rules for [game] from source PDF"
+- **Batch processing**: "Extract rules for [game list] in parallel"
+- **Translation refinement**: "Improve Japanese translation quality for existing rules"
 
-## 例の呼び出し
-- 「Wingspanのルールを抽出して、初心者向けインスト＋手番の流れ(turn_summary)のインフォグラフィックスを作って」
-- 「全ボドゲのコンポーネント一覧をkawaiiスタイルで一括生成」
+## Current Implementation
+
+### Pipeline Stages
+
+```
+1. PDF Discovery (PDFDiscoveryService)
+   Find official rulebook URL for game title
+   
+2. Content Extraction (NotebookLMPlaywrightExtractor)
+   Parse PDF → raw rule text as JSON
+   Extract: setup, gameplay, winning conditions, components
+   
+3. Japanese Refinement (Gemini 3.0 Flash)
+   Translate extracted rules to Japanese
+   Structure as game metadata record
+   
+4. Database Storage (Supabase)
+   Upsert game record with refined rules
+   Track data_version for regeneration
+```
+
+### Example Workflow
+
+```python
+# Extract rules for new game
+result = await game_service.generate_with_notebooklm("Wingspan")
+# Returns: {
+#   "title": "Wingspan",
+#   "title_ja": "ウィングスパン",
+#   "rules_summary": "...",  # Japanese
+#   "setup_summary": "...",  # Japanese
+#   "gameplay_summary": "..."  # Japanese
+# }
+```
+
+## Planned: Infographic Generation
+
+**Status**: Designed but not yet implemented.
+
+When implemented, should add stage after Japanese refinement:
+
+```
+3. Infographic Generation
+   - Turn flow diagrams (Japanese labels)
+   - Component layout visuals
+   - Win condition flowcharts
+   - Player interaction maps
+   
+   Styles: professional, instructional, sketch_note, kawaii, etc.
+   Output: Store as image_url in Supabase games.image_url
+```
+
+Would use Gemini Image Generation or Stable Diffusion with Japanese prompt engineering.
+
+## Rules
+
+- **Japanese First**: All extracted and refined text must be natural, native-level Japanese
+- **No Hallucination**: If PDF cannot be found or parsed, fail loudly (don't synthesize rules)
+- **Preserve Structure**: Maintain game metadata fields from CLAUDE.md schema
+- **One Attempt**: Extract once per game; no retry loops in application code
+
+## Out of Scope
+
+- Manual game creation (non-PDF sources)
+- Rule validation or playtesting
+- Affiliate link generation (handled by GameService)
+- English rule preservation (Japanese-only in rules fields)
 
 ## Parallel Execution
 
-Process multiple games in parallel:
+Process multiple games concurrently:
+
 ```
-/fork notebooklm: Extract rules for game A
-/fork notebooklm: Generate infographics for game B (separate instance)
-/fork notebooklm: Translate rules for game C (parallel)
+/fork notebooklm: Extract and refine rules for Wingspan
+/fork notebooklm: Extract and refine rules for Istanbul
+/fork notebooklm: Extract and refine rules for Splendor
 /tasks
 ```
 
-Use `/fork` when:
-- Processing multiple board game PDFs
-- Want concurrent rule extraction
-- Can leverage multiple NotebookLM sessions
+Use when:
+- Ingesting batch of new games
+- Regenerating rules for multiple games
+- Have multiple PDFs ready
+
+Each fork runs independently; combine results in single batch upsert.
+
+## Integration Points
+
+- **Backend entry**: `POST /api/games/generate` with `notebooklm=true`
+- **Service method**: `GameService.generate_with_notebooklm(query)`
+- **Pipeline**: `PipelineOrchestrator.process_game_rules(game_title)`
+- **Config**: PDF sources in `config/pdf_sources.yaml` (if needed)
+
+## Debugging
+
+- **Missing PDF**: Check `PDFDiscoveryService.find_pdf()` logic
+- **Parse errors**: Verify Playwright selector stability in `NotebookLMPlaywrightExtractor`
+- **Bad Japanese**: Inspect Gemini prompt in `pipeline_orchestrator.py` refinement step
+- **Database errors**: Validate game schema matches `backend/app/models.py`
+
