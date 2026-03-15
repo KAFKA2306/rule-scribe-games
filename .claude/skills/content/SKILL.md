@@ -1,5 +1,5 @@
 ---
-name: rule-scribe-content
+name: content
 description: Content curator for RuleScribe Games (SEO/Prompts/Japanese). Use whenever optimizing prompts, refining game metadata, improving Japanese writing, adjusting AI generation quality, or managing `app/prompts/`. Keywords: content, SEO, prompts, Japanese, metadata, description, Gemini, generation quality.
 ---
 

@@ -1,5 +1,5 @@
 ---
-name: rule-scribe-notebooklm
+name: notebooklm
 description: ボードゲーム専門NotebookLMスキル。「ボドゲのミカタ」プロジェクト専用。ルール解析・パーソナライズドインスト・根拠付きQ&Aに加え、各ゲームのインフォグラフィックス画像を自動生成。
 tags: [boardgame, rule-ingestion, personalized-guide, evidence-qa, infographic]
 version: 2.0

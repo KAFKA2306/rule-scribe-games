@@ -1,5 +1,5 @@
 ---
-name: rule-scribe-frontend
+name: frontend
 description: Frontend specialist for RuleScribe Games (React/Vite). Use whenever building/modifying `frontend/src/` components, fixing CSS/design issues, implementing API integration, or optimizing performance. Keywords: React, Vite, CSS, component, UI, frontend, design, responsive, performance.
 ---
 

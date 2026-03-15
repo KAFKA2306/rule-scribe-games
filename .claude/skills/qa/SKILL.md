@@ -1,5 +1,5 @@
 ---
-name: rule-scribe-qa
+name: qa
 description: QA sentinel for RuleScribe Games (verification/linting). Use whenever running linters, fixing documentation gaps, auditing code/docs consistency, checking README accuracy, or validating Zero-Fat compliance. Keywords: QA, lint, test, verify, check, document, consistency, audit.
 ---
 

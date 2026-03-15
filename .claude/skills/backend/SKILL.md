@@ -1,5 +1,5 @@
 ---
-name: rule-scribe-backend
+name: backend
 description: Backend architect for RuleScribe Games (FastAPI/Python). Use whenever modifying `app/routers/`, `app/services/`, debugging Supabase/async issues, fixing 500 errors, or managing `app/core/`. Keywords: FastAPI, Python, database, API, backend, async, Pydantic, endpoint, query.
 ---
 
