@@ -17,7 +17,7 @@ class NotebookLMPlaywrightExtractor:
 
     async def extract(self, pdf_url: str, prompt: str) -> dict[str, Any]:
         async with async_playwright() as p:
-            async with httpx.AsyncClient() as client:
+            async with httpx.AsyncClient(follow_redirects=True) as client:
                 resp = await client.get(pdf_url)
                 resp.raise_for_status()
 
