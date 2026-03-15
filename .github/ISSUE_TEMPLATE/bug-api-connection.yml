@@ -1,0 +1,123 @@
+name: API Connection Issue
+description: Report problems connecting frontend to backend API
+labels: ["bug", "api"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting this issue. Please provide as much detail as possible to help us debug and fix the problem.
+
+  - type: dropdown
+    id: frequency
+    attributes:
+      label: Issue Frequency
+      description: How often does this issue occur?
+      options:
+        - First occurrence
+        - Intermittent (sometimes happens)
+        - Consistently reproducible
+        - Only on specific conditions
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Describe what happens when the connection fails
+      placeholder: |
+        The frontend cannot reach the API after running `task dev`. Sometimes a page refresh fixes it, other times I need to restart both servers.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      description: Exact steps to reproduce the issue
+      placeholder: |
+        1. Run `task setup`
+        2. Run `task dev`
+        3. Navigate to http://localhost:5173
+        4. Click on a game to load
+        5. Observe: Network request fails with connection refused
+    validations:
+      required: true
+
+  - type: textarea
+    id: network-log
+    attributes:
+      label: Browser Network Tab Error
+      description: Open DevTools → Network tab. Reproduce the issue. Paste relevant request/response details.
+      placeholder: |
+        Request URL: http://localhost:5173/api/games
+        Method: GET
+        Status: ERR_CONNECTION_REFUSED
+        Response Headers: (empty)
+        Error Message: (from console)
+    validations:
+      required: true
+
+  - type: textarea
+    id: server-logs
+    attributes:
+      label: Server Logs
+      description: Paste relevant logs from backend and frontend terminals
+      placeholder: |
+        Backend (uvicorn):
+        INFO:     Uvicorn running on http://0.0.0.0:8000
+        
+        Frontend (Vite):
+        VITE v5.x.x  ready in xxx ms
+        ➜  Local:   http://localhost:5173/
+    validations:
+      required: false
+
+  - type: input
+    id: node-version
+    attributes:
+      label: Node Version
+      description: Run `node --version` in terminal
+      placeholder: "v18.17.0"
+
+  - type: input
+    id: python-version
+    attributes:
+      label: Python Version
+      description: Run `python --version` in terminal
+      placeholder: "Python 3.11.x"
+
+  - type: textarea
+    id: env-info
+    attributes:
+      label: Environment Information
+      description: Include your OS and browser details
+      placeholder: |
+        OS: Linux WSL2 / macOS / Windows
+        Browser: Chrome / Firefox / Safari
+        Hardware: (e.g., M1 Mac, 16GB RAM)
+      validations:
+        required: true
+
+  - type: checkboxes
+    id: troubleshooting
+    attributes:
+      label: Troubleshooting Attempts
+      description: Which of these have you already tried?
+      options:
+        - label: Ran `task kill` and restarted `task dev`
+        - label: Reloaded the browser
+        - label: Checked if port 8000 is already in use (e.g., `lsof -i :8000`)
+        - label: Ran `task clean` and then `task setup` again
+        - label: Checked /etc/hosts for localhost mapping
+        - label: Ran the diagnostic script (`bash scripts/diagnose_dev_connection.sh`)
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Context
+      description: Any other information that might help us debug this
+      placeholder: "e.g., This only happens when I restart both servers within 30 seconds. On my first attempt after setup, it works fine."
+      required: false
