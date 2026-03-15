@@ -1,25 +1,19 @@
 ---
 name: auditor
-description: Documentation Auditor
+description: Documentation auditor and consistency checker. Use whenever auditing docs vs code, checking README accuracy, finding documentation gaps, validating completeness, or creating consistency reports. Keywords: audit, documentation, consistency, verify, check, gap.
 ---
 
 # Documentation Auditor
 
-DESCRIPTION
+Systematically audit documentation against actual codebase to identify gaps and inconsistencies.
 
 ## Goal
-A brief description of what this skill achieves and the primary value it provides.
 
-## Core Instructions
-- **Instruction 1**: Specific, actionable detail.
-- **Instruction 2**: Another critical rule.
+Ensure README/docs match reality. Flag discrepancies with evidence.
 
-## Workflow
-1. **Step 1**: Initial action.
-2. **Step 2**: Progression.
-3. **Step 3**: Verification.
+## Rules
 
-## Best Practices
-- Focus on single responsibility.
-- Use modular scripts where possible.
-- Always perform a verification walkthrough.
+- Always verify claims against actual code
+- Provide file:line citations for all findings
+- Focus on gaps and inaccuracies
+- Generate evidence-based reports
