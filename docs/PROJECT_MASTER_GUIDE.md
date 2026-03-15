@@ -46,7 +46,7 @@
 *   **Endpoint**: `/api/search`, `/api/games`
 *   **Logic**: Supabase 検索 OR (Gemini 1-shot 生成 -> Upsert)
 *   **GeminiClient**: 1-shot JSON 専用。Google Search Grounding有効。プロンプトは `prompts.yaml` で一元管理。
-*   **DataEnhancer**: `GameService`内に統合（Link Resolver Agent）。
+*   **DataEnhancer**: `GameService`内に統合（Link Resolution Logic）。
 *   **Frontend**: `/api/*` のみを叩く。
 *   **特徴**: 壊れない、明瞭、保守しやすい。
 *   **Logging**: `app/core/logger.py` による中央集権ログ管理。
@@ -79,7 +79,7 @@ graph TD
 
     subgraph External ["External Services"]
         Supabase[("Supabase PostgreSQL")]
-        Gemini["Google Gemini 2.5 Flash"]
+        Gemini["Google Gemini 3.0 Flash"]
     end
 
     Browser --> |HTTPS| CDN
@@ -87,9 +87,7 @@ graph TD
     CDN --> |/api/*| BE
 
     BE --> |Read/Write| Supabase
-    BE --> |Generate + Grounding| Gemini
-    BE -.-> |Background| LinkResolver["Link Resolver Agent"]
-    LinkResolver --> |Verify| Internet["World Wide Web"]
+    BE --> |Generate + Grounding + Links| Gemini
     Gemini -.-> |Search| Internet
 ```
 
@@ -180,11 +178,8 @@ sequenceDiagram
         API->>AI: Generate Game Info (1-shot + Grounding)
         AI-->>API: Structured JSON
         
-        par Async Save
-            API->>DB: Upsert Game Data
-        and Return Response
-            API-->>User: Return JSON
-        end
+        API->>DB: Upsert Game Data
+        API-->>User: Return JSON
     end
 ```
 
@@ -260,7 +255,7 @@ create index if not exists idx_games_title on games(title);
 | 変数名 | デフォルト値 | 説明 |
 | :--- | :--- | :--- |
 | `GEMINI_API_KEY` | `None` (Required) | Google AI Studio APIキー。 |
-| `GEMINI_MODEL` | `models/gemini-3-flash-preview` | 使用するAIモデル名。 |
+| `GEMINI_MODEL` | `gemini-3.0-flash` | 使用するAIモデル名。 |
 | `SUPABASE_URL` | `None` (Required) | Supabase プロジェクトURL。 |
 | `SUPABASE_SERVICE_ROLE_KEY` | `None` (Recommended for Backend) | RLSをバイパスする管理者キー。バックエンド操作に推奨。 |
 | `SUPABASE_KEY` / `VITE_...` | `None` (Fallback) | `SERVICE_ROLE_KEY` がない場合、`SUPABASE_KEY` -> `NEXT_PUBLIC_...` -> `VITE_SUPABASE_ANON_KEY` の順でフォールバックします。 |
@@ -283,7 +278,7 @@ create index if not exists idx_games_title on games(title);
 *   **Regeneration**: 既存データをコンテキストとして受け取り、空白を埋め、誤りを訂正します。
 
 ### 6.2 リンク解決 (`link_resolve`)
-`Link Resolver Agent` がバックグラウンドで実行し、公式URL、Amazon URL、画像URLの候補を探して検証します。
+`Link Resolution Logic` が生成プロセスの一部として実行され、Amazon URLなどを生成します。
 
 ---
 
@@ -318,7 +313,7 @@ create index if not exists idx_games_title on games(title);
 
 ### 7.3 GET `/api/games/{slug}`
 特定のゲーム詳細を取得。Slug または ID でアクセス可能。
-**バックグラウンド処理**: `Link Resolver` が起動し、リンク情報の検証と更新を非同期で試みます。
+**同期処理**: リンク情報の生成も同時に行われます。
 
 ---
 
@@ -426,9 +421,9 @@ SupabaseのIDは **UUID (str)** です。`int` として扱わないこと。
 
 ## 11 検証済みリンク (Verified Links)
 
-*   **Logic**: `Link Resolver Agent` (`resolve_external_links`) がLLMを使って候補URLを生成し、Pythonコード (`httpx`) でステータスコード 200 を確認してからDBに保存します。
+*   **Logic**: 生成時に同期的にAmazon URLを構築します。
 *   **優先順位**: 常にこの検証済み `amazon_url` が優先して使用されます。
-*   **自動化**: ゲーム生成時および更新時にバックグラウンドで自動実行されます。
+*   **自動化**: ゲーム生成時および更新時に自動実行されます。
 
 
 
@@ -554,7 +549,7 @@ SupabaseのIDは **UUID (str)** です。`int` として扱わないこと。
 ## 17. サービスマネジメント (Service Management)
 
 ### 17.1 API Rate Limits (Gemini)
-*   **現状**: Gemini 2.5 Flash Free Tier を使用。
+*   **現状**: Gemini 3.0 Flash Free Tier を使用。
 *   **制限**: 1分あたり15リクエスト (RPM)、1日あたり1,500リクエスト (RPD)。
 *   **対策**:
     *   **Caching**: `Cache-Control` ヘッダーにより、CDNとブラウザでキャッシュを最大化。
