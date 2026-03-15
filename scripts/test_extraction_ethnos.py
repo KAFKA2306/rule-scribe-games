@@ -1,24 +1,25 @@
 import asyncio
 import logging
-import sys
 import os
+import sys
 
 # Change to backend directory to ensure relative paths work
 os.chdir(os.path.join(os.getcwd(), "backend"))
 sys.path.append(os.getcwd())
 
-from app.services.pipeline_orchestrator import PipelineOrchestrator
 from app.core.logger import setup_logging
+from app.services.pipeline_orchestrator import PipelineOrchestrator
+
 
 async def test_ethnos_extraction():
     setup_logging()
     logger = logging.getLogger("test_ethnos")
-    
+
     orchestrator = PipelineOrchestrator()
     game_title = "Ethnos"
-    
+
     print(f"🚀 Starting extraction test for: {game_title}")
-    
+
     try:
         result = await orchestrator.process_game_rules(game_title)
         print("\n✅ Extraction Successful!")

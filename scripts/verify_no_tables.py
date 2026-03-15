@@ -3,11 +3,8 @@ import os
 import sys
 
 sys.path.append(os.getcwd())
-try:
-    from app.core import supabase
-except ImportError:
-    print("Error importing supabase client.")
-    sys.exit(1)
+from app.core import supabase
+
 target_slugs = [
     "quick-shot",
     "fixer",
