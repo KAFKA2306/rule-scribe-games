@@ -2,8 +2,7 @@ import { supabase } from '../lib/supabase'
 
 export default function LoginButton({ session }) {
   const handleLogout = async () => {
-    const { error } = await supabase.auth.signOut()
-    if (error) console.log('Error logging out:', error.message)
+    await supabase.auth.signOut()
   }
 
   if (session) {

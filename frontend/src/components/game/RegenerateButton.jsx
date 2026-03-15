@@ -1,20 +1,22 @@
 import { useState } from 'react'
+import { api } from '../../lib/api'
 
 export const RegenerateButton = ({ title, onRegenerate }) => {
   const [regenerating, setRegenerating] = useState(false)
 
   const handleRegenerate = async () => {
     setRegenerating(true)
-    const res = await fetch('/api/search', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query: title, generate: true }),
-    })
-    const data = await res.json()
-    if (onRegenerate && Array.isArray(data) && data[0]) {
-      onRegenerate(data[0])
+    try {
+      const data = await api.post('/api/search', { query: title, generate: true })
+      if (onRegenerate && Array.isArray(data) && data[0]) {
+        onRegenerate(data[0])
+      }
+    } catch (err) {
+      console.error('Regeneration failed:', err)
+      alert('再生成に失敗しました')
+    } finally {
+      setRegenerating(false)
     }
-    setRegenerating(false)
   }
 
   return (
