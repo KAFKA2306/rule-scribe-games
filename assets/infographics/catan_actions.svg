@@ -1,0 +1,33 @@
+<svg width="800" height="600" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="800" height="600" fill="#90EE90"/>
+  
+  <!-- Gradient overlay -->
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:rgba(0,0,0,0);stop-opacity:1" />
+      <stop offset="100%" style="stop-color:rgba(0,0,0,0.2);stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect width="800" height="600" fill="url(#grad)"/>
+  
+  <!-- Top border -->
+  <line x1="50" y1="80" x2="750" y2="80" stroke="white" stroke-width="3"/>
+  
+  <!-- Bottom border -->
+  <line x1="50" y1="520" x2="750" y2="520" stroke="white" stroke-width="3"/>
+  
+  <!-- Title -->
+  <text x="400" y="220" font-size="56" font-weight="bold" fill="white" text-anchor="middle" font-family="Arial, sans-serif">
+    🎲 ターンのアクション
+  </text>
+  
+  <!-- Subtitle -->
+  <text x="400" y="350" font-size="32" fill="#dcdcdc" text-anchor="middle" font-family="Arial, sans-serif">
+    サイコロ振る → リソース受け取る → 建設または交易
+  </text>
+  
+  <!-- Decorative circles -->
+  <circle cx="100" cy="100" r="20" fill="white" opacity="0.3"/>
+  <circle cx="700" cy="500" r="20" fill="white" opacity="0.3"/>
+</svg>

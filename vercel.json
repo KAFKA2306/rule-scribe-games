@@ -11,15 +11,20 @@
       "destination": "/api/index.py"
     },
     {
-      "source": "/games/:slug",
-      "destination": "/api/index.py"
-    },
-    {
-      "source": "/((?!assets|api).*)",
+      "source": "/((?!assets|api|output_slides).*)",
       "destination": "/index.html"
     }
   ],
   "headers": [
+    {
+      "source": "/output_slides/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
     {
       "source": "/assets/(.*)",
       "headers": [

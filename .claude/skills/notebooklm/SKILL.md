@@ -31,11 +31,11 @@ Board game rule ingestion via PDF → structured JSON → native Japanese refine
    Maintain structure, add confidence scores per section
    Output: full game metadata record (matches CLAUDE.md schema)
 
-4. **Infographic Generation (NEW: Gemini Nano Banana Pro / Nano Banana 2)**
-   Generate multiple instructional diagrams automatically
-   Styles supported: professional_clean, instructional_diagram, sketch_note, minimal_flat, kawaii_japanese, boardgame_icon_style
-   All text rendered in natural Japanese (advanced text rendering)
-   Multi-panel or single focused diagrams
+4. **Infographic Generation & Slide Extraction (Native Japanese)**
+   - **Slide Generation**: Always use the `--language ja` flag with `nlm slides create`.
+   - **Custom Prompts**: Provide instructional prompts in Japanese to ensure content is localized.
+   - **Slide Extraction**: Use `pdftocairo` to convert NotebookLM slide PDF pages to high-resolution PNGs for the `InfographicsGallery`.
+   - Store infographics as: `image_url` (PNG) with keys like `slide_1`, `slide_2`, etc.
 
 5. **Database Storage (Supabase)**
    Upsert game record with rules_ja, metadata, confidence
@@ -58,20 +58,16 @@ Board game rule ingestion via PDF → structured JSON → native Japanese refine
 **Prompt Engineering Best Practice (Nano Banana用)**:
 各インフォグラフィック生成時に以下のプロンプトテンプレートを使う：
 
+```bash
+# Slide creation with Japanese forced
+nlm slides create <nb-id> --language ja --format detailed_deck --confirm
+```
+
+**Custom Instruction Prompt**:
 ```text
-Create a clear, professional instructional infographic for the board game "[Game Title]" (Japanese: "[Title_ja]").
-
-Visualize: [specific section, e.g. "turn structure and player actions"]
-Use this structured data: [paste the refined JSON section]
-
-Requirements:
-- All text must be in natural, easy-to-read Japanese (large, legible font)
-- Professional board game rulebook style: clean lines, icons, color coding (use consistent palette)
-- Include step numbers, arrows, and short explanatory captions
-- Add small English subtitle only if necessary for international clarity
-- Style: [professional_clean / kawaii_japanese / minimal_flat]
-- High resolution, perfect text rendering, no distortion
-- Make it educational and glanceable – users should understand the mechanic from this image alone
+このボードゲーム「[Title_ja]」のルールを、日本のプレイヤー向けに分かりやすく解説したスライドを作成してください。
+- すべてのテキストは自然な日本語で記述すること。
+- 図解や箇条書きを多用し、インスト（説明）でそのまま使える構成にすること。
 ```
 
 **Output Handling**:

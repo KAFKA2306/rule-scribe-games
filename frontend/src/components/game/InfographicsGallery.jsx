@@ -11,7 +11,22 @@ export function InfographicsGallery({ infographics }) {
     { key: 'components', title: 'コンポーネント', icon: '🧩' },
   ]
 
-  const available = infographicTypes.filter((inf) => infographics[inf.key])
+  // Add any 'slide_N' keys found in infographics
+  const slideKeys = Object.keys(infographics)
+    .filter((key) => key.startsWith('slide_'))
+    .sort((a, b) => {
+      const numA = parseInt(a.split('_')[1], 10)
+      const numB = parseInt(b.split('_')[1], 10)
+      return numA - numB
+    })
+    .map((key) => ({
+      key,
+      title: `スライド ${key.split('_')[1]}`,
+      icon: '📊',
+    }))
+
+  const allTypes = [...infographicTypes, ...slideKeys]
+  const available = allTypes.filter((inf) => infographics[inf.key])
 
   if (!available.length) {
     return <p className="no-infographics">図解はまだ利用できません</p>

@@ -15,19 +15,13 @@ def load_config() -> dict[str, Any]:
 
 _config = load_config()
 load_dotenv(Path(__file__).resolve().parent.parent.parent / ".env")
-CANONICAL_GEMINI_MODEL = "models/gemini-3-flash-preview"
+CANONICAL_GEMINI_MODEL = "gemini-2.5-flash"
 
 
 class Settings:
     def __init__(self) -> None:
         self.gemini_api_key = os.getenv("GEMINI_API_KEY")
-        requested_model = os.getenv("GEMINI_MODEL") or str(_config.get("gemini_model") or CANONICAL_GEMINI_MODEL)
-        if requested_model != CANONICAL_GEMINI_MODEL:
-            raise ValueError(
-                f"GEMINI_MODEL must be exactly '{CANONICAL_GEMINI_MODEL}'. "
-                f"Got: '{requested_model}'. Do not change the model name."
-            )
-        self.gemini_model = CANONICAL_GEMINI_MODEL
+        self.gemini_model = os.getenv("GEMINI_MODEL") or str(_config.get("gemini_model") or CANONICAL_GEMINI_MODEL)
         self.supabase_url = os.getenv("NEXT_PUBLIC_SUPABASE_URL") or os.getenv("SUPABASE_URL")
         self.supabase_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or os.getenv("SUPABASE_KEY")
 

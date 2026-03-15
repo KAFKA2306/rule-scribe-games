@@ -25,6 +25,8 @@ export default function GamePage({ slug: propSlug, initialGame }) {
 
   const isStandalone = !propSlug
 
+  const BASE_URL = 'https://rule-scribe-games.vercel.app'
+
   useEffect(() => {
     if (initialGame) return
     const fetchGame = async () => {
@@ -43,8 +45,6 @@ export default function GamePage({ slug: propSlug, initialGame }) {
     }
     fetchGame()
   }, [slug, initialGame])
-
-  const BASE_URL = 'https://bodoge-no-mikata.vercel.app'
 
   const handleSave = async (updatedData) => {
     try {

@@ -9,10 +9,12 @@ Deploy infographic images (turn flow, setup, actions, winning conditions, compon
 
 ## Architecture Overview
 
-**Frontend**: InfographicsGallery carousel component (React)
-**API**: PATCH `/api/games/{slug}` accepts infographics JSON
-**Database**: PostgreSQL JSONB column with GIN index
-**Data Format**: `{turn_flow: url, setup: url, actions: url, winning: url, components: url}`
+**Frontend**: InfographicsGallery carousel component (React) — Supports standard keys AND dynamic `slide_N` keys.
+**API**: PATCH `/api/games/{slug}` accepts infographics JSON.
+**Database**: PostgreSQL JSONB column with GIN index.
+**Data Format**: 
+- Standard: `{turn_flow: url, setup: url, actions: url, winning: url, components: url}`
+- Slide-based: `{slide_1: url, slide_2: url, ...}` (Preferred for NotebookLM pipelines)
 
 ## Deployment Checklist
 
@@ -70,7 +72,15 @@ curl -X PATCH http://localhost:8000/api/games/splendor \
   }'
 ```
 
-**Method 2: Frontend EditGameModal**:
+**Method 2: Slide Extraction (Automated High Fidelity)**:
+Use `scripts/deploy_slides_as_infographics.py` to convert NotebookLM slide decks to infographics.
+- **Tools**: `pdftocairo` (provided by `poppler-utils`)
+- **Workflow**:
+  1. `nlm download slide-deck <nb-id> --id <art-id> --output slides.pdf`
+  2. `uv run scripts/deploy_slides_as_infographics.py --slug <slug> --pdf slides.pdf`
+- **Result**: Automatically populates Supabase with relative URLs (e.g., `/output_slides/game_slide-01.png`) for maximum portability across local/dev/prod.
+
+**Method 3: Frontend EditGameModal**:
 - Click ✏️ Edit on game detail page
 - Add image URLs to each infographics field
 - Click Save
