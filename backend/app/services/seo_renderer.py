@@ -1,7 +1,10 @@
 import json
+import logging
 from pathlib import Path
 
 from app.core.supabase import _TABLE, _client
+
+logger = logging.getLogger(__name__)
 
 
 def generate_seo_html(slug: str) -> str:
@@ -53,11 +56,18 @@ def generate_seo_html(slug: str) -> str:
     ]
     html_content = ""
     for path in possible_paths:
-        if path.exists():
-            with path.open(encoding="utf-8") as f:
-                html_content = f.read()
-            break
-    assert html_content, f"index.html template not found in {possible_paths}"
+        try:
+            if path.exists():
+                with path.open(encoding="utf-8") as f:
+                    html_content = f.read()
+                break
+        except Exception as e:
+            logger.warning(f"Error reading path {path}: {e}")
+
+    if not html_content:
+        logger.error(f"index.html template not found in {possible_paths}")
+        # Return a skeleton if template missing to avoid crashing the function
+        html_content = '<html><head><title>RuleScribe</title></head><body><div id="root"></div></body></html>'
     html_content = html_content.replace(
         "ボドゲのミカタ | AIでルールを瞬時に要約。インスト時間を短縮",
         page_title,

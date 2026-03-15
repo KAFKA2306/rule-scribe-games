@@ -7,10 +7,18 @@ from dotenv import load_dotenv
 
 
 def load_config() -> dict[str, Any]:
-    config_path = Path(__file__).resolve().parent.parent.parent / "config.yaml"
-    with open(config_path) as f:
-        data = yaml.safe_load(f)
-        return data if isinstance(data, dict) else {}
+    # Try multiple possible locations for config.yaml
+    base_dir = Path(__file__).resolve().parent.parent.parent
+    possible_paths = [
+        base_dir / "config.yaml",  # backend/config.yaml
+        base_dir.parent / "config.yaml",  # host project root/config.yaml
+    ]
+    for config_path in possible_paths:
+        if config_path.exists():
+            with open(config_path) as f:
+                data = yaml.safe_load(f)
+                return data if isinstance(data, dict) else {}
+    return {}
 
 
 _config = load_config()
