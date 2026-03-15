@@ -1,7 +1,7 @@
 import logging
 import time
 import uuid
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from typing import Any
 
 from app.core import supabase
@@ -115,7 +115,7 @@ async def generate_metadata(query: str, context: str | None = None) -> dict[str,
 
     data = validated_data.model_dump()
     data = {k: v for k, v in data.items() if k in _ALLOWED_FIELDS}
-    data["updated_at"] = datetime.now(UTC).isoformat()
+    data["updated_at"] = datetime.now(timezone.utc).isoformat()
     data["amazon_url"] = amazon_search_url(str(data.get("title_ja") or query))
 
     total_duration = (time.time() - start_time) * 1000
@@ -177,7 +177,7 @@ class GameService:
             raise ValueError(f"Game not found for slug: {slug}")
 
         merged = {**game, **updates}
-        merged["updated_at"] = datetime.now(UTC).isoformat()
+        merged["updated_at"] = datetime.now(timezone.utc).isoformat()
         out = await supabase.upsert(merged)
         if not out:
             raise RuntimeError(f"Update failed for game: {slug}")

@@ -95,6 +95,7 @@ class GameUpdate(BaseSchema):
     bgg_url: str | None = None
     structured_data: StructuredData | None = None
     rules_content: str | None = None
+    infographics: dict[str, str] | None = None
     data_version: int | None = None
     last_regenerated_at: datetime | None = None
 
