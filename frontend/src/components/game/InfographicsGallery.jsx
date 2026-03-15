@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-export function InfographicsGallery({ slug, infographics }) {
+export function InfographicsGallery({ infographics }) {
   const [currentIndex, setCurrentIndex] = useState(0)
 
   const infographicTypes = [
