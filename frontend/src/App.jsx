@@ -61,7 +61,6 @@ function App() {
         } else {
           // Initial filter will happen in useEffect
         }
-
       } catch (err) {
         console.error('Failed to load games:', err)
         setError('ゲームの読み込みに失敗しました。しばらく経ってから再読み込みしてください。')
@@ -104,9 +103,6 @@ function App() {
       return
     }
 
-    console.log('Filtering games with query:', q)
-    console.log('Sample game:', initialGames[0])
-
     const filtered = initialGames.filter((game) => {
       const title = (game.title || '').normalize('NFKC').toLowerCase()
       const titleJa = (game.title_ja || '').normalize('NFKC').toLowerCase()
@@ -114,14 +110,6 @@ function App() {
       const summary = (game.summary || '').normalize('NFKC').toLowerCase()
       const description = (game.description || '').normalize('NFKC').toLowerCase()
       const rules = (game.rules_content || '').normalize('NFKC').toLowerCase()
-
-      if (game.slug === 'splendor') {
-        console.log('Checking Splendor:', {
-          title, titleJa, titleEn, summary, description, rules,
-          q,
-          match: title.includes(q) || titleJa.includes(q) || titleEn.includes(q)
-        })
-      }
 
       return (
         title.includes(q) ||
@@ -137,7 +125,6 @@ function App() {
     // Optional: Select first result if current selection is not in list?
     // For now, let's keep selection logic simple.
   }, [debouncedQuery, initialGames])
-
 
   const handleSearch = async (e) => {
     e.preventDefault()
@@ -157,10 +144,10 @@ function App() {
 
     // Check if we have results locally. If we do, usually we don't auto-generate.
     // But the button says "Generate".
-    // Let's assume the button action is specifically to TRY generating if not found, 
+    // Let's assume the button action is specifically to TRY generating if not found,
     // or if the user explicitly wants to find something new.
 
-    // Changing behavior: "Search" happens automatically. 
+    // Changing behavior: "Search" happens automatically.
     // "Generate" button should specifically trigger the API generation.
 
     setLoading(true)
@@ -177,7 +164,7 @@ function App() {
       if (list.length > 0) {
         const newGame = list[0]
         // Check if we already have it
-        const exists = initialGames.find(g => g.slug === newGame.slug)
+        const exists = initialGames.find((g) => g.slug === newGame.slug)
         if (!exists) {
           const newTotal = [newGame, ...initialGames]
           setInitialGames(newTotal)
@@ -188,7 +175,7 @@ function App() {
       }
     } catch (e) {
       console.error(e)
-      setError("生成に失敗しました。")
+      setError('生成に失敗しました。')
     } finally {
       setLoading(false)
       setGenerating(false)
@@ -225,9 +212,18 @@ function App() {
         </nav>
       </header>
 
-      <div style={{ textAlign: 'center', margin: '24px 16px', color: '#a0aec0', fontSize: '0.95rem', lineHeight: '1.6' }}>
+      <div
+        style={{
+          textAlign: 'center',
+          margin: '24px 16px',
+          color: '#a0aec0',
+          fontSize: '0.95rem',
+          lineHeight: '1.6',
+        }}
+      >
         <p style={{ margin: 0 }}>
-          「説明書を読むのが面倒」「インスト準備に時間がかかる」そんな悩みをAIが解決。<br />
+          「説明書を読むのが面倒」「インスト準備に時間がかかる」そんな悩みをAIが解決。
+          <br />
           ボドゲのミカタは、世界中のボードゲームのルールを瞬時に要約・検索できるツールです。
         </p>
       </div>
@@ -313,15 +309,17 @@ function App() {
             })}
 
             {games.length === 0 && !loading && <EmptyMeeple query={query} />}
-
-
           </div>
         </aside>
 
         <section className="game-detail-pane">
           {selectedSlug ? (
             <Suspense fallback={<div className="loading-pane">Loading game...</div>}>
-              <GamePage key={selectedSlug} slug={selectedSlug} initialGame={games.find(g => g.slug === selectedSlug)} />
+              <GamePage
+                key={selectedSlug}
+                slug={selectedSlug}
+                initialGame={games.find((g) => g.slug === selectedSlug)}
+              />
             </Suspense>
           ) : (
             <div className="empty-selection">
