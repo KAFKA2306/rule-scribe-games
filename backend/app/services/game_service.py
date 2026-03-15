@@ -9,13 +9,12 @@ from app.core.gemini import GeminiClient
 from app.core.llm_manager import LLMKeyRotator
 from app.models import GeneratedGameMetadata
 from app.prompts.prompts import PROMPTS
-from app.services.pipeline_orchestrator import PipelineOrchestrator
 from app.utils.affiliate import amazon_search_url
 
 logger = logging.getLogger("agents.game_service")
 _gemini = GeminiClient()
 _key_rotator = LLMKeyRotator("GEMINI_API_KEY")
-_pipeline = PipelineOrchestrator()
+_pipeline = None  # Lazy load in method
 _REQUIRED = ["title", "summary", "rules_content"]
 _ALLOWED_FIELDS = {
     "id",
@@ -184,6 +183,10 @@ class GameService:
         return out[0]
 
     async def generate_with_notebooklm(self, query: str, generate_infographics: bool = True) -> dict[str, Any]:
+        global _pipeline
+        if _pipeline is None:
+            from app.services.pipeline_orchestrator import PipelineOrchestrator
+            _pipeline = PipelineOrchestrator()
         result = await _pipeline.process_game_rules(query, generate_infographics=generate_infographics)
         if not result:
             raise RuntimeError(f"NotebookLM generation failed for: {query}")

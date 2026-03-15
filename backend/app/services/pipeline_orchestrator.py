@@ -4,7 +4,6 @@ from typing import Any
 
 from app.core.gemini import GeminiClient
 from app.services.infographic_service import InfographicService
-from app.services.notebooklm_playwright_extractor import NotebookLMPlaywrightExtractor
 from app.services.pdf_discovery import PDFDiscoveryService
 
 logger = logging.getLogger("agents.pipeline_orchestrator")
@@ -13,6 +12,7 @@ logger = logging.getLogger("agents.pipeline_orchestrator")
 class PipelineOrchestrator:
     def __init__(self):
         self.discovery = PDFDiscoveryService()
+        from app.services.notebooklm_playwright_extractor import NotebookLMPlaywrightExtractor
         self.extractor = NotebookLMPlaywrightExtractor()
         self.gemini = GeminiClient()
         self.infographics = InfographicService()
