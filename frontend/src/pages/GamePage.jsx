@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
 import ReactMarkdown from 'react-markdown'
+import { api } from '../lib/api'
 import EditGameModal from '../components/EditGameModal'
 import { ShareButton, TwitterShareButton } from '../components/game/ShareButtons'
 import { RegenerateButton } from '../components/game/RegenerateButton'
@@ -28,9 +29,7 @@ export default function GamePage({ slug: propSlug, initialGame }) {
       setLoading(true)
       setError(null)
       try {
-        const res = await fetch(`/api/games/${slug}`)
-        if (!res.ok) throw new Error('Game not found')
-        const data = await res.json()
+        const data = await api.get(`/api/games/${slug}`)
         const gameData = Array.isArray(data) ? data[0] : data.game || data
         setGame(gameData)
       } catch (err) {
@@ -46,14 +45,13 @@ export default function GamePage({ slug: propSlug, initialGame }) {
   const BASE_URL = 'https://bodoge-no-mikata.vercel.app'
 
   const handleSave = async (updatedData) => {
-    const res = await fetch(`/api/games/${slug}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(updatedData),
-    })
-
-    const data = await res.json()
-    setGame(data)
+    try {
+      const data = await api.patch(`/api/games/${slug}`, updatedData)
+      setGame(data)
+    } catch (err) {
+      console.error('Update failed:', err)
+      alert('更新に失敗しました')
+    }
   }
 
   if (loading)
@@ -88,12 +86,14 @@ export default function GamePage({ slug: propSlug, initialGame }) {
   const pageTitle = `「${title}」のルール・インストをAI要約 | 遊び方・3行解説`
   const baseDescription = `「${title}」のルールをAIが瞬時に要約。インスト準備や遊び方の確認に。「${title}」のセットアップ、勝利条件、流れを3行で解説。`
   const description =
-    (game.summary || game.description)
+    game.summary || game.description
       ? `${baseDescription} ${game.summary || game.description}`
       : baseDescription
   const gameUrl = `${BASE_URL}/games/${slug}`
   const imageUrl = game.image_url
-    ? (game.image_url.startsWith('http') ? game.image_url : `${BASE_URL}${game.image_url}`)
+    ? game.image_url.startsWith('http')
+      ? game.image_url
+      : `${BASE_URL}${game.image_url}`
     : `${BASE_URL}/assets/games/${slug}.webp`
 
   const renderRules = () => {
@@ -158,22 +158,22 @@ export default function GamePage({ slug: propSlug, initialGame }) {
             numberOfPlayers:
               game.min_players || game.max_players
                 ? {
-                  '@type': 'QuantitativeValue',
-                  minValue: game.min_players,
-                  maxValue: game.max_players || game.min_players,
-                }
+                    '@type': 'QuantitativeValue',
+                    minValue: game.min_players,
+                    maxValue: game.max_players || game.min_players,
+                  }
                 : undefined,
             audience: game.min_age
               ? {
-                '@type': 'PeopleAudience',
-                suggestedMinAge: game.min_age,
-              }
+                  '@type': 'PeopleAudience',
+                  suggestedMinAge: game.min_age,
+                }
               : undefined,
             timeRequired: game.play_time
               ? {
-                '@type': 'Duration',
-                value: `PT${game.play_time}M`,
-              }
+                  '@type': 'Duration',
+                  value: `PT${game.play_time}M`,
+                }
               : undefined,
             datePublished: game.published_year ? `${game.published_year}` : undefined,
           })}
