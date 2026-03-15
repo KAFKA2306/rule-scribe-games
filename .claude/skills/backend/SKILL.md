@@ -46,3 +46,18 @@ Magic numbers → `app/core/settings.py` or `.env`. Prompts → `app/prompts/pro
 - Frontend files (`.jsx`, `.css`)
 - Content/game descriptions
 - Supabase schema changes without consulting CLAUDE.md
+
+## Parallel Execution
+
+This skill can be parallelized with **frontend** and **content** for independent layers:
+```
+/fork backend: Implement API endpoints
+/fork frontend: Build UI components (depends on API)
+/fork content: Refine prompts (depends on specs)
+/tasks  # Monitor all three
+```
+
+Use `/fork` when:
+- Multiple routes/services need implementation simultaneously
+- No cross-dependency blocking required
+- Want to accelerate development

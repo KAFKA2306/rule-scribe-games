@@ -17,3 +17,18 @@ Define project-wide principles and enforce consistency.
 - Explain rationale, not just directives
 - Document architectural constraints
 - Keep principles accessible
+
+## Parallel Execution
+
+Rules constrain all parallel agents equally. Reference in forked sessions:
+```
+/fork backend: Work within rules constraints
+/fork frontend: Work within rules constraints
+/fork qa: Verify rules compliance (all agents)
+/tasks
+```
+
+Use `/fork` when:
+- Multiple agents need same rule constraints
+- Rules act as guardrails for parallel work
+- All agents must validate against constitution

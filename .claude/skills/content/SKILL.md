@@ -49,3 +49,18 @@ Do not invent game rules or mechanics. All metadata must be verifiable from offi
 - **rule_scribe_backend**: For API/database questions
 - **rule_scribe_frontend**: For UI/UX questions
 - **rule_scribe_notebooklm**: For PDF rule extraction
+
+## Parallel Execution
+
+This skill can run in parallel with **backend** and **frontend**:
+```
+/fork content: Optimize prompts and metadata
+/fork backend: Implement API (run in parallel)
+/fork frontend: Build UI (run in parallel)
+/tasks  # Track all
+```
+
+Use `/fork` when:
+- Multiple game metadata entries need processing
+- Prompt refinement doesn't block API/UI work
+- Want to parallelize content curation

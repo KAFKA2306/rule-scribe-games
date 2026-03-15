@@ -18,3 +18,17 @@ Design skills that trigger reliably and guide LLMs through structured workflows.
 - Use "Why" explanations, not imperatives
 - One responsibility per skill
 - Proper frontmatter: name, description
+
+## Parallel Execution
+
+Architect multiple skills in parallel:
+```
+/fork architect: Design skill A
+/fork architect: Design skill B (different instance)
+/tasks  # Manage both designs
+```
+
+Use `/fork` when:
+- Designing independent skills simultaneously
+- Can share findings via /tasks updates
+- Want concurrent architecture work

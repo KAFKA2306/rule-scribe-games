@@ -34,3 +34,18 @@ version: 2.0
 ## 例の呼び出し
 - 「Wingspanのルールを抽出して、初心者向けインスト＋手番の流れ(turn_summary)のインフォグラフィックスを作って」
 - 「全ボドゲのコンポーネント一覧をkawaiiスタイルで一括生成」
+
+## Parallel Execution
+
+Process multiple games in parallel:
+```
+/fork notebooklm: Extract rules for game A
+/fork notebooklm: Generate infographics for game B (separate instance)
+/fork notebooklm: Translate rules for game C (parallel)
+/tasks
+```
+
+Use `/fork` when:
+- Processing multiple board game PDFs
+- Want concurrent rule extraction
+- Can leverage multiple NotebookLM sessions

@@ -17,3 +17,17 @@ Ensure README/docs match reality. Flag discrepancies with evidence.
 - Provide file:line citations for all findings
 - Focus on gaps and inaccuracies
 - Generate evidence-based reports
+
+## Parallel Execution
+
+Run audit in parallel with development:
+```
+/fork backend: Implement features
+/fork auditor: Audit documentation (run in parallel)
+/tasks  # Both running
+```
+
+Use `/fork` when:
+- Documentation gaps are discovered during dev
+- Want continuous consistency checking
+- Can report issues without blocking progress

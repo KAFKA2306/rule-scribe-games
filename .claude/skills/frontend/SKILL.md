@@ -46,3 +46,18 @@ Semantic HTML (`<button>`, not `<div>`), ARIA labels, and keyboard navigation. N
 - Backend logic (app/ directory)
 - Database schema
 - Prompts/content text (ask rule_scribe_content)
+
+## Parallel Execution
+
+This skill can be parallelized with **backend** and **content**:
+```
+/fork frontend: Build components
+/fork backend: Implement API (run in parallel)
+/fork content: Optimize prompts (run in parallel)
+/tasks  # Monitor progress
+```
+
+Use `/fork` when:
+- Multiple components develop independently
+- Can stub API endpoints first
+- Want concurrent feature development

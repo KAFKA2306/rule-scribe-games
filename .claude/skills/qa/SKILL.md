@@ -49,3 +49,17 @@ Do not write feature code. Your job is verification only. Fix lint errors, confi
 - **rule_scribe_backend**: For backend code quality questions
 - **rule_scribe_frontend**: For frontend code quality questions
 - **rule_scribe_content**: For content/documentation questions
+
+## Parallel Execution
+
+Run **qa** in parallel with development:
+```
+/fork backend: Implement features
+/fork qa: Audit docs/code (run in parallel)
+/tasks  # Monitor both
+```
+
+Use `/fork` when:
+- Documentation audit doesn't block development
+- Want continuous verification during sprints
+- Can report gaps while code is being written
