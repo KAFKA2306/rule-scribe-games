@@ -1,5 +1,4 @@
 import { defineConfig, devices } from '@playwright/test'
-
 export default defineConfig({
   testDir: './tests',
   fullyParallel: true,
@@ -7,7 +6,7 @@ export default defineConfig({
   workers: 1,
   reporter: 'line',
   use: {
-    baseURL: 'https://rule-scribe-games.vercel.app',
+    baseURL: 'http://localhost:5173',
     trace: 'on-first-retry',
   },
   projects: [
