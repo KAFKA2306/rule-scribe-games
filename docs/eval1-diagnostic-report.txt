@@ -1,0 +1,415 @@
+=============================================================================
+FRONTEND 500 ERROR DIAGNOSTIC REPORT: Search/Generate Issue
+=============================================================================
+Date: 2026-03-14
+Issue: API returns 500 when user searches for a game and clicks 'Generate'
+
+=============================================================================
+1. REQUEST FLOW ANALYSIS
+=============================================================================
+
+Frontend Flow:
+- User enters game name in search input (App.jsx)
+- Clicks "生成" (Generate) button → handleSearch() function
+- handleSearch() calls: api.post('/api/search', { query, generate: true })
+- Expected response: list[GameDetail] with generated game
+
+Backend Flow:
+- POST /api/search → search_games_post() in app/routers/games.py
+- If body.generate=true → service.create_game_from_query(query)
+- create_game_from_query() calls generate_metadata(query)
+- generate_metadata() uses GeminiClient to call Google's Gemini API
+
+=============================================================================
+2. CRITICAL FAILURE POINTS IDENTIFIED
+=============================================================================
+
+POINT A: Gemini API Configuration
+Location: app/core/settings.py
+Issue: Model validation enforces exact model name
+Code:
+  CANONICAL_GEMINI_MODEL = "models/gemini-3-flash-preview"
+  
+  if requested_model != CANONICAL_GEMINI_MODEL:
+      raise ValueError(
+          f"GEMINI_MODEL must be exactly '{CANONICAL_GEMINI_MODEL}'. "
+          f"Got: '{requested_model}'. Do not change the model name."
+      )
+
+Diagnostic: Check if GEMINI_MODEL env var OR config.yaml matches exactly.
+Likely Error: Model name mismatch → ValueError during initialization
+
+---
+
+POINT B: Gemini API Call - No Error Handling
+Location: app/core/gemini.py → generate_structured_json()
+Key Issue: Following Crash-Driven Development (CDD) pattern, there are NO try-catch blocks.
+This means ANY API failure will bubble up as 500.
+
+Potential Failures:
+1. resp.raise_for_status() → Crashes on 401/403/429 (invalid key, rate limit, quotas)
+2. resp.json() KeyError if response structure differs from expected
+3. json.loads() → JSONDecodeError if Gemini returns invalid JSON
+4. Missing API key (None) → httpx sends invalid header
+
+Code Pattern (from CDD rules in .claude/rules/style.md):
+  "The usage of try-catch in business logic is FORBIDDEN"
+  "Fail Fast, Fail Loud."
+  → This is CORRECT for the architecture, BUT requires proper environment setup
+
+---
+
+POINT C: Settings/Environment Validation Missing
+Location: app/core/settings.py
+Current Code:
+  def __init__(self) -> None:
+      self.gemini_api_key = os.getenv("GEMINI_API_KEY")
+      ...
+
+Issue: No validation that gemini_api_key is not None before GeminiClient uses it
+Result: Crashes silently when API key is None
+
+---
+
+POINT D: Supabase Integration Point
+Location: app/services/game_service.py → generate_metadata()
+Code:
+  if not context:
+      rows = await supabase.search(query)
+      context = "\\n".join(...) if rows else "No matches."
+
+Issue: If supabase.search() fails, entire flow crashes
+
+=============================================================================
+3. DIAGNOSIS CHECKLIST
+=============================================================================
+
+[ ] 1. Environment Setup
+    - Check .env file exists and has content
+    - Verify GEMINI_API_KEY is set and non-empty
+    - Verify GEMINI_API_KEY is valid (active in Google Cloud)
+    - Verify SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY exist
+    - Compare config.yaml gemini_model vs .env GEMINI_MODEL
+
+[ ] 2. Gemini API Status
+    - Is the Google Cloud project active?
+    - Is the Generative Language API enabled?
+    - Does the API key have the right permissions?
+    - Is the API key quota exceeded?
+    - Has Google changed the API endpoint?
+
+[ ] 3. Network/CORS
+    - Can backend reach https://generativelanguage.googleapis.com?
+    - No proxy/firewall blocking HTTPS outbound?
+
+[ ] 4. Response Parsing
+    - Is Gemini returning proper JSON response?
+    - Does response contain "candidates[0].content.parts[0].text"?
+    - Are markdown code blocks (```json ... ```) properly extracted by regex?
+
+[ ] 5. Database
+    - Supabase connection working?
+    - Table "games" exists and has data?
+    - Credentials (SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY) valid?
+
+=============================================================================
+4. ROOT CAUSE HYPOTHESIS (Ordered by Likelihood)
+=============================================================================
+
+HYPOTHESIS 1: GEMINI_API_KEY Missing/Invalid (70% probability)
+Symptom: 401 Unauthorized from Google API
+Evidence: Most common deployment issue; .env not properly loaded
+Root Cause: GEMINI_API_KEY env var is None or contains invalid key
+Stack Trace: Will show 401 error in resp.raise_for_status()
+
+Quick Fix:
+  1. Ensure .env file exists in project root
+  2. Set GEMINI_API_KEY=AIza... (valid Google API key)
+  3. Restart backend server
+  4. Test: curl to /api/search with generate=true
+
+---
+
+HYPOTHESIS 2: Gemini Response Structure Changed (15% probability)
+Symptom: KeyError accessing resp.json()["candidates"][0]...
+Evidence: Google occasionally updates API response format
+Root Cause: Response JSON structure differs from expected schema
+Stack Trace: Will show KeyError with exact key that failed
+
+Check: Log the actual Gemini response before parsing
+Fix: Update the parsing logic in app/core/gemini.py
+
+---
+
+HYPOTHESIS 3: Rate Limiting / Quota Exhausted (10% probability)
+Symptom: 429 Too Many Requests from Google
+Evidence: Free tier has strict rate limits (100-1000 requests/day depending on tier)
+Root Cause: API quota exceeded or rate limit triggered
+Stack Trace: Will show 429 status code
+
+Check: Google Cloud Console → APIs → Quota metrics
+Fix: Request quota increase or implement caching
+
+---
+
+HYPOTHESIS 4: Supabase Connection Failure (5% probability)
+Symptom: Crash in generate_metadata() during supabase.search()
+Evidence: Less likely if initial game list loads correctly
+Root Cause: Supabase credentials invalid or API down
+Stack Trace: Will show Supabase error during search()
+
+Check: Test with curl: curl -H "Authorization: Bearer KEY" https://PROJECT.supabase.co/rest/v1/games
+Fix: Verify SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY
+
+=============================================================================
+5. DETAILED CODE FLOW WITH EXACT FAILURE POINTS
+=============================================================================
+
+1. Frontend (App.jsx line ~99):
+   handleSearch() {
+       api.post('/api/search', { query, generate: true })
+       ↓ NETWORK CALL
+
+2. Backend (app/routers/games.py line ~29):
+   @router.post("/search")
+   async def search_games_post(body: SearchRequest, ...):
+       if body.generate:
+           new_game = await service.create_game_from_query(body.query)
+           ↓ ENTERS SERVICE LAYER
+
+3. Service (app/services/game_service.py line ~52):
+   async def create_game_from_query(self, query: str):
+       result = await generate_metadata(query)
+       ↓ ENTERS METADATA GENERATION
+
+4. Metadata Generator (app/services/game_service.py line ~20):
+   async def generate_metadata(query, context=None):
+       if not context:
+           rows = await supabase.search(query)
+           ↓ POTENTIAL CRASH POINT #1: Supabase offline
+           context = "\\n".join(...)
+       
+       prompt = _load_prompt(...).format(query=query, context=context)
+       result = await _gemini.generate_structured_json(prompt)
+       ↓ ENTERS GEMINI CLIENT
+
+5. Gemini Client (app/core/gemini.py line ~12):
+   async def generate_structured_json(self, prompt: str):
+       data = {...}
+       async with httpx.AsyncClient() as client:
+           resp = await client.post(
+               self.url,  ← USES: "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent"
+               headers={
+                   "x-goog-api-key": self.api_key,  ← CRITICAL: If None, Google returns 401
+               },
+               json=data,
+           )
+           ↓ POTENTIAL CRASH POINT #2: Network error, 401/403/429 from Google
+           ↓ POTENTIAL CRASH POINT #3: Malformed response structure
+       
+       resp.raise_for_status()  ← CRASHES HERE on non-2xx status
+       text = resp.json()["candidates"][0]["content"]["parts"][0]["text"]
+       ↓ POTENTIAL CRASH POINT #4: KeyError if structure wrong
+       
+       json.loads(text)
+       ↓ POTENTIAL CRASH POINT #5: JSONDecodeError if invalid JSON
+
+6. Response Back to Frontend:
+   FastAPI catches any unhandled exception → 500 Internal Server Error
+   Frontend catches error in api.post() catch block
+   Shows: "生成に失敗しました。"
+
+=============================================================================
+6. QUICK DEBUGGING STEPS
+=============================================================================
+
+STEP 1: Check Backend Logs
+  Look at the terminal running: task dev:backend
+  Find the stack trace that shows:
+    - Exact line number where crash occurred
+    - Full exception message
+    - Any HTTP status codes or API errors
+
+STEP 2: Add Logging to Gemini Client
+  Edit: app/core/gemini.py
+  Add before resp.raise_for_status():
+    
+    logger.info(f"Gemini API Call - URL: {self.url}")
+    logger.info(f"Gemini API Call - Status: {resp.status_code}")
+    logger.info(f"Gemini API Call - Response (first 500 chars): {resp.text[:500]}")
+    
+  This will show exactly what Google returned
+
+STEP 3: Validate API Key
+  Run in Python:
+    import os
+    from dotenv import load_dotenv
+    load_dotenv()
+    key = os.getenv("GEMINI_API_KEY")
+    print(f"Key loaded: {key is not None}")
+    print(f"Key starts with: {key[:10] if key else 'NONE'}")
+
+STEP 4: Test Gemini API Manually
+  In your shell, replace YOUR_KEY with actual key:
+    
+    curl -X POST \
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=YOUR_KEY" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "contents": [{
+          "parts": [{"text": "Say hello in JSON format"}]
+        }],
+        "generationConfig": {
+          "response_mime_type": "application/json"
+        }
+      }'
+
+STEP 5: Check Environment Setup
+  In backend terminal, run:
+    echo "GEMINI_API_KEY: $GEMINI_API_KEY"
+    echo "SUPABASE_URL: $SUPABASE_URL"
+    
+  Should print actual values, not empty
+
+STEP 6: Test Without Generate Flag
+  Manually test just search (no Gemini):
+    curl -X POST http://localhost:8000/api/search \
+      -H "Content-Type: application/json" \
+      -d '{"query": "Catan", "generate": false}'
+    
+  If this works, problem is in Gemini. If not, problem is elsewhere.
+
+=============================================================================
+7. RECOMMENDED FIXES
+=============================================================================
+
+IMMEDIATE (Critical - Do This First):
+1. Check .env file exists: ls -la .env
+2. Verify GEMINI_API_KEY is set: grep GEMINI_API_KEY .env
+3. Verify key is not empty (should start with "AIza")
+4. Restart backend: task dev:backend
+5. Try search again with generate=true
+
+SHORT-TERM (Add Logging):
+1. In app/core/gemini.py, add logger calls before/after API call
+2. In app/core/settings.py, validate API key exists on init
+3. Run backend and capture logs when error occurs
+4. Share exact error message from logs
+
+MEDIUM-TERM (Improve Error Handling - Per CDD Rules):
+1. The "Crash Fast" pattern is intentional (no try-catch in business logic)
+2. Instead, add proper environment validation in __init__
+3. Example fix in app/core/settings.py:
+   
+   def __init__(self) -> None:
+       self.gemini_api_key = os.getenv("GEMINI_API_KEY")
+       if not self.gemini_api_key:
+           raise ValueError("GEMINI_API_KEY environment variable not set")
+       # Now we KNOW the key exists, so let it crash if it's invalid
+   
+4. This makes the crash happen at startup, not at first API call
+
+=============================================================================
+8. KEY FILES & LINES
+=============================================================================
+
+Frontend Entry Point:
+  frontend/src/App.jsx:99-109
+    handleSearch() function
+  
+Frontend API Call:
+  frontend/src/lib/api.js:10-20
+    api.post() implementation
+  
+Backend Endpoint:
+  app/routers/games.py:29-38
+    POST /api/search endpoint
+  
+Service Layer:
+  app/services/game_service.py:52-57
+    create_game_from_query() method
+  
+Metadata Generation:
+  app/services/game_service.py:18-44
+    generate_metadata() function
+  
+Gemini Client:
+  app/core/gemini.py:12-38
+    generate_structured_json() method ← MOST LIKELY FAILURE POINT
+  
+Settings:
+  app/core/settings.py:15-32
+    Settings.__init__() ← VALIDATION MISSING HERE
+  
+Prompts:
+  app/prompts/prompts.py:1-100
+    Contains metadata_generator prompt
+
+=============================================================================
+9. DECISION TREE TO FIND ROOT CAUSE
+=============================================================================
+
+START: 500 Error on Generate
+
+Q1: Can you see backend console where server is running?
+  NO → Start backend with: task dev:backend
+  YES → Go to Q2
+
+Q2: Is there a stack trace visible in the backend console?
+  NO → Restart backend, try again
+  YES → Look at the last line of Python code in the trace
+       → Is it in app/core/gemini.py?
+           YES → Go to Q3 (Gemini issue)
+           NO → Is it in app/core/supabase.py?
+               YES → Database issue
+               NO → Other issue
+
+Q3: What's the exact error in gemini.py?
+  "401 Unauthorized" → HYPOTHESIS 1 (Invalid API key)
+  "429 Too Many Requests" → HYPOTHESIS 3 (Rate limit)
+  "KeyError: 'candidates'" → HYPOTHESIS 2 (Response format)
+  "ConnectionError" → Network/firewall issue
+  Other → Google API changed
+
+Q4 (For 401 error): Is GEMINI_API_KEY set in .env?
+  NOT SET → Set it: GEMINI_API_KEY=AIza... (get from Google Cloud)
+  IS SET → Test key: use curl command from STEP 4 above
+           If curl works but app doesn't, issue is in code
+           If curl fails, key is invalid or quota exceeded
+
+=============================================================================
+10. COMMAND REFERENCE
+=============================================================================
+
+Check Environment:
+  cat .env | grep GEMINI
+  
+View Current Config:
+  cat config.yaml
+  
+Restart Backend:
+  task dev:backend
+  
+Test Search Endpoint (no generate):
+  curl -X POST http://localhost:8000/api/search \
+    -H "Content-Type: application/json" \
+    -d '{"query": "Catan", "generate": false}'
+  
+Test Generate Endpoint:
+  curl -X POST http://localhost:8000/api/search \
+    -H "Content-Type: application/json" \
+    -d '{"query": "Catan", "generate": true}'
+  
+View Logs:
+  Look at terminal running: task dev:backend
+  
+Test Gemini API Key:
+  curl -X POST "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=YOUR_KEY_HERE" \
+    -H "Content-Type: application/json" \
+    -d '{"contents":[{"parts":[{"text":"test"}]}]}'
+
+=============================================================================
+END DIAGNOSTIC REPORT
+=============================================================================
+Report Location: /home/kafka/projects/rule-scribe-games/docs/eval1-diagnostic-report.txt
+Generated: 2026-03-14

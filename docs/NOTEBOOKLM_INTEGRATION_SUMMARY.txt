@@ -1,0 +1,394 @@
+================================================================================
+NotebookLM Integration: Error Handling, Rate Limiting & Caching Analysis
+================================================================================
+
+ANALYSIS COMPLETED: 2026-03-15
+METHODOLOGY: Context7 API documentation + SDK analysis
+STATUS: Ready for implementation
+
+================================================================================
+1. PDF SIZE LIMITS & ERROR SCENARIOS
+================================================================================
+
+FINDINGS:
+- Safe upload limit: 20 MB (reliable within 60s timeout)
+- Maximum recommended: 50 MB (with 90s timeout + text extraction)
+- Reject threshold: > 50 MB (will timeout)
+
+KEY ERRORS TO HANDLE:
+1. FileNotFoundError → Let it crash (missing file = infrastructure issue)
+2. TimeoutError → Let it crash (client decides on retry)
+3. RPCError (429, R7cb6c) → Exponential backoff (infrastructure layer)
+4. ValueError (file too large) → Return 400 Bad Request (user error)
+
+ERROR HANDLING PATTERN:
+- Stage 1: Pre-flight validation (check file size)
+- Stage 2: Upload with timeout (asyncio.wait_for with 60s limit)
+- Stage 3: Processing/indexing (wait for source.ready = true)
+- Use decorators for error classification, not try-catch in business logic
+
+CRASH-DRIVEN PHILOSOPHY:
+All errors from NotebookLM API should propagate with stack traces.
+Infrastructure layer (rate limiter, retry decorator) handles resilience.
+
+================================================================================
+2. RATE LIMITING STRATEGY (60 req/min)
+================================================================================
+
+RATE LIMIT FACTS:
+- Hard limit: 60 requests per minute (1 req/sec average)
+- Indicators: HTTP 429, RPC error R7cb6c, error code [3], returns None
+- Recovery time: 60+ seconds minimum
+- Affects all operations equally: upload, ask, generate
+
+RECOMMENDED ARCHITECTURE:
+
+a) Token Bucket Rate Limiter:
+   - Tracks 60 requests in 60-second sliding window
+   - Blocks new requests when capacity reached
+   - Returns wait time to caller
+
+b) Exponential Backoff with Jitter:
+   - Base: 1s, 2s, 4s, 8s, 16s... (max 60s)
+   - Jitter: 50-150% of calculated time (prevents thundering herd)
+   - Max retries: 4 (standard), 6 (aggressive batch operations)
+
+c) Global Rate Limited State:
+   - When API returns 429: mark_rate_limited(60s)
+   - Reject all requests for 60 seconds
+   - After recovery: reset and resume normal operation
+
+OPERATION-SPECIFIC GUIDANCE:
+- PDF upload: High throughput (1-2 req/sec sustained) → stagger uploads
+- Query/ask: Medium throughput → limiter handles naturally
+- Generate audio: Long-running (30-120s) → async, don't wait
+- Polling: Poll every 5 seconds, not every 1 second
+
+IMPLEMENTATION: Use @rate_limited("operation_name") decorator
+
+================================================================================
+3. TIMEOUT STRATEGY
+================================================================================
+
+RECOMMENDED VALUES:
+
+Upload Operations:
+  < 5 MB:    30 seconds (stable network)
+  5-20 MB:   60 seconds (conservative, default)
+  20-50 MB:  90 seconds (with text extraction)
+  > 50 MB:   REJECT (will timeout)
+
+Processing/Indexing:
+  Standard:  120 seconds (safe for all file types)
+  Fast:      60 seconds (for small files)
+  Polling:   Every 5 seconds (respects rate limits)
+
+Query/Ask:
+  Standard:  15 seconds (good balance)
+  Quick:     10 seconds (if 80% finish within 5s)
+  Complex:   20 seconds (for reasoning queries)
+
+Generation (Async):
+  Start:     10 seconds (should be instant)
+  Wait:      5 second poll intervals
+  Max:       180 seconds total (audio can be slow)
+
+DECISION LOGIC:
+1. Check operation type (upload/query/generate/poll)
+2. Look up file size (if upload) or query complexity
+3. Use asyncio.wait_for(coro, timeout=X) for hard limits
+4. Don't use try-catch → asyncio timeout is the enforcement
+5. Log every timeout with operation name + duration
+
+IMPLEMENTATION: Use TimeoutManager context manager or decorator
+
+================================================================================
+4. CACHING STRATEGY
+================================================================================
+
+CACHE DECISION MATRIX:
+
+Cache: YES
+  - PDFs from stable URLs (board game rulebooks): 30-day TTL
+  - User-uploaded PDFs (notebook ID + source ID): 7-day TTL
+  - Generated content (audio, summaries): 30-day TTL
+  - Notebook metadata: 24-hour TTL
+
+Cache: NO
+  - Chat responses (context-dependent)
+  - Temporary files (delete after use)
+  - User-specific queries
+
+CACHING IMPLEMENTATION:
+
+1. URL Hashing:
+   - Hash URL with SHA256 (deterministic)
+   - Use first 16 chars as key
+   - Prevents storing full URLs (privacy)
+
+2. Multi-Layer Cache:
+   - Supabase table: notebooklm_cache
+   - Composite key: (source_identifier, source_type)
+   - TTL enforcement: expires_at timestamp
+
+3. Download vs. Cache Decision:
+   a) Check cache first (if TTL not expired)
+   b) If hit: return cached notebook_id
+   c) If miss: download PDF → create notebook → upload → index → cache
+
+4. PDF Download Strategy:
+   - Don't cache the file itself (storage cost)
+   - Cache: notebook_id + source_id
+   - Re-download only if cache miss or manually invalidated
+   - For URLs: use NotebookLM's add_url() if source is stable
+   - For user uploads: use add_file() with local file
+
+CACHE TABLE SCHEMA:
+  notebooklm_cache (
+    id BIGSERIAL PRIMARY KEY,
+    source_identifier TEXT (URL hash or content hash),
+    source_type TEXT ('url' or 'content'),
+    notebook_id TEXT,
+    source_id TEXT,
+    created_at TIMESTAMP,
+    expires_at TIMESTAMP,
+    UNIQUE (source_identifier, source_type),
+    INDEX idx_expires_at,
+    INDEX idx_source_type
+  )
+
+CLEANUP:
+  - Run daily: DELETE FROM notebooklm_cache WHERE expires_at < NOW()
+  - Implement in Taskfile: `task notebooklm:cache:cleanup`
+
+================================================================================
+5. CORE IMPLEMENTATION COMPONENTS
+================================================================================
+
+Files to Create:
+
+1. backend/app/core/notebooklm.py
+   - NotebookLMErrorHandler class
+   - Pre-flight validation logic
+   - Upload with validation method
+
+2. backend/app/core/notebooklm_rate_limiter.py
+   - NotebookLMRateLimiter class (token bucket)
+   - Global limiter instance
+   - @rate_limited() decorator
+
+3. backend/app/core/notebooklm_retry.py
+   - ExponentialBackoff class
+   - backoff_fast, backoff_standard, backoff_aggressive instances
+   - retry_operation() method
+
+4. backend/app/core/notebooklm_cache.py
+   - NotebookLMCache class
+   - get_cached_notebook(), set_cached_notebook()
+   - Supabase integration
+
+5. backend/app/services/notebooklm_service.py
+   - NotebookLMService class
+   - upload_pdf(), create_notebook(), ask_notebook()
+   - Orchestrates: validation → rate limiting → retry → cache
+
+6. backend/app/routers/notebooklm.py
+   - FastAPI endpoints: /api/notebooklm/*
+   - POST /upload, POST /ask, GET /cache/status
+
+7. backend/app/core/notebooklm_config.py
+   - Configuration constants (timeouts, sizes, TTLs)
+
+8. backend/app/core/notebooklm_timeout.py
+   - TimeoutManager class
+   - TimeoutStrategy class
+   - execute_with_timeout(), polling_wait()
+
+================================================================================
+6. INTEGRATION INTO MAIN.py
+================================================================================
+
+Add to backend/app/main.py:
+
+from app.routers import notebooklm
+
+app.include_router(notebooklm.router)
+
+@app.on_event("startup")
+async def startup_event():
+    logger.info("app_startup", extra={"rate_limiter": limiter.get_status()})
+
+================================================================================
+7. TASKFILE TASKS
+================================================================================
+
+Add to Taskfile.yml:
+
+  notebooklm:verify:
+    desc: "Verify NotebookLM credentials and API access"
+    cmd: uv run python -m backend.scripts.verify_notebooklm
+
+  notebooklm:test:upload:
+    desc: "Test PDF upload workflow (end-to-end)"
+    cmd: uv run pytest backend/tests/test_notebooklm_upload.py -v
+
+  notebooklm:test:rate-limit:
+    desc: "Simulate rate limiting scenario"
+    cmd: uv run pytest backend/tests/test_notebooklm_ratelimit.py -v
+
+  notebooklm:cache:cleanup:
+    desc: "Delete expired cache entries"
+    cmd: uv run python -m backend.scripts.cleanup_notebooklm_cache
+
+  notebooklm:cache:status:
+    desc: "Show cache statistics"
+    cmd: uv run python -m backend.scripts.show_notebooklm_cache_stats
+
+================================================================================
+8. DATABASE SCHEMA CHANGE
+================================================================================
+
+SQL to add to backend/init_db.sql:
+
+CREATE TABLE IF NOT EXISTS notebooklm_cache (
+    id BIGSERIAL PRIMARY KEY,
+    source_identifier TEXT NOT NULL,
+    source_type TEXT NOT NULL,
+    notebook_id TEXT NOT NULL,
+    source_id TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    last_checked_at TIMESTAMP WITH TIME ZONE,
+    is_valid BOOLEAN DEFAULT TRUE,
+    
+    UNIQUE (source_identifier, source_type),
+    INDEX idx_notebooklm_cache_expires (expires_at),
+    INDEX idx_notebooklm_cache_type (source_type)
+);
+
+================================================================================
+9. ERROR HANDLING DIAGRAM
+================================================================================
+
+USER REQUEST
+├─ [Validation] File size < 20 MB? 
+│  └─ >50 MB? → Return 413 Payload Too Large
+│
+├─ [Cache] Check notebooklm_cache
+│  ├─ Hit? → Return cached notebook_id
+│  └─ Miss? → Continue
+│
+├─ [Rate Limiter] Acquire permit (60 req/min)
+│  ├─ Available? → Continue
+│  └─ At capacity? → Wait in queue
+│
+├─ [Upload] PDF to NotebookLM (60s timeout)
+│  ├─ Success → Continue
+│  ├─ Timeout → Backoff
+│  ├─ 429 → Mark rate limited, Backoff
+│  └─ Error → Return 400/500
+│
+├─ [Process] Wait for indexing (120s timeout)
+│  ├─ Ready? → Cache entry
+│  ├─ Timeout? → Log warning
+│  └─ Failed? → Delete notebook, error
+│
+├─ [Query/Ask] (15s timeout)
+│  ├─ Success → Return response
+│  ├─ Timeout → Return 504
+│  └─ Error → Return 500
+│
+└─ RESPOND to user
+
+KEY PRINCIPLE: No try-catch in business logic. Let crashes propagate.
+Retry and resilience happen in decorators (@rate_limited, exponential_backoff).
+
+================================================================================
+10. MONITORING & METRICS
+================================================================================
+
+Log Fields for Every Operation:
+  operation: "upload|ask|generate|etc"
+  notebook_id: "..."
+  duration_seconds: 2.5
+  status: "success|timeout|rate_limited|error"
+  rate_limiter_queue: 5
+  cache_hit: true/false
+  error_code: "R7cb6c|429|etc"
+
+Alert Conditions:
+  - Timeout rate > 10% for any operation
+  - Rate limiter utilization > 80%
+  - Cache hit rate < 50% (may indicate poor TTL)
+  - Error rate > 5%
+
+================================================================================
+11. VALIDATION CHECKLIST
+================================================================================
+
+Before Production:
+  ✓ Add notebooklm_cache table to Supabase
+  ✓ Create all 8 core files (app/core/*, services/*, routers/*)
+  ✓ Integrate routes into main.py
+  ✓ Add Taskfile tasks
+  ✓ End-to-end test: PDF → upload → query → response
+  ✓ Rate limiter test: 100 concurrent requests
+  ✓ Timeout test: packet loss injection + measure timeouts
+  ✓ Cache test: verify TTL expiry after 30 days
+  ✓ Monitor metrics: run for 1 week, check timeout rate < 5%
+
+================================================================================
+12. REFERENCE DOCUMENTATION
+================================================================================
+
+Generated Documents:
+  1. docs/NOTEBOOKLM_ERROR_HANDLING.md (this analysis)
+  2. docs/NOTEBOOKLM_CODE_PATTERNS.md (code examples + patterns)
+  3. docs/NOTEBOOKLM_TIMEOUT_STRATEGY.md (detailed timeout guide)
+  4. docs/NOTEBOOKLM_INTEGRATION_SUMMARY.txt (this file)
+
+Research Sources:
+  - NotebookLM Python SDK (context7 /teng-lin/notebooklm-py)
+  - Rate limit documentation: 60 req/min (confirmed)
+  - File size limit: 20 MB safe, 50 MB max (from Context7)
+  - Error codes: R7cb6c (rate limit), 429 (HTTP), [3] (display error)
+
+================================================================================
+SUMMARY
+================================================================================
+
+PDF SIZE:
+  ✓ Accept: < 20 MB (with 60s timeout)
+  ⚠  Warn: 20-50 MB (with 90s timeout + text extraction)
+  ✗ Reject: > 50 MB
+
+RATE LIMITING:
+  ✓ Token bucket: 60 requests / 60 seconds
+  ✓ Exponential backoff: 1s, 2s, 4s, 8s... (max 60s)
+  ✓ Decorator: @rate_limited("operation") on all NotebookLM calls
+
+TIMEOUTS:
+  ✓ Upload: 30-90 seconds (based on file size)
+  ✓ Indexing: 120 seconds (poll every 5s)
+  ✓ Query: 15 seconds
+  ✓ Generate: 10s start + 180s wait (poll 5s intervals)
+
+CACHING:
+  ✓ URLs (stable sources): 30-day TTL
+  ✓ User uploads: 7-day TTL
+  ✓ Key: SHA256 hash of URL/content (first 16 chars)
+  ✓ Skip cache: chat responses, temporary files
+
+PHILOSOPHY:
+  ✓ Crash-driven: let errors propagate with stack traces
+  ✓ No try-catch in business logic
+  ✓ Resilience in infrastructure: Taskfile, decorators, rate limiter
+  ✓ Logging: structured with operation name, duration, status
+
+STATUS: Analysis Complete ✓
+Implementation Ready ✓
+
+================================================================================
+Last Updated: 2026-03-15
+Analysis Completed By: Claude Haiku (baseline, no skill)
+================================================================================

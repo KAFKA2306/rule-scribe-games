@@ -1,0 +1,488 @@
+================================================================================
+GITHUB ISSUE CREATION & DOCUMENTATION GUIDE
+Frontend-API Connection Issues (Intermittent on Dev Server Restart)
+================================================================================
+
+ANSWER TO YOUR QUESTION: YES, create a GitHub issue to track this!
+
+================================================================================
+PART 1: WHY CREATE A GITHUB ISSUE?
+================================================================================
+
+1. TRACKABILITY
+   - Creates permanent record searchable by future developers
+   - Links to commits, PRs, and discussions
+   - Shows when issue was first reported and resolved
+
+2. VISIBILITY
+   - Alerts team members to known issue
+   - Prevents duplicate reports
+   - Shows issue priority (via labels)
+
+3. COLLABORATION
+   - Multiple people can contribute debugging info
+   - Comments form discussion thread
+   - Enables confirmation from others experiencing same issue
+
+4. DOCUMENTATION
+   - Comments become permanent project history
+   - Solutions are discoverable via search
+   - Debugging process is documented for future occurrences
+
+5. METRICS
+   - Helps identify patterns (how often, on which systems)
+   - Informs prioritization and resource allocation
+   - Shows impact across team
+
+================================================================================
+PART 2: QUICK START - ISSUE CREATION PROCESS
+================================================================================
+
+Time Required: 15 minutes total
+
+STEP 1: Gather Information (10 minutes)
+   1. Run diagnostic script:
+      bash scripts/diagnose_dev_connection.sh
+      [Save this output]
+
+   2. Note your environment:
+      - OS (Linux, macOS, Windows)
+      - Browser (Chrome, Firefox, Safari)
+      - Node version: node --version
+      - Python version: python --version
+
+   3. Reproduce the issue:
+      - task dev
+      - Navigate to http://localhost:5173
+      - Open DevTools (F12) → Network tab
+      - Trigger API call that fails
+      - Screenshot the network tab
+
+   4. Document error:
+      - What is the exact HTTP status? (ERR_CONNECTION_REFUSED, 502, timeout, etc.)
+      - Are you able to reload page and make it work?
+      - Does task kill && task dev help?
+
+STEP 2: Create Issue on GitHub (5 minutes)
+   1. Go to: GitHub repo → Issues → New Issue
+   2. Select template: "API Connection Issue"
+   3. Fill in the form:
+      - Frequency dropdown: Intermittent / Consistently reproducible
+      - Description: What happens?
+      - Steps to Reproduce: 1. ... 2. ... 3. ...
+      - Network Tab Error: Status code and error message
+      - Server Logs: Paste backend/frontend logs
+      - Environment: OS, Node, Python, Browser
+
+   4. Paste your diagnostic output
+   5. Attach network tab screenshot
+   6. Submit issue
+
+================================================================================
+PART 3: DOCUMENTATION TO REFERENCE
+================================================================================
+
+When Creating Issue, Reference These Files:
+
+FILE 1: docs/TROUBLESHOOTING_DEV_ENVIRONMENT.md
+   - Quick diagnosis checklist (do this first!)
+   - Root cause analysis for 3 scenarios:
+     * Vite proxy timing (most common)
+     * Port already in use
+     * DNS/localhost resolution
+   - Code snippets for permanent fixes
+   - Debugging workflow
+
+FILE 2: .github/ISSUE_TEMPLATE/bug-api-connection.yml
+   - Pre-built GitHub issue form
+   - Ensures consistent information collection
+   - Use when creating new issue
+
+FILE 3: docs/ISSUE_INVESTIGATION_LOG_TEMPLATE.md
+   - Template for documenting your debugging sessions
+   - Session-by-session logging
+   - Copy and fill in as you debug
+   - Link from your GitHub issue
+
+FILE 4: scripts/diagnose_dev_connection.sh
+   - Automated diagnostic script
+   - Checks 6 key connection points
+   - Takes 10 seconds to run
+   - Use BEFORE creating issue
+
+FILE 5: docs/API_CONNECTION_ISSUE_SUMMARY.md
+   - Complete reference guide
+   - File locations summary
+   - Quick fixes reference table
+   - Escalation path
+
+================================================================================
+PART 4: QUICK FIX CHEAT SHEET
+================================================================================
+
+MOST COMMON FIX (Try First):
+   task kill
+   task dev
+
+IF PORT IS STUCK:
+   fuser -k 8000/tcp 5173/tcp
+   task dev
+
+VERIFY BOTH SERVERS:
+   lsof -i :8000   # Should show process info
+   lsof -i :5173   # Should show process info
+
+TEST CONNECTION:
+   curl http://localhost:8000/health
+   curl http://localhost:5173/api/health
+
+CLEAR EVERYTHING:
+   task clean
+   task setup
+   task dev
+
+FOR WSL2 USERS:
+   # In frontend/vite.config.js, change:
+   target: 'http://localhost:8000'
+   # To:
+   target: 'http://127.0.0.1:8000'
+
+================================================================================
+PART 5: ISSUE TEMPLATE TEXT
+================================================================================
+
+Use this when creating your GitHub issue:
+
+TITLE:
+[Intermittent] Frontend cannot connect to API on dev server restart
+
+BODY:
+
+### Description
+Frontend fails to connect to the API (http://localhost:8000) when restarting 
+dev servers (`task dev`). The issue occurs intermittently—sometimes the 
+connection establishes immediately, other times requires manual intervention 
+(browser refresh, server restart).
+
+### Expected Behavior
+After running `task dev`, both the FastAPI backend (port 8000) and Vite 
+frontend (port 5173) should start cleanly. The frontend should proxy all 
+`/api/*` requests to `http://localhost:8000` via Vite's proxy configuration, 
+and API calls should succeed immediately.
+
+### Actual Behavior
+- Backend starts but frontend cannot reach API endpoints
+- Network tab shows failed requests to `/api/*` with connection refused or timeout
+- Manual page refresh sometimes resolves it
+- Restarting both servers (using `task kill` then `task dev`) sometimes helps
+- No clear error messages in browser console or server logs
+
+### Reproduction Steps
+1. Start fresh dev environment: `task setup`
+2. Run: `task dev`
+3. Navigate to http://localhost:5173
+4. Attempt to load game list or interact with API endpoints
+5. Observe: Intermittent failures, no consistent pattern
+
+### Environment Information
+- OS: [Linux/macOS/Windows WSL]
+- Node version: [output of `node --version`]
+- Python version: 3.11+
+- Browser: [Chrome/Firefox/Safari]
+- Task command used: `task dev`
+
+### Network Tab Observation
+Request URL: http://localhost:5173/api/games
+Status: [CORS error / Connection refused / Timeout]
+Response Headers: [paste relevant headers or "empty"]
+
+### Diagnostic Script Output
+[Run `bash scripts/diagnose_dev_connection.sh` and paste output here]
+
+### What I've Already Tried
+- [ ] Ran `task kill` and restarted `task dev`
+- [ ] Reloaded the browser
+- [ ] Checked if port 8000 is already in use
+- [ ] Ran `task clean && task setup`
+- [ ] Other: [describe]
+
+================================================================================
+PART 6: ROOT CAUSE ANALYSIS
+================================================================================
+
+MOST LIKELY CAUSE: Vite Proxy Initialization Timing
+
+SYMPTOMS:
+- First request after `task dev` finishes fails
+- Reloading page after a few seconds succeeds
+- Consistently fails on first attempt
+
+WHY THIS HAPPENS:
+1. task dev starts both servers in parallel
+2. Vite frontend initializes its proxy configuration
+3. First browser request immediately attempts API call
+4. FastAPI backend may not be fully bound to port 8000 yet
+5. Request fails with connection refused
+6. Developer refreshes page
+7. Backend is ready by now
+8. Request succeeds
+
+FIX OPTION 1: Add Client-Side Retry Logic (Recommended)
+   File: frontend/src/lib/api.js
+   
+   Add this function:
+   ```javascript
+   const fetchWithRetry = async (path, options = {}, retryCount = 0) => {
+     try {
+       const res = await fetch(path, options)
+       if (!res.ok) throw new Error(`HTTP ${res.status}`)
+       return await res.json()
+     } catch (error) {
+       if (retryCount < 3) {
+         const delay = 200 * Math.pow(2, retryCount)
+         await new Promise(r => setTimeout(r, delay))
+         return fetchWithRetry(path, options, retryCount + 1)
+       }
+       throw error
+     }
+   }
+   ```
+
+FIX OPTION 2: Stagger Server Startup
+   File: Taskfile.yml
+   
+   Add this task:
+   ```yaml
+   dev:
+     desc: Backend and frontend with staggered startup
+     cmds:
+       - task: dev:backend &
+       - sleep 3
+       - task: dev:frontend
+   ```
+
+FIX OPTION 3: Do Both
+   Most robust solution
+
+IMPLEMENTATION TIME: 15-20 minutes
+
+================================================================================
+PART 7: DEBUGGING WORKFLOW
+================================================================================
+
+When experiencing the issue, follow this sequence:
+
+STEP 1: Run Diagnostic Script (30 seconds)
+   bash scripts/diagnose_dev_connection.sh
+   
+   This checks:
+   - Port 8000 (FastAPI) is in use
+   - Port 5173 (Vite) is in use
+   - Backend /health endpoint responds
+   - Frontend server responds
+   - API proxy through frontend works
+   - localhost DNS resolution
+   - Vite proxy config
+
+STEP 2: Check Port Availability (10 seconds)
+   lsof -i :8000
+   lsof -i :5173
+   
+   Should show process info, not be empty
+
+STEP 3: Force Kill and Restart (15 seconds)
+   task kill
+   task dev
+
+STEP 4: Test with curl (10 seconds)
+   curl http://localhost:8000/health
+   curl http://localhost:5173/api/health
+   
+   Both should return {"status":"ok"}
+
+STEP 5: Check Browser Network Tab (20 seconds)
+   - Open DevTools (F12)
+   - Go to Network tab
+   - Filter by XHR/Fetch
+   - Reload page
+   - Look for failed requests
+   - Check status code and response
+
+STEP 6: If Still Failing, Create GitHub Issue
+   - Use template from PART 5
+   - Include diagnostic output
+   - Attach Network tab screenshot
+   - Document exact reproduction steps
+
+TOTAL TIME: 5 minutes to identify issue
+
+================================================================================
+PART 8: INVESTIGATION LOG TEMPLATE
+================================================================================
+
+Use this format when documenting your debugging process:
+
+FILENAME: docs/ISSUE_INVESTIGATION_LOG_<YOUR_NAME>_<DATE>.md
+
+---
+
+# Investigation Log: Intermittent Frontend-API Connection
+
+**Date Opened:** [YYYY-MM-DD]
+**Status:** [Open / In Progress / Resolved]
+**Severity:** [Low / Medium / High]
+
+## Timeline
+
+### Session 1 - [Date & Time]
+
+**Environment:**
+- OS: [details]
+- Browser: [details]
+- Ports: [output of `lsof -i :8000` and `lsof -i :5173`]
+
+**Observed Behavior:**
+- [Describe what happened]
+- Frequency: [First time? Every restart? Intermittent?]
+
+**Network Tab:**
+- Status code: [what did you see?]
+- Error message: [what's the exact error?]
+
+**Server Logs:**
+```
+[Paste relevant logs from both backend and frontend]
+```
+
+**Diagnostic Output:**
+```
+[Paste output from `bash scripts/diagnose_dev_connection.sh`]
+```
+
+**Attempted Fixes:**
+- [ ] task kill && task dev
+- [ ] Browser refresh
+- [ ] Check ports
+- [ ] Other: [describe]
+
+**Result:**
+- [What happened? Did anything work?]
+
+### Session 2 - [Date & Time]
+[Repeat above for next session]
+
+## Root Cause Hypothesis
+[What do you think is causing this?]
+
+## Proposed Solution
+[How would you fix it?]
+
+---
+
+================================================================================
+PART 9: FILES CREATED FOR YOU
+================================================================================
+
+The following files have been created in your project:
+
+1. docs/GITHUB_ISSUE_GUIDE.md
+   - Comprehensive issue creation guide
+   - All templates and examples in one file
+
+2. docs/TROUBLESHOOTING_DEV_ENVIRONMENT.md
+   - Step-by-step debugging guide
+   - Root cause analysis with fixes
+   - Code snippets ready to use
+
+3. docs/ISSUE_INVESTIGATION_LOG_TEMPLATE.md
+   - Template for documenting your investigation
+   - Session-by-session structure
+   - Resolution tracking
+
+4. docs/API_CONNECTION_ISSUE_SUMMARY.md
+   - Quick reference and overview
+   - File locations summary
+   - Most likely root cause explanation
+
+5. scripts/diagnose_dev_connection.sh
+   - Automated diagnostic script
+   - Run: bash scripts/diagnose_dev_connection.sh
+
+6. .github/ISSUE_TEMPLATE/bug-api-connection.yml
+   - GitHub issue template
+   - Pre-built form for consistent issue reporting
+
+================================================================================
+PART 10: SUMMARY & RECOMMENDATIONS
+================================================================================
+
+SHOULD YOU CREATE A GITHUB ISSUE?
+Answer: YES
+
+WHY:
+- Documents the problem for future developers
+- Creates discussion thread for collaboration
+- Allows tracking of resolution
+- Prevents duplicate reports
+- Shows when/if issue is resolved
+
+WHAT SHOULD YOU DO NOW?
+
+1. Read: docs/TROUBLESHOOTING_DEV_ENVIRONMENT.md
+   (5 minutes - get familiar with the quick fixes)
+
+2. Run: bash scripts/diagnose_dev_connection.sh
+   (30 seconds - gather diagnostic data)
+
+3. Try: task kill && task dev
+   (30 seconds - try the most common fix)
+
+4. If still failing:
+   a. Document findings in investigation log
+   b. Go to GitHub Issues → New Issue
+   c. Choose "API Connection Issue" template
+   d. Fill in the form with your information
+   e. Paste diagnostic output
+   f. Submit issue
+
+5. After issue is created:
+   a. Follow troubleshooting guide
+   b. Implement recommended fix (add retry logic)
+   c. Comment on issue with solution
+   d. Link PR/commit that fixes it
+
+EXPECTED RESOLUTION TIME: 
+- Quick fixes: 5 minutes
+- Permanent fix implementation: 20 minutes
+- Testing: 10 minutes
+- Total: 35 minutes
+
+================================================================================
+PART 11: QUICK COMMAND REFERENCE
+================================================================================
+
+DIAGNOSTIC:
+   bash scripts/diagnose_dev_connection.sh
+
+COMMON FIXES:
+   task kill && task dev
+   task clean && task setup && task dev
+   fuser -k 8000/tcp 5173/tcp && task dev
+
+VERIFY:
+   curl http://localhost:8000/health
+   curl http://localhost:5173/api/health
+   lsof -i :8000
+   lsof -i :5173
+
+DOCUMENTATION:
+   Read: docs/TROUBLESHOOTING_DEV_ENVIRONMENT.md
+   Read: docs/API_CONNECTION_ISSUE_SUMMARY.md
+   Copy: docs/ISSUE_INVESTIGATION_LOG_TEMPLATE.md → docs/ISSUE_INVESTIGATION_LOG_YOUR_NAME.md
+
+ISSUE TEMPLATE:
+   .github/ISSUE_TEMPLATE/bug-api-connection.yml
+
+================================================================================
+END OF GUIDE
+================================================================================
