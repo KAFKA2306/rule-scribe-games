@@ -1,4 +1,3 @@
-import asyncio
 import json
 import logging
 import os
@@ -21,7 +20,7 @@ class NotebookLMPlaywrightExtractor:
                 resp = await client.get(pdf_url)
                 if resp.status_code != 200:
                     raise ValueError(f"Failed to download PDF: {resp.status_code}")
-                
+
                 with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp:
                     tmp.write(resp.content)
                     tmp_path = tmp.name
@@ -38,9 +37,9 @@ class NotebookLMPlaywrightExtractor:
             await page.goto(self.base_url)
 
             logger.info(f"Uploading {tmp_path} to NotebookLM...")
-            
+
             await browser.close()
             if os.path.exists(tmp_path):
                 os.unlink(tmp_path)
-            
+
             return {"status": "extracted", "raw_content": "Rule content here"}

@@ -26,7 +26,7 @@ async def search_games_post(
             new_game = await service.generate_with_notebooklm(body.query)
         except Exception:
             new_game = await service.create_game_from_query(body.query)
-            
+
         if new_game and new_game.get("slug"):
             return [new_game]
     return await service.search_games(body.query)

@@ -12,6 +12,7 @@ tasks:
       - task: setup:frontend
 
   setup:backend:
+    dir: backend
     cmd: uv sync
 
   setup:frontend:
@@ -24,6 +25,7 @@ tasks:
 
   dev:backend:
     desc: FastAPI 開発サーバー (http://localhost:8000)
+    dir: backend
     cmd: uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
   dev:frontend:
@@ -47,10 +49,23 @@ tasks:
       - task: lint:backend
       - task: lint:frontend
 
-  lint:backend:
+  format:
+    desc: "Format and check Python code (app, api, scripts, tests)"
+    dir: backend
     cmds:
-      - uv run ruff check --fix app
-      - uv run ruff format app
+      - uv run ruff format app api scripts tests
+      - uv run ruff check --fix app api scripts tests
+
+  lint:backend:
+    dir: backend
+    cmds:
+      - uv run ruff check --fix app api scripts tests
+      - uv run ruff format app api scripts tests
+
+  tycheck:backend:
+    desc: Pythonの静的型チェック (Pyright)
+    dir: backend
+    cmd: uv run --with pyright pyright app api scripts tests
 
   lint:frontend:
     dir: frontend
@@ -87,20 +102,25 @@ tasks:
 
   validate-urls:
     desc: DBの全ゲームURLを検証し、無効なものをNULL化
+    dir: backend
     cmd: uv run python -m app.scripts.validate_urls
 
   validate-urls:recent:
     desc: 過去24時間更新のゲームのみURL検証
+    dir: backend
     cmd: uv run python -m app.scripts.validate_urls --hours 24
 
   gemini:verify:
     desc: "Gemini model existence + generateContent smoke check"
+    dir: backend
     cmd: bash scripts/verify_gemini_model.sh
 
   image:gen:ai:
     desc: "Generate AI image (Usage: task image:gen:ai PROMPT='...' OUTPUT='path/to/img.png')"
+    dir: backend
     cmd: uv run python scripts/generate_image_local.py "{{.PROMPT}}" "{{.OUTPUT}}" --width {{.WIDTH | default 1280}} --height {{.HEIGHT | default 670}}
 
   image:gen:composite:
     desc: "Create composite header (Usage: task image:gen:composite OUTPUT='...' INPUTS='img1 img2 ...')"
+    dir: backend
     cmd: uv run python scripts/create_composite_header.py --output "{{.OUTPUT}}" {{.INPUTS}}

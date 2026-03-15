@@ -1,4 +1,3 @@
-from typing import Optional, Dict, Any, List
 from pydantic import BaseModel, ConfigDict
 
 
@@ -8,59 +7,56 @@ class BaseSchema(BaseModel):
 
 class GameDetail(BaseSchema):
     id: str
-    slug: Optional[str] = None
+    slug: str | None = None
     title: str
-    description: Optional[str] = None
-    rules_content: Optional[str] = None
-    rules_summary: Optional[str] = None
-    image_url: Optional[str] = None
-    summary: Optional[str] = None
-    structured_data: Optional[Dict[str, Any]] = None
-    source_url: Optional[str] = None
-    affiliate_urls: Optional[Dict[str, Any]] = None
-    view_count: Optional[int] = 0
-    search_count: Optional[int] = 0
-    data_version: Optional[int] = 0
-    is_official: Optional[bool] = False
-    min_players: Optional[int] = None
-    max_players: Optional[int] = None
-    play_time: Optional[int] = None
-    min_age: Optional[int] = None
-    published_year: Optional[int] = None
-    title_ja: Optional[str] = None
-    title_en: Optional[str] = None
-    official_url: Optional[str] = None
-    bgg_url: Optional[str] = None
-    bga_url: Optional[str] = None
-    amazon_url: Optional[str] = None
-    audio_url: Optional[str] = None
-    strategy_tier: Optional[str] = None  # e.g. "S", "A", "B"
-    created_at: Optional[str] = None
-    updated_at: Optional[str] = None
+    description: str | None = None
+    rules_content: str | None = None
+    rules_summary: str | None = None
+    image_url: str | None = None
+    summary: str | None = None
+    structured_data: "StructuredData | None" = None
+    source_url: str | None = None
+    affiliate_urls: dict[str, str | None] | None = None
+    view_count: int | None = 0
+    search_count: int | None = 0
+    data_version: int | None = 0
+    is_official: bool | None = False
+    min_players: int | None = None
+    max_players: int | None = None
+    play_time: int | None = None
+    min_age: int | None = None
+    published_year: int | None = None
+    title_ja: str | None = None
+    title_en: str | None = None
+    official_url: str | None = None
+    bgg_url: str | None = None
+    bga_url: str | None = None
+    amazon_url: str | None = None
+    audio_url: str | None = None
+    strategy_tier: str | None = None
+    created_at: str | None = None
+    updated_at: str | None = None
 
 
 class GameUpdate(BaseSchema):
-    title: Optional[str] = None
-    title_ja: Optional[str] = None
-    description: Optional[str] = None
-    summary: Optional[str] = None
-    min_players: Optional[int] = None
-    max_players: Optional[int] = None
-    play_time: Optional[int] = None
-    min_age: Optional[int] = None
-    published_year: Optional[int] = None
-    image_url: Optional[str] = None
-    official_url: Optional[str] = None
-    bgg_url: Optional[str] = None
-    structured_data: Optional[Dict[str, Any]] = None
-    rules_content: Optional[str] = None
-    rules_summary: Optional[str] = None
+    title: str | None = None
+    title_ja: str | None = None
+    description: str | None = None
+    summary: str | None = None
+    min_players: int | None = None
+    max_players: int | None = None
+    play_time: int | None = None
+    min_age: int | None = None
+    published_year: int | None = None
+    image_url: str | None = None
+    official_url: str | None = None
+    bgg_url: str | None = None
+    structured_data: "StructuredData | None" = None
+    rules_content: str | None = None
+    rules_summary: str | None = None
 
 
 SearchResult = GameDetail
-
-
-# --- AI Generation Models ---
 
 
 class Keyword(BaseSchema):
@@ -70,35 +66,34 @@ class Keyword(BaseSchema):
 
 class KeyElement(BaseSchema):
     name: str
-    type: str  # e.g. "Card", "Token", "Action"
+    type: str
     reason: str
 
 
 class StructuredData(BaseSchema):
-    keywords: List[Keyword] = []
-    key_elements: List[KeyElement] = []
-    # Add other flexible fields if needed, but these 2 are strict for Frontend
-    mechanics: List[str] = []
-    best_player_count: Optional[str] = None
+    keywords: list[Keyword] = []
+    key_elements: list[KeyElement] = []
+    mechanics: list[str] = []
+    best_player_count: str | None = None
 
 
 class GeneratedGameMetadata(BaseSchema):
     title: str
-    title_ja: Optional[str] = None
+    title_ja: str | None = None
     summary: str
     description: str
     min_players: int
     max_players: int
     play_time: int
     min_age: int
-    rules_content: str  # Markdown
+    rules_content: str
     structured_data: StructuredData
 
 
 class StrategyTier(BaseSchema):
     id: str
     game_slug: str
-    tier_rating: str  # e.g. "S", "A"
-    strategy_content: str  # Markdown
-    author: Optional[str] = None
-    created_at: Optional[str] = None
+    tier_rating: str
+    strategy_content: str
+    author: str | None = None
+    created_at: str | None = None
