@@ -1,0 +1,32 @@
+{
+  "eval_id": 6,
+  "eval_name": "ai-prompt-optimization",
+  "prompt": "The Gemini prompts we're using to generate game metadata are returning inconsistent results. Sometimes the rules summary is great, sometimes it's missing key information or includes irrelevant details. The generated JSON structure is valid but the content quality varies wildly. How do I improve the prompt and validate the output?",
+  "expected_output": "Gemini prompt engineering techniques, how to test and iterate on prompts, validation rules for metadata quality, examples of good vs bad outputs, systematic approach to prompt optimization",
+  "assertions": [
+    {
+      "name": "Prompt engineering techniques",
+      "description": "Explains specific prompt engineering techniques (temperature, examples, constraints) for improving Gemini output"
+    },
+    {
+      "name": "Testing and iteration methodology",
+      "description": "Provides a systematic approach to testing and iterating on prompts"
+    },
+    {
+      "name": "Validation rules provided",
+      "description": "Includes specific validation rules or criteria for evaluating metadata quality"
+    },
+    {
+      "name": "Examples of good vs bad output",
+      "description": "Demonstrates examples of good vs bad outputs to show the difference"
+    },
+    {
+      "name": "Systematic optimization approach",
+      "description": "Provides a step-by-step approach to systematically improve prompt quality"
+    },
+    {
+      "name": "Practical implementation guidance",
+      "description": "Includes code or configuration examples for implementing the improvements"
+    }
+  ]
+}

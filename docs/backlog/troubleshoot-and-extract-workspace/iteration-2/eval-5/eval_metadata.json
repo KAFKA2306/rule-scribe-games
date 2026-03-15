@@ -1,0 +1,32 @@
+{
+  "eval_id": 5,
+  "eval_name": "database-infrastructure-troubleshooting",
+  "prompt": "Our Supabase database connection keeps timing out during the batch PDF extraction script. We're processing 50+ games and hitting 'connection pool exceeded' errors around game 15-20. The script hangs and we have to manually kill it. How do I debug and fix this?",
+  "expected_output": "Diagnosis of connection pool exhaustion, steps to increase pool size, query optimization suggestions, async connection management best practices, monitoring for future issues",
+  "assertions": [
+    {
+      "name": "Connection pool diagnosis included",
+      "description": "Response diagnoses the root cause as connection pool exhaustion or similar infrastructure issue"
+    },
+    {
+      "name": "Pool size increase guidance provided",
+      "description": "Provides specific steps to increase connection pool size in Supabase"
+    },
+    {
+      "name": "Query optimization suggestions",
+      "description": "Includes recommendations for optimizing queries to reduce connection consumption"
+    },
+    {
+      "name": "Async connection management",
+      "description": "Discusses best practices for managing async connections and preventing pool exhaustion"
+    },
+    {
+      "name": "Monitoring and prevention",
+      "description": "Provides guidance on monitoring connection usage and preventing future issues"
+    },
+    {
+      "name": "Code examples provided",
+      "description": "Includes executable code examples (Python or scripts) demonstrating fixes"
+    }
+  ]
+}

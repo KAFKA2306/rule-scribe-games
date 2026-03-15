@@ -1,0 +1,690 @@
+/* ============================================================================
+   Mobile Responsive CSS Fixes for rule-scribe-games/frontend/src/index.css
+
+   INTEGRATION INSTRUCTIONS:
+   1. Copy entire content of this file
+   2. Paste at END of frontend/src/index.css (after line 1010)
+   3. Run: task lint --fix (to format)
+   4. Test: task dev:frontend, then view on mobile (390px)
+
+   CONTENT:
+   - Mobile font stack fixes (Japanese text rendering)
+   - Content overflow prevention (word-break, overflow-wrap)
+   - Image aspect-ratio responsive breakpoints
+   - Button/action bar mobile layout
+   - Grid layout mobile adaptations
+   - Padding/spacing mobile reductions
+   - Touch target sizing for accessibility
+
+   ============================================================================ */
+
+/* ============================================================================
+   SECTION 1: Japanese Font Rendering Fixes
+   ============================================================================ */
+
+@media (max-width: 640px) {
+  /* Ensure Japanese font used on mobile for all text */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  p,
+  span,
+  div {
+    font-family: var(--font-main);
+    font-weight: 500;
+  }
+
+  h1.game-title {
+    font-size: 20px;
+    line-height: 1.4;
+    font-weight: 700;
+    margin-bottom: 12px;
+  }
+
+  h3 {
+    font-size: 16px;
+    line-height: 1.4;
+    margin-bottom: 12px;
+  }
+
+  h4 {
+    font-size: 15px;
+    line-height: 1.4;
+    margin-bottom: 8px;
+  }
+
+  /* Base text: minimum 15px for CJK legibility */
+  p,
+  span,
+  div {
+    font-size: 15px;
+    line-height: 1.8;
+  }
+
+  .markdown-content {
+    font-size: 15px;
+    line-height: 1.9;
+    word-spacing: 0.05em;
+    letter-spacing: 0;
+  }
+
+  .markdown-content h1,
+  .markdown-content h2,
+  .markdown-content h3 {
+    margin-top: 16px;
+    margin-bottom: 12px;
+  }
+
+  .markdown-content p {
+    margin-bottom: 12px;
+  }
+
+  .markdown-content strong {
+    font-weight: 600;
+  }
+
+  .summary-text {
+    font-size: 15px;
+    line-height: 1.8;
+    font-weight: 500;
+  }
+
+  .rule-text {
+    font-size: 15px;
+    line-height: 1.8;
+    word-break: break-word;
+    overflow-wrap: break-word;
+  }
+
+  /* Font smoothing for better rendering on mobile */
+  body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* Desktop: Use English font for titles */
+@media (min-width: 768px) {
+  h1.game-title {
+    font-family: var(--font-head);
+  }
+
+  h3,
+  h4 {
+    font-size: 18px;
+  }
+
+  p,
+  span,
+  div {
+    font-size: 14px;
+  }
+}
+
+/* ============================================================================
+   SECTION 2: Content Overflow Prevention
+   ============================================================================ */
+
+@media (max-width: 640px) {
+  .markdown-content,
+  .rule-text {
+    word-break: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+    white-space: normal;
+  }
+
+  /* Ensure code blocks don't overflow */
+  .markdown-content code,
+  .markdown-content pre {
+    word-break: break-all;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Links should wrap */
+  a {
+    word-break: break-word;
+  }
+
+  /* Tables should scroll horizontally on mobile */
+  .markdown-content table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+  }
+
+  .markdown-content table th,
+  .markdown-content table td {
+    padding: 8px;
+    min-width: 80px;
+  }
+}
+
+/* ============================================================================
+   SECTION 3: Image Scaling & Aspect Ratio
+   ============================================================================ */
+
+/* Mobile: Portrait-optimized aspect ratio */
+@media (max-width: 640px) {
+  .game-hero-image {
+    margin: 0 -16px 16px -16px;
+    border-radius: 0;
+    aspect-ratio: 4/3;
+    width: calc(100% + 32px);
+    max-width: none;
+    border: none;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .game-hero-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+}
+
+/* Tablet: 16:9 aspect ratio */
+@media (min-width: 641px) and (max-width: 1023px) {
+  .game-hero-image {
+    aspect-ratio: 16/9;
+    max-width: 100%;
+    margin: 0 auto 24px;
+  }
+}
+
+/* Desktop: Larger 16:9 with max-width constraint */
+@media (min-width: 1024px) {
+  .game-hero-image {
+    aspect-ratio: 16/9;
+    max-width: 600px;
+    margin: 0 auto 24px;
+  }
+}
+
+/* ============================================================================
+   SECTION 4: Content Container Padding
+   ============================================================================ */
+
+@media (max-width: 640px) {
+  .game-detail-pane {
+    padding: 16px;
+    border-radius: 12px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+  }
+
+  .app-container {
+    padding: 12px;
+  }
+
+  .info-section {
+    margin-bottom: 24px;
+    padding: 0;
+  }
+
+  .rules-section {
+    margin-bottom: 24px;
+    padding: 0;
+  }
+
+  .rule-section {
+    margin-bottom: 16px;
+    padding: 12px;
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.2);
+  }
+
+  .rule-section h4 {
+    margin: 0 0 8px;
+    font-size: 14px;
+  }
+}
+
+/* ============================================================================
+   SECTION 5: Button & Action Bar Mobile Layout
+   ============================================================================ */
+
+@media (max-width: 640px) {
+  .header-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+    justify-content: flex-start;
+  }
+
+  .header-actions button,
+  .header-actions a {
+    flex: 1 1 calc(50% - 4px);
+    min-width: 44px;
+    min-height: 44px;
+    padding: 8px 12px;
+    font-size: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .share-btn {
+    padding: 10px 12px;
+    height: auto;
+    min-height: 44px;
+  }
+
+  .share-btn span {
+    display: none;
+  }
+
+  .share-btn::before {
+    content: '📋';
+  }
+}
+
+/* ============================================================================
+   SECTION 6: Grid Layouts Mobile Adaptations
+   ============================================================================ */
+
+@media (max-width: 640px) {
+  /* Keywords Grid */
+  .keywords-grid {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 8px;
+  }
+
+  .keyword-item {
+    padding: 12px;
+    font-size: 13px;
+    border-radius: 8px;
+  }
+
+  .keyword-item strong {
+    font-size: 13px;
+    margin-bottom: 4px;
+  }
+
+  .keyword-item span {
+    font-size: 12px;
+  }
+
+  /* Cards Grid */
+  .cards-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .card-item {
+    padding: 12px;
+    border-radius: 8px;
+  }
+
+  .card-head {
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 8px;
+  }
+
+  .card-head strong {
+    font-size: 13px;
+  }
+
+  .card-type {
+    align-self: flex-start;
+  }
+
+  .card-item p {
+    font-size: 13px;
+    margin: 0;
+  }
+
+  /* Basic Info Grid */
+  .basic-info-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .info-item {
+    padding: 12px;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .info-item strong {
+    font-size: 11px;
+  }
+
+  .info-item span {
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  /* External Links Grid */
+  .external-links-grid {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .link-button {
+    flex: 1 1 calc(50% - 4px);
+    padding: 10px 12px;
+    font-size: 12px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .affiliate-box {
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .affiliate-link {
+    flex: 1 1 calc(50% - 4px);
+    padding: 10px 12px;
+    font-size: 11px;
+    min-height: 44px;
+  }
+}
+
+/* ============================================================================
+   SECTION 7: Modal & Form Responsive Design
+   ============================================================================ */
+
+@media (max-width: 640px) {
+  .modal-overlay {
+    padding: 12px;
+  }
+
+  .modal-content {
+    width: 100%;
+    max-width: calc(100% - 24px);
+    max-height: 95vh;
+    border-radius: 12px;
+  }
+
+  .modal-header {
+    padding: 16px;
+  }
+
+  .edit-form {
+    padding: 16px;
+    gap: 12px;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .form-group input,
+  .form-group textarea {
+    padding: 10px;
+    font-size: 14px;
+    min-height: 44px;
+  }
+
+  .modal-actions {
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .btn-primary,
+  .btn-secondary {
+    flex: 1;
+    min-height: 44px;
+  }
+}
+
+/* ============================================================================
+   SECTION 8: Search & List Pane Mobile
+   ============================================================================ */
+
+@media (max-width: 640px) {
+  .search-form {
+    flex-wrap: wrap;
+    gap: 8px;
+    max-width: 100%;
+  }
+
+  .search-input {
+    flex: 1 1 100%;
+    padding: 12px;
+    font-size: 16px;
+    min-height: 44px;
+  }
+
+  .btn-primary,
+  .btn-ghost {
+    flex: 1;
+    min-height: 44px;
+    padding: 0 12px;
+  }
+
+  .game-list-pane {
+    max-height: 50vh;
+    border-radius: 12px;
+  }
+
+  .game-card {
+    min-height: 120px;
+    padding: 12px;
+  }
+
+  .game-card h3 {
+    font-size: 16px;
+    margin-bottom: 6px;
+  }
+
+  .game-summary {
+    font-size: 12px;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+  }
+
+  .game-tags {
+    gap: 4px;
+  }
+
+  .tag {
+    font-size: 10px;
+    padding: 3px 6px;
+  }
+}
+
+/* ============================================================================
+   SECTION 9: Header & Navigation Mobile
+   ============================================================================ */
+
+@media (max-width: 640px) {
+  .main-header {
+    padding: 12px 0 16px;
+    gap: 8px;
+  }
+
+  .brand h1 {
+    font-size: 18px;
+  }
+
+  .brand img {
+    width: 24px;
+  }
+
+  .logo-icon {
+    font-size: 20px;
+  }
+
+  .nav-link {
+    padding: 6px 12px;
+    font-size: 12px;
+    border-radius: 6px;
+  }
+}
+
+/* ============================================================================
+   SECTION 10: Footer Mobile
+   ============================================================================ */
+
+@media (max-width: 640px) {
+  .main-footer {
+    padding: 16px 12px;
+    font-size: 11px;
+    gap: 8px;
+  }
+
+  .main-footer img {
+    width: 60px;
+  }
+}
+
+/* ============================================================================
+   SECTION 11: Loading & Error States Mobile
+   ============================================================================ */
+
+@media (max-width: 640px) {
+  .loading-container {
+    padding: 24px;
+    min-height: 300px;
+  }
+
+  .mascot-state {
+    padding: 24px 12px;
+  }
+
+  .mascot-text {
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  .error-banner {
+    padding: 12px 16px;
+    font-size: 13px;
+    margin: 0 -12px 16px -12px;
+    border-radius: 0;
+  }
+
+  .error-container {
+    padding: 24px 16px;
+  }
+
+  .error-container button {
+    min-height: 44px;
+    min-width: 100px;
+  }
+}
+
+/* ============================================================================
+   SECTION 12: Accessibility - Touch Targets
+   ============================================================================ */
+
+@media (max-width: 640px) {
+  /* All interactive elements must be ≥ 44px × 44px */
+  button,
+  a[role='button'],
+  input[type='button'],
+  input[type='submit'],
+  input[type='reset'] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Increase clickable area for links in text */
+  .markdown-content a {
+    padding: 4px 2px;
+    display: inline-block;
+  }
+
+  /* Ensure form inputs are touch-friendly */
+  input,
+  textarea,
+  select {
+    min-height: 44px;
+    font-size: 16px;
+  }
+}
+
+/* ============================================================================
+   SECTION 13: Video Container Responsive
+   ============================================================================ */
+
+@media (max-width: 640px) {
+  .video-container {
+    border-radius: 8px;
+    margin: 0;
+    padding-bottom: 56.25% !important;
+  }
+
+  .video-container iframe {
+    border-radius: 8px;
+  }
+}
+
+/* ============================================================================
+   SECTION 14: Responsive Typography Utility
+   ============================================================================ */
+
+@media (max-width: 640px) {
+  /* Utility classes for responsive text sizing */
+  .text-sm {
+    font-size: 12px;
+  }
+
+  .text-base {
+    font-size: 14px;
+  }
+
+  .text-lg {
+    font-size: 16px;
+  }
+
+  .text-xl {
+    font-size: 18px;
+  }
+
+  .font-japanese {
+    font-family: var(--font-main);
+  }
+
+  .font-english {
+    font-family: var(--font-head);
+  }
+
+  /* Tight line-height for titles */
+  .line-tight {
+    line-height: 1.2;
+  }
+
+  /* Loose line-height for body text */
+  .line-loose {
+    line-height: 1.8;
+  }
+}
+
+/* ============================================================================
+   SECTION 15: Debug Utilities (Remove in Production)
+   ============================================================================ */
+
+@media (max-width: 640px) {
+  /* Uncomment to visualize container bounds during development */
+  /*
+  .game-detail-pane,
+  .game-hero-image,
+  .markdown-content,
+  .rules-section {
+    outline: 2px dashed red;
+    outline-offset: -2px;
+  }
+  */
+}
+
+/* ============================================================================
+   END OF MOBILE RESPONSIVE CSS FIXES
+   ============================================================================ */

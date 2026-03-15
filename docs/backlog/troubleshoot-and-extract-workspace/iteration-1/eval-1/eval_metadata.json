@@ -1,0 +1,27 @@
+{
+  "eval_id": 1,
+  "eval_name": "frontend-500-error-diagnosis",
+  "prompt": "Frontend issue: When I try to search for a game on the home page and click 'Generate', the API returns a 500 error. The backend console shows something about Gemini, but I'm not sure what's wrong. Help me debug this step by step.",
+  "assertions": [
+    {
+      "name": "covers-env-var-checks",
+      "description": "Response explicitly checks GEMINI_API_KEY, Supabase URL, and Supabase keys"
+    },
+    {
+      "name": "provides-curl-tests",
+      "description": "Includes concrete curl commands to test API endpoints in isolation"
+    },
+    {
+      "name": "isolates-problem-layers",
+      "description": "Clearly explains how to distinguish between frontend/backend/Gemini/Supabase failures"
+    },
+    {
+      "name": "actionable-steps",
+      "description": "Each step includes specific commands or checks the user can run immediately"
+    },
+    {
+      "name": "explains-500-error-handling",
+      "description": "Mentions not wrapping in try-catch and reading stack traces (Zero-Fat principle)"
+    }
+  ]
+}

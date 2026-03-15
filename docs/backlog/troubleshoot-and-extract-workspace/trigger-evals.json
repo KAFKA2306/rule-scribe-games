@@ -1,0 +1,102 @@
+[
+  {
+    "query": "The search feature on our board game website keeps returning 500 errors when users try to generate game metadata. The backend console mentions something about Gemini but I'm not sure what's failing. How do I debug this?",
+    "should_trigger": true,
+    "reason": "Direct frontend API error + mention of Gemini → Part 1 (Frontend Troubleshooting)"
+  },
+  {
+    "query": "I have PDFs of official board game rule books (from publisher websites) and I need to extract the rules, translate them to Japanese, and create database records. Where do I start?",
+    "should_trigger": true,
+    "reason": "PDF extraction + Japanese translation + database creation → Part 2 (PDF Extraction)"
+  },
+  {
+    "query": "I need to create Japanese cover images for games in our database with game-appropriate visuals and Japanese title overlays. What's the exact command?",
+    "should_trigger": true,
+    "reason": "Japanese visual generation → Part 3 (Image Generation)"
+  },
+  {
+    "query": "We're getting intermittent connection failures between the frontend and API when restarting dev servers. Sometimes a hard refresh fixes it, sometimes we need to restart both servers. Should I create a GitHub issue and how?",
+    "should_trigger": true,
+    "reason": "Intermittent frontend-API issue + issue documentation → Part 4 (Issue Tracking)"
+  },
+  {
+    "query": "POST /api/search returns 500 with error involving Gemini model. Backend logs show it's happening in the generate_metadata function. The API key is set in .env. How do I isolate which component is failing?",
+    "should_trigger": true,
+    "reason": "API error + Gemini integration + diagnostic need → Part 1"
+  },
+  {
+    "query": "I have a rulebook PDF in English and need to: (1) extract game setup, (2) structure the rules, (3) generate Japanese summaries, (4) validate the data, (5) insert into Supabase. Give me step-by-step instructions.",
+    "should_trigger": true,
+    "reason": "Complete PDF workflow → Part 2"
+  },
+  {
+    "query": "The regenerate button on game detail pages isn't working. Clicking it shows a 500 error and 'Gemini API returned an error' in the console. What's the fastest way to debug?",
+    "should_trigger": true,
+    "reason": "Frontend error → Gemini → API → Part 1"
+  },
+  {
+    "query": "I want to create a Splendor board game cover image in Japanese for our website. I need it to look professional, include Renaissance gem trading visuals, and have the Japanese title on top. What's the exact process?",
+    "should_trigger": true,
+    "reason": "Japanese image with specific game theme → Part 3"
+  },
+  {
+    "query": "When I click the 'Generate' button on a new game search, sometimes it works and sometimes I get a 500 error that says the model doesn't exist or something about authentication. This happens intermittently and I want to document it for the team.",
+    "should_trigger": true,
+    "reason": "Intermittent 500 error + model/auth issue + documentation → Parts 1 & 4"
+  },
+  {
+    "query": "I keep running into issues where the frontend can't connect to the backend API right after I run `task dev`. It's frustrating because a page refresh usually fixes it. I think this deserves a GitHub issue with proper documentation so other devs know about it.",
+    "should_trigger": true,
+    "reason": "Intermittent frontend-API connection → Part 4 (Issue Tracking)"
+  },
+  {
+    "query": "What's the best way to organize my CSS files in a React app?",
+    "should_trigger": false,
+    "reason": "Generic React/CSS question, not related to troubleshooting/content extraction"
+  },
+  {
+    "query": "How do I deploy this project to Vercel?",
+    "should_trigger": false,
+    "reason": "Deployment question, not troubleshooting or content extraction"
+  },
+  {
+    "query": "Can you explain how the Supabase ORM works?",
+    "should_trigger": false,
+    "reason": "General technical knowledge, not related to diagnosing issues or extracting content"
+  },
+  {
+    "query": "I need to add authentication to my board game database application. Should I use JWT, OAuth, or session-based auth?",
+    "should_trigger": false,
+    "reason": "Architecture decision question, not troubleshooting or content extraction"
+  },
+  {
+    "query": "Write a Python function to validate email addresses using regex.",
+    "should_trigger": false,
+    "reason": "Generic coding task, not project-specific troubleshooting"
+  },
+  {
+    "query": "Our Gemini API integration seems slow. When users search for games with generation enabled, it takes 30+ seconds. How can I optimize the prompts and API calls?",
+    "should_trigger": true,
+    "reason": "Gemini performance optimization → could be Part 1 or specialized focus"
+  },
+  {
+    "query": "The Supabase database keeps timing out when we run the PDF extraction script. Connection pools are maxed out. How do I debug and fix this?",
+    "should_trigger": true,
+    "reason": "PDF extraction + Supabase issues → Part 2 + infrastructure"
+  },
+  {
+    "query": "We're collecting board game data from multiple sources (BGG API, official PDFs, user submissions). How do I structure and validate this data before storing in Supabase?",
+    "should_trigger": true,
+    "reason": "Multi-source content collection + validation → Part 2 (PDF scenario can generalize)"
+  },
+  {
+    "query": "The frontend search isn't working and I don't know if it's a network issue, API issue, or database issue. How do I systematically figure out what's failing?",
+    "should_trigger": true,
+    "reason": "Multi-layer API debugging → Part 1"
+  },
+  {
+    "query": "When I run both `task dev:backend` and `task dev:frontend` at the same time, the frontend seems to load before the backend is ready. The API requests fail initially but work after a refresh. What's the root cause and how do I document this?",
+    "should_trigger": true,
+    "reason": "Startup race condition → frontend-API issue → Part 4 (Issue tracking)"
+  }
+]

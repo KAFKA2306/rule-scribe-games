@@ -1,0 +1,31 @@
+{
+  "eval_id": 2,
+  "eval_name": "pdf-extraction-to-japanese-workflow",
+  "prompt": "I have an official PDF rulebook for 'Ticket to Ride' that I want to add to our database. The PDF has English setup instructions and gameplay rules. I need to extract the content and create a structured game record with Japanese summaries. How do I do this?",
+  "assertions": [
+    {
+      "name": "includes-pdf-extraction-code",
+      "description": "Provides working Python code using pdfplumber or PyPDF2 to extract text"
+    },
+    {
+      "name": "covers-gemini-integration",
+      "description": "Explains how to call Gemini for translation and structuring (using generate_metadata from prompts.yaml)"
+    },
+    {
+      "name": "four-summary-fields",
+      "description": "Output includes all 4 required fields: setup_summary, gameplay_summary, end_game_summary, rules_summary"
+    },
+    {
+      "name": "japanese-output-confirmed",
+      "description": "Explicitly states that output should be in Japanese"
+    },
+    {
+      "name": "supabase-insertion",
+      "description": "Shows how to validate and insert the record into Supabase using upsert"
+    },
+    {
+      "name": "slug-generation",
+      "description": "Mentions slug derivation from title (kebab-case)"
+    }
+  ]
+}

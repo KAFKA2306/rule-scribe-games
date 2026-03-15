@@ -1,0 +1,27 @@
+{
+  "eval_id": 3,
+  "eval_name": "japanese-game-image-generation",
+  "prompt": "I want to create a Japanese cover image for a strategy board game. The game is called 'Splendor' and it's about Renaissance gem trading. I need a visually appealing image with Japanese text overlay. What's the exact command and what should my prompt look like?",
+  "assertions": [
+    {
+      "name": "exact-task-command",
+      "description": "Provides the exact syntax: task image:gen:ai PROMPT='...' OUTPUT='...'"
+    },
+    {
+      "name": "japanese-prompt-provided",
+      "description": "Includes a concrete Japanese language prompt (not English)"
+    },
+    {
+      "name": "game-theme-relevant",
+      "description": "Prompt references Renaissance, gems, trading, or strategy (Splendor's core themes)"
+    },
+    {
+      "name": "text-overlay-mentioned",
+      "description": "Prompt or instructions explicitly mention Japanese text overlay capability"
+    },
+    {
+      "name": "dimension-guidance",
+      "description": "Mentions image dimensions (e.g., 1280x670 default)"
+    }
+  ]
+}

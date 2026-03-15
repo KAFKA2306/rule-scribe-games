@@ -1,0 +1,32 @@
+{
+  "eval_id": 7,
+  "eval_name": "frontend-mobile-responsiveness",
+  "prompt": "Users are reporting that the game detail page looks broken on mobile devices. The rules text overflows, images don't scale, and the Japanese text rendering is sometimes illegible. The frontend CSS seems to have responsive design but it's not working correctly. How do I systematically debug and fix this?",
+  "expected_output": "Responsive design debugging methodology, CSS media query issues, text overflow solutions, image scaling for multiple devices, Japanese font rendering on mobile, DevTools approach to finding the root cause",
+  "assertions": [
+    {
+      "name": "Responsive design debugging methodology",
+      "description": "Provides a systematic methodology for debugging mobile responsiveness issues"
+    },
+    {
+      "name": "CSS media query analysis",
+      "description": "Discusses CSS media query issues and how to identify/fix them"
+    },
+    {
+      "name": "Text overflow solutions",
+      "description": "Provides specific solutions for handling text overflow in responsive design"
+    },
+    {
+      "name": "Image scaling guidance",
+      "description": "Explains how to properly scale images for multiple device sizes"
+    },
+    {
+      "name": "Japanese font rendering",
+      "description": "Addresses Japanese font rendering issues on mobile devices"
+    },
+    {
+      "name": "DevTools debugging approach",
+      "description": "Explains how to use browser DevTools to find and diagnose responsive design issues"
+    }
+  ]
+}

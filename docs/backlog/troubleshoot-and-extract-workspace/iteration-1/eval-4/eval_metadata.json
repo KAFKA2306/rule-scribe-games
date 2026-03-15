@@ -1,0 +1,27 @@
+{
+  "eval_id": 4,
+  "eval_name": "issue-documentation-and-tracking",
+  "prompt": "I keep running into the same issue with the frontend not connecting to the API when I restart the dev servers. It happens intermittently. Should I create a GitHub issue to track this, and how should I document it for future debugging?",
+  "assertions": [
+    {
+      "name": "github-issue-template",
+      "description": "Provides a valid GitHub issue template with title, reproduction steps, expected/actual behavior"
+    },
+    {
+      "name": "includes-error-log-guidance",
+      "description": "Mentions including error logs and stack traces in the issue"
+    },
+    {
+      "name": "troubleshooting-wiki-suggestion",
+      "description": "Suggests creating a TROUBLESHOOTING.md or similar documentation for recurring issues"
+    },
+    {
+      "name": "environment-details",
+      "description": "Issue template includes space for environment details (Python version, Node version, OS)"
+    },
+    {
+      "name": "reusable-format",
+      "description": "Format is structured and can be reused for other frontend/API issues"
+    }
+  ]
+}

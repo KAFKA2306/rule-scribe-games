@@ -1,0 +1,442 @@
+================================================================================
+EXTRACTING PDF RULEBOOK & CREATING STRUCTURED GAME RECORD
+Step-by-Step Guide for "Ticket to Ride"
+================================================================================
+
+## OVERVIEW
+This guide covers extracting content from a PDF rulebook and creating a
+structured database record with Japanese summaries in the Rule-Scribe-Games
+database (Supabase + FastAPI).
+
+================================================================================
+## PART 1: EXTRACT PDF CONTENT
+================================================================================
+
+### Step 1.1: Extract Text from PDF
+You'll need to convert the PDF to plaintext. Choose one:
+
+Option A - Using Python with pdfplumber:
+```python
+import pdfplumber
+
+pdf_path = "/path/to/ticket-to-ride-rulebook.pdf"
+with pdfplumber.open(pdf_path) as pdf:
+    rules_text = ""
+    for page in pdf.pages:
+        rules_text += page.extract_text() + "\n"
+
+print(rules_text)
+```
+
+Option B - Using CLI tool `pdftotext`:
+```bash
+pdftotext /path/to/ticket-to-ride-rulebook.pdf rules-output.txt
+```
+
+### Step 1.2: Organize Extracted Text
+Structure the text into sections:
+- **Setup Instructions**: Components, board setup, initial conditions
+- **Gameplay Rules**: Turn structure, player actions, mechanics
+- **Scoring**: Victory conditions, point calculation
+- **Special Rules**: Advanced optional rules
+
+Example structure:
+```
+SETUP INSTRUCTIONS:
+- Components: 225 train cards, gameboard, destination tickets...
+- Setup: Each player receives $45 in train cards...
+
+GAMEPLAY:
+- On your turn, perform ONE of these actions:
+  1. Draw 2 train cards
+  2. Claim a route
+  3. Draw destination tickets
+```
+
+================================================================================
+## PART 2: CREATE GAME DATABASE RECORD
+================================================================================
+
+### Step 2.1: Understand the Database Schema
+
+The database uses Pydantic models (app/models.py). Key fields:
+
+```python
+class GameDetail(BaseSchema):
+    id: str                          # UUID (auto)
+    slug: str | None                 # "ticket-to-ride" (auto)
+    title: str                       # "Ticket to Ride"
+    title_ja: str | None             # "チケット・トゥ・ライド" (REQUIRED)
+    description: str | None          # Long Japanese (3-5 sentences)
+    summary: str | None              # Brief Japanese (1 sentence)
+    rules_content: str | None        # Detailed Japanese rules (markdown)
+    rules_summary: str | None        # Rules overview (Japanese)
+    min_players: int                 # 2
+    max_players: int                 # 5
+    play_time: int                   # Minutes (60)
+    min_age: int                     # 8
+    published_year: int              # 2004
+    is_official: bool                # True (from official PDF)
+    image_url: str | None            # Game cover image
+    bgg_url: str | None              # BoardGameGeek link
+    structured_data: StructuredData  # Keywords, mechanics, elements
+```
+
+### Step 2.2: Translate to Japanese (Critical Step)
+
+You must create Japanese content. Options:
+
+Option A - Use Gemini API (Integrated):
+```python
+from app.core.gemini import GeminiClient
+import asyncio
+
+async def translate_rules(english_rules: str) -> dict:
+    gemini = GeminiClient()
+    prompt = f"""
+Translate this English board game rulebook to Japanese.
+Create content for FIRST-TIME PLAYERS (Explain Like I'm 5).
+Use plain Japanese (Desu/Masu form), avoid Katakana jargon.
+
+ENGLISH RULES:
+{english_rules}
+
+Return JSON:
+{{
+    "title_ja": "Japanese title",
+    "summary": "1-sentence Japanese summary",
+    "description": "3-5 sentence Japanese description",
+    "rules_content": "Detailed step-by-step Japanese rules"
+}}
+"""
+    result = await gemini.generate_structured_json(prompt)
+    return result
+
+result = asyncio.run(translate_rules(extracted_rules_text))
+```
+
+Option B - Manual translation:
+- Use DeepL API or human translator
+- Ensure plain language for board game audience
+- Include: components, setup, turn structure, victory condition
+
+### Step 2.3: Structure Rules Content (Markdown Format)
+
+Follow this format (from prompts.py):
+
+```markdown
+[Game overview 2-3 sentences. No jargon. What experience?]
+
+- [Component list]
+
+1. [Setup steps numbered. Concrete and detailed]
+
+[Detailed step-by-step instructions. Technical terms explained in plain Japanese]
+
+[Clear end condition and victory rules]
+
+- [3 strategy tips]
+```
+
+Example for Ticket to Ride:
+```markdown
+アメリカ大陸を列車で旅してネットワークを築くゲームです。
+目的地チケットの目標地点を繋げて、効率よく得点を稼ぐかが勝負です。
+
+- 列車カード 225枚（色別 各45枚）
+- 目的地チケット 81枚
+- プレイヤー駒（各色 45個）
+- ゲームボード
+
+1. 各プレイヤーが45ドル分の資金を受け取ります
+2. 目的地チケットを3〜4枚ずつ配ります
+3. プレイヤー駒を出発地に置きます
+
+手番では以下のいずれかを行います：
+1. 列車カードを2枚引く
+2. 路線を占拠する（列車カードを支払って線を埋める）
+3. 目的地チケットを引く
+
+ゲーム終了：誰かが駒45個を使い切ったらラウンド終了。
+最終得点：目的地チケット（達成で加点、未達成で減点）+ 占拠路線の得点。
+
+- 短い路線から占拠する：早期に点数を稼げる
+- 無理な目的地は避ける：減点が非常に痛い
+- ライバルの動きを観察：狙いの路線を先制する
+```
+
+================================================================================
+## PART 3: CREATE STRUCTURED DATA
+================================================================================
+
+### Step 3.1: Define Keywords (5-8 terms with plain explanations)
+
+```json
+{
+  "keywords": [
+    {
+      "term": "路線（ルート）",
+      "description": "2つの都市を繋ぐ線。列車カードを支払うことで占拠できます"
+    },
+    {
+      "term": "列車カード",
+      "description": "色が書かれたカード。同じ色を集めて路線を占拠するのに使います"
+    },
+    {
+      "term": "目的地チケット",
+      "description": "2つの遠い都市を繋ぐ目標。達成できたら得点、できなかったら失点"
+    },
+    {
+      "term": "占拠（クレーム）",
+      "description": "地図上の線に自分の駒を置くこと。その線はあなたのものになります"
+    },
+    {
+      "term": "ネットワーク",
+      "description": "自分の駒で繋がった複数の路線。長いほど得点が高い"
+    }
+  ]
+}
+```
+
+### Step 3.2: Define Key Elements (4-6 game components)
+
+```json
+{
+  "key_elements": [
+    {
+      "name": "ネットワーク作り",
+      "type": "mechanic",
+      "reason": "地図上で自分の色の線を繋げる快感"
+    },
+    {
+      "name": "目的地チケット",
+      "type": "mechanic",
+      "reason": "隠された目標を達成する時のドキドキ感"
+    },
+    {
+      "name": "列車カード",
+      "type": "component",
+      "reason": "色彩豊かなカードを集める楽しさ"
+    },
+    {
+      "name": "競争",
+      "type": "mechanic",
+      "reason": "短い路線を奪い合う競争"
+    }
+  ]
+}
+```
+
+### Step 3.3: Define Mechanics (List of game systems)
+
+```json
+{
+  "mechanics": [
+    "Set Collection",
+    "Route Building",
+    "Area Control",
+    "Hand Management"
+  ]
+}
+```
+
+================================================================================
+## PART 4: CREATE GAME RECORD (Complete Code Example)
+================================================================================
+
+### Step 4.1: Python Script
+
+```python
+import asyncio
+import os
+import sys
+from datetime import UTC, datetime
+
+sys.path.append(os.getcwd())
+from app.core import supabase
+
+async def create_ticket_to_ride():
+    game_data = {
+        "title": "Ticket to Ride",
+        "title_ja": "チケット・トゥ・ライド",
+        "title_en": "Ticket to Ride",
+        "min_players": 2,
+        "max_players": 5,
+        "play_time": 60,
+        "min_age": 8,
+        "published_year": 2004,
+        "is_official": True,
+        "bgg_url": "https://boardgamegeek.com/boardgame/9209/ticket-ride",
+        "official_url": "https://www.daysofwonder.com/tickettoride/",
+        "summary": "アメリカ大陸を列車で旅してネットワークを築き、目的地チケットの目標を達成して得点を稼ぐゲーム",
+        "description": "アメリカ大陸を舞台にした列車旅行ゲーム。列車カードを集めて地図上の路線を占拠します。目的地チケットで指定された都市を繋ぐと得点。繋げなかったら減点。シンプルなルールながら奥深い戦略性が魅力。家族から愛好家まで幅広い層に人気。",
+        "rules_content": "アメリカ大陸を列車で旅してネットワークを築くゲーム。\n\n**内容物:**\n- 列車カード 225枚（色別 各45枚）\n- 目的地チケット 81枚\n- プレイヤー駒（各色 45個）\n- ゲームボード\n\n**準備:**\n1. 各プレイヤーが45ドル分の資金を受け取ります\n2. 目的地チケットを3〜4枚ずつ配ります\n3. プレイヤー駒を出発地に置きます\n\n**手番では以下のいずれかを行います:**\n1. 列車カードを2枚引く\n2. 路線を占拠する\n3. 目的地チケットを引く\n\n**戦略ヒント:**\n- 短い路線から占拠する\n- 無理な目的地は避ける\n- ライバルの動きを観察する",
+        "rules_summary": "列車カードを集めて地図上の路線を占拠し、目的地を繋ぐゲーム。",
+        "structured_data": {
+            "keywords": [
+                {"term": "路線（ルート）", "description": "2つの都市を繋ぐ線"},
+                {"term": "列車カード", "description": "色が書かれたカード"},
+                {"term": "目的地チケット", "description": "2つの遠い都市を繋ぐ目標"},
+                {"term": "占拠（クレーム）", "description": "地図上の線に自分の駒を置くこと"},
+                {"term": "ネットワーク", "description": "自分の駒で繋がった複数の路線"}
+            ],
+            "key_elements": [
+                {"name": "ネットワーク作り", "type": "mechanic", "reason": "地図上で線を繋げる快感"},
+                {"name": "目的地チケット", "type": "mechanic", "reason": "隠された目標の達成感"},
+                {"name": "列車カード", "type": "component", "reason": "カードを集める楽しさ"},
+                {"name": "競争", "type": "mechanic", "reason": "路線を奪い合う競争"}
+            ],
+            "mechanics": ["Set Collection", "Route Building", "Area Control", "Hand Management"],
+            "best_player_count": "3-4"
+        },
+        "created_at": datetime.now(UTC).isoformat(),
+        "updated_at": datetime.now(UTC).isoformat()
+    }
+
+    result = await supabase.upsert(game_data)
+
+    if result:
+        print(f"✓ Game created: {result[0].get('id')}")
+        print(f"✓ Slug: {result[0].get('slug')}")
+        return result[0]
+    else:
+        print("✗ Failed to create game")
+        return None
+
+if __name__ == "__main__":
+    game = asyncio.run(create_ticket_to_ride())
+```
+
+### Step 4.2: Run the Script
+
+```bash
+uv run python scripts/add_ticket_to_ride.py
+```
+
+================================================================================
+## PART 5: VALIDATION & QUALITY CHECKS
+================================================================================
+
+### Step 5.1: Verify Record
+
+```python
+from app.core import supabase
+
+game = await supabase.get_by_slug("ticket-to-ride")
+print(f"Title: {game['title']}")
+print(f"Title (JA): {game['title_ja']}")
+print(f"Rules: {game['rules_summary'][:100]}...")
+```
+
+### Step 5.2: Japanese Content Quality Checklist
+
+- [ ] Title is correct Japanese transliteration
+- [ ] Summary is 1 sentence (Why is it fun?)
+- [ ] Description is 3-5 sentences, plain Japanese
+- [ ] Rules use markdown format with sections
+- [ ] No Katakana jargon without explanation
+- [ ] Keywords explain terms simply
+- [ ] Key elements describe fun aspects
+- [ ] Mechanics list is accurate
+
+### Step 5.3: Code Quality
+
+```bash
+task lint
+task format
+```
+
+================================================================================
+## PART 6: COMMON PITFALLS & SOLUTIONS
+================================================================================
+
+1. **Problem**: Japanese translation too technical (Katakana)
+   **Solution**: Replace with plain Japanese
+   - "ドラフト" → "カードを選ぶ"
+   - "トリックテイキング" → "勝ったカードを取る"
+
+2. **Problem**: PDF extraction produces garbled text
+   **Solution**:
+   - Try pdfplumber instead of PyPDF2
+   - Manually clean text, remove OCR errors
+
+3. **Problem**: Slug conflicts
+   **Solution**: Add year/edition
+   - "ticket-to-ride" → "ticket-to-ride-2004"
+
+4. **Problem**: Database upsert fails validation
+   **Solution**: Check required fields
+   - title, slug, description, rules_content filled
+   - Types correct (int for play_time)
+
+5. **Problem**: Rules content wrong length
+   **Solution**: Target 800-1500 Japanese characters
+
+================================================================================
+## PART 7: WORKFLOW CHECKLIST
+================================================================================
+
+For adding any game from an official PDF:
+
+- [ ] Extract text from PDF
+- [ ] Organize into: Setup, Gameplay, Winning, Strategy
+- [ ] Translate to plain Japanese
+- [ ] Create markdown rules_content
+- [ ] Define 5-8 keywords with explanations
+- [ ] Define 4-6 key_elements
+- [ ] List mechanics
+- [ ] Verify all GameDetail fields
+- [ ] Run script to create record
+- [ ] Validate slug, title_ja, rules_content
+- [ ] Spot-check Japanese accuracy
+- [ ] Run task lint
+- [ ] Commit: "feat: add Ticket to Ride from official PDF"
+
+================================================================================
+## PART 8: DATABASE SCHEMA REFERENCE
+================================================================================
+
+Required fields:
+- title (str): English title
+- rules_content (str): Japanese markdown rules
+- min_players, max_players (int)
+- play_time (int): Minutes
+- min_age (int)
+- published_year (int)
+
+Recommended optional fields:
+- title_ja (str): Japanese title
+- summary (str): 1-sentence Japanese summary
+- description (str): 3-5 sentence Japanese description
+- is_official (bool): True for official PDFs
+- bgg_url (str): BoardGameGeek link
+- official_url (str): Publisher link
+- structured_data: Keywords, mechanics, key_elements
+
+Auto-generated fields:
+- id (str): UUID
+- slug (str): From title (e.g., "ticket-to-ride")
+- created_at, updated_at (timestamp)
+
+================================================================================
+RELATED PROJECT FILES
+================================================================================
+
+Key files in this project:
+
+1. app/models.py - GameDetail, GameUpdate, StructuredData Pydantic models
+2. app/core/supabase.py - Database client with upsert(), get_by_slug()
+3. app/services/game_service.py - GameService class for game operations
+4. app/core/gemini.py - GeminiClient for translation/content generation
+5. app/prompts/prompts.py - Prompt templates for metadata generation
+6. scripts/enrich_new_games.py - Example: enriching games with full metadata
+7. scripts/add_new_games.py - Example: adding games from manual data
+8. Taskfile.yml - Task definitions for development workflow
+
+Database table: "games" (Supabase PostgreSQL)
+API endpoints: FastAPI (app/main.py, app/routers/games.py)
+Frontend: React + Vite (frontend/)
+
+================================================================================
+END OF GUIDE
+================================================================================
