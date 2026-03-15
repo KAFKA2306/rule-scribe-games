@@ -48,3 +48,7 @@ coverage/
 tests/logs/
 TTS-Voice-Wizard/
 data/
+.playwright_data/
+output_slides/
+frontend/public/output_slides/
+*.pdf
