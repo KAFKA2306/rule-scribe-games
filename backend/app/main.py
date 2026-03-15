@@ -9,6 +9,7 @@ from app.services.sitemap import get_sitemap_xml
 
 setup_logging()
 app = FastAPI(title="RuleScribe Minimal", version="1.0.0")
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],

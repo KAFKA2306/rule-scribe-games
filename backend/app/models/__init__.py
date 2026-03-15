@@ -1,4 +1,6 @@
-from pydantic import BaseModel, ConfigDict
+from datetime import datetime
+
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class BaseSchema(BaseModel):
@@ -35,6 +37,13 @@ class GameDetail(BaseSchema):
     description: str | None = None
     rules_content: str | None = None
     rules_summary: str | None = None
+    rules_confidence: float = 0.5
+    setup_summary: str | None = None
+    setup_confidence: float = 0.5
+    gameplay_summary: str | None = None
+    gameplay_confidence: float = 0.5
+    end_game_summary: str | None = None
+    end_game_confidence: float = 0.5
     image_url: str | None = None
     summary: str | None = None
     structured_data: StructuredData | None = None
@@ -43,7 +52,8 @@ class GameDetail(BaseSchema):
     affiliate_urls: dict[str, str | None] | None = None
     view_count: int | None = 0
     search_count: int | None = 0
-    data_version: int | None = 0
+    data_version: int = 1
+    last_regenerated_at: datetime | None = None
     is_official: bool | None = False
     min_players: int | None = None
     max_players: int | None = None
@@ -67,6 +77,14 @@ class GameUpdate(BaseSchema):
     title_ja: str | None = None
     description: str | None = None
     summary: str | None = None
+    rules_summary: str | None = None
+    rules_confidence: float | None = Field(None, ge=0, le=1)
+    setup_summary: str | None = None
+    setup_confidence: float | None = Field(None, ge=0, le=1)
+    gameplay_summary: str | None = None
+    gameplay_confidence: float | None = Field(None, ge=0, le=1)
+    end_game_summary: str | None = None
+    end_game_confidence: float | None = Field(None, ge=0, le=1)
     min_players: int | None = None
     max_players: int | None = None
     play_time: int | None = None
@@ -77,10 +95,11 @@ class GameUpdate(BaseSchema):
     bgg_url: str | None = None
     structured_data: StructuredData | None = None
     rules_content: str | None = None
-    rules_summary: str | None = None
+    data_version: int | None = None
+    last_regenerated_at: datetime | None = None
 
 
-SearchResult = GameDetail
+SEARCH_RESULT = GameDetail
 
 
 class GeneratedGameMetadata(BaseSchema):
@@ -104,3 +123,4 @@ class StrategyTier(BaseSchema):
     strategy_content: str
     author: str | None = None
     created_at: str | None = None
+    updated_at: str | None = None

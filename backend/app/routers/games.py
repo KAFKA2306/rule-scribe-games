@@ -12,7 +12,9 @@ def get_game_service():
 
 @router.get("/search", response_model=list[GameDetail])
 async def search_games(q: str = Query(..., min_length=1), service: GameService = Depends(get_game_service)):
-    return await service.search_games(q)
+    if not q or not q.strip():
+        return []
+    return await service.search_games(q.strip())
 
 
 @router.post("/search", response_model=list[GameDetail])
@@ -21,12 +23,7 @@ async def search_games_post(
     service: GameService = Depends(get_game_service),
 ):
     if body.generate:
-        # Try NotebookLM pipeline first if possible, otherwise fallback to Gemini
-        try:
-            new_game = await service.generate_with_notebooklm(body.query)
-        except Exception:
-            new_game = await service.create_game_from_query(body.query)
-
+        new_game = await service.generate_with_notebooklm(body.query)
         if new_game and new_game.get("slug"):
             return [new_game]
     return await service.search_games(body.query)

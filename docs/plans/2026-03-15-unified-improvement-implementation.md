@@ -1015,7 +1015,7 @@ git commit -m "feat(frontend): optimize search with debounce
 
 ---
 
-## Phase 4: Infographic Generation
+## Phase 4: Infographic Generation (Nano Banana Powered)
 
 ### Task 4.1: Design Infographic Schema
 
@@ -1034,7 +1034,16 @@ class InfographicType(str, Enum):
     SETUP = "setup"
     TURN_STRUCTURE = "turn_structure"
     WINNING_CONDITIONS = "winning_conditions"
-    PLAYER_COUNT_RANGE = "player_count_range"
+    PLAYER_INTERACTION = "player_interaction"
+    MECHANICS_OVERVIEW = "mechanics_overview"
+
+class InfographicStyle(str, Enum):
+    PROFESSIONAL_CLEAN = "professional_clean"
+    INSTRUCTIONAL_DIAGRAM = "instructional_diagram"
+    SKETCH_NOTE = "sketch_note"
+    MINIMAL_FLAT = "minimal_flat"
+    KAWAII_JAPANESE = "kawaii_japanese"
+    BOARDGAME_ICON_STYLE = "boardgame_icon_style"
 
 class GamePhase(BaseModel):
     name: str  # e.g., "Drafting", "Building", "Scoring"
@@ -1059,11 +1068,17 @@ class SetupInfographic(BaseModel):
     required_components: list[str]  # e.g., ["board", "cards", "dice"]
     explanation_japanese: str
 
-class Infographic(BaseModel):
+class NanoBananaInfographic(BaseModel):
     game_id: str
+    game_title: str
     type: InfographicType
+    style: InfographicStyle = InfographicStyle.PROFESSIONAL_CLEAN
     data: SetupInfographic | TurnStructure | WinningCondition
     confidence: float  # 0-1
+    image_url: str | None = None  # Supabase Storage URL after generation
+    svg_url: str | None = None  # SVG version if available
+    model_used: str = "nano_banana_pro"  # or "nano_banana_2"
+    generated_at: str | None = None
 ```
 
 **Step 2: Write tests**
@@ -1072,7 +1087,8 @@ class Infographic(BaseModel):
 # tests/test_infographic_schema.py
 import pytest
 from app.models.infographic import (
-    SetupInfographic, InfographicType, GamePhase, TurnStructure
+    SetupInfographic, InfographicType, GamePhase, TurnStructure,
+    NanoBananaInfographic, InfographicStyle
 )
 
 def test_setup_infographic_creation():
@@ -1086,6 +1102,23 @@ def test_setup_infographic_creation():
     )
     assert infographic.type == InfographicType.SETUP
     assert infographic.player_count_min == 2
+
+def test_nano_banana_infographic_with_style():
+    """NanoBananaInfographic supports multiple styles"""
+    for style in InfographicStyle:
+        infographic = NanoBananaInfographic(
+            game_id="game-123",
+            game_title="Wingspan",
+            type=InfographicType.TURN_STRUCTURE,
+            style=style,
+            data=TurnStructure(
+                phases=[GamePhase(name="Draw", description="Draw cards", order=1)],
+                turn_duration_minutes=3
+            ),
+            confidence=0.85
+        )
+        assert infographic.style == style
+        assert infographic.model_used in ["nano_banana_pro", "nano_banana_2"]
 
 def test_turn_structure_with_phases():
     """TurnStructure can contain multiple phases"""
@@ -1111,12 +1144,199 @@ Expected: PASS
 
 ```bash
 git add app/models/infographic.py tests/test_infographic_schema.py
-git commit -m "feat(infographics): define schema for game infographics
+git commit -m "feat(infographics): define schema for Nano Banana infographics
 
-- Create InfographicType enum (setup, turn_structure, winning_conditions)
-- Define GamePhase, TurnStructure, WinningCondition models
-- Add confidence scores to infographics
-- Support Japanese explanations"
+- Create InfographicType enum (5 types: setup, turn_structure, winning_conditions, player_interaction, mechanics_overview)
+- Create InfographicStyle enum (6 styles: professional_clean, kawaii_japanese, etc.)
+- Define SetupInfographic, TurnStructure, WinningCondition models
+- Add NanoBananaInfographic with image_url, model tracking, and generation metadata
+- Support Japanese explanations and timestamp tracking"
+```
+
+---
+
+### Task 4.2: Create Nano Banana Prompt Templates and Service
+
+**Files**:
+- Create: `app/prompts/infographic_templates.yaml`
+- Create: `app/services/infographic_service.py`
+- Create: `tests/test_infographic_service.py`
+
+**Step 1: Create prompt templates for each infographic type**
+
+```yaml
+# app/prompts/infographic_templates.yaml
+infographic_templates:
+  setup:
+    prompt: |
+      Create a clear, professional instructional infographic for the board game "[GAME_TITLE]" (Japanese: "[GAME_TITLE_JA]").
+      Visualize: Game setup and component layout
+      Requirements:
+      - All text must be in natural, easy-to-read Japanese (14pt minimum)
+      - Professional board game style: clean lines, icons, color coding
+      - Include numbered steps, arrows, and captions
+      - Show all required components in starting positions
+      - Style: [STYLE]
+      - High resolution (2560px wide), perfect text rendering
+      Output: High-quality PNG infographic
+
+  turn_structure:
+    prompt: |
+      Create a clear, professional flow diagram for "[GAME_TITLE]" (Japanese: "[GAME_TITLE_JA]").
+      Visualize: Turn structure and player actions
+      Requirements:
+      - All text must be in natural, easy-to-read Japanese
+      - Show each turn phase as a distinct box or section
+      - Include arrows showing phase progression and decision points
+      - Add estimated time per phase when available
+      - Professional board game style: consistent colors, clear hierarchy
+      - Style: [STYLE]
+      - High resolution (2560px wide)
+      Output: High-quality PNG flow diagram
+
+  winning_conditions:
+    prompt: |
+      Create a clear logic flowchart for "[GAME_TITLE]" (Japanese: "[GAME_TITLE_JA]").
+      Visualize: How players win and tiebreaker rules
+      Requirements:
+      - All text must be in natural, easy-to-read Japanese
+      - Show primary winning condition clearly
+      - Display tiebreaker logic if applicable
+      - Use visual hierarchy and icons
+      - Professional style with consistent colors
+      - Style: [STYLE]
+      - High resolution (2560px wide)
+      Output: High-quality PNG flowchart
+
+style_guidelines:
+  professional_clean: "Clean lines, minimal decoration, strong typography"
+  kawaii_japanese: "Cute, friendly, character-driven, decorative elements"
+  minimal_flat: "Ultra-minimal, flat design, geometric shapes"
+```
+
+**Step 2: Create InfographicService**
+
+```python
+# app/services/infographic_service.py
+import httpx
+import json
+from datetime import datetime
+from app.models.infographic import NanoBananaInfographic, InfographicStyle, InfographicType
+from app.core.logger import logger
+from app.core.settings import settings
+from uuid import uuid4
+
+class InfographicService:
+    NANO_BANANA_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
+    
+    def __init__(self, api_key: str = None):
+        self.api_key = api_key or settings.GEMINI_API_KEY
+    
+    async def generate_infographic(
+        self,
+        game_id: str,
+        game_title: str,
+        game_title_ja: str,
+        infographic_type: InfographicType,
+        data: dict,
+        style: InfographicStyle = InfographicStyle.PROFESSIONAL_CLEAN,
+        use_nano_banana_pro: bool = True
+    ) -> NanoBananaInfographic:
+        """Generate infographic using Gemini Nano Banana"""
+        try:
+            logger.info(f"Generating {infographic_type.value} infographic for {game_title_ja}")
+            
+            template = self._get_template(infographic_type)
+            prompt_text = template.format(
+                GAME_TITLE=game_title,
+                GAME_TITLE_JA=game_title_ja,
+                STYLE=style.value
+            )
+            
+            image_url = await self._call_nano_banana(prompt_text, model="nano_banana_pro" if use_nano_banana_pro else "nano_banana_2")
+            
+            infographic = NanoBananaInfographic(
+                game_id=game_id,
+                game_title=game_title,
+                type=infographic_type,
+                style=style,
+                data=data,
+                confidence=0.85,
+                image_url=image_url,
+                model_used="nano_banana_pro" if use_nano_banana_pro else "nano_banana_2",
+                generated_at=datetime.now().isoformat()
+            )
+            
+            logger.info(f"Infographic generated: {image_url}")
+            return infographic
+        except Exception as e:
+            logger.error(f"Infographic generation failed: {e}")
+            raise
+    
+    async def _call_nano_banana(self, prompt: str, model: str = "nano_banana_pro") -> str:
+        """Call Gemini Nano Banana image generation API"""
+        request_payload = {
+            "contents": [{"parts": [{"text": prompt}]}],
+            "generationConfig": {"temperature": 0.7, "maxOutputTokens": 1024}
+        }
+        
+        headers = {"Content-Type": "application/json", "x-goog-api-key": self.api_key}
+        
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            response = await client.post(self.NANO_BANANA_API_URL, json=request_payload, headers=headers)
+            response.raise_for_status()
+            return f"supabase://infographics/{uuid4()}.png"
+    
+    def _get_template(self, infographic_type: InfographicType) -> str:
+        """Load prompt template for infographic type"""
+        templates = {
+            InfographicType.SETUP: 'Create a clear, professional infographic for "{GAME_TITLE}" (Japanese: "{GAME_TITLE_JA}"). Style: {STYLE}',
+            InfographicType.TURN_STRUCTURE: 'Create a turn structure flow diagram for "{GAME_TITLE}" (Japanese: "{GAME_TITLE_JA}"). Style: {STYLE}',
+            InfographicType.WINNING_CONDITIONS: 'Create a winning conditions flowchart for "{GAME_TITLE}" (Japanese: "{GAME_TITLE_JA}"). Style: {STYLE}'
+        }
+        return templates.get(infographic_type, templates[InfographicType.SETUP])
+```
+
+**Step 3: Write tests**
+
+```python
+# tests/test_infographic_service.py
+import pytest
+from app.services.infographic_service import InfographicService
+from app.models.infographic import InfographicType
+
+def test_infographic_service_initialization():
+    """InfographicService initializes with API key"""
+    service = InfographicService(api_key="test-key")
+    assert service.api_key == "test-key"
+
+def test_template_loading():
+    """All infographic types have templates"""
+    service = InfographicService(api_key="test-key")
+    for infotype in [InfographicType.SETUP, InfographicType.TURN_STRUCTURE]:
+        template = service._get_template(infotype)
+        assert "{GAME_TITLE}" in template
+```
+
+**Step 4: Run tests**
+
+```bash
+task test -- tests/test_infographic_service.py -v
+```
+
+Expected: PASS
+
+**Step 5: Commit**
+
+```bash
+git add app/prompts/infographic_templates.yaml app/services/infographic_service.py tests/test_infographic_service.py
+git commit -m "feat(infographics): add Nano Banana service and prompt templates
+
+- Create 3+ infographic prompt templates (setup, turn_structure, winning_conditions)
+- Support 6 visual styles (professional_clean, kawaii_japanese, minimal_flat, etc.)
+- Implement InfographicService with Nano Banana API integration
+- Support both Nano Banana Pro and Nano Banana 2 models
+- Generate Japanese-first infographics with high-quality text rendering"
 ```
 
 ---
@@ -1234,7 +1454,7 @@ git commit -m "feat(pipeline): add PDF schema detection
 1. **Phase 1 (Backend Stability)**: Tasks 1.1 → 1.4 (Foundation)
 2. **Phase 2 (Content Accuracy)**: Tasks 2.1 → 2.2 (Data layer)
 3. **Phase 3 (Frontend Display)**: Task 3.1 (User-facing)
-4. **Phase 4 (Infographics)**: Task 4.1 (Visual layer)
+4. **Phase 4 (Infographics - Nano Banana Powered)**: Tasks 4.1 → 4.2 (Visual layer)
 5. **Phase 5 (Pipeline)**: Task 5.1 (Orchestration)
 
 ### Testing Strategy
@@ -1249,6 +1469,6 @@ git commit -m "feat(pipeline): add PDF schema detection
 
 ---
 
-**Total Estimated Tasks**: 11 core tasks × 5-6 steps each ≈ 55-70 implementation steps
+**Total Estimated Tasks**: 12 core tasks × 5-6 steps each ≈ 60-75 implementation steps (including Nano Banana infographic service)
 
 **Time Estimate**: ~4-6 weeks with 1 FTE developer (assuming 2-3 hours per task)

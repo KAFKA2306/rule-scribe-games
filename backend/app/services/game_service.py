@@ -4,14 +4,13 @@ import uuid
 from datetime import UTC, datetime
 from typing import Any
 
-from app.prompts.prompts import PROMPTS
-from app.services.pipeline_orchestrator import PipelineOrchestrator
-from app.utils.affiliate import amazon_search_url
-
 from app.core import supabase
 from app.core.gemini import GeminiClient
 from app.core.llm_manager import LLMKeyRotator
 from app.models import GeneratedGameMetadata
+from app.prompts.prompts import PROMPTS
+from app.services.pipeline_orchestrator import PipelineOrchestrator
+from app.utils.affiliate import amazon_search_url
 
 logger = logging.getLogger("agents.game_service")
 _gemini = GeminiClient()
@@ -173,8 +172,8 @@ class GameService:
         out = await supabase.upsert(merged)
         return out[0] if out else {}
 
-    async def generate_with_notebooklm(self, query: str) -> dict[str, Any]:
-        result = await _pipeline.process_game_rules(query)
+    async def generate_with_notebooklm(self, query: str, generate_infographics: bool = True) -> dict[str, Any]:
+        result = await _pipeline.process_game_rules(query, generate_infographics=generate_infographics)
         out = await supabase.upsert(result)
         return out[0] if out else {}
 

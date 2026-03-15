@@ -8,12 +8,14 @@ class LLMKeyRotator:
         self.prefix = prefix
         self.keys: list[str] = []
         self.valid: list[bool] = []
+        self.key_map: dict[str, int] = {}
 
         i = 1
         while True:
             key = os.getenv(f"{prefix}_{i}")
             if not key:
                 break
+            self.key_map[key] = len(self.keys)
             self.keys.append(key)
             self.valid.append(True)
             i += 1
@@ -21,6 +23,7 @@ class LLMKeyRotator:
         if not self.keys:
             key = os.getenv(prefix)
             if key:
+                self.key_map[key] = 0
                 self.keys = [key]
                 self.valid = [True]
 
@@ -41,7 +44,7 @@ class LLMKeyRotator:
         raise RuntimeError("All API keys are rate-limited. Try again in 1 hour.")
 
     def mark_rate_limited(self, key: str):
-        idx = self.keys.index(key)
+        idx = self.key_map[key]
         self.valid[idx] = False
         valid_count = sum(self.valid)
         logging.warning(f"[LLM] Key {idx + 1}/{len(self.keys)} rate-limited. {valid_count} keys remaining.")

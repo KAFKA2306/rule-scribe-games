@@ -57,14 +57,22 @@ This spec defines a holistic improvement to RuleScribe Games across five archite
 - Data versioning tracks what changed and why
 - Confidence scores on extracted facts (high/medium/low)
 
-### Layer 4: Infographic Generation
-**Goal**: Visual explanations that make complex rules intuitive
+### Layer 4: Infographic Generation (Nano Banana Powered)
+**Goal**: Professional visual explanations that make complex rules intuitive and learnable at a glance
 
 **Requirements**:
-- Auto-generate diagrams for game setup, turn structure, winning conditions
-- Infographics are schema-based (not just pretty images without meaning)
-- Explainability: users see *which rule* is visualized and *why*
-- Multi-language support (English + Japanese on same graphic)
+- **Gemini Nano Banana Pro/2 powered image generation** for high-quality instructional diagrams
+- Auto-generate multiple diagram types per game:
+  - Setup/Component Layout - 初期セットアップの俯瞰図 with labeled components
+  - Turn Structure Flow - ターン進行の流れ with step numbers and conditional branches
+  - Winning Conditions Flowchart - 勝利条件の論理ツリーまたはフローチャート
+  - Player Interaction Map - プレイヤー間の相互作用 and action flow
+  - Key Mechanics Overview - ゲームのコアメカニクス 1枚まとめ with icons
+- **Japanese-first design**: All text rendered natively in Japanese (高精度な日本語テキスト描画)
+- **Multiple style options**: professional_clean, instructional_diagram, sketch_note, minimal_flat, kawaii_japanese, boardgame_icon_style
+- **Schema-based generation**: Every infographic is tied to rule blocks (not decorative)
+- **Explainability**: Users see *which rule* is visualized, confidence level, and generation model
+- **Accessibility**: High contrast, readable fonts, clear labeling
 
 ### Layer 5: Smart Pipeline
 **Goal**: Intelligent orchestration from PDF → structured data → user view

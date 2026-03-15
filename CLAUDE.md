@@ -129,11 +129,17 @@ tests/
 - Login button no-ops when auth unavailable
 - Set env vars before testing auth flows
 
+### Middleware Ordering (FastAPI)
+- **Middleware order matters:** CORS must be registered after other setup but before route handlers (outermost layer). FastAPI's built-in JSON validation is sufficient; custom ValidationMiddleware is redundant.
+- Current stack: CORS → route handlers. Any additional middleware should be added before CORS registration.
+
 ## Code Style & Architecture Rules
 
 ### Python (FastAPI)
 - Target **Python 3.11+**
 - Use async endpoints; prefer type hints; minimal abstractions
+- **No try-catch in business logic** — Let exceptions crash per Crash-Driven Development (CDD). Only handle at middleware/monitoring level if needed.
+- **Service singletons** — Use module-level instance or dependency-inject, NOT ClassVar (doesn't persist per-request in FastAPI)
 - Direct Supabase + Gemini calls (no heavy ORMs)
 - Logging via `app/core/logger.setup_logging()`
 - Package manager: `uv` (via `task setup:backend`)
