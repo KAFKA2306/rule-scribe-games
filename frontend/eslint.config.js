@@ -7,7 +7,7 @@ import prettier from 'eslint-config-prettier'
 import babelParser from '@babel/eslint-parser'
 export default [
   {
-    ignores: ['node_modules', 'dist', 'playwright-report', 'coverage'],
+    ignores: ['node_modules', 'dist', 'playwright-report', 'coverage', 'test-results'],
   },
   {
     files: ['**/*.{js,jsx}'],
