@@ -1,0 +1,152 @@
+{
+  "timestamp": "2025-12-06T17:47:02.001424",
+  "model": "gemini-2.5-flash",
+  "query": "カタン",
+  "step1_generator": {
+    "prompt": "You are an accurate board game librarian.\nYour task is to search for the board game \"カタン\" and generate a JSON object based on verified facts found in the search results.\n\nContext from existing database (for reference):\nNo matches.\n\n# Core Mission\n1. **COMPLETE THE BLANKS**: The provided context may be incomplete. Your job is to fill in ALL missing fields in the schema.\n2. **CORRECT HALLUCINATIONS**: The context may contain lies or misunderstandings. Verify strictly against search results and FIX any inaccuracies.\n3. **STRICT ACCURACY**: If the game does not exist or you cannot find reliable information, return {\"error\": \"Game not found\"}. Do not invent rules or cards.\n\n# Content Rules\n1. LANGUAGE: All descriptive text (summary, rules_content) MUST be in Japanese.\n2. TARGET: The content is for beginners who want to play the game immediately.\n   - rules_content: MUST be comprehensive. Include \"Preparation (Setup)\", \"Game Flow (Turn Structure)\", \"End Game Conditions\", and \"Victory Conditions\". Write in a clear, step-by-step format in Japanese Markdown.\n   - summary: Catchy short summary in Japanese (1-2 sentences).\n3. URLS: Only include URLs if they are verified strong relation with the game title and working.\n4. KEYWORDS: Generate 5-10 relevant Japanese keywords (e.g., genre, mechanic, theme). Format: { \"term\": \"Keyword\", \"description\": \"Why it fits\" }.\n\n# Output JSON Schema\n{\n    \"data\": {\n        \"slug\": \"unique-kebab-case-identifier\",\n        \"title\": \"Original English Title\",\n        \"title_ja\": \"Japanese Title\",\n        \"title_en\": \"English Title\",\n        \"summary\": \"Catchy short summary in Japanese\",\n        \"rules_content\": \"Detailed summary of rules in Japanese Markdown. Headers: ## Setup, ## Gameplay, ## End Game\",\n        \"image_url\": \"string or null\",\n        \"min_players\": int,\n        \"max_players\": int,\n        \"play_time\": int,\n        \"min_age\": int,\n        \"published_year\": int,\n        \"official_url\": \"string or null\",\n        \"bgg_url\": \"string or null\",\n        \"bga_url\": \"string or null\",\n        \"bgg_url\": \"string or null\",\n        \"bga_url\": \"string or null\",\n        \"amazon_url\": \"string or null\",\n        \"structured_data\": {\n            \"keywords\": [\n                { \"term\": \"string\", \"description\": \"string\" }\n            ]\n        }\n    },\n    \"data_confidence\": {\n        \"slug\": float, \"title\": float, \"title_ja\": float, \"title_en\": float,\n        \"summary\": float, \"rules_content\": float,\n        \"image_url\": float, \"min_players\": float, \"max_players\": float,\n        \"play_time\": float, \"min_age\": float, \"published_year\": float,\n        \"official_url\": float, \"bgg_url\": float, \"bga_url\": float, \"amazon_url\": float,\n        \"structured_data\": float\n    },\n    \"issues\": [\n        {\"field\": \"field_name\", \"problem\": \"short reason (missing/uncertain/contradictory)\", \"confidence\": float}\n    ]\n}\nRules:\n- data_confidence must include every field above; use 0.0 if unsure.\n- issues only for fields that are missing/uncertain/contradictory; keep message under 120 chars.",
+    "output": {
+      "data": {
+        "slug": "catan",
+        "title": "The Settlers of Catan",
+        "title_ja": "カタンの開拓者たち",
+        "title_en": "Catan",
+        "summary": "無人島を舞台に、資源を集め、道を建設し、開拓地を広げ、勝利点を競う戦略ボードゲーム。サイコロの運と交渉が勝敗を分ける、世界中で愛される名作です。",
+        "rules_content": "# カタンの開拓者たち ルール説明\n\nカタンは、無人島「カタン島」を舞台に、資源を集め、開拓地や都市を建設し、道を広げていく戦略ボードゲームです。サイコロの運とプレイヤー間の交渉が重要になります。最初に10勝利点を獲得したプレイヤーが勝者となります。\n\n## セットアップ (準備)\n\n1.  **島の作成:**\n    *   地形タイル（資源タイル）を裏向きにしてよく混ぜ、カタン島の形になるように配置します。通常は六角形の環状に並べます。\n    *   海フレームを地形タイルの周りに配置し、島を囲みます。\n    *   地形タイルを表向きにします。\n2.  **数字トークンの配置:**\n    *   数字トークン（2から12までの数字が書かれた丸いチップ）を、砂漠タイルを除く各地形タイルにランダムに配置します。ただし、赤色の数字（6と8）は隣接しないように配置します。\n3.  **港タイルの配置:**\n    *   海フレームの指定された場所に港タイルを配置します。\n4.  **資源カードと発展カードの準備:**\n    *   資源カード（木材、レンガ、羊毛、麦、鉱石）を種類ごとに分け、山札として置きます。\n    *   発展カード（騎士、勝利点、独占、街道建設、発見）をよく混ぜ、裏向きの山札として置きます。\n5.  **盗賊の配置:**\n    *   盗賊コマを砂漠タイルに置きます。\n6.  **プレイヤーの準備:**\n    *   各プレイヤーは、自分の色の開拓地コマ5個、都市コマ4個、道コマ15個を受け取ります。\n    *   各プレイヤーは、建設コスト表を1枚受け取ります。\n7.  **初期配置:**\n    *   じゃんけんなどでスタートプレイヤーを決めます。\n    *   スタートプレイヤーから時計回りに、各プレイヤーは開拓地1つとそれに隣接する道1つを配置します。開拓地は3つの地形タイルが交わる交差点に置きます。道は開拓地に隣接する辺に置きます。\n    *   次に、最後のプレイヤーから反時計回りに、各プレイヤーは2つ目の開拓地とそれに隣接する道1つを配置します。\n    *   2つ目の開拓地を置いたプレイヤーは、その開拓地に隣接する3つの地形タイルから、それぞれ1枚ずつ資源カードを受け取ります。\n\n## ゲームの流れ (ターン構造)\n\n各プレイヤーのターンは以下の3つのフェイズで構成されます。\n\n1.  **サイコロを振る:**\n    *   手番プレイヤーは2つのサイコロを振り、出た目の合計を確認します。\n    *   出た目の数字が置かれている地形タイルに隣接する開拓地や都市を持つプレイヤーは、対応する資源カードを受け取ります。\n        *   開拓地：資源カード1枚\n        *   都市：資源カード2枚\n    *   **「7」が出た場合:**\n        *   全てのプレイヤーは、手札の資源カードが7枚を超えている場合、その半分（端数切り捨て）を捨て札にします。\n        *   サイコロを振ったプレイヤーは、盗賊コマを砂漠以外の好きな地形タイルに移動させます。\n        *   盗賊を移動させたプレイヤーは、その地形タイルに隣接する開拓地または都市を持つプレイヤーから、資源カードを1枚ランダムに奪います。\n        *   盗賊が置かれた地形タイルからは、サイコロの目が出ても資源は産出されません。\n2.  **交易 (交渉):**\n    *   手番プレイヤーは、他のプレイヤーと資源カードを交換することができます。交渉は自由に行われ、交換比率も自由に決められます。\n    *   手番プレイヤーは、港を利用して銀行と交易することもできます。\n        *   通常の交易：同じ資源カード4枚を銀行に渡し、好きな資源カード1枚を受け取ります。\n        *   港での交易：港の種類に応じた資源カード3枚（または2枚）を銀行に渡し、好きな資源カード1枚を受け取ります。\n3.  **建設:**\n    *   手番プレイヤーは、手札の資源カードを消費して、以下のものを建設できます。\n        *   **道 (木材1、レンガ1):** 自分の開拓地や道に隣接する辺に建設できます。\n        *   **開拓地 (木材1、レンガ1、羊毛1、麦1):** 自分の道に繋がっており、他の開拓地や都市から2辺以上離れた交差点に建設できます。開拓地を建設すると1勝利点。\n        *   **都市 (麦2、鉱石3):** 自分の開拓地を都市にアップグレードします。都市は2勝利点となり、資源産出時に2枚の資源カードを受け取ります。\n        *   **発展カード (羊毛1、麦1、鉱石1):** 発展カードの山札から1枚引きます。引いた発展カードはすぐに使わず、次の自分のターン以降に使うことができます（勝利点カードを除く）。\n            *   **騎士カード:** プレイすると盗賊を移動させ、資源を奪うことができます。3枚の騎士カードをプレイしたプレイヤーは「最大騎士力」として2勝利点を得ます。\n            *   **勝利点カード:** プレイせずに手札に持っておき、ゲーム終了時に勝利点として数えます。\n            *   **独占:** 宣言した種類の資源カードを、他の全プレイヤーから全て奪います。\n            *   **街道建設:** 道を2本、無料で建設できます。\n            *   **発見:** 好きな資源カードを2枚、銀行から受け取ります。\n\n## 終了条件\n\nいずれかのプレイヤーが10勝利点に達した時点で、そのプレイヤーのターンが終了するのを待たずにゲームは終了し、そのプレイヤーが勝者となります。\n\n## 勝利条件\n\n最初に10勝利点を獲得したプレイヤーが勝利します。勝利点は以下の要素で構成されます。\n\n*   開拓地：1勝利点\n*   都市：2勝利点\n*   勝利点カード：1勝利点\n*   最大騎士力：2勝利点（騎士カードを3枚以上プレイし、他の誰よりも多くプレイしている場合）\n*   最長交易路：2勝利点（途切れることなく5本以上の道を繋げ、他の誰よりも長く繋げている場合）",
+        "image_url": "https://cf.geekdo-images.com/images/pic2419375.jpg",
+        "min_players": 3,
+        "max_players": 4,
+        "play_time": 75,
+        "min_age": 8,
+        "published_year": 1995,
+        "official_url": "https://www.catan.com/",
+        "bgg_url": "https://boardgamegeek.com/boardgame/13/catan",
+        "bga_url": "https://boardgamearena.com/gamepanel?game=catan",
+        "amazon_url": "https://www.amazon.co.jp/カタン-スタンダード版-ボードゲーム-3-4人用-8才以上/dp/B075R32194/",
+        "structured_data": {
+          "keywords": [
+            {
+              "term": "資源管理",
+              "description": "木材、レンガ、羊毛、麦、鉱石といった資源を効率的に集め、計画的に使うことが勝利への鍵となります。"
+            },
+            {
+              "term": "交渉",
+              "description": "他のプレイヤーとの資源の交換（交易）がゲームの重要な要素であり、巧みな交渉術が求められます。"
+            },
+            {
+              "term": "開拓",
+              "description": "無人島に開拓地や都市を建設し、道を広げていくことで自分の領土を拡大していくことが目的です。"
+            },
+            {
+              "term": "ダイスロール",
+              "description": "サイコロの出目によって資源の産出が決まるため、運の要素もゲーム展開に大きく影響します。"
+            },
+            {
+              "term": "戦略",
+              "description": "どの場所に開拓地を置くか、何を優先して建設するか、いつ交渉するかなど、長期的な計画と判断が必要です。"
+            },
+            {
+              "term": "交易",
+              "description": "港を利用した銀行との交易や、他のプレイヤーとの資源のやり取りが頻繁に行われます。"
+            },
+            {
+              "term": "ドイツゲーム",
+              "description": "ドイツで生まれ、世界的に人気を博したボードゲームのジャンルであり、その代表作の一つです。"
+            },
+            {
+              "term": "ボードゲーム",
+              "description": "物理的なボード、カード、コマなどを使って遊ぶ、テーブルゲームの一種です。"
+            }
+          ]
+        }
+      },
+      "data_confidence": {
+        "slug": 1.0,
+        "title": 1.0,
+        "title_ja": 1.0,
+        "title_en": 1.0,
+        "summary": 1.0,
+        "rules_content": 1.0,
+        "image_url": 0.9,
+        "min_players": 1.0,
+        "max_players": 1.0,
+        "play_time": 1.0,
+        "min_age": 1.0,
+        "published_year": 1.0,
+        "official_url": 1.0,
+        "bgg_url": 1.0,
+        "bga_url": 1.0,
+        "amazon_url": 0.9,
+        "structured_data": 1.0
+      },
+      "issues": []
+    }
+  },
+  "step2_critic": {
+    "prompt": "Role: Board Game Data Auditor and Fixer\nInputs:\n  - query: \"カタン\"\n  - draft_json: {\"slug\": \"catan\", \"title\": \"The Settlers of Catan\", \"title_ja\": \"カタンの開拓者たち\", \"title_en\": \"Catan\", \"summary\": \"無人島を舞台に、資源を集め、道を建設し、開拓地を広げ、勝利点を競う戦略ボードゲーム。サイコロの運と交渉が勝敗を分ける、世界中で愛される名作です。\", \"rules_content\": \"# カタンの開拓者たち ルール説明\\n\\nカタンは、無人島「カタン島」を舞台に、資源を集め、開拓地や都市を建設し、道を広げていく戦略ボードゲームです。サイコロの運とプレイヤー間の交渉が重要になります。最初に10勝利点を獲得したプレイヤーが勝者となります。\\n\\n## セットアップ (準備)\\n\\n1.  **島の作成:**\\n    *   地形タイル（資源タイル）を裏向きにしてよく混ぜ、カタン島の形になるように配置します。通常は六角形の環状に並べます。\\n    *   海フレームを地形タイルの周りに配置し、島を囲みます。\\n    *   地形タイルを表向きにします。\\n2.  **数字トークンの配置:**\\n    *   数字トークン（2から12までの数字が書かれた丸いチップ）を、砂漠タイルを除く各地形タイルにランダムに配置します。ただし、赤色の数字（6と8）は隣接しないように配置します。\\n3.  **港タイルの配置:**\\n    *   海フレームの指定された場所に港タイルを配置します。\\n4.  **資源カードと発展カードの準備:**\\n    *   資源カード（木材、レンガ、羊毛、麦、鉱石）を種類ごとに分け、山札として置きます。\\n    *   発展カード（騎士、勝利点、独占、街道建設、発見）をよく混ぜ、裏向きの山札として置きます。\\n5.  **盗賊の配置:**\\n    *   盗賊コマを砂漠タイルに置きます。\\n6.  **プレイヤーの準備:**\\n    *   各プレイヤーは、自分の色の開拓地コマ5個、都市コマ4個、道コマ15個を受け取ります。\\n    *   各プレイヤーは、建設コスト表を1枚受け取ります。\\n7.  **初期配置:**\\n    *   じゃんけんなどでスタートプレイヤーを決めます。\\n    *   スタートプレイヤーから時計回りに、各プレイヤーは開拓地1つとそれに隣接する道1つを配置します。開拓地は3つの地形タイルが交わる交差点に置きます。道は開拓地に隣接する辺に置きます。\\n    *   次に、最後のプレイヤーから反時計回りに、各プレイヤーは2つ目の開拓地とそれに隣接する道1つを配置します。\\n    *   2つ目の開拓地を置いたプレイヤーは、その開拓地に隣接する3つの地形タイルから、それぞれ1枚ずつ資源カードを受け取ります。\\n\\n## ゲームの流れ (ターン構造)\\n\\n各プレイヤーのターンは以下の3つのフェイズで構成されます。\\n\\n1.  **サイコロを振る:**\\n    *   手番プレイヤーは2つのサイコロを振り、出た目の合計を確認します。\\n    *   出た目の数字が置かれている地形タイルに隣接する開拓地や都市を持つプレイヤーは、対応する資源カードを受け取ります。\\n        *   開拓地：資源カード1枚\\n        *   都市：資源カード2枚\\n    *   **「7」が出た場合:**\\n        *   全てのプレイヤーは、手札の資源カードが7枚を超えている場合、その半分（端数切り捨て）を捨て札にします。\\n        *   サイコロを振ったプレイヤーは、盗賊コマを砂漠以外の好きな地形タイルに移動させます。\\n        *   盗賊を移動させたプレイヤーは、その地形タイルに隣接する開拓地または都市を持つプレイヤーから、資源カードを1枚ランダムに奪います。\\n        *   盗賊が置かれた地形タイルからは、サイコロの目が出ても資源は産出されません。\\n2.  **交易 (交渉):**\\n    *   手番プレイヤーは、他のプレイヤーと資源カードを交換することができます。交渉は自由に行われ、交換比率も自由に決められます。\\n    *   手番プレイヤーは、港を利用して銀行と交易することもできます。\\n        *   通常の交易：同じ資源カード4枚を銀行に渡し、好きな資源カード1枚を受け取ります。\\n        *   港での交易：港の種類に応じた資源カード3枚（または2枚）を銀行に渡し、好きな資源カード1枚を受け取ります。\\n3.  **建設:**\\n    *   手番プレイヤーは、手札の資源カードを消費して、以下のものを建設できます。\\n        *   **道 (木材1、レンガ1):** 自分の開拓地や道に隣接する辺に建設できます。\\n        *   **開拓地 (木材1、レンガ1、羊毛1、麦1):** 自分の道に繋がっており、他の開拓地や都市から2辺以上離れた交差点に建設できます。開拓地を建設すると1勝利点。\\n        *   **都市 (麦2、鉱石3):** 自分の開拓地を都市にアップグレードします。都市は2勝利点となり、資源産出時に2枚の資源カードを受け取ります。\\n        *   **発展カード (羊毛1、麦1、鉱石1):** 発展カードの山札から1枚引きます。引いた発展カードはすぐに使わず、次の自分のターン以降に使うことができます（勝利点カードを除く）。\\n            *   **騎士カード:** プレイすると盗賊を移動させ、資源を奪うことができます。3枚の騎士カードをプレイしたプレイヤーは「最大騎士力」として2勝利点を得ます。\\n            *   **勝利点カード:** プレイせずに手札に持っておき、ゲーム終了時に勝利点として数えます。\\n            *   **独占:** 宣言した種類の資源カードを、他の全プレイヤーから全て奪います。\\n            *   **街道建設:** 道を2本、無料で建設できます。\\n            *   **発見:** 好きな資源カードを2枚、銀行から受け取ります。\\n\\n## 終了条件\\n\\nいずれかのプレイヤーが10勝利点に達した時点で、そのプレイヤーのターンが終了するのを待たずにゲームは終了し、そのプレイヤーが勝者となります。\\n\\n## 勝利条件\\n\\n最初に10勝利点を獲得したプレイヤーが勝利します。勝利点は以下の要素で構成されます。\\n\\n*   開拓地：1勝利点\\n*   都市：2勝利点\\n*   勝利点カード：1勝利点\\n*   最大騎士力：2勝利点（騎士カードを3枚以上プレイし、他の誰よりも多くプレイしている場合）\\n*   最長交易路：2勝利点（途切れることなく5本以上の道を繋げ、他の誰よりも長く繋げている場合）\", \"image_url\": \"https://cf.geekdo-images.com/images/pic2419375.jpg\", \"min_players\": 3, \"max_players\": 4, \"play_time\": 75, \"min_age\": 8, \"published_year\": 1995, \"official_url\": \"https://www.catan.com/\", \"bgg_url\": \"https://boardgamegeek.com/boardgame/13/catan\", \"bga_url\": \"https://boardgamearena.com/gamepanel?game=catan\", \"amazon_url\": \"https://www.amazon.co.jp/カタン-スタンダード版-ボードゲーム-3-4人用-8才以上/dp/B075R32194/\", \"structured_data\": {\"keywords\": [{\"term\": \"資源管理\", \"description\": \"木材、レンガ、羊毛、麦、鉱石といった資源を効率的に集め、計画的に使うことが勝利への鍵となります。\"}, {\"term\": \"交渉\", \"description\": \"他のプレイヤーとの資源の交換（交易）がゲームの重要な要素であり、巧みな交渉術が求められます。\"}, {\"term\": \"開拓\", \"description\": \"無人島に開拓地や都市を建設し、道を広げていくことで自分の領土を拡大していくことが目的です。\"}, {\"term\": \"ダイスロール\", \"description\": \"サイコロの出目によって資源の産出が決まるため、運の要素もゲーム展開に大きく影響します。\"}, {\"term\": \"戦略\", \"description\": \"どの場所に開拓地を置くか、何を優先して建設するか、いつ交渉するかなど、長期的な計画と判断が必要です。\"}, {\"term\": \"交易\", \"description\": \"港を利用した銀行との交易や、他のプレイヤーとの資源のやり取りが頻繁に行われます。\"}, {\"term\": \"ドイツゲーム\", \"description\": \"ドイツで生まれ、世界的に人気を博したボードゲームのジャンルであり、その代表作の一つです。\"}, {\"term\": \"ボードゲーム\", \"description\": \"物理的なボード、カード、コマなどを使って遊ぶ、テーブルゲームの一種です。\"}]}}\n  - data_confidence: {\"slug\": 1.0, \"title\": 1.0, \"title_ja\": 1.0, \"title_en\": 1.0, \"summary\": 1.0, \"rules_content\": 1.0, \"image_url\": 0.9, \"min_players\": 1.0, \"max_players\": 1.0, \"play_time\": 1.0, \"min_age\": 1.0, \"published_year\": 1.0, \"official_url\": 1.0, \"bgg_url\": 1.0, \"bga_url\": 1.0, \"amazon_url\": 0.9, \"structured_data\": 1.0}\n  - issues: []\n  - context (database/search snippets): No matches.\n  - fix_requests (validator feedback): []\n  - protected_fields (high-confidence; avoid overwriting): [\"slug\", \"title\", \"title_ja\", \"title_en\", \"summary\", \"rules_content\", \"image_url\", \"min_players\", \"max_players\", \"play_time\", \"min_age\", \"published_year\", \"official_url\", \"bgg_url\", \"bga_url\", \"amazon_url\", \"structured_data\"]\n\nMission:\n  1. Repair ONLY the fields that are missing, low-confidence (<0.7), or flagged in issues/fix_requests.\n  2. Preserve protected_fields unless you find strong contradictory evidence (explain in notes).\n  3. Enforce Japanese for summary/rules_content; keep schema identical to the draft.\n  4. For URLs: include only verifiable/official links; if unsure, use null and add an unresolved issue.\n  5. Never invent a non-existent game. If evidence is insufficient, return {\"data\": null, \"unresolved_issues\": [\"Game not found or unverifiable\"]}.\n\nChecklist:\n  - Does slug exist and stay kebab-case?\n  - Are summary and rules_content present and Japanese?\n  - Are numeric fields integers (min_players, play_time, min_age, published_year)?\n  - Do URLs look valid and match the game title?\n\nOutput JSON only:\n{\n  \"data\": { ...final game object... },\n  \"changed_fields\": [\"field_a\", \"field_b\"],\n  \"notes\": [\"what was changed and why\"],\n  \"unresolved_issues\": [\"still missing/uncertain fields\"]\n}",
+    "output": {
+      "data": {
+        "slug": "catan",
+        "title": "The Settlers of Catan",
+        "title_ja": "カタンの開拓者たち",
+        "title_en": "Catan",
+        "summary": "無人島を舞台に、資源を集め、道を建設し、開拓地を広げ、勝利点を競う戦略ボードゲーム。サイコロの運と交渉が勝敗を分ける、世界中で愛される名作です。",
+        "rules_content": "# カタンの開拓者たち ルール説明\n\nカタンは、無人島「カタン島」を舞台に、資源を集め、開拓地や都市を建設し、道を広げていく戦略ボードゲームです。サイコロの運とプレイヤー間の交渉が重要になります。最初に10勝利点を獲得したプレイヤーが勝者となります。\n\n## セットアップ (準備)\n\n1.  **島の作成:**\n    *   地形タイル（資源タイル）を裏向きにしてよく混ぜ、カタン島の形になるように配置します。通常は六角形の環状に並べます。\n    *   海フレームを地形タイルの周りに配置し、島を囲みます。\n    *   地形タイルを表向きにします。\n2.  **数字トークンの配置:**\n    *   数字トークン（2から12までの数字が書かれた丸いチップ）を、砂漠タイルを除く各地形タイルにランダムに配置します。ただし、赤色の数字（6と8）は隣接しないように配置します。\n3.  **港タイルの配置:**\n    *   海フレームの指定された場所に港タイルを配置します。\n4.  **資源カードと発展カードの準備:**\n    *   資源カード（木材、レンガ、羊毛、麦、鉱石）を種類ごとに分け、山札として置きます。\n    *   発展カード（騎士、勝利点、独占、街道建設、発見）をよく混ぜ、裏向きの山札として置きます。\n5.  **盗賊の配置:**\n    *   盗賊コマを砂漠タイルに置きます。\n6.  **プレイヤーの準備:**\n    *   各プレイヤーは、自分の色の開拓地コマ5個、都市コマ4個、道コマ15個を受け取ります。\n    *   各プレイヤーは、建設コスト表を1枚受け取ります。\n7.  **初期配置:**\n    *   じゃんけんなどでスタートプレイヤーを決めます。\n    *   スタートプレイヤーから時計回りに、各プレイヤーは開拓地1つとそれに隣接する道1つを配置します。開拓地は3つの地形タイルが交わる交差点に置きます。道は開拓地に隣接する辺に置きます。\n    *   次に、最後のプレイヤーから反時計回りに、各プレイヤーは2つ目の開拓地とそれに隣接する道1つを配置します。\n    *   2つ目の開拓地を置いたプレイヤーは、その開拓地に隣接する3つの地形タイルから、それぞれ1枚ずつ資源カードを受け取ります。\n\n## ゲームの流れ (ターン構造)\n\n各プレイヤーのターンは以下の3つのフェイズで構成されます。\n\n1.  **サイコロを振る:**\n    *   手番プレイヤーは2つのサイコロを振り、出た目の合計を確認します。\n    *   出た目の数字が置かれている地形タイルに隣接する開拓地や都市を持つプレイヤーは、対応する資源カードを受け取ります。\n        *   開拓地：資源カード1枚\n        *   都市：資源カード2枚\n    *   **「7」が出た場合:**\n        *   全てのプレイヤーは、手札の資源カードが7枚を超えている場合、その半分（端数切り捨て）を捨て札にします。\n        *   サイコロを振ったプレイヤーは、盗賊コマを砂漠以外の好きな地形タイルに移動させます。\n        *   盗賊を移動させたプレイヤーは、その地形タイルに隣接する開拓地または都市を持つプレイヤーから、資源カードを1枚ランダムに奪います。\n        *   盗賊が置かれた地形タイルからは、サイコロの目が出ても資源は産出されません。\n2.  **交易 (交渉):**\n    *   手番プレイヤーは、他のプレイヤーと資源カードを交換することができます。交渉は自由に行われ、交換比率も自由に決められます。\n    *   手番プレイヤーは、港を利用して銀行と交易することもできます。\n        *   通常の交易：同じ資源カード4枚を銀行に渡し、好きな資源カード1枚を受け取ります。\n        *   港での交易：港の種類に応じた資源カード3枚（または2枚）を銀行に渡し、好きな資源カード1枚を受け取ります。\n3.  **建設:**\n    *   手番プレイヤーは、手札の資源カードを消費して、以下のものを建設できます。\n        *   **道 (木材1、レンガ1):** 自分の開拓地や道に隣接する辺に建設できます。\n        *   **開拓地 (木材1、レンガ1、羊毛1、麦1):** 自分の道に繋がっており、他の開拓地や都市から2辺以上離れた交差点に建設できます。開拓地を建設すると1勝利点。\n        *   **都市 (麦2、鉱石3):** 自分の開拓地を都市にアップグレードします。都市は2勝利点となり、資源産出時に2枚の資源カードを受け取ります。\n        *   **発展カード (羊毛1、麦1、鉱石1):** 発展カードの山札から1枚引きます。引いた発展カードはすぐに使わず、次の自分のターン以降に使うことができます（勝利点カードを除く）。\n            *   **騎士カード:** プレイすると盗賊を移動させ、資源を奪うことができます。3枚の騎士カードをプレイしたプレイヤーは「最大騎士力」として2勝利点を得ます。\n            *   **勝利点カード:** プレイせずに手札に持っておき、ゲーム終了時に勝利点として数えます。\n            *   **独占:** 宣言した種類の資源カードを、他の全プレイヤーから全て奪います。\n            *   **街道建設:** 道を2本、無料で建設できます。\n            *   **発見:** 好きな資源カードを2枚、銀行から受け取ります。\n\n## 終了条件\n\nいずれかのプレイヤーが10勝利点に達した時点で、そのプレイヤーのターンが終了するのを待たずにゲームは終了し、そのプレイヤーが勝者となります。\n\n## 勝利条件\n\n最初に10勝利点を獲得したプレイヤーが勝利します。勝利点は以下の要素で構成されます。\n\n*   開拓地：1勝利点\n*   都市：2勝利点\n*   勝利点カード：1勝利点\n*   最大騎士力：2勝利点（騎士カードを3枚以上プレイし、他の誰よりも多くプレイしている場合）\n*   最長交易路：2勝利点（途切れることなく5本以上の道を繋げ、他の誰よりも長く繋げている場合）",
+        "image_url": "https://cf.geekdo-images.com/images/pic2419375.jpg",
+        "min_players": 3,
+        "max_players": 4,
+        "play_time": 75,
+        "min_age": 8,
+        "published_year": 1995,
+        "official_url": "https://www.catan.com/",
+        "bgg_url": "https://boardgamegeek.com/boardgame/13/catan",
+        "bga_url": "https://boardgamearena.com/gamepanel?game=catan",
+        "amazon_url": "https://www.amazon.co.jp/カタン-スタンダード版-ボードゲーム-3-4人用-8才以上/dp/B075R32194/",
+        "structured_data": {
+          "keywords": [
+            {
+              "term": "資源管理",
+              "description": "木材、レンガ、羊毛、麦、鉱石といった資源を効率的に集め、計画的に使うことが勝利への鍵となります。"
+            },
+            {
+              "term": "交渉",
+              "description": "他のプレイヤーとの資源の交換（交易）がゲームの重要な要素であり、巧みな交渉術が求められます。"
+            },
+            {
+              "term": "開拓",
+              "description": "無人島に開拓地や都市を建設し、道を広げていくことで自分の領土を拡大していくことが目的です。"
+            },
+            {
+              "term": "ダイスロール",
+              "description": "サイコロの出目によって資源の産出が決まるため、運の要素もゲーム展開に大きく影響します。"
+            },
+            {
+              "term": "戦略",
+              "description": "どの場所に開拓地を置くか、何を優先して建設するか、いつ交渉するかなど、長期的な計画と判断が必要です。"
+            },
+            {
+              "term": "交易",
+              "description": "港を利用した銀行との交易や、他のプレイヤーとの資源のやり取りが頻繁に行われます。"
+            },
+            {
+              "term": "ドイツゲーム",
+              "description": "ドイツで生まれ、世界的に人気を博したボードゲームのジャンルであり、その代表作の一つです。"
+            },
+            {
+              "term": "ボードゲーム",
+              "description": "物理的なボード、カード、コマなどを使って遊ぶ、テーブルゲームの一種です."
+            }
+          ]
+        }
+      },
+      "changed_fields": [],
+      "notes": [
+        "All fields in the draft_json were protected and had high confidence (>= 0.7). No issues or fix requests were present. Therefore, no changes were made to the provided data."
+      ],
+      "unresolved_issues": []
+    }
+  },
+  "validation": {
+    "result": "PASS",
+    "missing_fields": []
+  }
+}

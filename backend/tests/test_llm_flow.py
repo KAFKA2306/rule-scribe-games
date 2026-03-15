@@ -5,6 +5,7 @@ import os
 import re
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 import httpx
 import yaml
@@ -13,6 +14,9 @@ try:
     import pytest
 except ModuleNotFoundError:
     pytest = None
+
+# Cast to Any to avoid "None" attribute errors in static analysis
+pytest_any: Any = pytest
 
 
 def load_prompt(key: str) -> str:
@@ -23,7 +27,7 @@ def load_prompt(key: str) -> str:
     return str(data).strip()
 
 
-async def call_gemini(api_key: str, model: str, prompt: str) -> dict:
+async def call_gemini(api_key: str, model: str, prompt: str) -> dict[str, Any]:
     url = f"https://generativelanguage.googleapis.com/v1beta/{model}:generateContent"
     payload = {
         "contents": [{"parts": [{"text": prompt}]}],
@@ -44,24 +48,24 @@ async def call_gemini(api_key: str, model: str, prompt: str) -> dict:
     return json.loads(m.group(0) if m else text)
 
 
-if pytest:
+if pytest_any:
 
-    @pytest.fixture(scope="session")
+    @pytest_any.fixture(scope="session")
     def api_key():
         key = os.getenv("GEMINI_API_KEY")
         if not key:
-            pytest.skip("GEMINI_API_KEY not set; skipping LLM flow integration test")
+            pytest_any.skip("GEMINI_API_KEY not set; skipping LLM flow integration test")
         return key
 
-    @pytest.fixture(scope="session")
+    @pytest_any.fixture(scope="session")
     def model():
         return os.getenv("GEMINI_MODEL", "models/gemini-3-flash-preview")
 
-    @pytest.fixture(scope="session")
+    @pytest_any.fixture(scope="session")
     def query():
         return os.getenv("LLM_FLOW_QUERY", "カタン")
 
-    @pytest.fixture(scope="session")
+    @pytest_any.fixture(scope="session")
     def output_path():
         path = os.getenv("LLM_FLOW_OUTPUT")
         return path
