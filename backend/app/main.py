@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 
 from app.core.logger import setup_logging
+from app.middleware.validation import ValidationMiddleware
 from app.routers import games
 from app.services.seo_renderer import generate_seo_html
 from app.services.sitemap import get_sitemap_xml
@@ -10,6 +11,8 @@ from app.services.sitemap import get_sitemap_xml
 setup_logging()
 app = FastAPI(title="RuleScribe Minimal", version="1.0.0")
 
+# Order matters: Validation before CORS so CORS is added "on top" and handles its own errors
+app.add_middleware(ValidationMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -17,6 +20,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 app.include_router(games.router, prefix="/api", tags=["games"])
 
 

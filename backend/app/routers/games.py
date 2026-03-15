@@ -1,9 +1,14 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 
+from app.core.rate_limiter import RateLimiter
 from app.models import GameDetail, GameUpdate, SearchRequest
 from app.services.game_service import GameService
 
 router = APIRouter()
+
+# Shared limiters
+search_limiter = RateLimiter.get_limiter("search", max_requests=100, window_seconds=60)
+gen_limiter = RateLimiter.get_limiter("generation", max_requests=10, window_seconds=60)
 
 
 def get_game_service():
@@ -12,6 +17,9 @@ def get_game_service():
 
 @router.get("/search", response_model=list[GameDetail])
 async def search_games(q: str = Query(..., min_length=1), service: GameService = Depends(get_game_service)):
+    if not search_limiter.acquire():
+        raise HTTPException(status_code=429, detail="Search rate limit exceeded")
+
     if not q or not q.strip():
         return []
     return await service.search_games(q.strip())
@@ -23,6 +31,9 @@ async def search_games_post(
     service: GameService = Depends(get_game_service),
 ):
     if body.generate:
+        if not gen_limiter.acquire():
+            raise HTTPException(status_code=429, detail="Generation rate limit exceeded")
+
         new_game = await service.generate_with_notebooklm(body.query)
         if new_game and new_game.get("slug"):
             return [new_game]
@@ -49,9 +60,13 @@ async def update_game(
     service: GameService = Depends(get_game_service),
 ) -> dict[str, object]:
     if regenerate:
+        if not gen_limiter.acquire():
+            raise HTTPException(status_code=429, detail="Generation rate limit exceeded")
         return await service.update_game_content(slug, fill_missing_only=fill_missing_only)
+
     if game_update:
         updates = game_update.model_dump(exclude_unset=True)
         if updates:
             return await service.update_game_manual(slug, updates)
+
     return {"status": "ok", "message": "No action taken (regenerate=False, no body)"}

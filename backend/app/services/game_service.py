@@ -72,18 +72,17 @@ async def generate_metadata(query: str, context: str | None = None) -> dict[str,
 
     if not context:
         rows = await supabase.search(query)
-        context = (
-            "\n".join(
-                f"[{i}] {r.get('title', 'Unknown')!s}: {r.get('summary', '')!s}" for i, r in enumerate(rows[:3], 1)
-            )
-            if rows
-            else "No matches."
+        if not rows:
+            raise ValueError(f"No matches found for query: {query}")
+
+        context = "\n".join(
+            f"[{i}] {r.get('title', 'Unknown')!s}: {r.get('summary', '')!s}" for i, r in enumerate(rows[:3], 1)
         )
         logger.info(
             "context_retrieved",
             extra={
                 "task_id": task_id,
-                "similar_games": len(rows) if rows else 0,
+                "similar_games": len(rows),
             },
         )
 
@@ -147,35 +146,52 @@ class GameService:
     async def update_game_content(self, slug: str, fill_missing_only: bool = False) -> dict[str, Any]:
         game = await supabase.get_by_slug(slug)
         if not game:
-            return {}
+            raise ValueError(f"Game not found for slug: {slug}")
+
         title = game.get("title")
         summary = game.get("summary")
         ctx = f"{title!s}: {summary!s}"
         result = await generate_metadata(str(title), ctx)
         merged = _merge_fields(game, result, fill_missing_only)
+
+        if not merged.get("id") or not slug:
+            raise ValueError("Corrupt game record: missing id or slug")
+
         merged["id"], merged["slug"] = game["id"], slug
         merged["data_version"] = int(game.get("data_version", 0) or 0) + 1
         out = await supabase.upsert(merged)
-        return out[0] if out else {}
+        if not out:
+            raise RuntimeError(f"Upsert failed for game: {slug}")
+        return out[0]
 
     async def create_game_from_query(self, query: str) -> dict[str, Any]:
         result = await generate_metadata(query)
         out = await supabase.upsert(result)
-        return out[0] if out else {}
+        if not out:
+            raise RuntimeError(f"Creation failed for query: {query}")
+        return out[0]
 
     async def update_game_manual(self, slug: str, updates: dict[str, Any]) -> dict[str, Any]:
         game = await supabase.get_by_slug(slug)
         if not game:
-            return {}
+            raise ValueError(f"Game not found for slug: {slug}")
+
         merged = {**game, **updates}
         merged["updated_at"] = datetime.now(UTC).isoformat()
         out = await supabase.upsert(merged)
-        return out[0] if out else {}
+        if not out:
+            raise RuntimeError(f"Update failed for game: {slug}")
+        return out[0]
 
     async def generate_with_notebooklm(self, query: str, generate_infographics: bool = True) -> dict[str, Any]:
         result = await _pipeline.process_game_rules(query, generate_infographics=generate_infographics)
+        if not result:
+            raise RuntimeError(f"NotebookLM generation failed for: {query}")
+
         out = await supabase.upsert(result)
-        return out[0] if out else {}
+        if not out:
+            raise RuntimeError(f"Upsert failed for generated game: {query}")
+        return out[0]
 
 
 def _merge_fields(original: dict[str, Any], incoming: dict[str, Any], fill_missing_only: bool) -> dict[str, Any]:
