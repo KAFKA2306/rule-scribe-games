@@ -12,27 +12,27 @@ description = "Board Game Metadata Generator"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    "fastapi>=0.123.0",
-    "httpx>=0.28.1",
-    "pydantic>=2.12.5",
-    "supabase>=2.24.0",
-    "uvicorn>=0.38.0",
-    "python-dotenv>=1.0.0",
-    "anyio>=4.0.0",
+    "fastapi",
+    "httpx",
+    "pydantic",
+    "supabase",
+    "uvicorn",
+    "python-dotenv",
+    "anyio",
 ]
 
 [dependency-groups]
 dev = [
-    "pyright>=1.1.408",
-    "pytest-asyncio>=1.3.0",
-    "google-generativeai>=0.8.5",
-    "pillow>=12.0.0",
-    "pypdf2>=3.0.1",
-    "pdf2image>=1.17.0",
-    "beautifulsoup4>=4.14.3",
-    "playwright>=1.58.0",
-    "pytest-playwright>=0.7.2",
-    "PyYAML>=6.0.1",
+    "pyright",
+    "pytest-asyncio",
+    "google-generativeai",
+    "pillow",
+    "pypdf2",
+    "pdf2image",
+    "beautifulsoup4",
+    "playwright",
+    "pytest-playwright",
+    "PyYAML",
 ]
 
 
