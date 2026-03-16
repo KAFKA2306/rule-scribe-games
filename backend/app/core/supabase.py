@@ -6,8 +6,17 @@ from supabase import create_client
 from app.core.settings import settings
 from app.utils.slugify import slugify
 
-_client = create_client(settings.supabase_url, settings.supabase_key)
 _TABLE = "games"
+
+try:
+    if settings.supabase_url and settings.supabase_key:
+        _client = create_client(settings.supabase_url, settings.supabase_key)
+    else:
+        print("CRITICAL: Supabase client not initialized due to missing settings!")
+        _client = None
+except Exception as e:
+    print(f"CRITICAL: Failed to initialize Supabase client: {e}")
+    _client = None
 
 
 async def search(query: str) -> list[dict[str, Any]]:

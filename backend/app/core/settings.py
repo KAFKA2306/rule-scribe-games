@@ -32,6 +32,9 @@ class Settings:
         self.gemini_model = os.getenv("GEMINI_MODEL") or str(_config.get("gemini_model") or CANONICAL_GEMINI_MODEL)
         self.supabase_url = os.getenv("NEXT_PUBLIC_SUPABASE_URL") or os.getenv("SUPABASE_URL")
         self.supabase_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or os.getenv("SUPABASE_KEY")
+        
+        if not self.supabase_url or not self.supabase_key:
+            print("WARNING: Supabase environment variables are missing!")
 
 
 settings = Settings()
