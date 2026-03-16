@@ -8,15 +8,11 @@ from app.utils.slugify import slugify
 
 _TABLE = "games"
 
-try:
-    if settings.supabase_url and settings.supabase_key:
-        _client = create_client(settings.supabase_url, settings.supabase_key)
-    else:
-        print("CRITICAL: Supabase client not initialized due to missing settings!")
-        _client = None
-except Exception as e:
-    print(f"CRITICAL: Failed to initialize Supabase client: {e}")
-    _client = None
+_client = None
+if settings.supabase_url and settings.supabase_key:
+    _client = create_client(settings.supabase_url, settings.supabase_key)
+else:
+    print("CRITICAL: Supabase client not initialized due to missing settings!")
 
 
 def _get_client():
