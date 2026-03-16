@@ -1,11 +1,10 @@
-import os
-import sys
+from fastapi import FastAPI
+app = FastAPI()
 
-# Ensure backend directory is prioritized in sys.path
-root_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-backend_path = os.path.join(root_path, "backend")
-if backend_path not in sys.path:
-    sys.path.insert(0, backend_path)
+@app.get("/api/health")
+async def health():
+    return {"status": "infra_ok"}
 
-# Try to import the app
-from app.main import app
+@app.get("/health")
+async def health_root():
+    return {"status": "infra_ok"}
