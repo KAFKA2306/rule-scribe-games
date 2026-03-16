@@ -7,11 +7,11 @@ from dotenv import load_dotenv
 
 
 def load_config() -> dict[str, Any]:
-    # Try multiple possible locations for config.yaml
-    base_dir = Path(__file__).resolve().parent.parent.parent
+    # Use absolute path based on Vercel environment or current file
+    root = Path(os.getenv("LAMBDA_TASK_ROOT", Path(__file__).resolve().parent.parent.parent.parent))
     possible_paths = [
-        base_dir / "config.yaml",  # backend/config.yaml
-        base_dir.parent / "config.yaml",  # host project root/config.yaml
+        root / "config.yaml",
+        root / "backend" / "config.yaml",
     ]
     for config_path in possible_paths:
         if config_path.exists():
@@ -22,13 +22,17 @@ def load_config() -> dict[str, Any]:
 
 
 _config = load_config()
-load_dotenv(Path(__file__).resolve().parent.parent.parent / ".env")
+# Load .env from root
+_root = Path(os.getenv("LAMBDA_TASK_ROOT", Path(__file__).resolve().parent.parent.parent.parent))
+load_dotenv(_root / ".env")
+
 CANONICAL_GEMINI_MODEL = "gemini-2.5-flash"
 
 
 class Settings:
     def __init__(self) -> None:
-        # Supabase config
+        self.gemini_api_key = os.getenv("GEMINI_API_KEY") or str(_config.get("gemini_api_key") or "")
+        self.gemini_model = os.getenv("GEMINI_MODEL") or str(_config.get("gemini_model") or CANONICAL_GEMINI_MODEL)
         self.supabase_url = (
             os.getenv("SUPABASE_URL") or
             os.getenv("NEXT_PUBLIC_SUPABASE_URL")
@@ -38,9 +42,6 @@ class Settings:
             os.getenv("SUPABASE_ANON_KEY") or
             os.getenv("NEXT_PUBLIC_SUPABASE_ANON_KEY")
         )
-
-        if not self.supabase_url or not self.supabase_key:
-            print(f"CRITICAL: Supabase config missing! URL={bool(self.supabase_url)}, Key={bool(self.supabase_key)}")
 
 
 settings = Settings()

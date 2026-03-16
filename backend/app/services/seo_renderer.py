@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 from pathlib import Path
 
 from app.core.supabase import get_by_slug
@@ -49,11 +50,12 @@ async def generate_seo_html(slug: str) -> str:
         seo_description += f" {description}"
     structured_data["description"] = seo_description
     json_ld = json.dumps(structured_data, ensure_ascii=False)
-    base_dir = Path(__file__).resolve().parent.parent.parent
+    # Use absolute path based on Vercel environment or current file
+    root = Path(os.getenv("LAMBDA_TASK_ROOT", Path(__file__).resolve().parent.parent.parent.parent))
     possible_paths = [
-        base_dir / "frontend" / "dist" / "index.html",
-        base_dir / "public" / "index.html",
-        base_dir / "index.html",
+        root / "frontend" / "dist" / "index.html",
+        root / "public" / "index.html",
+        root / "index.html",
     ]
     html_content = ""
     for path in possible_paths:
@@ -67,7 +69,7 @@ async def generate_seo_html(slug: str) -> str:
 
     if not html_content:
         logger.error(f"index.html template not found in {possible_paths}")
-        html_content = '<html><head><title>RuleScribe</title></head><body><div id="root"></div></body></html>'
+        html_content = '<html><head><title>ボドゲのミカタ</title></head><body><div id="root"></div></body></html>'
     html_content = html_content.replace(
         "ボドゲのミカタ | AIでルールを瞬時に要約。インスト時間を短縮",
         page_title,
