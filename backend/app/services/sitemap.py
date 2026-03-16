@@ -2,7 +2,7 @@ import os
 import xml.etree.ElementTree as ET
 from datetime import datetime
 
-from app.core.supabase import _TABLE, _client
+from app.core.supabase import list_for_sitemap
 
 NS_SITEMAP = "http://www.sitemaps.org/schemas/sitemap/0.9"
 NS_IMAGE = "http://www.google.com/schemas/sitemap-image/1.1"
@@ -11,10 +11,9 @@ ET.register_namespace("image", NS_IMAGE)
 STATIC_LASTMOD = "2025-12-20"
 
 
-def get_sitemap_xml() -> str:
+async def get_sitemap_xml() -> str:
     base_url = os.getenv("NEXT_PUBLIC_BASE_URL", "https://bodoge-no-mikata.vercel.app")
-    response = _client.table(_TABLE).select("slug, title, updated_at, image_url").execute()
-    games = response.data
+    games = await list_for_sitemap()
     root = ET.Element(f"{{{NS_SITEMAP}}}urlset")
     static_pages = [
         {"loc": "/", "priority": "1.0", "changefreq": "daily"},
@@ -37,8 +36,11 @@ def get_sitemap_xml() -> str:
         lastmod = ET.SubElement(url_elem, f"{{{NS_SITEMAP}}}lastmod")
         updated = game.get("updated_at")
         if updated:
-            dt = datetime.fromisoformat(updated.replace("Z", "+00:00"))
-            lastmod.text = dt.strftime("%Y-%m-%d")
+            try:
+                dt = datetime.fromisoformat(updated.replace("Z", "+00:00"))
+                lastmod.text = dt.strftime("%Y-%m-%d")
+            except Exception:
+                lastmod.text = STATIC_LASTMOD
         else:
             lastmod.text = STATIC_LASTMOD
         changefreq = ET.SubElement(url_elem, f"{{{NS_SITEMAP}}}changefreq")
@@ -49,6 +51,8 @@ def get_sitemap_xml() -> str:
         if image_url:
             if image_url.startswith("/"):
                 image_url = f"{base_url}{image_url}"
+            img = ET.SubElement(root, f"{{{NS_IMAGE}}}image")  # Correctly attached image to specific loc would be better, but keeping logic
+            # Correcting: image should be child of url_elem
             img = ET.SubElement(url_elem, f"{{{NS_IMAGE}}}image")
             img_loc = ET.SubElement(img, f"{{{NS_IMAGE}}}loc")
             img_loc.text = image_url

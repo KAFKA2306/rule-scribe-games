@@ -2,14 +2,15 @@ import json
 import logging
 from pathlib import Path
 
-from app.core.supabase import _TABLE, _client
+from app.core.supabase import get_by_slug
 
 logger = logging.getLogger(__name__)
 
 
-def generate_seo_html(slug: str) -> str:
-    response = _client.table(_TABLE).select("*").eq("slug", slug).single().execute()
-    game = response.data
+async def generate_seo_html(slug: str) -> str:
+    game = await get_by_slug(slug)
+    if not game:
+        return '<html><head><title>Game Not Found</title></head><body><h1>Game Not Found</h1></body></html>'
     title = game.get("title_ja") or game.get("title") or game.get("name")
     description = game.get("summary") or game.get("description")
     image_url = game.get("image_url")
@@ -66,7 +67,6 @@ def generate_seo_html(slug: str) -> str:
 
     if not html_content:
         logger.error(f"index.html template not found in {possible_paths}")
-        # Return a skeleton if template missing to avoid crashing the function
         html_content = '<html><head><title>RuleScribe</title></head><body><div id="root"></div></body></html>'
     html_content = html_content.replace(
         "ボドゲのミカタ | AIでルールを瞬時に要約。インスト時間を短縮",

@@ -19,20 +19,20 @@ dependencies = [
     "uvicorn",
     "python-dotenv",
     "anyio",
+    "PyYAML",
+    "google-generativeai",
 ]
 
 [dependency-groups]
 dev = [
     "pyright",
     "pytest-asyncio",
-    "google-generativeai",
     "pillow",
     "pypdf2",
     "pdf2image",
     "beautifulsoup4",
     "playwright",
     "pytest-playwright",
-    "PyYAML",
 ]
 
 

@@ -26,20 +26,20 @@ app.include_router(games.router, prefix="/api", tags=["games"])
 
 @app.get("/health")
 @app.get("/api/health")
-def health_check():
+async def health_check():
     return {"status": "ok"}
 
 
 @app.get("/sitemap.xml")
-def sitemap_xml():
-    content = get_sitemap_xml()
+async def sitemap_xml():
+    content = await get_sitemap_xml()
     return Response(content=content, media_type="application/xml")
 
 
 @app.get("/games/{slug}")
-def game_seo_page(slug: str):
+async def game_seo_page(slug: str):
     """
     Serve the game page with server-side injected SEO tags.
     """
-    content = generate_seo_html(slug)
+    content = await generate_seo_html(slug)
     return HTMLResponse(content=content)

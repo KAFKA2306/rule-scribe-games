@@ -19,11 +19,17 @@ except Exception as e:
     _client = None
 
 
+def _get_client():
+    if _client is None:
+        raise RuntimeError("Supabase client is not initialized. Check environment variables.")
+    return _client
+
+
 async def search(query: str) -> list[dict[str, Any]]:
     def _q():
         safe_query = query.replace('"', '\\"')
         term = f"*{safe_query}*"
-        return _client.table(_TABLE).select("*").or_(f'title.ilike."{term}",description.ilike."{term}"').execute().data
+        return _get_client().table(_TABLE).select("*").or_(f'title.ilike."{term}",description.ilike."{term}"').execute().data
 
     return await anyio.to_thread.run_sync(_q)
 
@@ -50,14 +56,14 @@ async def upsert(data: dict[str, Any]) -> list[dict[str, Any]]:
             key = "id"
         else:
             key = "source_url" if data.get("source_url") else "slug"
-        return _client.table(_TABLE).upsert(data, on_conflict=key).execute().data
+        return _get_client().table(_TABLE).upsert(data, on_conflict=key).execute().data
 
     return await anyio.to_thread.run_sync(_q)
 
 
 async def get_by_id(game_id: int) -> dict[str, Any] | None:
     def _q():
-        r = _client.table(_TABLE).select("*").eq("id", game_id).execute().data
+        r = _get_client().table(_TABLE).select("*").eq("id", game_id).execute().data
         return r[0] if r else None
 
     return await anyio.to_thread.run_sync(_q)
@@ -65,7 +71,7 @@ async def get_by_id(game_id: int) -> dict[str, Any] | None:
 
 async def get_by_slug(slug: str) -> dict[str, Any] | None:
     def _q():
-        r = _client.table(_TABLE).select("*").eq("slug", slug).execute().data
+        r = _get_client().table(_TABLE).select("*").eq("slug", slug).execute().data
         return r[0] if r else None
 
     return await anyio.to_thread.run_sync(_q)
@@ -74,7 +80,7 @@ async def get_by_slug(slug: str) -> dict[str, Any] | None:
 async def list_recent(limit: int = 100, offset: int = 0) -> list[dict[str, Any]]:
     def _q():
         return (
-            _client.table(_TABLE)
+            _get_client().table(_TABLE)
             .select("*")
             .order("updated_at", desc=True)
             .range(offset, offset + limit - 1)
@@ -87,10 +93,17 @@ async def list_recent(limit: int = 100, offset: int = 0) -> list[dict[str, Any]]
 
 async def increment_view_count(game_id: str) -> None:
     def _q():
-        r = _client.table(_TABLE).select("view_count").eq("id", game_id).execute().data
+        r = _get_client().table(_TABLE).select("view_count").eq("id", game_id).execute().data
         if r:
             count = r[0].get("view_count")
             current = int(count) if count is not None else 0
-            _client.table(_TABLE).update({"view_count": current + 1}).eq("id", game_id).execute()
+            _get_client().table(_TABLE).update({"view_count": current + 1}).eq("id", game_id).execute()
 
     await anyio.to_thread.run_sync(_q)
+
+
+async def list_for_sitemap() -> list[dict[str, Any]]:
+    def _q():
+        return _get_client().table(_TABLE).select("slug, title, updated_at, image_url").execute().data
+
+    return await anyio.to_thread.run_sync(_q)

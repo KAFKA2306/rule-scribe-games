@@ -1479,6 +1479,7 @@ dependencies = [
     { name = "httpx" },
     { name = "pydantic" },
     { name = "python-dotenv" },
+    { name = "pyyaml" },
     { name = "supabase" },
     { name = "uvicorn" },
 ]
@@ -1486,7 +1487,6 @@ dependencies = [
 [package.dev-dependencies]
 dev = [
     { name = "beautifulsoup4" },
-    { name = "google-generativeai" },
     { name = "pdf2image" },
     { name = "pillow" },
     { name = "playwright" },
@@ -1494,33 +1494,31 @@ dev = [
     { name = "pyright" },
     { name = "pytest-asyncio" },
     { name = "pytest-playwright" },
-    { name = "pyyaml" },
 ]
 
 [package.metadata]
 requires-dist = [
-    { name = "anyio", specifier = ">=4.0.0" },
-    { name = "fastapi", specifier = ">=0.123.0" },
-    { name = "google-generativeai", specifier = ">=0.8.5" },
-    { name = "httpx", specifier = ">=0.28.1" },
-    { name = "pydantic", specifier = ">=2.12.5" },
-    { name = "python-dotenv", specifier = ">=1.0.0" },
-    { name = "supabase", specifier = ">=2.24.0" },
-    { name = "uvicorn", specifier = ">=0.38.0" },
+    { name = "anyio" },
+    { name = "fastapi" },
+    { name = "google-generativeai" },
+    { name = "httpx" },
+    { name = "pydantic" },
+    { name = "python-dotenv" },
+    { name = "pyyaml" },
+    { name = "supabase" },
+    { name = "uvicorn" },
 ]
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "beautifulsoup4", specifier = ">=4.14.3" },
-    { name = "google-generativeai", specifier = ">=0.8.5" },
-    { name = "pdf2image", specifier = ">=1.17.0" },
-    { name = "pillow", specifier = ">=12.0.0" },
-    { name = "playwright", specifier = ">=1.58.0" },
-    { name = "pypdf2", specifier = ">=3.0.1" },
-    { name = "pyright", specifier = ">=1.1.408" },
-    { name = "pytest-asyncio", specifier = ">=1.3.0" },
-    { name = "pytest-playwright", specifier = ">=0.7.2" },
-    { name = "pyyaml", specifier = ">=6.0.1" },
+    { name = "beautifulsoup4" },
+    { name = "pdf2image" },
+    { name = "pillow" },
+    { name = "playwright" },
+    { name = "pypdf2" },
+    { name = "pyright" },
+    { name = "pytest-asyncio" },
+    { name = "pytest-playwright" },
 ]
 
 [[package]]
