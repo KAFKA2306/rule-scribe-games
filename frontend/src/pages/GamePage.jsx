@@ -120,6 +120,7 @@ export default function GamePage({ slug: propSlug, initialGame, allGames: propAl
         <button className={activeTab === 'rules' ? 'active' : ''} onClick={() => setActiveTab('rules')}>ANALYSIS & RULES</button>
         <button className={activeTab === 'coach' ? 'active' : ''} onClick={() => setActiveTab('coach')}>INST COACH</button>
         <button className={activeTab === 'strategy' ? 'active' : ''} onClick={() => setActiveTab('strategy')}>STRATEGY GUIDE</button>
+        <button className={activeTab === 'reviews' ? 'active' : ''} onClick={() => setActiveTab('reviews')}>SUBAGENT REVIEWS</button>
         <button className={activeTab === 'graph' ? 'active' : ''} onClick={() => setActiveTab('graph')}>CONNECTIONS</button>
         {game.infographics && <button className={activeTab === 'infographics' ? 'active' : ''} onClick={() => setActiveTab('infographics')}>INFOGRAPHICS</button>}
       </div>
@@ -174,6 +175,41 @@ export default function GamePage({ slug: propSlug, initialGame, allGames: propAl
               <div style={{ textAlign: 'center', padding: '1rem', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
                 AIによるインストガイドです。詳細は「ANALYSIS & RULES」タブを確認してください。
               </div>
+            </div>
+          )}
+
+          {activeTab === 'strategy' && (
+            <div className="markdown-content">
+              {sd.strategy_analysis ? (
+                <ReactMarkdown>{sd.strategy_analysis}</ReactMarkdown>
+              ) : (
+                <div style={{ padding: '2rem', textAlign: 'center', background: '#111', borderRadius: '8px', color: '#666' }}>
+                  No deep strategy analysis available yet. Try regenerating.
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'reviews' && (
+            <div className="persona-reviews">
+              <div className="pro-card-title">SUB-AGENT PERSPECTIVES</div>
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
+                異なるプレイスタイルのAIエージェントによる多角的な評価。
+              </p>
+              
+              {sd.persona_reviews?.length > 0 ? sd.persona_reviews.map((rev, i) => (
+                <div key={i} className="review-card">
+                  <div className="review-header">
+                    <span className="persona-badge">{rev.persona}</span>
+                    <span className="rating-badge">{rev.rating} / 10</span>
+                  </div>
+                  <div className="review-text">「{rev.review_text}」</div>
+                </div>
+              )) : (
+                <div style={{ padding: '2rem', textAlign: 'center', background: '#111', borderRadius: '8px', color: '#666' }}>
+                  No persona reviews available yet. Try regenerating.
+                </div>
+              )}
             </div>
           )}
 

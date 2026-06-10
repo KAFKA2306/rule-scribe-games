@@ -150,6 +150,29 @@ class GameService:
     async def get_game_by_slug(self, slug: str) -> dict[str, Any] | None:
         return await supabase.get_by_slug(slug)
 
+    async def _generate_persona_reviews(self, query: str, context: str) -> list[dict[str, Any]]:
+        personas = [
+            {"type": "ガチ勢 (Heavy Gamer)", "desc": "複雑な戦略と深い思考を好む。運要素を嫌い、メカニクスの完成度を重視する。"},
+            {"type": "ファミリー (Family Player)", "desc": "子供や初心者と遊びやすいか、ルールが直感的か、見た目が楽しいかを重視する。"},
+            {"type": "エンジョイ勢 (Casual)", "desc": "ワイワイ盛り上がれるか、短時間で終わるか、雰囲気が良いかを重視する。"}
+        ]
+        
+        reviews = []
+        for p in personas:
+            prompt = _load_prompt("persona_review_generator.generate").format(
+                persona_type=p["type"],
+                persona_description=p["desc"],
+                query=query,
+                context=context
+            )
+            try:
+                res = await _gemini.generate_structured_json(prompt)
+                if res:
+                    reviews.append(res)
+            except Exception as e:
+                logger.warning(f"Persona review failed for {p['type']}: {e}")
+        return reviews
+
     async def create_game_from_query(self, query: str) -> dict[str, Any] | None:
         """
         Generate game metadata using Gemini and save it to the database.
@@ -162,7 +185,7 @@ class GameService:
             logger.error(f"Metadata generation failed: {e}")
             return None
 
-        # 2. Enhance with Pro Strategy
+        # 3. Enhance with Pro Strategy and Persona Reviews
         prompt = _load_prompt("pro_strategy_generator.generate").format(
             query=query, 
             context=metadata.get("description", "")
@@ -175,9 +198,14 @@ class GameService:
                 sd["pro_tips"] = pro_strategy.get("pro_tips", [])
                 sd["rule_mistakes"] = pro_strategy.get("rule_mistakes", [])
                 sd["strategy_analysis"] = pro_strategy.get("strategy_content", "")
+                
+                # Generate Persona Reviews
+                reviews = await self._generate_persona_reviews(query, metadata.get("description", ""))
+                sd["persona_reviews"] = reviews
+                
                 metadata["structured_data"] = sd
         except Exception as e:
-            logger.warning(f"Pro strategy generation failed for {query}: {e}")
+            logger.warning(f"Strategy/Persona enrichment failed for {query}: {e}")
 
         # 3. Save
         game_id = str(uuid.uuid4())

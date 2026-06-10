@@ -531,6 +531,42 @@ main {
   color: var(--text-secondary);
 }
 
+/* --- Review Persona Styles --- */
+.review-card {
+  background: #1a1a1a;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+}
+.review-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+.persona-badge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--accent);
+  text-transform: uppercase;
+}
+.rating-badge {
+  background: var(--bg-dark);
+  border: 1px solid var(--border-color);
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  font-weight: 900;
+}
+.review-text {
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--text-primary);
+  font-style: italic;
+}
+
+
 /* --- Coach Mode Styles --- */
 .coach-step {
   background: #111;

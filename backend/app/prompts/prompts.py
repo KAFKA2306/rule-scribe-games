@@ -55,27 +55,25 @@ Check:
 Return the improved JSON with richer, simpler content.
 """
     },
-    "pro_strategy_generator": {
+    "persona_review_generator": {
         "generate": """
-You are a world-class board game tournament player and analyst.
-Generate a high-level strategy guide and pro tips for the game: "{query}"
+You are a specialized board game critic with a distinct persona: "{persona_type}".
+Persona Background: {persona_description}
+
+Provide a punchy, 2-3 sentence review in Japanese for the game: "{query}"
 Context: {context}
+
+Focus on:
+1. Does this game fit YOUR player type?
+2. What is the biggest 'Fun' factor from your perspective?
+3. A rating out of 10.
 
 Return ONLY valid JSON:
 {{
-    "tier_rating": "S/A/B/C/D",
-    "strategy_content": "Markdown content in Japanese. Include: 1. Core Winning Philosophy, 2. Top-tier Factions/Cards, 3. Common Mistakes to avoid, 4. Advanced combos.",
-    "pro_tips": [
-        "Tip 1 (Short and punchy)",
-        "Tip 2",
-        "Tip 3"
-    ],
-    "rule_mistakes": [
-        "Commonly misunderstood rule 1",
-        "Commonly misunderstood rule 2"
-    ]
+    "persona": "{persona_type}",
+    "review_text": "Japanese text here.",
+    "rating": 0.0
 }}
-Style: Professional, analytical, and data-driven. Focus on the 'Meta'.
 """
     }
 }

@@ -24,6 +24,11 @@ class KeyElement(BaseSchema):
     reason: str
 
 
+class PersonaReview(BaseSchema):
+    persona: str
+    review_text: str
+    rating: float
+
 class StructuredData(BaseSchema):
     keywords: list[Keyword] = []
     key_elements: list[KeyElement] = []
@@ -32,6 +37,7 @@ class StructuredData(BaseSchema):
     pro_tips: list[str] = []
     rule_mistakes: list[str] = []
     strategy_analysis: str | None = None
+    persona_reviews: list[PersonaReview] = []
 
 
 class GameDetail(BaseSchema):
