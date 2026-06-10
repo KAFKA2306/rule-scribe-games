@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.core.rate_limiter import RateLimiter
-from app.models import GameDetail, GameUpdate, SearchRequest
+from app.models import GameDetail, GameUpdate, SearchRequest, GameListResponse
 from app.services.game_service import GameService
 
 router = APIRouter()

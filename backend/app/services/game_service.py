@@ -70,20 +70,19 @@ async def generate_metadata(query: str, context: str | None = None) -> dict[str,
     )
 
     if not context:
-        rows = await supabase.search(query)
-        if not rows:
-            raise ValueError(f"No matches found for query: {query}")
+        try:
+            rows = await supabase.search(query)
+            if rows:
+                context = "\n".join(
+                    f"[{i}] {r.get('title', 'Unknown')!s}: {r.get('summary', '')!s}" for i, r in enumerate(rows[:3], 1)
+                )
+                logger.info(f"Context retrieved from DB for {query}")
+        except Exception as e:
+            logger.warning(f"Could not retrieve context from DB: {e}")
 
-        context = "\n".join(
-            f"[{i}] {r.get('title', 'Unknown')!s}: {r.get('summary', '')!s}" for i, r in enumerate(rows[:3], 1)
-        )
-        logger.info(
-            "context_retrieved",
-            extra={
-                "task_id": task_id,
-                "similar_games": len(rows),
-            },
-        )
+    if not context:
+        context = "New game discovery. No existing context in database. Use general knowledge and search grounding."
+        logger.info(f"Using default context for {query}")
 
     prompt = _load_prompt("metadata_generator.generate").format(query=query, context=context)
 
@@ -130,6 +129,18 @@ async def generate_metadata(query: str, context: str | None = None) -> dict[str,
 
 
 class GameService:
+    def __init__(self):
+        self.use_local = True
+        try:
+            from app.core import supabase
+            supabase._get_client()
+            self.use_local = False
+            logger.info("Supabase connected. Using cloud DB.")
+        except Exception:
+            logger.warning("Supabase not configured. Falling back to local SQLite.")
+            from app.core import local_db
+            local_db.init_db()
+
     async def search_games(self, query: str) -> list[dict[str, Any]]:
         return await supabase.search(query)
 
@@ -137,10 +148,65 @@ class GameService:
         return await supabase.list_recent(limit=limit, offset=offset)
 
     async def get_game_by_slug(self, slug: str) -> dict[str, Any] | None:
-        game = await supabase.get_by_slug(slug)
-        if game:
-            await supabase.increment_view_count(str(game["id"]))
-        return game
+        return await supabase.get_by_slug(slug)
+
+    async def create_game_from_query(self, query: str) -> dict[str, Any] | None:
+        """
+        Generate game metadata using Gemini and save it to the database.
+        """
+        # 1. Generate with Gemini 2.0 Flash (uses existing metadata_generator logic)
+        # Note: metadata_generator is a standalone function in this file
+        try:
+            metadata = await generate_metadata(query)
+        except Exception as e:
+            logger.error(f"Metadata generation failed: {e}")
+            return None
+
+        # 2. Enhance with Pro Strategy
+        prompt = _load_prompt("pro_strategy_generator.generate").format(
+            query=query, 
+            context=metadata.get("description", "")
+        )
+        try:
+            pro_strategy = await _gemini.generate_structured_json(prompt)
+            if pro_strategy:
+                metadata["strategy_tier"] = pro_strategy.get("tier_rating", "B")
+                sd = metadata.get("structured_data", {})
+                sd["pro_tips"] = pro_strategy.get("pro_tips", [])
+                sd["rule_mistakes"] = pro_strategy.get("rule_mistakes", [])
+                sd["strategy_analysis"] = pro_strategy.get("strategy_content", "")
+                metadata["structured_data"] = sd
+        except Exception as e:
+            logger.warning(f"Pro strategy generation failed for {query}: {e}")
+
+        # 3. Save
+        game_id = str(uuid.uuid4())
+        game_data = {
+            "id": game_id,
+            "slug": metadata.get("slug") or f"{uuid.uuid4().hex[:8]}",
+            "title": metadata.get("title"),
+            "title_ja": metadata.get("title_ja"),
+            "summary": metadata.get("summary"),
+            "description": metadata.get("description"),
+            "rules_content": metadata.get("rules_content"),
+            "min_players": metadata.get("min_players"),
+            "max_players": metadata.get("max_players"),
+            "play_time": metadata.get("play_time"),
+            "min_age": metadata.get("min_age"),
+            "published_year": metadata.get("published_year"),
+            "image_url": metadata.get("image_url"),
+            "strategy_tier": metadata.get("strategy_tier", "B"),
+            "structured_data": metadata.get("structured_data", {}),
+            "created_at": datetime.now(UTC).isoformat(),
+            "updated_at": datetime.now(UTC).isoformat(),
+        }
+
+        if self.use_local:
+            from app.core import local_db
+            local_db.upsert_game(game_data)
+            return game_data
+        else:
+            return await supabase.upsert_game(game_data)
 
     async def update_game_content(self, slug: str, fill_missing_only: bool = False) -> dict[str, Any]:
         game = await supabase.get_by_slug(slug)

@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -34,7 +35,7 @@ class StructuredData(BaseSchema):
 
 
 class GameDetail(BaseSchema):
-    id: str
+    id: Any
     slug: str | None = None
     title: str
     description: str | None = None

@@ -27,9 +27,12 @@ function App() {
     setError(null)
     setLoading(true)
     try {
-      const data = await api.get(`/api/games?limit=1000&offset=0`)
-      setInitialGames(data.games || [])
-      setTotalGamesCount(data.total || 0)
+      const data = await api.get(`/api/games?limit=20000&offset=0`)
+      const list = data.games || []
+      const total = data.total || 0
+
+      setInitialGames(list)
+      setTotalGamesCount(total)
     } catch (err) {
       console.error('Failed to load games:', err)
       setError('ゲームの読み込みに失敗しました。')
