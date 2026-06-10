@@ -1,346 +1,431 @@
-import { useEffect, useState, lazy, Suspense } from 'react'
-import { useSearchParams } from 'react-router-dom'
-// import GamePage from './pages/GamePage' // Changed to lazy
-const GamePage = lazy(() => import('./pages/GamePage'))
-import { ThinkingMeeple } from './components/ThinkingMeeple'
-import { EmptyMeeple } from './components/EmptyMeeple'
-import { GameBackground } from './components/GameBackground'
-import { supabase } from './lib/supabase'
-
+import { useEffect, useState, useMemo } from 'react'
+import { useSearchParams, Link, useNavigate } from 'react-router-dom'
 import { api } from './lib/api'
 
 function App() {
   const [searchParams, setSearchParams] = useSearchParams()
-  const [games, setGames] = useState([])
+  const navigate = useNavigate()
+  
   const [initialGames, setInitialGames] = useState([])
-  const [selectedSlug, setSelectedSlug] = useState(null)
+  const [totalGamesCount, setTotalGamesCount] = useState(0)
   const [loading, setLoading] = useState(true)
-
-  const [generating, setGenerating] = useState(false)
   const [error, setError] = useState(null)
-  const [_session, setSession] = useState(null)
+  const [generating, setGenerating] = useState(false)
+
+  // Filters state
+  const [query, setQuery] = useState(searchParams.get('q') || '')
+  const [activePlayers, setActivePlayers] = useState(null)
+  const [activeTime, setActiveTime] = useState(null)
+  const [activeTier, setActiveTier] = useState(null)
+  const [sortOption, setSortOption] = useState('recent')
+
+  // Comparison State
+  const [compareList, setCompareList] = useState([])
+  const [isBattleMode, setIsBattleMode] = useState(false)
+
+  const loadAllGames = async () => {
+    setError(null)
+    setLoading(true)
+    try {
+      const data = await api.get(`/api/games?limit=1000&offset=0`)
+      setInitialGames(data.games || [])
+      setTotalGamesCount(data.total || 0)
+    } catch (err) {
+      console.error('Failed to load games:', err)
+      setError('ゲームの読み込みに失敗しました。')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleLoadMore = async () => {
+    if (initialGames.length >= totalGamesCount) return
+    setLoading(true)
+    try {
+      const data = await api.get(`/api/games?limit=1000&offset=${initialGames.length}`)
+      const newGames = data.games || []
+      setInitialGames([...initialGames, ...newGames])
+    } catch (err) {
+      console.error('Failed to load more games:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
-    if (!supabase) return
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session)
-    })
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session)
-    })
-
-    return () => subscription.unsubscribe()
+    loadAllGames()
   }, [])
 
-  const [query, setQuery] = useState(searchParams.get('q') || '')
-  // HasMore/Offset are no longer needed for full client-side load
-  // const [hasMore, setHasMore] = useState(true)
-  // const [offset, setOffset] = useState(0)
+  // Derived unique values
+  const availableTiers = useMemo(() => {
+    const tiers = new Set(initialGames.map(g => g.strategy_tier).filter(Boolean))
+    return Array.from(tiers).sort()
+  }, [initialGames])
 
-  useEffect(() => {
-    const loadAllGames = async () => {
-      setError(null)
-      setLoading(true)
+  // Filtering Logic
+  const filteredGames = useMemo(() => {
+    let result = [...initialGames]
 
-      try {
-        // Fetch a large number to ensure we get everything for client-side search
-        const data = await api.get(`/api/games?limit=1000&offset=0`)
-        const list = Array.isArray(data) ? data : data.games || []
-
-        setInitialGames(list)
-        // If there's an initial query from URL, filtered results will be set by the useEffect below
-        // Otherwise, show all
-        if (!searchParams.get('q')) {
-          setGames(list)
-          if (list.length > 0) {
-            setSelectedSlug(list[0].slug)
-          }
-        } else {
-          // Initial filter will happen in useEffect
-        }
-      } catch (err) {
-        console.error('Failed to load games:', err)
-        setError('ゲームの読み込みに失敗しました。しばらく経ってから再読み込みしてください。')
-      } finally {
-        setLoading(false)
-      }
+    // Search Query
+    if (query) {
+      const q = query.trim().normalize('NFKC').toLowerCase()
+      result = result.filter((game) => {
+        const title = (game.title || '').normalize('NFKC').toLowerCase()
+        const titleJa = (game.title_ja || '').normalize('NFKC').toLowerCase()
+        const titleEn = (game.title_en || '').normalize('NFKC').toLowerCase()
+        const summary = (game.summary || '').normalize('NFKC').toLowerCase()
+        return title.includes(q) || titleJa.includes(q) || titleEn.includes(q) || summary.includes(q)
+      })
     }
 
-    loadAllGames()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+    // Player Count Filter
+    if (activePlayers) {
+      const p = parseInt(activePlayers)
+      result = result.filter(g => {
+        const min = g.min_players || 1
+        const max = g.max_players || 99
+        if (activePlayers === '5+') return max >= 5
+        return p >= min && p <= max
+      })
+    }
 
-  const [debouncedQuery, setDebouncedQuery] = useState(query)
+    // Play Time Filter
+    if (activeTime) {
+      result = result.filter(g => {
+        const t = g.play_time || 0
+        if (activeTime === '30-') return t > 0 && t <= 30
+        if (activeTime === '30-60') return t > 30 && t <= 60
+        if (activeTime === '60-120') return t > 60 && t <= 120
+        if (activeTime === '120+') return t > 120
+        return true
+      })
+    }
 
-  // Debounce input
+    // Tier Filter
+    if (activeTier) {
+      result = result.filter(g => g.strategy_tier === activeTier)
+    }
+
+    // Sorting
+    result.sort((a, b) => {
+      if (sortOption === 'recent') {
+        const dateA = a.created_at ? new Date(a.created_at).getTime() : 0
+        const dateB = b.created_at ? new Date(b.created_at).getTime() : 0
+        return dateB - dateA
+      }
+      if (sortOption === 'title') {
+        const ta = a.title_ja || a.title || ''
+        const tb = b.title_ja || b.title || ''
+        return ta.localeCompare(tb)
+      }
+      if (sortOption === 'year') {
+        const ya = a.published_year || 0
+        const yb = b.published_year || 0
+        return yb - ya
+      }
+      if (sortOption === 'play_time') {
+        const ta = a.play_time || 0
+        const tb = b.play_time || 0
+        return ta - tb
+      }
+      return 0
+    })
+
+    return result
+  }, [initialGames, query, activePlayers, activeTime, activeTier, sortOption])
+
+  // Sync Search Query to URL
   useEffect(() => {
     const timer = setTimeout(() => {
-      setDebouncedQuery(query)
+      if (query) {
+        setSearchParams({ q: query }, { replace: true })
+      } else {
+        setSearchParams({}, { replace: true })
+      }
     }, 300)
     return () => clearTimeout(timer)
-  }, [query])
+  }, [query, setSearchParams])
 
-  // Sync with URL
-  useEffect(() => {
-    if (debouncedQuery) {
-      setSearchParams({ q: debouncedQuery }, { replace: true })
-    } else {
-      setSearchParams({}, { replace: true })
-    }
-  }, [debouncedQuery, setSearchParams])
-
-  // Client-side wide search
-  useEffect(() => {
-    if (initialGames.length === 0) return
-
-    const q = debouncedQuery.trim().normalize('NFKC').toLowerCase()
-
-    if (!q) {
-      setGames(initialGames)
-      return
-    }
-
-    const filtered = initialGames.filter((game) => {
-      const title = (game.title || '').normalize('NFKC').toLowerCase()
-      const titleJa = (game.title_ja || '').normalize('NFKC').toLowerCase()
-      const titleEn = (game.title_en || '').normalize('NFKC').toLowerCase()
-      const summary = (game.summary || '').normalize('NFKC').toLowerCase()
-      const description = (game.description || '').normalize('NFKC').toLowerCase()
-      const rules = (game.rules_content || '').normalize('NFKC').toLowerCase()
-
-      return (
-        title.includes(q) ||
-        titleJa.includes(q) ||
-        titleEn.includes(q) ||
-        summary.includes(q) ||
-        description.includes(q) ||
-        rules.includes(q)
-      )
-    })
-
-    setGames(filtered)
-    // Optional: Select first result if current selection is not in list?
-    // For now, let's keep selection logic simple.
-  }, [debouncedQuery, initialGames])
-
-  const handleSearch = async (e) => {
+  const handleSearchSubmit = async (e) => {
     e.preventDefault()
-    // For normal search, the useEffect handles it.
-    // This handler is now primarily for "Generate" (Force create new).
+    if (!query.trim()) return
 
-    // If just searching existing, do nothing (handled by effect)
-    // But if we want to support "Generate" explicitly via button:
-    // We already filter. If user hits Enter, it's just submitting the form.
-
-    // However, the original code had "Generate" button logic associated with `generating` state.
-    // The UI shows a "Generate" button.
-
-    if (!query.trim()) {
-      return
-    }
-
-    // Check if we have results locally. If we do, usually we don't auto-generate.
-    // But the button says "Generate".
-    // Let's assume the button action is specifically to TRY generating if not found,
-    // or if the user explicitly wants to find something new.
-
-    // Changing behavior: "Search" happens automatically.
-    // "Generate" button should specifically trigger the API generation.
-
-    setLoading(true)
     setGenerating(true)
     setError(null)
-
     try {
-      // Use the generate=true flag
       const data = await api.post('/api/search', { query, generate: true })
       const list = Array.isArray(data) ? data : data.games || []
-
-      // If a new game was generated, it usually returns just that game or a list.
-      // We should probably re-fetch all games or add this to our local list.
       if (list.length > 0) {
         const newGame = list[0]
-        // Check if we already have it
         const exists = initialGames.find((g) => g.slug === newGame.slug)
         if (!exists) {
-          const newTotal = [newGame, ...initialGames]
-          setInitialGames(newTotal)
-          // The useEffect will re-filter and pick it up
+          setInitialGames([newGame, ...initialGames])
         }
-        setQuery(newGame.title_ja || newGame.title) // update query to match exact title? Maybe not.
-        setSelectedSlug(newGame.slug)
+        navigate(`/games/${newGame.slug}`)
       }
     } catch (e) {
       console.error(e)
-      setError('生成に失敗しました。')
+      setError('AI生成リクエストに失敗しました。')
     } finally {
-      setLoading(false)
       setGenerating(false)
     }
   }
 
-  const handleClear = () => {
+  const clearFilters = () => {
     setQuery('')
-    setDebouncedQuery('')
-    setGames(initialGames)
-    if (initialGames.length > 0) {
-      setSelectedSlug(initialGames[0].slug)
+    setActivePlayers(null)
+    setActiveTime(null)
+    setActiveTier(null)
+  }
+
+  const toggleCompare = (game) => {
+    if (compareList.find(g => g.id === game.id)) {
+      setCompareList(compareList.filter(g => g.id !== game.id))
+    } else {
+      if (compareList.length >= 3) return
+      setCompareList([...compareList, game])
     }
   }
 
-  return (
-    <div className="app-container">
-      <GameBackground games={initialGames} />
-      <header className="main-header">
-        <div className="brand" onClick={handleClear}>
-          <img
-            src="/assets/header-icon.webp"
-            alt="Meeple"
-            loading="lazy"
-            style={{ width: '32px', height: 'auto', marginRight: '8px' }}
-          />
-          <span className="logo-icon">♜</span>
-          <h1>ボドゲのミカタ</h1>
+  if (isBattleMode) {
+    return (
+      <div className="game-detail-content" style={{ overflowY: 'auto', height: '100dvh', padding: '2rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+          <h1 className="game-title">COMPARISON BATTLE</h1>
+          <button className="filter-btn" style={{ borderColor: '#fff' }} onClick={() => setIsBattleMode(false)}>CLOSE BATTLE</button>
         </div>
-        <nav style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <a href="/data" className="nav-link">
-            📊 データ
-          </a>
-        </nav>
-      </header>
-
-      <div
-        style={{
-          textAlign: 'center',
-          margin: '24px 16px',
-          color: '#a0aec0',
-          fontSize: '0.95rem',
-          lineHeight: '1.6',
-        }}
-      >
-        <p style={{ margin: 0 }}>
-          「説明書を読むのが面倒」「インスト準備に時間がかかる」そんな悩みをAIが解決。
-          <br />
-          ボドゲのミカタは、世界中のボードゲームのルールを瞬時に要約・検索できるツールです。
-        </p>
-      </div>
-
-      <div className="search-section">
-        <form onSubmit={handleSearch} className="search-form">
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="ボードゲーム名を入れてね。なければ調べるよ！(v2)"
-            className="search-input"
-          />
-          <button type="submit" className="btn-primary" disabled={loading || generating}>
-            {generating ? '生成中...' : '生成'}
-          </button>
-          {query && (
-            <button type="button" onClick={handleClear} className="btn-ghost">
-              クリア
-            </button>
-          )}
-        </form>
-      </div>
-
-      {error && <div className="error-banner">{error}</div>}
-      {generating && (
-        <div
-          style={{
-            marginBottom: '24px',
-            background: 'var(--card-bg)',
-            border: '1px solid var(--primary)',
-            borderRadius: '12px',
-            padding: '16px',
-          }}
-        >
-          <ThinkingMeeple text="探検家ミープル君がルールブックを読破中..." />
-        </div>
-      )}
-
-      <main className="main-layout">
-        <aside className="game-list-pane">
-          <div className="pane-header">
-            <h2>
-              ゲーム一覧 <span className="count">{games.length}</span>
-            </h2>
-          </div>
-
-          <div className="game-grid">
-            {loading && (
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'center',
-                  padding: '48px',
-                  width: '100%',
-                }}
-              >
-                <ThinkingMeeple />
+        
+        <div className="battle-grid">
+          {compareList.map(game => (
+            <div key={game.id} className="battle-col">
+              <div className="pro-card" style={{ textAlign: 'center' }}>
+                <img src={game.image_url || '/assets/no-image.webp'} style={{ width: '100%', borderRadius: '8px', marginBottom: '1rem' }} alt={game.title_ja} />
+                <div className="pro-stat-value">{game.title_ja || game.title}</div>
+                {game.strategy_tier && <div className="tier-badge" style={{ position: 'static', marginTop: '8px' }}>TIER {game.strategy_tier}</div>}
               </div>
-            )}
-            {games.map((game) => {
-              const title = game.title_ja || game.title || game.name || 'Untitled'
-              return (
-                <div
-                  key={game.id}
-                  className={`game-card ${selectedSlug === game.slug ? 'active' : ''}`}
-                  onClick={() => setSelectedSlug(game.slug)}
-                  style={{
-                    backgroundImage: `linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.8)), url(/assets/games/${game.slug}.webp), url(${game.image_url || '/assets/no-image.webp'})`,
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center',
-                  }}
-                >
-                  <h3 className="game-title">{title}</h3>
-                  <p className="game-summary">{game.summary || game.description}</p>
-                  <div className="game-tags">
-                    <span className="tag">
-                      {game.min_players}-{game.max_players}人用
-                    </span>
-                    <span className="tag">{game.play_time}分</span>
+
+              <div className="battle-attr">
+                <div className="battle-attr-label">Synopsis</div>
+                <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{game.summary || 'No summary available.'}</div>
+              </div>
+
+              <div className="battle-attr">
+                <div className="battle-attr-label">Specs</div>
+                <div className="pro-stats-grid" style={{ marginBottom: 0 }}>
+                  <div className="pro-stat-card"><div className="pro-stat-label">P</div><div className="pro-stat-value" style={{ fontSize: '0.9rem' }}>{game.min_players}-{game.max_players}</div></div>
+                  <div className="pro-stat-card"><div className="pro-stat-label">T</div><div className="pro-stat-value" style={{ fontSize: '0.9rem' }}>{game.play_time}m</div></div>
+                </div>
+              </div>
+
+              {game.structured_data?.mechanics && (
+                <div className="battle-attr">
+                  <div className="battle-attr-label">Mechanics</div>
+                  <div className="tag-list">
+                    {game.structured_data.mechanics.slice(0, 5).map(m => <span key={m} className="tag-item">{m}</span>)}
                   </div>
                 </div>
-              )
-            })}
-
-            {games.length === 0 && !loading && <EmptyMeeple query={query} />}
-          </div>
-        </aside>
-
-        <section className="game-detail-pane">
-          {selectedSlug ? (
-            <Suspense fallback={<div className="loading-pane">Loading game...</div>}>
-              <GamePage
-                key={selectedSlug}
-                slug={selectedSlug}
-                initialGame={games.find((g) => g.slug === selectedSlug)}
-              />
-            </Suspense>
-          ) : (
-            <div className="empty-selection">
-              <p>左のリストからゲームを選択してください</p>
+              )}
+              
+              <div style={{ marginTop: '2rem' }}>
+                <Link to={`/games/${game.slug}`} className="filter-btn" style={{ width: '100%', display: 'block', textDecoration: 'none' }}>VIEW FULL ANALYSIS</Link>
+              </div>
             </div>
-          )}
-        </section>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <>
+      <header>
+        <Link to="/" className="logo">
+          <div className="logo-text">ボドゲのミカタ</div>
+        </Link>
+        
+        <form className="search-container" onSubmit={handleSearchSubmit}>
+          <input 
+            type="text" 
+            className="search-input" 
+            placeholder="ゲームを検索、または未登録ゲームをAI生成..."
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+        </form>
+
+        <div className="db-status">
+          <div className="status-dot connected"></div>
+          {loading ? 'SYNCING...' : `${totalGamesCount} GAMES`}
+        </div>
+      </header>
+
+      <aside>
+        <div className="filter-section">
+          <h3>プレイ人数</h3>
+          <div className="filter-grid">
+            {['1', '2', '3', '4', '5+'].map(p => (
+              <button 
+                key={p} 
+                className={`filter-btn ${activePlayers === p ? 'active' : ''}`}
+                onClick={() => setActivePlayers(activePlayers === p ? null : p)}
+              >
+                {p}人
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="filter-section">
+          <h3>プレイ時間</h3>
+          <div className="filter-grid" style={{ gridTemplateColumns: '1fr' }}>
+            {[
+              { id: '30-', label: '30分以内' },
+              { id: '30-60', label: '30-60分' },
+              { id: '60-120', label: '60-120分' },
+              { id: '120+', label: '120分以上' }
+            ].map(t => (
+              <button 
+                key={t.id} 
+                className={`filter-btn ${activeTime === t.id ? 'active' : ''}`}
+                onClick={() => setActiveTime(activeTime === t.id ? null : t.id)}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {availableTiers.length > 0 && (
+          <div className="filter-section">
+            <h3>戦略ティア</h3>
+            <div className="filter-grid">
+              {availableTiers.map(t => (
+                <button 
+                  key={t} 
+                  className={`filter-btn ${activeTier === t ? 'active' : ''}`}
+                  onClick={() => setActiveTier(activeTier === t ? null : t)}
+                >
+                  Tier {t}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="filter-section">
+          <button 
+            className="filter-btn" 
+            style={{ width: '100%', borderColor: 'var(--accent-secondary)' }}
+            onClick={clearFilters}
+          >
+            フィルターをリセット
+          </button>
+        </div>
+      </aside>
+
+      <main>
+        <div className="control-panel">
+          <div className="active-filters" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: '700' }}>
+              {filteredGames.length} RESULTS
+            </span>
+            {activePlayers && <div className="filter-chip">人数: {activePlayers} <button onClick={() => setActivePlayers(null)}>×</button></div>}
+            {activeTime && <div className="filter-chip">時間: {activeTime} <button onClick={() => setActiveTime(null)}>×</button></div>}
+            {activeTier && <div className="filter-chip">Tier: {activeTier} <button onClick={() => setActiveTier(null)}>×</button></div>}
+          </div>
+          
+          <select 
+            className="sort-select" 
+            value={sortOption} 
+            onChange={(e) => setSortOption(e.target.value)}
+          >
+            <option value="recent">最近追加</option>
+            <option value="title">タイトル順</option>
+            <option value="year">発売年順</option>
+            <option value="play_time">プレイ時間順</option>
+          </select>
+        </div>
+
+        {error && <div style={{ color: '#ff4444', padding: '1rem', background: '#2a0000', borderRadius: '8px' }}>{error}</div>}
+        {generating && <div style={{ padding: '1rem', background: '#1a1a1a', borderRadius: '8px', border: '1px solid #444', color: '#aaa', textAlign: 'center' }}>AIが新しいゲーム情報を生成しています...</div>}
+
+        {loading ? (
+          <div style={{ textAlign: 'center', padding: '2rem', color: '#666' }}>ARCHIVE INITIALIZING...</div>
+        ) : (
+          <div className="asset-grid">
+            {filteredGames.map(game => (
+              <div key={game.id} style={{ position: 'relative' }}>
+                <Link to={`/games/${game.slug}`} className="asset-card" style={{ height: '100%' }}>
+                  <div className="asset-thumb-container">
+                    {game.strategy_tier && <div className="tier-badge">Tier {game.strategy_tier}</div>}
+                    <img 
+                      src={game.image_url || '/assets/no-image.webp'} 
+                      alt={game.title_ja || game.title} 
+                      className="asset-thumb"
+                      loading="lazy"
+                    />
+                  </div>
+                  <div className="asset-info">
+                    <div className="asset-title">{game.title_ja || game.title}</div>
+                    <div className="asset-meta">
+                      {game.min_players && <span className="meta-item">👥 {game.min_players}{game.max_players && game.max_players !== game.min_players ? `-${game.max_players}` : ''}</span>}
+                      {game.play_time && <span className="meta-item">⏳ {game.play_time}m</span>}
+                      {game.published_year && <span className="meta-item">📅 {game.published_year}</span>}
+                    </div>
+                    <div className="asset-summary">{game.summary || game.description}</div>
+                  </div>
+                </Link>
+                <button 
+                  onClick={(e) => { e.preventDefault(); toggleCompare(game); }}
+                  className={`filter-btn ${compareList.find(g => g.id === game.id) ? 'active' : ''}`}
+                  style={{ position: 'absolute', top: '8px', right: '8px', zIndex: 10, padding: '4px 8px', fontSize: '0.65rem' }}
+                >
+                  {compareList.find(g => g.id === game.id) ? 'READY' : 'COMPARE'}
+                </button>
+              </div>
+            ))}
+            {filteredGames.length === 0 && !loading && (
+              <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '3rem', color: '#666' }}>
+                条件に一致するゲームが見つかりません。
+              </div>
+            )}
+          </div>
+        )}
+        
+        {!loading && initialGames.length < totalGamesCount && (
+          <div style={{ textAlign: 'center', padding: '2rem' }}>
+            <button 
+              className="filter-btn" 
+              style={{ padding: '10px 24px', fontSize: '0.9rem', borderColor: 'var(--accent)' }}
+              onClick={handleLoadMore}
+            >
+              さらに読み込む ({initialGames.length} / {totalGamesCount})
+            </button>
+          </div>
+        )}
       </main>
 
-      <footer
-        className="main-footer"
-        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}
-      >
-        <span>© {new Date().getFullYear()} ボドゲのミカタ</span>
-        <img
-          src="/assets/footer-logo.webp"
-          alt="Bodoge no Mikata Logo"
-          style={{ width: '80px', height: 'auto', borderRadius: '8px', opacity: 0.8 }}
-        />
-      </footer>
-    </div>
+      {compareList.length > 0 && (
+        <div className="comparison-tray">
+          <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#666' }}>BATTLE TRAY</div>
+          {compareList.map(g => (
+            <div key={g.id} className="compare-item">
+              <img src={g.image_url || '/assets/no-image.webp'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Compare Item" />
+              <button onClick={() => toggleCompare(g)}>×</button>
+            </div>
+          ))}
+          {compareList.length >= 2 && (
+            <button 
+              className="filter-btn active" 
+              style={{ padding: '6px 16px', borderRadius: '20px' }}
+              onClick={() => setIsBattleMode(true)}
+            >
+              BATTLE START
+            </button>
+          )}
+        </div>
+      )}
+    </>
   )
 }
 

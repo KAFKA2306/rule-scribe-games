@@ -28,6 +28,9 @@ class StructuredData(BaseSchema):
     key_elements: list[KeyElement] = []
     mechanics: list[str] = []
     best_player_count: str | None = None
+    pro_tips: list[str] = []
+    rule_mistakes: list[str] = []
+    strategy_analysis: str | None = None
 
 
 class GameDetail(BaseSchema):
@@ -125,3 +128,10 @@ class StrategyTier(BaseSchema):
     author: str | None = None
     created_at: str | None = None
     updated_at: str | None = None
+
+
+class GameListResponse(BaseSchema):
+    games: list[GameDetail]
+    total: int
+    limit: int
+    offset: int

@@ -40,9 +40,15 @@ async def search_games_post(
     return await service.search_games(body.query)
 
 
-@router.get("/games", response_model=list[GameDetail])
+@router.get("/games", response_model=GameListResponse)
 async def list_recent_games(limit: int = 100, offset: int = 0, service: GameService = Depends(get_game_service)):
-    return await service.list_recent_games(limit=limit, offset=offset)
+    result = await service.list_recent_games(limit=limit, offset=offset)
+    return {
+        "games": result["data"],
+        "total": result["total"] or 0,
+        "limit": limit,
+        "offset": offset
+    }
 
 
 @router.get("/games/{slug}", response_model=GameDetail)

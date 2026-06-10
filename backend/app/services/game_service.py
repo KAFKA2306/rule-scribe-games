@@ -133,7 +133,7 @@ class GameService:
     async def search_games(self, query: str) -> list[dict[str, Any]]:
         return await supabase.search(query)
 
-    async def list_recent_games(self, limit: int = 100, offset: int = 0) -> list[dict[str, Any]]:
+    async def list_recent_games(self, limit: int = 100, offset: int = 0) -> dict[str, Any]:
         return await supabase.list_recent(limit=limit, offset=offset)
 
     async def get_game_by_slug(self, slug: str) -> dict[str, Any] | None:

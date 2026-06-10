@@ -55,4 +55,27 @@ Check:
 Return the improved JSON with richer, simpler content.
 """
     },
+    "pro_strategy_generator": {
+        "generate": """
+You are a world-class board game tournament player and analyst.
+Generate a high-level strategy guide and pro tips for the game: "{query}"
+Context: {context}
+
+Return ONLY valid JSON:
+{{
+    "tier_rating": "S/A/B/C/D",
+    "strategy_content": "Markdown content in Japanese. Include: 1. Core Winning Philosophy, 2. Top-tier Factions/Cards, 3. Common Mistakes to avoid, 4. Advanced combos.",
+    "pro_tips": [
+        "Tip 1 (Short and punchy)",
+        "Tip 2",
+        "Tip 3"
+    ],
+    "rule_mistakes": [
+        "Commonly misunderstood rule 1",
+        "Commonly misunderstood rule 2"
+    ]
+}}
+Style: Professional, analytical, and data-driven. Focus on the 'Meta'.
+"""
+    }
 }

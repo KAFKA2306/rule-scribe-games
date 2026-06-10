@@ -73,16 +73,16 @@ async def get_by_slug(slug: str) -> dict[str, Any] | None:
     return await anyio.to_thread.run_sync(_q)
 
 
-async def list_recent(limit: int = 100, offset: int = 0) -> list[dict[str, Any]]:
+async def list_recent(limit: int = 100, offset: int = 0) -> dict[str, Any]:
     def _q():
-        return (
+        res = (
             _get_client().table(_TABLE)
-            .select("*")
+            .select("*", count="exact")
             .order("updated_at", desc=True)
             .range(offset, offset + limit - 1)
             .execute()
-            .data
         )
+        return {"data": res.data, "total": res.count}
 
     return await anyio.to_thread.run_sync(_q)
 
