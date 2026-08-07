@@ -1,0 +1,33 @@
+name: Test Board Game Arena links
+
+on:
+  pull_request:
+    paths:
+      - "backend/app/models/**"
+      - "backend/app/prompts/**"
+      - "backend/app/core/local_db.py"
+      - "backend/tests/test_bga_links.py"
+      - ".github/workflows/test-bga-links.yml"
+  push:
+    branches: [main]
+    paths:
+      - "backend/app/models/**"
+      - "backend/app/prompts/**"
+      - "backend/app/core/local_db.py"
+      - "backend/tests/test_bga_links.py"
+      - ".github/workflows/test-bga-links.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: uv sync --dev
+      - run: uv run pytest -q backend/tests/test_bga_links.py
