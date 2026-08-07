@@ -15,6 +15,7 @@ Return ONLY valid JSON matching this schema:
     "max_players": int,
     "play_time": int (minutes),
     "min_age": int (recommended age),
+    "bga_url": "Verified HTTPS Board Game Arena game URL, or null",
     "rules_content": "See format below",
     "structured_data": {{
         "keywords": [
@@ -39,7 +40,8 @@ IMPORTANT GUIDELINES:
 3. key_elements: Include 4-6 fun elements.
 4. **STYLE: Explain Like I'm 5.** Use polite Japanese (Desu/Masu). Avoid Katakana jargon where possible.
 5. Focus on "How to start" and "What do I do on my turn?".
-If the game is not found, do your best to infer from similar games.
+6. bga_url MUST be null unless the exact game is confirmed on Board Game Arena. Never infer a slug or fabricate a URL. When present, it MUST use HTTPS and a boardgamearena.com host.
+If the game is not found, do your best to infer from similar games, but keep bga_url null.
 """
     },
     "metadata_critic": {
@@ -52,6 +54,7 @@ Check:
 3. Are there 5-8 keywords explaining game terms simply?
 4. Are there 4-6 key_elements describing fun components?
 5. Is the flow of play clear step-by-step?
+6. Preserve bga_url only when it is a verified HTTPS URL on boardgamearena.com; otherwise set it to null.
 Return the improved JSON with richer, simpler content.
 """
     },
