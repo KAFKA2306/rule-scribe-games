@@ -1,7 +1,22 @@
 from datetime import datetime
 from typing import Any
+from urllib.parse import urlparse
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+
+def validate_bga_url(value: str | None) -> str | None:
+    """Accept only canonical HTTPS Board Game Arena links."""
+    if value is None:
+        return None
+    value = value.strip()
+    if not value:
+        return None
+    parsed = urlparse(value)
+    host = (parsed.hostname or "").lower()
+    if parsed.scheme != "https" or not (host == "boardgamearena.com" or host.endswith(".boardgamearena.com")):
+        raise ValueError("bga_url must be an HTTPS URL on boardgamearena.com")
+    return value
 
 
 class BaseSchema(BaseModel):
@@ -28,6 +43,7 @@ class PersonaReview(BaseSchema):
     persona: str
     review_text: str
     rating: float
+
 
 class StructuredData(BaseSchema):
     keywords: list[Keyword] = []
@@ -81,6 +97,8 @@ class GameDetail(BaseSchema):
     created_at: str | None = None
     updated_at: str | None = None
 
+    _validate_bga_url = field_validator("bga_url")(validate_bga_url)
+
 
 class GameUpdate(BaseSchema):
     title: str | None = None
@@ -103,11 +121,14 @@ class GameUpdate(BaseSchema):
     image_url: str | None = None
     official_url: str | None = None
     bgg_url: str | None = None
+    bga_url: str | None = None
     structured_data: StructuredData | None = None
     rules_content: str | None = None
     infographics: dict[str, str] | None = None
     data_version: int | None = None
     last_regenerated_at: datetime | None = None
+
+    _validate_bga_url = field_validator("bga_url")(validate_bga_url)
 
 
 SEARCH_RESULT = GameDetail
@@ -124,7 +145,10 @@ class GeneratedGameMetadata(BaseSchema):
     min_age: int
     rules_content: str
     structured_data: StructuredData
+    bga_url: str | None = None
     infographics: dict[str, str] | None = None
+
+    _validate_bga_url = field_validator("bga_url")(validate_bga_url)
 
 
 class StrategyTier(BaseSchema):
