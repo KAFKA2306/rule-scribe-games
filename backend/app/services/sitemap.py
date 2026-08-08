@@ -51,12 +51,8 @@ async def get_sitemap_xml() -> str:
         if image_url:
             if image_url.startswith("/"):
                 image_url = f"{base_url}{image_url}"
-            img = ET.SubElement(root, f"{{{NS_IMAGE}}}image")  # Correctly attached image to specific loc would be better, but keeping logic
-            # Correcting: image should be child of url_elem
-            img = ET.SubElement(url_elem, f"{{{NS_IMAGE}}}image")
-            img_loc = ET.SubElement(img, f"{{{NS_IMAGE}}}loc")
-            img_loc.text = image_url
-            img_title = ET.SubElement(img, f"{{{NS_IMAGE}}}title")
-            img_title.text = game.get("title", "")
+            image = ET.SubElement(url_elem, f"{{{NS_IMAGE}}}image")
+            image_loc = ET.SubElement(image, f"{{{NS_IMAGE}}}loc")
+            image_loc.text = image_url
     xml_str = ET.tostring(root, encoding="unicode", method="xml")
     return '<?xml version="1.0" encoding="UTF-8"?>\n' + xml_str
