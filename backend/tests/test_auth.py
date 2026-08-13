@@ -41,8 +41,8 @@ async def test_auth_requires_bearer_token():
 
 @pytest.mark.asyncio
 async def test_auth_rejects_invalid_token(monkeypatch):
-    monkeypatch.setenv('NEXT_PUBLIC_SUPABASE_URL', 'https://example.supabase.co')
-    monkeypatch.setenv('NEXT_PUBLIC_SUPABASE_ANON_KEY', 'sb_publishable_test')
+    monkeypatch.setenv('SUPABASE_URL', 'https://example.supabase.co')
+    monkeypatch.setenv('VITE_SUPABASE_ANON_KEY', 'sb_publishable_test')
     FakeAsyncClient.response = FakeResponse(401, {'message': 'invalid token'})
     monkeypatch.setattr(auth.httpx, 'AsyncClient', FakeAsyncClient)
 
@@ -54,8 +54,8 @@ async def test_auth_rejects_invalid_token(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_auth_returns_normalized_verified_user(monkeypatch):
-    monkeypatch.setenv('NEXT_PUBLIC_SUPABASE_URL', 'https://example.supabase.co')
-    monkeypatch.setenv('NEXT_PUBLIC_SUPABASE_ANON_KEY', 'sb_publishable_test')
+    monkeypatch.setenv('SUPABASE_URL', 'https://example.supabase.co')
+    monkeypatch.setenv('VITE_SUPABASE_ANON_KEY', 'sb_publishable_test')
     FakeAsyncClient.response = FakeResponse(
         200,
         {
