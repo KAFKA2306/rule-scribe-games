@@ -1,4 +1,4 @@
-import { useAuth } from '../auth/AuthContext'
+import { useAuth } from '../auth/authContext'
 
 export default function LoginButton() {
   const { user, loading, isConfigured, signInWithGoogle, signOut, error } = useAuth()
