@@ -64,9 +64,10 @@ export default function GamePage({ slug: propSlug, initialGame, allGames: propAl
   const title = game.title_ja || game.title || 'Untitled'
   const rules = game.rules_content || ''
   const sd = game.structured_data || {}
+  const coachSourceUrl = game.official_url || game.source_url || null
 
   const pageTitle = `「${title}」のルール・戦略・インスト要約 | ボドゲのミカタ`
-  const description = game.summary || `「${title}」のルールをAIが瞬時に分析。セットアップから勝利戦略まで。`
+  const description = game.summary || `「${title}」の登録済みルール要約と出典情報を確認できます。`
   const gameUrl = `${BASE_URL}/games/${slug}`
   const imageUrl = game.image_url || `${BASE_URL}/assets/no-image.webp`
 
@@ -185,41 +186,34 @@ export default function GamePage({ slug: propSlug, initialGame, allGames: propAl
                   <span className="coach-step-num">STEP 1</span>
                   <div className="coach-step-title">セットアップ (Setup)</div>
                   <div style={{ fontSize: '0.95rem', lineHeight: 1.6 }}>
-                    コンポーネントを準備し、各プレイヤーに初期リソースを配布します。
-                    {sd.key_elements?.length > 0 && (
-                      <div style={{ marginTop: '1rem', color: 'var(--text-secondary)' }}>
-                        💡 注目要素: {sd.key_elements.map(e => e.name).join(', ')}
-                      </div>
-                    )}
+                    {game.setup_summary || 'このゲーム固有のセットアップ要約は未確認です。'}
                   </div>
                 </div>
 
                 <div className="coach-step">
                   <span className="coach-step-num">STEP 2</span>
-                  <div className="coach-step-title">ゲームの目的 (Objective)</div>
+                  <div className="coach-step-title">ゲームの流れ (Gameplay)</div>
                   <div style={{ fontSize: '0.95rem', lineHeight: 1.6 }}>
-                    {game.summary || '勝利条件を確認します。'}
+                    {game.gameplay_summary || 'このゲーム固有のゲーム進行要約は未確認です。'}
                   </div>
                 </div>
 
                 <div className="coach-step">
                   <span className="coach-step-num">STEP 3</span>
-                  <div className="coach-step-title">手番の流れ (Turn Flow)</div>
+                  <div className="coach-step-title">ゲーム終了 (End Game)</div>
                   <div style={{ fontSize: '0.95rem', lineHeight: 1.6 }}>
-                    1. アクションを選択 <br />
-                    2. リソースを支払う <br />
-                    3. 効果を解決 <br />
-                    <br />
-                    {sd.mechanics?.length > 0 && (
-                      <div className="tag-list">
-                        {sd.mechanics.map(m => <span key={m} className="tag-item">{m}</span>)}
-                      </div>
-                    )}
+                    {game.end_game_summary || 'このゲーム固有の終了条件要約は未確認です。'}
                   </div>
                 </div>
 
                 <div style={{ textAlign: 'center', padding: '1rem', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
-                  AIによるインストガイドです。詳細は「ANALYSIS & RULES」タブを確認してください。
+                  登録済みのゲーム固有要約を表示しています。AI生成・要約を含む場合があり、公式裁定ではありません。
+                  {coachSourceUrl && (
+                    <>
+                      {' '}
+                      <a href={coachSourceUrl} target="_blank" rel="noreferrer">出典を確認</a>
+                    </>
+                  )}
                 </div>
               </div>
             )}
