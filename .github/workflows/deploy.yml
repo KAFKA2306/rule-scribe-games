@@ -46,6 +46,54 @@ jobs:
               raise SystemExit(1)
           print("Supabase auth environment contract: OK")
           PY
+      - name: Verify Google OAuth provider redirect
+        shell: bash
+        run: |
+          python - .vercel/.env.preview.local <<'PY'
+          import sys
+          import urllib.error
+          import urllib.parse
+          import urllib.request
+          from pathlib import Path
+
+          values = {}
+          for raw in Path(sys.argv[1]).read_text(encoding="utf-8").splitlines():
+              line = raw.strip()
+              if not line or line.startswith("#") or "=" not in line:
+                  continue
+              key, value = line.split("=", 1)
+              value = value.strip()
+              if len(value) >= 2 and value[0] == value[-1] and value[0] in "'\"":
+                  value = value[1:-1]
+              values[key.strip()] = value
+
+          base = values["SUPABASE_URL"].rstrip("/")
+          query = urllib.parse.urlencode({
+              "provider": "google",
+              "redirect_to": "https://bodoge-no-mikata.vercel.app",
+          })
+          url = f"{base}/auth/v1/authorize?{query}"
+
+          class NoRedirect(urllib.request.HTTPRedirectHandler):
+              def redirect_request(self, req, fp, code, msg, headers, newurl):
+                  return None
+
+          opener = urllib.request.build_opener(NoRedirect)
+          request = urllib.request.Request(url, headers={"User-Agent": "rule-scribe-games-auth-contract/1.0"})
+          try:
+              response = opener.open(request, timeout=10)
+              status = response.status
+              location = response.headers.get("Location", "")
+          except urllib.error.HTTPError as exc:
+              status = exc.code
+              location = exc.headers.get("Location", "")
+
+          host = urllib.parse.urlparse(location).hostname
+          if status not in (301, 302, 303, 307, 308) or host != "accounts.google.com":
+              print(f"Google OAuth provider redirect check failed: status={status}, host={host or 'none'}")
+              raise SystemExit(1)
+          print("Google OAuth provider redirect contract: OK")
+          PY
       - name: Deploy Preview to Vercel
         run: vercel deploy --yes --token=${{ secrets.VERCEL_TOKEN }}
 
@@ -83,6 +131,54 @@ jobs:
               print("Missing required Vercel environment variables: " + ", ".join(missing))
               raise SystemExit(1)
           print("Supabase auth environment contract: OK")
+          PY
+      - name: Verify Google OAuth provider redirect
+        shell: bash
+        run: |
+          python - .vercel/.env.production.local <<'PY'
+          import sys
+          import urllib.error
+          import urllib.parse
+          import urllib.request
+          from pathlib import Path
+
+          values = {}
+          for raw in Path(sys.argv[1]).read_text(encoding="utf-8").splitlines():
+              line = raw.strip()
+              if not line or line.startswith("#") or "=" not in line:
+                  continue
+              key, value = line.split("=", 1)
+              value = value.strip()
+              if len(value) >= 2 and value[0] == value[-1] and value[0] in "'\"":
+                  value = value[1:-1]
+              values[key.strip()] = value
+
+          base = values["SUPABASE_URL"].rstrip("/")
+          query = urllib.parse.urlencode({
+              "provider": "google",
+              "redirect_to": "https://bodoge-no-mikata.vercel.app",
+          })
+          url = f"{base}/auth/v1/authorize?{query}"
+
+          class NoRedirect(urllib.request.HTTPRedirectHandler):
+              def redirect_request(self, req, fp, code, msg, headers, newurl):
+                  return None
+
+          opener = urllib.request.build_opener(NoRedirect)
+          request = urllib.request.Request(url, headers={"User-Agent": "rule-scribe-games-auth-contract/1.0"})
+          try:
+              response = opener.open(request, timeout=10)
+              status = response.status
+              location = response.headers.get("Location", "")
+          except urllib.error.HTTPError as exc:
+              status = exc.code
+              location = exc.headers.get("Location", "")
+
+          host = urllib.parse.urlparse(location).hostname
+          if status not in (301, 302, 303, 307, 308) or host != "accounts.google.com":
+              print(f"Google OAuth provider redirect check failed: status={status}, host={host or 'none'}")
+              raise SystemExit(1)
+          print("Google OAuth provider redirect contract: OK")
           PY
       - name: Deploy Production to Vercel
         run: vercel deploy --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
