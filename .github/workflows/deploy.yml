@@ -18,7 +18,23 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install Vercel CLI
         run: npm install --global vercel@latest
-      - name: Pull Vercel Environment Information
+      - name: Pull Preview Environment Information
+        run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+      - name: Pull Production Environment Information for contract audit
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+      - name: Audit Supabase environment variable names
+        shell: bash
+        run: |
+          set -euo pipefail
+          for file in .vercel/.env.preview.local .vercel/.env.production.local; do
+            echo "[$file]"
+            if [[ -f "$file" ]]; then
+              sed -E 's/^([^=]+)=.*$/\1/' "$file" | grep -E 'SUPABASE|DATABASE' || true
+            else
+              echo "(missing)"
+            fi
+          done
+      - name: Restore Preview Environment Information
         run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
       - name: Deploy Preview to Vercel
         run: vercel deploy --yes --token=${{ secrets.VERCEL_TOKEN }}
