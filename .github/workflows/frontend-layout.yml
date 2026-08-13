@@ -35,6 +35,20 @@ jobs:
         working-directory: frontend
         run: npm run build
 
+      - name: Verify source-bound public messaging
+        working-directory: frontend
+        shell: bash
+        run: |
+          if grep -Fq "AIでルールを瞬時に要約" index.html; then
+            echo "Unsupported instant-AI claim returned to public metadata"
+            exit 1
+          fi
+          if grep -Fq "世界中のボードゲームのルールを瞬時に要約" index.html; then
+            echo "Unsupported worldwide instant-summary claim returned to public metadata"
+            exit 1
+          fi
+          grep -Fq "AI生成・要約を含む情報は公式資料と区別して確認してください" index.html
+
       - name: Lint changed frontend surface
         working-directory: frontend
         run: npx eslint src/main.jsx src/auth/AuthContext.jsx src/auth/authContext.js src/components/AuthControlPortal.jsx src/components/LoginButton.jsx src/lib/api.js src/lib/supabase.js tests/game_layout.spec.js tests/auth.spec.js playwright.config.js
