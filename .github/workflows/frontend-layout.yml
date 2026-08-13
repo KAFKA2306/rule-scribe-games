@@ -13,6 +13,9 @@ permissions:
 jobs:
   game-layout:
     runs-on: ubuntu-latest
+    env:
+      VITE_SUPABASE_URL: https://example.supabase.co
+      VITE_SUPABASE_ANON_KEY: sb_publishable_test
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -34,7 +37,7 @@ jobs:
 
       - name: Lint changed frontend surface
         working-directory: frontend
-        run: npx eslint src/main.jsx src/auth/AuthContext.jsx src/auth/authContext.js src/components/AuthControlPortal.jsx src/components/LoginButton.jsx src/lib/api.js tests/game_layout.spec.js tests/auth.spec.js playwright.config.js
+        run: npx eslint src/main.jsx src/auth/AuthContext.jsx src/auth/authContext.js src/components/AuthControlPortal.jsx src/components/LoginButton.jsx src/lib/api.js src/lib/supabase.js tests/game_layout.spec.js tests/auth.spec.js playwright.config.js
 
       - name: Install Chromium
         working-directory: frontend

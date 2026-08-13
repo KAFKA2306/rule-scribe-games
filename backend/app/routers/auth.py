@@ -9,8 +9,8 @@ bearer = HTTPBearer(auto_error=False)
 
 
 def _auth_config() -> tuple[str, str]:
-    url = os.getenv("NEXT_PUBLIC_SUPABASE_URL", "").rstrip("/")
-    key = os.getenv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "")
+    url = os.getenv("SUPABASE_URL", "").rstrip("/")
+    key = os.getenv("VITE_SUPABASE_ANON_KEY", "")
     if not url or not key:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,

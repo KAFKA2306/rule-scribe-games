@@ -20,6 +20,32 @@ jobs:
         run: npm install --global vercel@latest
       - name: Pull Vercel Environment Information
         run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+      - name: Verify Supabase auth environment contract
+        shell: bash
+        run: |
+          python - .vercel/.env.preview.local VITE_SUPABASE_URL VITE_SUPABASE_ANON_KEY SUPABASE_URL <<'PY'
+          import sys
+          from pathlib import Path
+
+          path = Path(sys.argv[1])
+          required = sys.argv[2:]
+          values = {}
+          if path.exists():
+              for raw in path.read_text(encoding="utf-8").splitlines():
+                  line = raw.strip()
+                  if not line or line.startswith("#") or "=" not in line:
+                      continue
+                  key, value = line.split("=", 1)
+                  value = value.strip()
+                  if len(value) >= 2 and value[0] == value[-1] and value[0] in "'\"":
+                      value = value[1:-1]
+                  values[key.strip()] = value
+          missing = [key for key in required if not values.get(key)]
+          if missing:
+              print("Missing required Vercel environment variables: " + ", ".join(missing))
+              raise SystemExit(1)
+          print("Supabase auth environment contract: OK")
+          PY
       - name: Deploy Preview to Vercel
         run: vercel deploy --yes --token=${{ secrets.VERCEL_TOKEN }}
 
@@ -32,5 +58,31 @@ jobs:
         run: npm install --global vercel@latest
       - name: Pull Vercel Environment Information
         run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+      - name: Verify Supabase auth environment contract
+        shell: bash
+        run: |
+          python - .vercel/.env.production.local VITE_SUPABASE_URL VITE_SUPABASE_ANON_KEY SUPABASE_URL <<'PY'
+          import sys
+          from pathlib import Path
+
+          path = Path(sys.argv[1])
+          required = sys.argv[2:]
+          values = {}
+          if path.exists():
+              for raw in path.read_text(encoding="utf-8").splitlines():
+                  line = raw.strip()
+                  if not line or line.startswith("#") or "=" not in line:
+                      continue
+                  key, value = line.split("=", 1)
+                  value = value.strip()
+                  if len(value) >= 2 and value[0] == value[-1] and value[0] in "'\"":
+                      value = value[1:-1]
+                  values[key.strip()] = value
+          missing = [key for key in required if not values.get(key)]
+          if missing:
+              print("Missing required Vercel environment variables: " + ", ".join(missing))
+              raise SystemExit(1)
+          print("Supabase auth environment contract: OK")
+          PY
       - name: Deploy Production to Vercel
         run: vercel deploy --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
