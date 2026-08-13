@@ -1,35 +1,53 @@
-import { supabase } from '../lib/supabase'
+import { useAuth } from '../auth/AuthContext'
 
-export default function LoginButton({ session }) {
-  const handleLogout = async () => {
-    await supabase.auth.signOut()
+export default function LoginButton() {
+  const { user, loading, isConfigured, signInWithGoogle, signOut, error } = useAuth()
+
+  if (loading) {
+    return (
+      <button className="button-secondary" type="button" disabled aria-label="認証状態を確認中">
+        AUTH...
+      </button>
+    )
   }
 
-  if (session) {
+  if (user) {
+    const avatarUrl = user.user_metadata?.avatar_url
+    const displayName = user.user_metadata?.full_name || user.email || 'USER'
+
     return (
-      <div className="user-menu">
-        <img
-          src={session.user.user_metadata.avatar_url}
-          alt="Avatar"
-          className="user-avatar"
-          style={{
-            width: '32px',
-            height: '32px',
-            borderRadius: '50%',
-            marginRight: '8px',
-            verticalAlign: 'middle',
-          }}
-        />
-        <button
-          onClick={handleLogout}
-          className="button-secondary"
-          style={{ fontSize: '0.8rem', padding: '4px 8px' }}
-        >
+      <div className="user-menu" data-auth-state="signed-in" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        {avatarUrl ? (
+          <img
+            src={avatarUrl}
+            alt=""
+            className="user-avatar"
+            width="32"
+            height="32"
+            style={{ borderRadius: '50%' }}
+          />
+        ) : null}
+        <span style={{ fontSize: '0.75rem', maxWidth: '160px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {displayName}
+        </span>
+        <button type="button" onClick={signOut} className="button-secondary" style={{ fontSize: '0.8rem', padding: '4px 8px' }}>
           ログアウト
         </button>
       </div>
     )
   }
 
-  return null
+  return (
+    <div data-auth-state="signed-out" title={error || undefined}>
+      <button
+        type="button"
+        onClick={signInWithGoogle}
+        className="button-secondary"
+        disabled={!isConfigured}
+        aria-label="Googleでログイン"
+      >
+        Googleでログイン
+      </button>
+    </div>
+  )
 }
