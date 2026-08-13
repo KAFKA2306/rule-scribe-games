@@ -9,7 +9,10 @@ import './layout.css'
 const GamePage = lazy(() => import('./pages/GamePage.jsx'))
 const DataPage = lazy(() => import('./pages/DataPage.jsx'))
 
+import { AuthProvider } from './auth/AuthContext.jsx'
+import AuthControlPortal from './components/AuthControlPortal.jsx'
 import LoadingFallback from './components/LoadingFallback.jsx'
+
 const router = createBrowserRouter([
   {
     path: '/',
@@ -40,7 +43,10 @@ const router = createBrowserRouter([
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <HelmetProvider>
-      <RouterProvider router={router} />
+      <AuthProvider>
+        <RouterProvider router={router} />
+        <AuthControlPortal />
+      </AuthProvider>
     </HelmetProvider>
   </StrictMode>
 )

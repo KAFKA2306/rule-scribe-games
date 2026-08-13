@@ -4,7 +4,7 @@ from fastapi.responses import HTMLResponse
 
 from app.core.logger import setup_logging
 from app.middleware.validation import ValidationMiddleware
-from app.routers import games
+from app.routers import auth, games
 from app.services.seo_renderer import generate_seo_html
 from app.services.sitemap import get_sitemap_xml
 
@@ -22,6 +22,7 @@ app.add_middleware(
 )
 
 app.include_router(games.router, prefix="/api", tags=["games"])
+app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
 
 
 @app.get("/health")
