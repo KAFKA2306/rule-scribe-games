@@ -34,56 +34,49 @@ async function mockGameApi(page) {
   })
 }
 
-test('desktop game detail uses metadata sidebar plus readable main without page overflow', async ({ page }) => {
-  await page.setViewportSize({ width: 1280, height: 900 })
+async function readLayout(page) {
+  return page.evaluate(() => {
+    const sidebar = document.querySelector('.game-sidebar')?.getBoundingClientRect()
+    const main = document.querySelector('.game-main')?.getBoundingClientRect()
+    const title = document.querySelector('.game-title')?.getBoundingClientRect()
+    const tabs = document.querySelector('.rules-tabs')?.getBoundingClientRect()
+
+    if (!sidebar || !main || !title || !tabs) throw new Error('game detail layout nodes are missing')
+
+    return {
+      clientWidth: document.documentElement.clientWidth,
+      scrollWidth: document.documentElement.scrollWidth,
+      sidebar: { x: sidebar.x, y: sidebar.y, width: sidebar.width, height: sidebar.height },
+      main: { x: main.x, y: main.y, width: main.width, height: main.height },
+      titleX: title.x,
+      tabsX: tabs.x,
+    }
+  })
+}
+
+test('game detail keeps a readable desktop main and collapses cleanly at 800px', async ({ page }) => {
   await mockGameApi(page)
+  await page.setViewportSize({ width: 1280, height: 900 })
   await page.goto('/games/big-shot')
 
   await expect(page.getByRole('heading', { name: 'ビッグショット' })).toBeVisible()
   await expect(page.getByRole('tab', { name: 'ANALYSIS & RULES' })).toBeVisible()
 
-  const metrics = await page.evaluate(() => {
-    const sidebar = document.querySelector('.game-sidebar').getBoundingClientRect()
-    const main = document.querySelector('.game-main').getBoundingClientRect()
-    const title = document.querySelector('.game-title').getBoundingClientRect()
-    const tabs = document.querySelector('.rules-tabs').getBoundingClientRect()
-    return {
-      clientWidth: document.documentElement.clientWidth,
-      scrollWidth: document.documentElement.scrollWidth,
-      sidebar: { x: sidebar.x, y: sidebar.y, width: sidebar.width },
-      main: { x: main.x, y: main.y, width: main.width },
-      titleX: title.x,
-      tabsX: tabs.x,
-    }
-  })
+  const desktop = await readLayout(page)
+  expect(desktop.scrollWidth).toBe(desktop.clientWidth)
+  expect(desktop.sidebar.width).toBeGreaterThanOrEqual(280)
+  expect(desktop.sidebar.width).toBeLessThanOrEqual(340)
+  expect(desktop.main.width).toBeGreaterThan(600)
+  expect(desktop.main.x).toBeGreaterThan(desktop.sidebar.x + desktop.sidebar.width)
+  expect(desktop.titleX).toBeGreaterThanOrEqual(desktop.main.x)
+  expect(desktop.tabsX).toBeGreaterThanOrEqual(desktop.main.x)
 
-  expect(metrics.scrollWidth).toBe(metrics.clientWidth)
-  expect(metrics.sidebar.width).toBeGreaterThanOrEqual(280)
-  expect(metrics.sidebar.width).toBeLessThanOrEqual(340)
-  expect(metrics.main.width).toBeGreaterThan(600)
-  expect(metrics.main.x).toBeGreaterThan(metrics.sidebar.x + metrics.sidebar.width)
-  expect(metrics.titleX).toBeGreaterThanOrEqual(metrics.main.x)
-  expect(metrics.tabsX).toBeGreaterThanOrEqual(metrics.main.x)
-})
-
-test('game detail collapses to one column at 800px', async ({ page }) => {
   await page.setViewportSize({ width: 800, height: 900 })
-  await mockGameApi(page)
-  await page.goto('/games/big-shot')
+  await expect(page.locator('.game-layout')).toHaveCSS('grid-template-columns', /\d+(?:\.\d+)?px/)
 
-  const metrics = await page.evaluate(() => {
-    const sidebar = document.querySelector('.game-sidebar').getBoundingClientRect()
-    const main = document.querySelector('.game-main').getBoundingClientRect()
-    return {
-      clientWidth: document.documentElement.clientWidth,
-      scrollWidth: document.documentElement.scrollWidth,
-      sidebar: { x: sidebar.x, y: sidebar.y, width: sidebar.width },
-      main: { x: main.x, y: main.y, width: main.width },
-    }
-  })
-
-  expect(metrics.scrollWidth).toBe(metrics.clientWidth)
-  expect(Math.abs(metrics.sidebar.x - metrics.main.x)).toBeLessThan(2)
-  expect(Math.abs(metrics.sidebar.width - metrics.main.width)).toBeLessThan(2)
-  expect(metrics.main.y).toBeGreaterThan(metrics.sidebar.y)
+  const compact = await readLayout(page)
+  expect(compact.scrollWidth).toBe(compact.clientWidth)
+  expect(Math.abs(compact.sidebar.x - compact.main.x)).toBeLessThan(2)
+  expect(Math.abs(compact.sidebar.width - compact.main.width)).toBeLessThan(2)
+  expect(compact.main.y).toBeGreaterThan(compact.sidebar.y + compact.sidebar.height - 2)
 })
