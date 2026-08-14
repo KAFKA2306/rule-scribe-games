@@ -78,3 +78,30 @@ async def test_auth_returns_normalized_verified_user(monkeypatch):
         'display_name': 'Test User',
         'avatar_url': 'https://example.com/avatar.png',
     }
+
+
+@pytest.mark.asyncio
+async def test_catalog_editor_rejects_authenticated_user_without_acl(monkeypatch):
+    async def no_role(user_id):
+        assert user_id == 'user-123'
+        return None
+
+    monkeypatch.setattr(auth.catalog_access, 'get_catalog_editor_role', no_role)
+    with pytest.raises(HTTPException) as exc:
+        await auth.require_catalog_editor({'id': 'user-123', 'email': 'user@example.com'})
+
+    assert exc.value.status_code == 403
+    assert exc.value.detail == 'Catalog editor permission required'
+
+
+@pytest.mark.asyncio
+async def test_catalog_editor_accepts_explicit_editor_acl(monkeypatch):
+    async def editor_role(user_id):
+        assert user_id == 'user-123'
+        return 'editor'
+
+    monkeypatch.setattr(auth.catalog_access, 'get_catalog_editor_role', editor_role)
+    user = await auth.require_catalog_editor({'id': 'user-123', 'email': 'user@example.com'})
+
+    assert user['id'] == 'user-123'
+    assert user['catalog_role'] == 'editor'
