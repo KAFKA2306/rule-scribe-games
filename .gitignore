@@ -31,6 +31,11 @@ pnpm-debug.log*
 # Local deployment/link metadata
 .vercel/
 
+# Local/generated infographic caches
+birmingham_ai_infographics.json
+birmingham_playwright_infographics.json
+birmingham_infographics_urls.json
+
 # OS-specific
 .DS_Store
 
