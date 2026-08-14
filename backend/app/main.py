@@ -4,7 +4,7 @@ from fastapi.responses import HTMLResponse
 
 from app.core.logger import setup_logging
 from app.middleware.validation import ValidationMiddleware
-from app.routers import auth, games, lists, vrchat
+from app.routers import auth, games, lists, mechanical_dna, vrchat
 from app.services.seo_renderer import generate_seo_html
 from app.services.sitemap import get_sitemap_xml
 
@@ -22,6 +22,7 @@ app.add_middleware(
 )
 
 app.include_router(games.router, prefix="/api", tags=["games"])
+app.include_router(mechanical_dna.router, prefix="/api", tags=["connections"])
 app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
 app.include_router(lists.router, prefix="/api", tags=["lists"])
 app.include_router(vrchat.router, prefix="/api/vrchat/v1", tags=["vrchat"])
@@ -41,7 +42,7 @@ async def sitemap_xml():
 
 def game_not_found_html() -> str:
     return """<!doctype html>
-<html lang="ja">
+<html lang="ja">">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
