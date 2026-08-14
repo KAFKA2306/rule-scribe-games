@@ -4,6 +4,8 @@ import httpx
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
+from app.services import catalog_access
+
 router = APIRouter()
 bearer = HTTPBearer(auto_error=False)
 
@@ -59,6 +61,17 @@ async def get_current_user(
         "display_name": metadata.get("full_name") or metadata.get("name"),
         "avatar_url": metadata.get("avatar_url"),
     }
+
+
+async def require_catalog_editor(user: dict = Depends(get_current_user)) -> dict:
+    """Authorize global catalog mutation through an explicit server-side ACL."""
+    role = await catalog_access.get_catalog_editor_role(user.get("id"))
+    if role not in {"editor", "admin"}:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Catalog editor permission required",
+        )
+    return {**user, "catalog_role": role}
 
 
 @router.get("/me")
