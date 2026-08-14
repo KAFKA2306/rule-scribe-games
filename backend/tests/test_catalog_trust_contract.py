@@ -52,10 +52,15 @@ def test_catalog_schema_uses_compatible_trust_migration_then_removes_legacy_fiel
     assert "NOT VALID" not in cleanup_sql
 
 
-def test_catalog_acl_tables_are_rls_protected():
+def test_catalog_acl_tables_are_rls_protected_and_match_production_contract():
     sql = MIGRATION_007.read_text(encoding="utf-8")
 
     assert "CREATE TABLE IF NOT EXISTS public.catalog_editors" in sql
+    assert "role IN ('owner', 'editor')" in sql
+    assert "active boolean NOT NULL DEFAULT true" in sql
     assert "ALTER TABLE public.catalog_editors ENABLE ROW LEVEL SECURITY" in sql
     assert "CREATE TABLE IF NOT EXISTS public.catalog_mutation_audit" in sql
+    assert "actor_user_id" in sql
+    assert "game_slug" in sql
+    assert "outcome" in sql
     assert "ALTER TABLE public.catalog_mutation_audit ENABLE ROW LEVEL SECURITY" in sql
