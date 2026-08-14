@@ -1,0 +1,10 @@
+{
+  "games": {
+    "skull-king": {
+      "rule_version": "grandpa-becks-current-2026-08-14",
+      "source_revision": "grandpa-becks-current-rulebook-accessed-2026-08-14"
+    }
+  },
+  "registry_sha256": "f096d2664e5754e54bfb1af0f3a49a8666b13211fe4a244b9544fde7dde75c5c",
+  "schema_version": 1
+}
