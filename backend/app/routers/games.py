@@ -4,11 +4,13 @@ from app.core.rate_limiter import RateLimiter
 from app.models import GameDetail, GameListResponse, GameUpdate, SearchRequest
 from app.models.concept_taxonomy import ConceptDetailResponse, GameConceptsReadResponse, GameGlossaryReadResponse
 from app.models.rule_graph import RuleGraphReadResponse, RuleNodeType
+from app.models.ruleset import RuleSetListResponse
 from app.routers.auth import require_catalog_editor
 from app.services import catalog_access
 from app.services.concept_taxonomy import ConceptTaxonomyService
 from app.services.game_service import GameService
 from app.services.rule_graph import RuleGraphService
+from app.services.rulesets import RuleSetService
 
 router = APIRouter()
 
@@ -23,6 +25,10 @@ def get_game_service():
 
 def get_rule_graph_service():
     return RuleGraphService()
+
+
+def get_ruleset_service():
+    return RuleSetService()
 
 
 def get_concept_taxonomy_service():
@@ -104,13 +110,25 @@ async def get_game_glossary(
     return glossary
 
 
+@router.get("/games/{slug}/rule-sets", response_model=RuleSetListResponse)
+async def get_game_rule_sets(
+    slug: str,
+    service: RuleSetService = Depends(get_ruleset_service),
+):
+    rulesets = await service.get_by_slug(slug)
+    if rulesets is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Game not found")
+    return rulesets
+
+
 @router.get("/games/{slug}/rule-graph", response_model=RuleGraphReadResponse)
 async def get_game_rule_graph(
     slug: str,
     types: list[RuleNodeType] | None = Query(default=None),
+    rule_set_id: str | None = Query(default=None),
     service: RuleGraphService = Depends(get_rule_graph_service),
 ):
-    graph = await service.get_by_slug(slug, rule_types=types)
+    graph = await service.get_by_slug(slug, rule_types=types, rule_set_id=rule_set_id)
     if graph is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Game not found")
     return graph
