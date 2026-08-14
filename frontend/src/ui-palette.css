@@ -129,9 +129,9 @@ textarea:disabled {
 }
 
 .mistake-item {
-  background: var(--ks-rejected-soft);
-  color: var(--ks-rejected);
-  border-left-color: var(--ks-rejected);
+  background: color-mix(in srgb, var(--ks-attention-soft) 72%, var(--ks-surface));
+  color: color-mix(in srgb, var(--ks-attention) 78%, var(--ks-ink));
+  border-left-color: var(--ks-attention);
 }
 
 .comparison-tray {
