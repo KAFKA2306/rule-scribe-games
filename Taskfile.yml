@@ -123,14 +123,19 @@ tasks:
           fi
 
   validate-urls:
-    desc: DBの全ゲームURLを検証し、無効なものをNULL化
+    desc: DBの全ゲームURLをread-only監査（DB更新なし）
     dir: backend
     cmd: uv run python -m app.scripts.validate_urls
 
   validate-urls:recent:
-    desc: 過去24時間更新のゲームのみURL検証
+    desc: 過去24時間更新のゲームURLをread-only監査
     dir: backend
     cmd: uv run python -m app.scripts.validate_urls --hours 24
+
+  validate-urls:apply:
+    desc: 確認済み400/404/410 URLをNULL化（明示的なproduction write）
+    dir: backend
+    cmd: uv run python -m app.scripts.validate_urls --apply
 
   game:add:
     desc: "curated gameを一次情報検証→read-only identity preflight→生成してPR準備。production writeはmerge後に自動実行 (GAME=<slug>)"
