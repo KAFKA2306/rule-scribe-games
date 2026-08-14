@@ -155,9 +155,9 @@ test('directory empty state and comparison tray use the same light palette', asy
   await page.goto('/')
   await expect(page.getByText('配色監査', { exact: true })).toBeVisible()
 
-  const compareButtons = page.getByRole('button', { name: 'COMPARE' })
-  await compareButtons.nth(0).click()
-  await compareButtons.nth(1).click()
+  await page.getByRole('button', { name: 'COMPARE' }).first().click()
+  await page.getByRole('button', { name: 'COMPARE' }).first().click()
+  await expect(page.getByRole('button', { name: 'BATTLE START' })).toBeVisible()
   await expectLightSurface(page.locator('.comparison-tray'), 'comparison tray')
 
   const search = page.getByPlaceholder('ゲームを検索、または未登録ゲームをAI生成...')
