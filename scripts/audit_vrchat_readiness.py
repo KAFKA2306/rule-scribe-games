@@ -74,8 +74,8 @@ async def _run(args: argparse.Namespace) -> int:
     if args.env_file:
         _load_env_file(args.env_file)
     sys.path.insert(0, str(BACKEND))
-    audit_module = importlib.import_module("app.services.vrchat_readiness_audit")
-    service = audit_module.VrchatReadinessAuditService()
+    audit_module = importlib.import_module("app.services.vrchat_readiness_policy")
+    service = audit_module.StrictVrchatReadinessAuditService()
     if getattr(service.game_service, "use_local", False):
         raise RuntimeError(
             "production readiness audit requires configured Supabase; local fallback is not accepted"
