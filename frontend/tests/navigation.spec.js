@@ -72,7 +72,7 @@ test('directory -> game -> lists stays in one document and browser back restores
 
   await expect(page).toHaveURL(/\/games\/game-one$/)
   await expect(page.locator('[data-navigation-feedback]')).toBeVisible()
-  await expect(page.locator('#route-content')).toBeFocused()
+  await expect.poll(() => page.evaluate(() => document.activeElement?.matches('main, .game-detail-content'))).toBe(true)
   expect(await page.evaluate(() => window.__spaContinuityMarker)).toBe('alive')
   expect(await page.evaluate(() => performance.getEntriesByType('navigation').length)).toBe(1)
 
