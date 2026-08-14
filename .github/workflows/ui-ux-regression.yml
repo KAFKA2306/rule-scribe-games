@@ -57,6 +57,31 @@ jobs:
           fi
           grep -Fq "AI生成・要約を含む情報は公式資料と区別して確認してください" index.html
 
+      - name: Diagnose GameListSavePortal lint
+        continue-on-error: true
+        working-directory: frontend
+        run: npx eslint src/components/GameListSavePortal.jsx
+
+      - name: Diagnose AuthControlPortal lint
+        continue-on-error: true
+        working-directory: frontend
+        run: npx eslint src/components/AuthControlPortal.jsx
+
+      - name: Diagnose ListsPage lint
+        continue-on-error: true
+        working-directory: frontend
+        run: npx eslint src/pages/ListsPage.jsx
+
+      - name: Diagnose cross-flow spec lint
+        continue-on-error: true
+        working-directory: frontend
+        run: npx eslint tests/ui_ux_regression.spec.js
+
+      - name: Diagnose Playwright config lint
+        continue-on-error: true
+        working-directory: frontend
+        run: npx eslint playwright.config.js
+
       - name: Lint frontend and UX contracts
         working-directory: frontend
         run: npm run lint
