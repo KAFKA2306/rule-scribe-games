@@ -9,9 +9,8 @@ on:
   schedule:
     - cron: "17 * * * *"
 
-env:
-  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+permissions:
+  contents: read
 
 concurrency:
   group: vercel-${{ github.workflow }}-${{ github.ref }}
@@ -23,46 +22,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - name: Install uv
-        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
-      - name: Install Vercel CLI
-        run: npm install --global vercel@59.0.0
-      - name: Pull Vercel Environment Information
-        run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
-      - name: Verify Supabase auth and server environment contract
-        shell: bash
-        run: |
-          python - .vercel/.env.preview.local VITE_SUPABASE_URL VITE_SUPABASE_ANON_KEY SUPABASE_URL SUPABASE_SERVICE_ROLE_KEY <<'PY'
-          import sys
-          from pathlib import Path
-
-          path = Path(sys.argv[1])
-          required = sys.argv[2:]
-          values = {}
-          if path.exists():
-              for raw in path.read_text(encoding="utf-8").splitlines():
-                  line = raw.strip()
-                  if not line or line.startswith("#") or "=" not in line:
-                      continue
-                  key, value = line.split("=", 1)
-                  value = value.strip()
-                  if len(value) >= 2 and value[0] == value[-1] and value[0] in "'\"":
-                      value = value[1:-1]
-                  values[key.strip()] = value
-          missing = [key for key in required if not values.get(key)]
-          if missing:
-              print("Missing required Vercel environment variables: " + ", ".join(missing))
-              raise SystemExit(1)
-          print("Supabase auth/server environment contract: OK")
-          PY
-      - name: Verify Google OAuth provider redirect
-        run: python scripts/check_google_oauth.py .vercel/.env.preview.local
-      - name: Build Preview with Vercel
-        run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+      - name: Build PR without deployment secrets
+        working-directory: frontend
+        run: npm run build
 
   Production-Build-And-Verify:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
     steps:
       - uses: actions/checkout@v5
       - name: Install uv
@@ -130,6 +107,9 @@ jobs:
   Production-Catch-Up:
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
     steps:
       - uses: actions/checkout@v5
       - name: Inspect Vercel deployment budget
