@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   repair-lockfile:
-    if: ${{ !contains(github.event.head_commit.message, 'chore: refresh audited dependency lockfile') }}
+    if: ${{ contains(github.event.head_commit.message, 'chore: refresh audited dependency lockfile') == false }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
