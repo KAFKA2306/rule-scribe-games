@@ -1,0 +1,290 @@
+.sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+.directory-search {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.generate-game-button {
+  white-space: nowrap;
+  min-height: var(--ks-control-min);
+}
+
+.filter-grid--single {
+  grid-template-columns: 1fr;
+}
+
+.filter-reset-button {
+  width: 100%;
+  border-color: var(--ks-secondary);
+}
+
+.mobile-filter-toggle,
+.mobile-filter-close,
+.mobile-filter-backdrop {
+  display: none;
+}
+
+.results-count {
+  font-size: 0.8rem;
+  color: var(--ks-ink-muted);
+  font-weight: 700;
+}
+
+.asset-card-shell {
+  position: relative;
+  min-width: 0;
+}
+
+.asset-card-link {
+  height: 100%;
+}
+
+.compare-toggle {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 10;
+  padding: 4px 8px;
+  font-size: 0.65rem;
+}
+
+.compare-toggle:disabled {
+  background: var(--ks-unavailable-soft);
+  color: var(--ks-unavailable);
+  border-color: var(--ks-border);
+  opacity: 1;
+}
+
+.compare-feedback {
+  background: var(--ks-attention-soft);
+  color: var(--ks-attention);
+  border-color: color-mix(in srgb, var(--ks-attention) 42%, var(--ks-border));
+}
+
+.load-more-wrap {
+  text-align: center;
+  padding: 2rem;
+}
+
+.load-more-button {
+  padding: 10px 24px;
+  font-size: 0.9rem;
+  border-color: var(--ks-primary);
+}
+
+.comparison-page {
+  overflow-y: auto;
+  height: 100dvh;
+  padding: 2rem;
+}
+
+.comparison-page__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.comparison-game-card {
+  text-align: center;
+}
+
+.comparison-game-image {
+  width: 100%;
+  border-radius: var(--ks-radius-md);
+  margin-bottom: 1rem;
+}
+
+.comparison-tier {
+  position: static;
+  margin-top: 8px;
+  display: inline-block;
+}
+
+.comparison-summary {
+  font-size: 0.85rem;
+  color: var(--ks-ink-muted);
+}
+
+.comparison-specs {
+  margin-bottom: 0;
+}
+
+.comparison-stat {
+  font-size: 0.9rem;
+}
+
+.comparison-detail-link {
+  width: 100%;
+  display: block;
+  text-decoration: none;
+  margin-top: 2rem;
+}
+
+.comparison-tray {
+  max-width: calc(100vw - 2rem);
+}
+
+.comparison-tray__label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.compare-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.battle-start-button {
+  padding: 6px 16px;
+  border-radius: var(--ks-radius-pill);
+  white-space: nowrap;
+}
+
+.modal-content[role='dialog'] {
+  max-height: min(90dvh, 900px);
+  overflow-y: auto;
+}
+
+.keyword-fieldset {
+  min-width: 0;
+  border: 0;
+  padding: 0;
+}
+
+.keyword-fieldset legend {
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+.keyword-list {
+  display: grid;
+  gap: 0.4rem;
+  margin-bottom: 0.6rem;
+}
+
+.keyword-row {
+  display: grid;
+  grid-template-columns: minmax(7.5rem, 0.35fr) minmax(0, 1fr) auto;
+  gap: 0.6rem;
+  align-items: center;
+}
+
+.keyword-term,
+.keyword-description {
+  min-width: 0;
+}
+
+.keyword-add-button {
+  padding-inline: 15px;
+}
+
+.game-main .pro-main-col[role='tabpanel']:focus-visible {
+  outline: 2px solid var(--ks-focus);
+  outline-offset: 4px;
+  border-radius: var(--ks-radius-sm);
+}
+
+@media (max-width: 900px) {
+  .directory-search {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .generate-game-button {
+    width: 100%;
+  }
+
+  .mobile-filter-toggle,
+  .mobile-filter-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .mobile-filter-close {
+    width: 100%;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+  }
+
+  .mobile-filter-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 2990;
+    border: 0;
+    min-height: 100dvh;
+    background: rgb(36 54 83 / 0.28);
+    cursor: default;
+  }
+
+  #root > aside.filter-sidebar-shell.mobile-open {
+    display: flex !important;
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 3000;
+    width: min(88vw, 360px);
+    max-width: 100%;
+    height: 100dvh;
+    overflow-y: auto;
+    border-right: 1px solid var(--ks-border);
+    border-bottom: 0;
+    box-shadow: 12px 0 32px rgb(36 54 83 / 0.18);
+  }
+
+  .control-panel {
+    align-items: flex-start;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  .active-filters {
+    flex: 1 1 100%;
+    align-items: center;
+  }
+
+  .sort-select {
+    width: 100%;
+  }
+
+  .comparison-tray {
+    bottom: 0.75rem;
+    padding: 8px 12px;
+    gap: 8px;
+    overflow-x: auto;
+    justify-content: flex-start;
+  }
+
+  .comparison-page__header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 560px) {
+  .keyword-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .keyword-remove-button,
+  .keyword-add-button {
+    justify-self: start;
+  }
+}
