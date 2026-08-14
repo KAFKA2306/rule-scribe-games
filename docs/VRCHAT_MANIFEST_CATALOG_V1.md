@@ -98,3 +98,12 @@ client cannot supply an arbitrary `moduleId` or capability declaration to make a
 
 The dedicated CI gate also runs the #183 manifest contract tests so transport changes cannot drift
 from the versioned BoardGameModule Manifest JSON Schema.
+
+## Production verification state
+
+The merge commit for PR #195 (`3458ccfe8e2c64aee67b3c3965a9b61781237de4`) passed the production
+Vercel build and environment checks on 2026-08-14. The repository's deployment-budget gate reported
+`quota_saturated`, so the canonical Vercel Git production deployment verification was deliberately
+skipped and no deployment was created by GitHub Actions. Issue #184 remains open until a later
+production catch-up confirms this exact-or-newer main revision and the live catalog endpoint passes
+the same schema/cache smoke checks. This quota state does not change the local/CI contract above.
