@@ -53,17 +53,22 @@ def accepted_supported_claim(claim: dict, bindings: list[dict]) -> dict | None:
     return {**claim, "source_ids": source_ids}
 
 
-def project_rule_rows(rule_rows: list[dict], eligible_claims: dict[str, dict]) -> list[ProjectedRule]:
+def project_rule_rows(rule_rows: list[dict], eligible_claims: dict[str, list[dict]]) -> list[ProjectedRule]:
     """Project only current, evidence-backed base RuleNodes; stale claims fail closed."""
     projected: list[ProjectedRule] = []
     for row in rule_rows:
         if row["node_type"] == "variant":
             continue
-        evidence = eligible_claims.get(row["rule_id"])
+        candidates = eligible_claims.get(row["rule_id"], [])
+        evidence = next(
+            (
+                candidate
+                for candidate in candidates
+                if (candidate.get("normalized_payload") or {}).get("statement") == row["normalized_statement"]
+            ),
+            None,
+        )
         if evidence is None:
-            continue
-        claim_statement = (evidence.get("normalized_payload") or {}).get("statement")
-        if claim_statement != row["normalized_statement"]:
             continue
         projected.append(
             ProjectedRule(
@@ -78,6 +83,39 @@ def project_rule_rows(rule_rows: list[dict], eligible_claims: dict[str, dict]) -
             )
         )
     return projected
+
+
+def projection_to_json_ld(projection: PresentationProjectionResponse, title: str) -> dict[str, object]:
+    """Build JSON-LD from the canonical projection without introducing a second truth store."""
+    data: dict[str, object] = {
+        "@context": "https://schema.org",
+        "@type": "Game",
+        "name": title,
+        "identifier": [
+            {"@type": "PropertyValue", "propertyID": "slug", "value": projection.slug},
+            {"@type": "PropertyValue", "propertyID": "ruleSet", "value": projection.rule_set_id},
+        ],
+    }
+    if projection.quick_rules.status == ProjectionSectionStatus.AVAILABLE:
+        data["subjectOf"] = [
+            {
+                "@type": "CreativeWork",
+                "identifier": item.rule_id,
+                "text": item.text,
+            }
+            for item in projection.quick_rules.items
+        ]
+    if projection.glossary.status == ProjectionSectionStatus.AVAILABLE:
+        data["about"] = [
+            {
+                "@type": "DefinedTerm",
+                "termCode": item.concept_id,
+                "name": item.label,
+                **({"description": item.definition} if item.definition else {}),
+            }
+            for item in projection.glossary.items
+        ]
+    return data
 
 
 class PresentationProjectionService:
@@ -172,8 +210,8 @@ class PresentationProjectionService:
                 status=(ProjectionSectionStatus.AVAILABLE if glossary_items else ProjectionSectionStatus.NOT_AVAILABLE),
                 items=glossary_items,
             ),
-            # No canonical Misconception/Advice layer exists yet. Do not read legacy
-            # structured_data.rule_mistakes/pro_tips as a second truth source.
+            # Canonical misconception/advice layers do not exist yet. Keep these
+            # sections unavailable instead of promoting compatibility presentation data.
             "common_errors": cls._empty_rule_section(ProjectionSectionKind.COMMON_ERRORS),
             "pro_tips": cls._empty_rule_section(ProjectionSectionKind.PRO_TIPS),
         }
@@ -198,7 +236,7 @@ class PresentationProjectionService:
         )
 
     @staticmethod
-    def _load_eligible_rule_claims(client, rule_set_id: str) -> dict[str, dict]:
+    def _load_eligible_rule_claims(client, rule_set_id: str) -> dict[str, list[dict]]:
         claims = (
             client.table("claims")
             .select("claim_id,rule_id,normalized_payload,lifecycle_status")
@@ -208,7 +246,7 @@ class PresentationProjectionService:
             .execute()
             .data
         )
-        eligible: dict[str, dict] = {}
+        eligible: dict[str, list[dict]] = defaultdict(list)
         for claim in claims:
             bindings = (
                 client.table("evidence_bindings")
@@ -219,9 +257,9 @@ class PresentationProjectionService:
             )
             evidence = accepted_supported_claim(claim, bindings)
             rule_id = claim.get("rule_id")
-            if evidence is not None and rule_id and rule_id not in eligible:
-                eligible[rule_id] = evidence
-        return eligible
+            if evidence is not None and rule_id:
+                eligible[rule_id].append(evidence)
+        return dict(eligible)
 
     @staticmethod
     def _load_glossary(client, game_id: str, rule_set_id: str, language_code: str) -> list[ProjectedGlossaryEntry]:
