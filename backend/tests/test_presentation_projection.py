@@ -6,6 +6,9 @@ from pydantic import ValidationError
 from app.models.presentation_projection import (
     GlossaryProjectionSection,
     PresentationProjectionResponse,
+    ProjectedGlossaryEntry,
+    ProjectedRule,
+    ProjectionEvidence,
     ProjectionSectionKind,
     ProjectionSectionStatus,
     RuleProjectionSection,
@@ -15,6 +18,7 @@ from app.services.presentation_projection import (
     PresentationProjectionService,
     accepted_supported_claim,
     project_rule_rows,
+    projection_to_json_ld,
 )
 
 
@@ -40,21 +44,27 @@ def test_claim_requires_accepted_supported_uncontradicted_evidence():
 
 def test_rule_projection_rejects_stale_claim_and_variant():
     eligible_claims = {
-        "rule.current": {
-            "claim_id": "claim.current",
-            "normalized_payload": {"statement": "Current canonical statement."},
-            "source_ids": ["source.publisher"],
-        },
-        "rule.stale": {
-            "claim_id": "claim.stale",
-            "normalized_payload": {"statement": "Old statement."},
-            "source_ids": ["source.publisher"],
-        },
-        "rule.variant": {
-            "claim_id": "claim.variant",
-            "normalized_payload": {"statement": "Optional variant."},
-            "source_ids": ["source.publisher"],
-        },
+        "rule.current": [
+            {
+                "claim_id": "claim.current",
+                "normalized_payload": {"statement": "Current canonical statement."},
+                "source_ids": ["source.publisher"],
+            }
+        ],
+        "rule.stale": [
+            {
+                "claim_id": "claim.stale",
+                "normalized_payload": {"statement": "Old statement."},
+                "source_ids": ["source.publisher"],
+            }
+        ],
+        "rule.variant": [
+            {
+                "claim_id": "claim.variant",
+                "normalized_payload": {"statement": "Optional variant."},
+                "source_ids": ["source.publisher"],
+            }
+        ],
     }
     rules = [
         {
@@ -80,6 +90,43 @@ def test_rule_projection_rejects_stale_claim_and_variant():
     projected = project_rule_rows(rules, eligible_claims)
     assert [item.rule_id for item in projected] == ["rule.current"]
     assert projected[0].evidence.claim_id == "claim.current"
+    assert projected[0].evidence.claim_lifecycle == "accepted"
+    assert projected[0].evidence.support_status == "supported"
+
+
+def test_rule_projection_selects_current_claim_when_earlier_accepted_claim_is_stale():
+    rules = [
+        {
+            "rule_id": "rule.end",
+            "node_type": "game_end",
+            "normalized_statement": "Current end condition.",
+            "sequence": 1,
+        }
+    ]
+    eligible_claims = {
+        "rule.end": [
+            {
+                "claim_id": "claim.001.stale",
+                "normalized_payload": {"statement": "Old end condition."},
+                "source_ids": ["source.old"],
+            },
+            {
+                "claim_id": "claim.002.current",
+                "normalized_payload": {"statement": "Current end condition."},
+                "source_ids": ["source.current"],
+            },
+        ]
+    }
+
+    projected = project_rule_rows(rules, eligible_claims)
+    assert len(projected) == 1
+    assert projected[0].evidence.claim_id == "claim.002.current"
+    assert projected[0].evidence.source_ids == ["source.current"]
+
+
+def test_projection_evidence_requires_at_least_one_supporting_source():
+    with pytest.raises(ValidationError):
+        ProjectionEvidence(claim_id="claim.empty", source_ids=[])
 
 
 def test_available_and_not_available_section_contracts_are_strict():
@@ -123,6 +170,80 @@ def _empty_projection(slug="example", rule_set_id="ruleset-1"):
         common_errors=empty(ProjectionSectionKind.COMMON_ERRORS),
         pro_tips=empty(ProjectionSectionKind.PRO_TIPS),
     )
+
+
+def _available_projection():
+    empty = PresentationProjectionService._empty_rule_section
+    rule = ProjectedRule(
+        rule_id="rule.end",
+        node_type="game_end",
+        text="The game ends at round end.",
+        evidence=ProjectionEvidence(claim_id="claim.end", source_ids=["source.publisher"]),
+    )
+    quick = RuleProjectionSection(
+        kind=ProjectionSectionKind.QUICK_RULES,
+        status=ProjectionSectionStatus.AVAILABLE,
+        items=[rule],
+    )
+    glossary = GlossaryProjectionSection(
+        status=ProjectionSectionStatus.AVAILABLE,
+        items=[
+            ProjectedGlossaryEntry(
+                concept_id="concept.round",
+                label="ラウンド",
+                definition="ゲーム進行の一区切り。",
+                rule_ids=["rule.end"],
+            )
+        ],
+    )
+    return PresentationProjectionResponse(
+        status="available",
+        game_id="game-1",
+        slug="example",
+        rule_set_id="ruleset-ja-v1",
+        language_code="ja",
+        synopsis=empty(ProjectionSectionKind.SYNOPSIS),
+        quick_rules=quick,
+        setup=empty(ProjectionSectionKind.SETUP),
+        game_flow=empty(ProjectionSectionKind.GAME_FLOW),
+        end_condition=RuleProjectionSection(
+            kind=ProjectionSectionKind.END_CONDITION,
+            status=ProjectionSectionStatus.AVAILABLE,
+            items=[rule],
+        ),
+        scoring=empty(ProjectionSectionKind.SCORING),
+        glossary=glossary,
+        common_errors=empty(ProjectionSectionKind.COMMON_ERRORS),
+        pro_tips=empty(ProjectionSectionKind.PRO_TIPS),
+    )
+
+
+def test_json_ld_adapter_uses_only_canonical_projected_rules_and_concepts():
+    data = projection_to_json_ld(_available_projection(), "Example Game")
+
+    assert data["@type"] == "Game"
+    assert data["name"] == "Example Game"
+    assert {entry["propertyID"]: entry["value"] for entry in data["identifier"]} == {
+        "slug": "example",
+        "ruleSet": "ruleset-ja-v1",
+    }
+    assert data["subjectOf"] == [
+        {
+            "@type": "CreativeWork",
+            "identifier": "rule.end",
+            "text": "The game ends at round end.",
+        }
+    ]
+    assert data["about"] == [
+        {
+            "@type": "DefinedTerm",
+            "termCode": "concept.round",
+            "name": "ラウンド",
+            "description": "ゲーム進行の一区切り。",
+        }
+    ]
+    assert "pro_tips" not in data
+    assert "common_errors" not in data
 
 
 class FakePresentationService:
