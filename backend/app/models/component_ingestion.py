@@ -124,20 +124,32 @@ class ComponentSourceManifest(ManifestModel):
     notes: list[str] = Field(default_factory=list)
 
     @model_validator(mode="after")
-    def validate_manifest(self):  # noqa: PLR0912 - fail-closed contract is intentionally explicit
+    def validate_manifest(self):
+        known_sources = self._validate_sources()
+        locators = self._validate_locators(known_sources)
+        known_sets = self._validate_sets(known_sources)
+        known_definitions = self._validate_definitions(known_sources)
+        components = self._validate_components(known_sources, known_sets)
+        self._validate_bindings(known_sources, locators, known_sets, known_definitions, components)
+        self._validate_completeness()
+        return self
+
+    def _validate_sources(self) -> set[str]:
         source_ids = [source.source_id for source in self.sources]
         if len(source_ids) != len(set(source_ids)):
             raise ValueError("duplicate source_id")
-        known_sources = set(source_ids)
+        return set(source_ids)
 
+    def _validate_locators(self, known_sources: set[str]) -> dict[str, SourceLocator]:
         locator_ids = [locator.locator_id for locator in self.source_locators]
         if len(locator_ids) != len(set(locator_ids)):
             raise ValueError("duplicate locator_id")
-        locators = {locator.locator_id: locator for locator in self.source_locators}
         for locator in self.source_locators:
             if locator.source_id not in known_sources:
                 raise ValueError(f"locator {locator.locator_id} references unknown source")
+        return {locator.locator_id: locator for locator in self.source_locators}
 
+    def _validate_sets(self, known_sources: set[str]) -> set[str]:
         set_ids = [item.component_set_id for item in self.component_sets]
         if len(set_ids) != len(set(set_ids)):
             raise ValueError("duplicate component_set_id")
@@ -146,18 +158,24 @@ class ComponentSourceManifest(ManifestModel):
             if item.parent_component_set_id and item.parent_component_set_id not in known_sets:
                 raise ValueError("parent component set is not present in manifest")
             self._require_known_sources(item.source_ids, known_sources, f"component_set:{item.component_set_id}")
+        return known_sets
 
+    def _validate_definitions(self, known_sources: set[str]) -> set[str]:
         definition_keys = [item.property_key for item in self.property_definitions]
         if len(definition_keys) != len(set(definition_keys)):
             raise ValueError("duplicate property_key")
-        known_definitions = set(definition_keys)
         for definition in self.property_definitions:
             self._require_known_sources(definition.source_ids, known_sources, f"property_definition:{definition.property_key}")
+        return set(definition_keys)
 
+    def _validate_components(
+        self,
+        known_sources: set[str],
+        known_sets: set[str],
+    ) -> dict[str, ManifestComponent]:
         component_ids = [item.component_id for item in self.components]
         if len(component_ids) != len(set(component_ids)):
             raise ValueError("duplicate component_id")
-        components = {item.component_id: item for item in self.components}
         for component in self.components:
             if component.component_set_id and component.component_set_id not in known_sets:
                 raise ValueError(f"component {component.component_id} references unknown component set")
@@ -174,7 +192,16 @@ class ComponentSourceManifest(ManifestModel):
                     known_sources,
                     f"component:{component.component_id}:ability:{ability.ability_id}",
                 )
+        return {item.component_id: item for item in self.components}
 
+    def _validate_bindings(
+        self,
+        known_sources: set[str],
+        locators: dict[str, SourceLocator],
+        known_sets: set[str],
+        known_definitions: set[str],
+        components: dict[str, ManifestComponent],
+    ) -> None:
         binding_ids = [binding.binding_id for binding in self.evidence_bindings]
         if len(binding_ids) != len(set(binding_ids)):
             raise ValueError("duplicate evidence binding_id")
@@ -188,6 +215,7 @@ class ComponentSourceManifest(ManifestModel):
                 raise ValueError(f"evidence binding {binding.binding_id} source does not match locator source")
             self._validate_target(binding.target, known_sets, known_definitions, components)
 
+    def _validate_completeness(self) -> None:
         if self.completeness == CompletenessState.COMPLETE:
             if self.expected_count is None:
                 raise ValueError("complete manifest requires source-backed expected_count")
@@ -197,7 +225,6 @@ class ComponentSourceManifest(ManifestModel):
                 raise ValueError("complete manifest cannot have unresolved components")
         elif self.completeness == CompletenessState.UNKNOWN and self.expected_count is not None:
             raise ValueError("unknown completeness cannot claim an expected_count")
-        return self
 
     @staticmethod
     def _require_known_sources(source_ids: list[str], known_sources: set[str], target: str) -> None:
@@ -225,29 +252,37 @@ class ComponentSourceManifest(ManifestModel):
                 raise ValueError("evidence target references unknown component")
             return
         if target.target_type == EvidenceTargetType.COMPONENT_PROPERTY:
-            component = components.get(target.component_id or "")
-            if component is None:
-                raise ValueError("component_property evidence target references unknown component")
-            prop = next((item for item in component.properties if item.property_key == target.property_key), None)
-            if prop is None:
-                raise ValueError("component_property evidence target references unknown component property")
-            if target.ordinal is None or target.ordinal >= len(prop.values):
-                raise ValueError("component_property evidence target ordinal is out of range")
+            ComponentSourceManifest._validate_property_target(target, components)
             return
         if target.target_type in {EvidenceTargetType.ABILITY_PRINTED_TEXT, EvidenceTargetType.ABILITY_NORMALIZED}:
-            matches = [
-                ability
-                for component in components.values()
-                for ability in component.abilities
-                if ability.ability_id == target.ability_id
-            ]
-            if len(matches) != 1:
-                raise ValueError("ability evidence target must resolve to exactly one manifest ability")
-            ability = matches[0]
-            if target.target_type == EvidenceTargetType.ABILITY_PRINTED_TEXT and not ability.printed_text:
-                raise ValueError("ability_printed_text target requires printed_text")
-            if target.target_type == EvidenceTargetType.ABILITY_NORMALIZED and not ability.normalized_label:
-                raise ValueError("ability_normalized target requires normalized_label")
+            ComponentSourceManifest._validate_ability_target(target, components)
+
+    @staticmethod
+    def _validate_property_target(target: ClaimTarget, components: dict[str, ManifestComponent]) -> None:
+        component = components.get(target.component_id or "")
+        if component is None:
+            raise ValueError("component_property evidence target references unknown component")
+        prop = next((item for item in component.properties if item.property_key == target.property_key), None)
+        if prop is None:
+            raise ValueError("component_property evidence target references unknown component property")
+        if target.ordinal is None or target.ordinal >= len(prop.values):
+            raise ValueError("component_property evidence target ordinal is out of range")
+
+    @staticmethod
+    def _validate_ability_target(target: ClaimTarget, components: dict[str, ManifestComponent]) -> None:
+        matches = [
+            ability
+            for component in components.values()
+            for ability in component.abilities
+            if ability.ability_id == target.ability_id
+        ]
+        if len(matches) != 1:
+            raise ValueError("ability evidence target must resolve to exactly one manifest ability")
+        ability = matches[0]
+        if target.target_type == EvidenceTargetType.ABILITY_PRINTED_TEXT and not ability.printed_text:
+            raise ValueError("ability_printed_text target requires printed_text")
+        if target.target_type == EvidenceTargetType.ABILITY_NORMALIZED and not ability.normalized_label:
+            raise ValueError("ability_normalized target requires normalized_label")
 
 
 class EvidenceCoverage(ManifestModel):
