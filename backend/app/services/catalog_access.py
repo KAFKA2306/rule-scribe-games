@@ -10,7 +10,7 @@ logger = logging.getLogger("catalog.access")
 
 
 async def get_catalog_editor_role(user_id: str | None) -> str | None:
-    """Return an explicit catalog role; missing server credentials fail closed."""
+    """Return an explicit active catalog role; missing server credentials fail closed."""
     user_id = str(user_id or "").strip()
     if not user_id or not settings.supabase_key or supabase.is_local():
         return None
@@ -21,6 +21,7 @@ async def get_catalog_editor_role(user_id: str | None) -> str | None:
             .table("catalog_editors")
             .select("role")
             .eq("user_id", user_id)
+            .eq("active", True)
             .limit(1)
             .execute()
             .data
@@ -28,7 +29,7 @@ async def get_catalog_editor_role(user_id: str | None) -> str | None:
         if not rows:
             return None
         role = str(rows[0].get("role") or "").strip()
-        return role if role in {"editor", "admin"} else None
+        return role if role in {"owner", "editor"} else None
 
     try:
         return await anyio.to_thread.run_sync(_q)
@@ -45,16 +46,16 @@ async def record_catalog_mutation(
     action: str,
     changed_fields: list[str],
 ) -> None:
-    """Write metadata-only audit evidence without request bodies or tokens."""
+    """Write metadata-only audit evidence using the production audit schema."""
     if not settings.supabase_key or supabase.is_local():
         return
 
     payload = {
-        "editor_user_id": editor_user_id,
-        "game_id": game.get("id"),
-        "slug": slug,
+        "actor_user_id": editor_user_id,
+        "game_slug": slug,
         "action": action,
         "changed_fields": sorted(set(changed_fields)),
+        "outcome": "succeeded",
     }
 
     def _q() -> None:
@@ -63,6 +64,4 @@ async def record_catalog_mutation(
     try:
         await anyio.to_thread.run_sync(_q)
     except Exception:
-        # The catalog mutation has already succeeded. Preserve availability while
-        # making audit failure visible to operations rather than leaking payloads.
         logger.exception("catalog_mutation_audit_failed", extra={"slug": slug, "action": action})
