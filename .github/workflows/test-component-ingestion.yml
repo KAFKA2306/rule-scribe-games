@@ -1,0 +1,83 @@
+name: Component ingestion contract
+
+on:
+  pull_request:
+    paths:
+      - "backend/app/models/component_ingestion.py"
+      - "backend/app/services/component_ingestion.py"
+      - "backend/scripts/component_ingest.py"
+      - "backend/data/component_ingestion/**"
+      - "backend/tests/test_component_ingestion.py"
+      - ".github/workflows/test-component-ingestion.yml"
+  push:
+    branches: [main]
+    paths:
+      - "backend/app/models/component_ingestion.py"
+      - "backend/app/services/component_ingestion.py"
+      - "backend/scripts/component_ingest.py"
+      - "backend/data/component_ingestion/**"
+      - "backend/tests/test_component_ingestion.py"
+      - ".github/workflows/test-component-ingestion.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  component-ingestion:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+
+      - name: Install Python dependencies
+        run: uv sync --frozen --dev
+
+      - name: Compile ingestion modules
+        run: >-
+          uv run python -m compileall -q
+          backend/app/models/component_ingestion.py
+          backend/app/services/component_ingestion.py
+          backend/scripts/component_ingest.py
+          backend/tests/test_component_ingestion.py
+
+      - name: Ruff ingestion slice
+        run: >-
+          uv run ruff check
+          backend/app/models/component_ingestion.py
+          backend/app/services/component_ingestion.py
+          backend/scripts/component_ingest.py
+          backend/tests/test_component_ingestion.py
+
+      - name: Run targeted ingestion tests
+        env:
+          PYTHONPATH: backend
+        run: uv run pytest -q backend/tests/test_component_ingestion.py backend/tests/test_component_catalog.py
+
+      - name: Run YRO manifest dry-run and export v1 schema
+        env:
+          PYTHONPATH: backend
+        shell: bash
+        run: |
+          mkdir -p artifacts
+          uv run python backend/scripts/component_ingest.py \
+            backend/data/component_ingestion/yro-bga-260725-1445.v1.yaml \
+            --resolved-ruleset-id 00000000-0000-0000-0000-000000000178 \
+            > artifacts/yro-component-ingest-dry-run.json
+          uv run python backend/scripts/component_ingest.py \
+            backend/data/component_ingestion/yro-bga-260725-1445.v1.yaml \
+            --schema \
+            > artifacts/component-source-manifest-v1.schema.json
+          python -m json.tool artifacts/yro-component-ingest-dry-run.json >/dev/null
+          python -m json.tool artifacts/component-source-manifest-v1.schema.json >/dev/null
+          grep -q '"blockers": \[\]' artifacts/yro-component-ingest-dry-run.json
+          grep -q '"schema_version"' artifacts/component-source-manifest-v1.schema.json
+
+      - name: Upload ingestion audit contract artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: component-ingestion-contract
+          path: artifacts/
+          if-no-files-found: error
