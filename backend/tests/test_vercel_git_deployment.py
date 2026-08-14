@@ -1,5 +1,4 @@
-import pytest
-
+from scripts.vercel_deployment_budget import BudgetDecision, decide_budget, latest_ready_production_sha
 from scripts.verify_vercel_git_deployment import DeploymentMatch, find_deployment_for_sha
 
 
@@ -78,3 +77,61 @@ def test_preserves_terminal_failure_state_for_caller():
 def test_missing_meta_is_not_inferred_from_position():
     payload = {"deployments": [{"uid": "dpl_latest", "state": "READY", "target": "production", "meta": {}}]}
     assert find_deployment_for_sha(payload, "abc123") is None
+
+
+def _production_payload(sha: str = "older"):
+    return {
+        "deployments": [
+            {
+                "uid": "dpl_prod",
+                "state": "READY",
+                "target": "production",
+                "meta": {"githubCommitSha": sha},
+            }
+        ]
+    }
+
+
+def test_budget_is_current_when_latest_production_matches_main():
+    decision = decide_budget(
+        team_payload={"deployments": [{}] * 100},
+        project_payload=_production_payload("abc123"),
+        expected_sha="abc123",
+    )
+    assert decision.state == "current"
+    assert decision.latest_production_sha == "abc123"
+
+
+def test_budget_is_quota_saturated_at_observed_free_limit():
+    decision = decide_budget(
+        team_payload={"deployments": [{}] * 100},
+        project_payload=_production_payload("older"),
+        expected_sha="abc123",
+    )
+    assert decision == BudgetDecision(
+        state="quota_saturated",
+        deployment_count=100,
+        latest_production_sha="older",
+        reason="at least 100 team deployments were observed in the last 24 hours",
+    )
+
+
+def test_budget_is_deployable_below_limit_when_production_is_behind():
+    decision = decide_budget(
+        team_payload={"deployments": [{}] * 42},
+        project_payload=_production_payload("older"),
+        expected_sha="abc123",
+    )
+    assert decision.state == "deployable"
+    assert decision.deployment_count == 42
+
+
+def test_latest_ready_sha_ignores_error_and_preview_deployments():
+    payload = {
+        "deployments": [
+            {"state": "ERROR", "target": "production", "meta": {"githubCommitSha": "bad"}},
+            {"state": "READY", "target": "preview", "meta": {"githubCommitSha": "preview"}},
+            {"state": "READY", "target": "production", "meta": {"githubCommitSha": "good"}},
+        ]
+    }
+    assert latest_ready_production_sha(payload) == "good"
