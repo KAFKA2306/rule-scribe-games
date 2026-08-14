@@ -14,7 +14,6 @@ permissions:
 
 jobs:
   repair-lockfile:
-    if: "${{ contains(github.event.head_commit.message, 'chore: refresh audited dependency lockfile') == false }}"
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -34,7 +33,7 @@ jobs:
         run: |
           npm ci
           npm audit --omit=dev --audit-level=high
-      - name: Commit repaired lockfile
+      - name: Commit repaired lockfile when changed
         shell: bash
         run: |
           set -euo pipefail
