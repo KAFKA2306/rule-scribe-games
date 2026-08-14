@@ -11,6 +11,7 @@ from app.services.component_ingestion import ComponentIngestionDryRun, ExistingC
 YRO_MANIFEST = Path("backend/data/component_ingestion/yro-bga-260725-1445.v1.yaml")
 RULESET_ID = "00000000-0000-0000-0000-000000000178"
 YRO_EVIDENCE_FIELDS = 6
+YRO_SOURCE_LOCATORS = 4
 FIXTURE_EVIDENCE_FIELDS = 4
 FIXTURE_SUPPORTED_WITH_ONE_MISSING = 3
 
@@ -144,7 +145,7 @@ def test_yro_manifest_is_source_bound_unknown_and_does_not_fabricate_cards():
     assert manifest.expected_count is None
     assert manifest.components == []
     assert {item.component_set_id for item in manifest.component_sets} == {"adventurers", "quests"}
-    assert len(manifest.source_locators) == 4
+    assert len(manifest.source_locators) == YRO_SOURCE_LOCATORS
     assert report.blockers == []
     assert report.evidence_coverage.required_fields == YRO_EVIDENCE_FIELDS
     assert report.evidence_coverage.supported_fields == YRO_EVIDENCE_FIELDS
