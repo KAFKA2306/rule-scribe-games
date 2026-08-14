@@ -1,10 +1,8 @@
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
-from pydantic import ValidationError
-
 from app.models import GameDetail
 from app.models.component_catalog import ComponentCatalog, ComponentKind, ComponentSet
 from app.models.rule_graph import RuleGraphReadResponse, RuleNode, RuleNodeType
@@ -16,9 +14,10 @@ from app.models.vrchat_manifest import (
     ModuleBinding,
 )
 from app.services.vrchat_manifest_projection import project_board_game_module_manifest
+from pydantic import ValidationError
 
 
-GENERATED_AT = datetime(2026, 8, 14, tzinfo=timezone.utc)
+GENERATED_AT = datetime(2026, 8, 14, tzinfo=UTC)
 
 
 def _node(
