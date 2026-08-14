@@ -1,12 +1,21 @@
 import anyio
 import logging
 from typing import Any, Dict, List, Optional
+
 from app.core import local_db
 from app.core.settings import settings
 from app.utils.slugify import slugify
 
 logger = logging.getLogger("core.db_provider")
 _TABLE = "games"
+_IMAGE_BUCKET = "game-images"
+
+# Storage objects verified against the production Supabase project on 2026-08-14.
+# Keep this explicit: a missing image must not be inferred from a slug.
+_STORAGE_IMAGE_OVERRIDES = {
+    "splendor": "splendor.png",
+    "yokohama-duel": "yokohama-duel.png",
+}
 
 _client = None
 try:
@@ -19,31 +28,68 @@ try:
 except Exception as e:
     logger.warning(f"Supabase client init failed ({e}). Local-first mode active.")
 
+
 def is_local() -> bool:
     return _client is None
+
 
 def _get_client():
     if _client is None:
         raise RuntimeError("Supabase not configured. Using Local-First.")
     return _client
 
+
+def _with_canonical_storage_image(game: Dict[str, Any]) -> Dict[str, Any]:
+    """Replace audited stale image references with their public Storage URL."""
+    slug = str(game.get("slug") or "").strip()
+    storage_name = _STORAGE_IMAGE_OVERRIDES.get(slug)
+    if not storage_name or not settings.supabase_url:
+        return game
+
+    current = str(game.get("image_url") or "").strip()
+    if current and "via.placeholder.com" not in current and not current.startswith("/assets/games/"):
+        return game
+
+    normalized = dict(game)
+    normalized["image_url"] = (
+        f"{settings.supabase_url.rstrip('/')}/storage/v1/object/public/"
+        f"{_IMAGE_BUCKET}/{storage_name}"
+    )
+    return normalized
+
+
 async def search(query: str) -> List[Dict[str, Any]]:
     if is_local():
         # Search the entire local DB
         res = local_db.list_recent(limit=10000)
         q = query.lower()
-        return [g for g in res["data"] if q in (g.get("title") or "").lower() or q in (g.get("title_ja") or "").lower()]
-    
+        return [
+            g
+            for g in res["data"]
+            if q in (g.get("title") or "").lower()
+            or q in (g.get("title_ja") or "").lower()
+        ]
+
     def _q():
         safe_query = query.replace('"', '\\"')
         term = f"*{safe_query}*"
-        return _get_client().table(_TABLE).select("*").or_(f'title.ilike."{term}",description.ilike."{term}"').execute().data
+        rows = (
+            _get_client()
+            .table(_TABLE)
+            .select("*")
+            .or_(f'title.ilike."{term}",description.ilike."{term}"')
+            .execute()
+            .data
+        )
+        return [_with_canonical_storage_image(row) for row in rows]
+
     return await anyio.to_thread.run_sync(_q)
+
 
 async def list_recent(limit: int = 100, offset: int = 0) -> Dict[str, Any]:
     if is_local():
         return local_db.list_recent(limit=limit, offset=offset)
-    
+
     def _q():
         res = (
             _get_client().table(_TABLE)
@@ -52,45 +98,75 @@ async def list_recent(limit: int = 100, offset: int = 0) -> Dict[str, Any]:
             .range(offset, offset + limit - 1)
             .execute()
         )
-        return {"data": res.data, "total": res.count}
+        return {
+            "data": [_with_canonical_storage_image(row) for row in res.data],
+            "total": res.count,
+        }
+
     return await anyio.to_thread.run_sync(_q)
+
 
 async def get_by_slug(slug: str) -> Optional[Dict[str, Any]]:
     if is_local():
         return local_db.get_by_slug(slug)
-    
+
     def _q():
-        r = _get_client().table(_TABLE).select("*").eq("slug", slug).execute().data
-        return r[0] if r else None
+        rows = _get_client().table(_TABLE).select("*").eq("slug", slug).execute().data
+        return _with_canonical_storage_image(rows[0]) if rows else None
+
     return await anyio.to_thread.run_sync(_q)
+
 
 async def upsert_game(game_data: Dict[str, Any]) -> Dict[str, Any]:
     if is_local():
         local_db.upsert_game(game_data)
         return game_data
-    
+
     def _q():
         return _get_client().table(_TABLE).upsert(game_data).execute().data[0]
+
     return await anyio.to_thread.run_sync(_q)
 
+
 async def increment_view_count(game_id: str) -> None:
-    if is_local(): return
+    if is_local():
+        return
+
     def _q():
-        r = _get_client().table(_TABLE).select("view_count").eq("id", game_id).execute().data
-        if r:
-            count = r[0].get("view_count") or 0
+        rows = _get_client().table(_TABLE).select("view_count").eq("id", game_id).execute().data
+        if rows:
+            count = rows[0].get("view_count") or 0
             _get_client().table(_TABLE).update({"view_count": count + 1}).eq("id", game_id).execute()
+
     await anyio.to_thread.run_sync(_q)
+
 
 # Legacy alias
 async def upsert(data: dict[str, Any]) -> List[dict[str, Any]]:
     return [await upsert_game(data)]
 
+
 async def list_for_sitemap() -> list[dict[str, Any]]:
     if is_local():
         res = local_db.list_recent(limit=50000)
-        return [{"slug": g["slug"], "title": g["title"], "updated_at": g["updated_at"], "image_url": g.get("image_url")} for g in res["data"]]
-    
+        return [
+            {
+                "slug": g["slug"],
+                "title": g["title"],
+                "updated_at": g["updated_at"],
+                "image_url": g.get("image_url"),
+            }
+            for g in res["data"]
+        ]
+
     def _q():
-        return _get_client().table(_TABLE).select("slug, title, updated_at, image_url").execute().data
+        rows = (
+            _get_client()
+            .table(_TABLE)
+            .select("slug, title, updated_at, image_url")
+            .execute()
+            .data
+        )
+        return [_with_canonical_storage_image(row) for row in rows]
+
     return await anyio.to_thread.run_sync(_q)
