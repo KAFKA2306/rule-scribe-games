@@ -22,6 +22,9 @@
 - **[`COMPONENT_CATALOG_V1.md`](./COMPONENT_CATALOG_V1.md)**
     - Ontology v2 のgame-content instance layer。cards / tiles / tokens / diceを同じgeneric schemaで扱い、PropertyDefinition・typed values・RuleSet/Concept/RuleNode境界を定義します。
 
+- **[`CLAIM_EVIDENCE_V1.md`](./CLAIM_EVIDENCE_V1.md)**
+    - RuleNode / ComponentProperty / Ability / metadata fieldごとのClaimとSource/Locator/EvidenceBindingを分離し、support・contradiction・projection eligibilityを決定論的に追跡するprovenance contractです。
+
 - **[`diagrams.md`](./diagrams.md)**
     - システムアーキテクチャ、シーケンス図、ER図などの視覚的な資料が含まれています。
 
