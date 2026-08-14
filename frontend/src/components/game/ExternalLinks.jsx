@@ -2,8 +2,13 @@ const isValidUrl = (url) => {
   if (!url || typeof url !== 'string') return false
   const trimmed = url.trim()
   if (!trimmed) return false
-  new URL(trimmed)
-  return trimmed.startsWith('http://') || trimmed.startsWith('https://')
+
+  try {
+    const parsed = new URL(trimmed)
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:'
+  } catch {
+    return false
+  }
 }
 
 export const ExternalLinks = ({ game }) => {
@@ -27,9 +32,9 @@ export const ExternalLinks = ({ game }) => {
     <div className="info-section">
       <h3>Links</h3>
       <div className="external-links-grid">
-        {links.map((link, i) => (
+        {links.map((link) => (
           <a
-            key={i}
+            key={`${link.class}:${link.url}`}
             href={link.url}
             target="_blank"
             rel="noopener noreferrer sponsored"
