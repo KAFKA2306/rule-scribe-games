@@ -11,8 +11,15 @@ const isValidUrl = (url) => {
   }
 }
 
+const sourceLabel = (sourceTrust) => {
+  if (sourceTrust === 'official_publisher') return '出版社・公式一次情報'
+  if (sourceTrust === 'authorized_partner') return '認定パートナー情報'
+  if (sourceTrust === 'third_party') return '第三者情報源'
+  return '出典（未検証）'
+}
+
 export const ExternalLinks = ({ game }) => {
-  const { affiliate_urls, official_url, bgg_url, amazon_url } = game
+  const { affiliate_urls, source_url, source_trust, bgg_url, amazon_url } = game
   const amazon = affiliate_urls?.amazon || amazon_url
   const rakuten = affiliate_urls?.rakuten
   const yahoo = affiliate_urls?.yahoo
@@ -21,7 +28,7 @@ export const ExternalLinks = ({ game }) => {
     { url: amazon, label: 'Amazon', class: 'amazon' },
     { url: rakuten, label: '楽天で見る', class: 'rakuten' },
     { url: yahoo, label: 'Yahoo!で見る', class: 'yahoo' },
-    { url: official_url, label: '公式サイト', class: 'official' },
+    { url: source_url, label: sourceLabel(source_trust), class: 'source' },
     { url: bgg_url, label: 'BoardGameGeek', class: 'bgg' },
     { url: game.bga_url, label: 'Board Game Arena', class: 'bga' },
   ].filter((link) => isValidUrl(link.url))
