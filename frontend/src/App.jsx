@@ -2,6 +2,8 @@ import { useEffect, useState, useMemo } from 'react'
 import { useSearchParams, Link, useNavigate } from 'react-router-dom'
 import { api } from './lib/api'
 
+const COMPARE_LIMIT = 3
+
 function App() {
   const [searchParams, setSearchParams] = useSearchParams()
   const navigate = useNavigate()
@@ -172,13 +174,16 @@ function App() {
   }
 
   const toggleCompare = (game) => {
-    if (compareList.find(g => g.id === game.id)) {
-      setCompareList(compareList.filter(g => g.id !== game.id))
-    } else {
-      if (compareList.length >= 3) return
-      setCompareList([...compareList, game])
-    }
+    setCompareList((current) => {
+      if (current.some(g => g.id === game.id)) {
+        return current.filter(g => g.id !== game.id)
+      }
+      if (current.length >= COMPARE_LIMIT) return current
+      return [...current, game]
+    })
   }
+
+  const compareLimitReached = compareList.length >= COMPARE_LIMIT
 
   if (isBattleMode) {
     return (
@@ -322,6 +327,15 @@ function App() {
             <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: '700' }}>
               {filteredGames.length} RESULTS
             </span>
+            <span
+              id="compare-limit-status"
+              role="status"
+              aria-live="polite"
+              style={{ fontSize: '0.75rem', color: compareLimitReached ? 'var(--ks-rejected)' : 'var(--text-muted)', fontWeight: 700 }}
+            >
+              比較 {compareList.length}/{COMPARE_LIMIT}
+              {compareLimitReached ? ' · 上限です。選択済みを外すと追加できます。' : ' · 最大3件'}
+            </span>
             {activePlayers && <div className="filter-chip">人数: {activePlayers} <button onClick={() => setActivePlayers(null)}>×</button></div>}
             {activeTime && <div className="filter-chip">時間: {activeTime} <button onClick={() => setActiveTime(null)}>×</button></div>}
             {activeTier && <div className="filter-chip">Tier: {activeTier} <button onClick={() => setActiveTier(null)}>×</button></div>}
@@ -346,37 +360,57 @@ function App() {
           <div className="app-loading-state" role="status">ARCHIVE INITIALIZING...</div>
         ) : (
           <div className="asset-grid">
-            {filteredGames.map(game => (
-              <div key={game.id} style={{ position: 'relative' }}>
-                <Link to={`/games/${game.slug}`} className="asset-card" style={{ height: '100%' }}>
-                  <div className="asset-thumb-container">
-                    {game.strategy_tier && <div className="tier-badge">Tier {game.strategy_tier}</div>}
-                    <img
-                      src={game.image_url || '/assets/no-image.webp'}
-                      alt={game.title_ja || game.title}
-                      className="asset-thumb"
-                      loading="lazy"
-                    />
-                  </div>
-                  <div className="asset-info">
-                    <div className="asset-title">{game.title_ja || game.title}</div>
-                    <div className="asset-meta">
-                      {game.min_players && <span className="meta-item">👥 {game.min_players}{game.max_players && game.max_players !== game.min_players ? `-${game.max_players}` : ''}</span>}
-                      {game.play_time && <span className="meta-item">⏳ {game.play_time}m</span>}
-                      {game.published_year && <span className="meta-item">📅 {game.published_year}</span>}
+            {filteredGames.map(game => {
+              const gameName = game.title_ja || game.title || '名称未設定のゲーム'
+              const isCompared = compareList.some(g => g.id === game.id)
+              const compareDisabled = compareLimitReached && !isCompared
+
+              return (
+                <div key={game.id} style={{ position: 'relative' }}>
+                  <Link to={`/games/${game.slug}`} className="asset-card" style={{ height: '100%' }}>
+                    <div className="asset-thumb-container">
+                      {game.strategy_tier && <div className="tier-badge">Tier {game.strategy_tier}</div>}
+                      <img
+                        src={game.image_url || '/assets/no-image.webp'}
+                        alt={gameName}
+                        className="asset-thumb"
+                        loading="lazy"
+                      />
                     </div>
-                    <div className="asset-summary">{game.summary || game.description}</div>
-                  </div>
-                </Link>
-                <button
-                  onClick={(e) => { e.preventDefault(); toggleCompare(game); }}
-                  className={`filter-btn ${compareList.find(g => g.id === game.id) ? 'active' : ''}`}
-                  style={{ position: 'absolute', top: '8px', right: '8px', zIndex: 10, padding: '4px 8px', fontSize: '0.65rem' }}
-                >
-                  {compareList.find(g => g.id === game.id) ? 'READY' : 'COMPARE'}
-                </button>
-              </div>
-            ))}
+                    <div className="asset-info">
+                      <div className="asset-title">{gameName}</div>
+                      <div className="asset-meta">
+                        {game.min_players && <span className="meta-item">👥 {game.min_players}{game.max_players && game.max_players !== game.min_players ? `-${game.max_players}` : ''}</span>}
+                        {game.play_time && <span className="meta-item">⏳ {game.play_time}m</span>}
+                        {game.published_year && <span className="meta-item">📅 {game.published_year}</span>}
+                      </div>
+                      <div className="asset-summary">{game.summary || game.description}</div>
+                    </div>
+                  </Link>
+                  <button
+                    onClick={(e) => { e.preventDefault(); toggleCompare(game); }}
+                    className={`filter-btn ${isCompared ? 'active' : ''}`}
+                    disabled={compareDisabled}
+                    aria-pressed={isCompared}
+                    aria-label={`${gameName}を比較${isCompared ? 'から外す' : 'に追加する'}`}
+                    aria-describedby="compare-limit-status"
+                    title={compareDisabled ? `比較は${COMPARE_LIMIT}件までです。選択済みのゲームを外してから追加してください。` : undefined}
+                    style={{
+                      position: 'absolute',
+                      top: '8px',
+                      right: '8px',
+                      zIndex: 10,
+                      padding: '4px 8px',
+                      fontSize: '0.65rem',
+                      opacity: compareDisabled ? 0.55 : 1,
+                      cursor: compareDisabled ? 'not-allowed' : 'pointer',
+                    }}
+                  >
+                    {isCompared ? 'READY' : compareDisabled ? 'LIMIT 3' : 'COMPARE'}
+                  </button>
+                </div>
+              )
+            })}
             {filteredGames.length === 0 && !loading && (
               <div className="app-empty-state">
                 条件に一致するゲームが見つかりません。
@@ -399,14 +433,25 @@ function App() {
       </main>
 
       {compareList.length > 0 && (
-        <div className="comparison-tray">
-          <div className="comparison-tray__label" style={{ fontSize: '0.75rem', fontWeight: 700 }}>BATTLE TRAY</div>
-          {compareList.map(g => (
-            <div key={g.id} className="compare-item">
-              <img src={g.image_url || '/assets/no-image.webp'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Compare Item" />
-              <button onClick={() => toggleCompare(g)}>×</button>
-            </div>
-          ))}
+        <div className="comparison-tray" aria-label={`比較トレイ ${compareList.length}/${COMPARE_LIMIT}`}>
+          <div className="comparison-tray__label" style={{ fontSize: '0.75rem', fontWeight: 700 }}>
+            BATTLE TRAY · {compareList.length}/{COMPARE_LIMIT}
+          </div>
+          {compareList.map(g => {
+            const gameName = g.title_ja || g.title || '名称未設定のゲーム'
+            return (
+              <div key={g.id} className="compare-item">
+                <img src={g.image_url || '/assets/no-image.webp'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt={`${gameName}の比較サムネイル`} />
+                <button
+                  onClick={() => toggleCompare(g)}
+                  aria-label={`${gameName}を比較から外す`}
+                  title={`${gameName}を比較から外す`}
+                >
+                  ×
+                </button>
+              </div>
+            )
+          })}
           {compareList.length >= 2 && (
             <button
               className="filter-btn active"
