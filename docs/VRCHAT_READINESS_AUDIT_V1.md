@@ -33,6 +33,10 @@ The audit reads only existing canonical structures:
 Legacy `structured_data.mechanics`, free-form rule text, title keywords, BGG categories, and LLM
 interpretation are not used to promote capabilities.
 
+Production execution uses `StrictVrchatReadinessAuditService`. The underlying traversal service is
+kept separate so catalog pagination/binding mechanics do not redefine evidence, runtime capability,
+or rights policy.
+
 ## Rule coverage
 
 Each RuleSet is independently checked for six runtime-critical dimensions:
@@ -44,9 +48,14 @@ Each RuleSet is independently checked for six runtime-critical dimensions:
 5. game end
 6. win / victory
 
-Missing dimensions are data blockers. Existing nodes only count as evidence-backed when their
-verification state is `source_bound` or `verified` and the node carries a claim, evidence, or source
-reference. Missing provenance is an evidence blocker rather than being silently treated as verified.
+Missing dimensions are data blockers. Under the strict production policy, an existing RuleNode only
+counts as evidence-backed when its verification state is `source_bound` or `verified` **and it has a
+field-level `evidence_ref`**. A `source_url` or claim reference alone is not enough to promote the
+node to evidence-backed status.
+
+This intentionally aligns the VRChat release gate with #175: source existence and claim support are
+different states. Until the field-level evidence migration is complete, affected records remain
+`review-required` rather than being silently promoted.
 
 RuleSets are never merged to fill one another's gaps. Multiple active RuleSets with the same
 language/edition/platform identity are reported as `AMBIGUOUS_ACTIVE_RULESET_IDENTITY` until the
@@ -68,22 +77,31 @@ The v1 runtime capabilities are the exact #183 manifest capabilities:
 - realtime
 - dexterity
 
-A capability becomes `required` only from structured evidence:
+A capability becomes `required` or `not-required` only when a source-bound/verified RuleNode with a
+field-level `evidence_ref` explicitly declares it in `metadata.vrchat_capabilities`.
 
-- a canonical `turn` node -> `turn-based`
-- canonical scoring/victory nodes -> `score`
-- `card` components -> `deck`
-- `die` components -> `dice`
-- token/marker/figure components -> `tokens`
-- board/tile components -> `board`
-- a source-bound/verified RuleNode may explicitly declare `metadata.vrchat_capabilities`
+Examples:
 
-An explicit metadata declaration can be `required` or `not-required`. Conflicting declarations are
-not resolved by precedence; they become a review blocker. Anything not established by structured
-verified evidence remains `unknown`.
+```json
+{
+  "vrchat_capabilities": {
+    "deck": "required",
+    "hidden-information": "required",
+    "dexterity": "not-required"
+  }
+}
+```
 
-This is deliberate for hidden information, simultaneous play, realtime play, timers, and dexterity:
-the audit does not guess those properties from game descriptions.
+Component kind is descriptive evidence about the physical game contents; it is **not** a runtime
+requirement by itself. In particular:
+
+- the presence of cards does not prove that VRMine needs deck/shuffle/draw semantics;
+- tiles do not automatically imply a board-state engine;
+- figures/markers do not automatically imply generic token semantics;
+- a victory node does not automatically imply a numeric score system.
+
+Conflicting explicit declarations are not resolved by precedence; they become evidence blockers.
+Anything without explicit verified capability evidence remains `unknown`.
 
 ## Component completeness
 
@@ -112,13 +130,21 @@ binding registry remains the explicit transport-side declaration and missing mod
 
 The default asset policy is `generic-only`.
 
-That means the audit does **not** claim that publisher artwork, card scans, icons, rulebook pages, or
-other source assets are reusable. A game can be modeled with VRMine-owned generic geometry/UI and
-verified factual data without importing source artwork. Rights to source assets are therefore never
-inferred from `source_url`, `source_trust`, publisher identity, or the fact that content is public.
+The audit does **not** claim that publisher artwork, card scans, icons, rulebook pages, or other
+source assets are reusable. Rights are never inferred from `source_url`, source trust, publisher
+identity, or public availability.
 
-If a future module requires source-owned assets, an explicit reuse-rights contract must be added and
-this audit must emit a rights blocker until that contract is verified.
+Because there is not yet a canonical explicit reuse-rights contract, every RuleSet record currently
+carries `SOURCE_ASSET_REUSE_UNVERIFIED`. A record that would otherwise be `ready` is therefore held at
+`review-required` until the rights boundary is resolved. VRMine may still implement generic geometry,
+VRMine-owned UI, and verified factual mechanics without copying source assets.
+
+A future explicit rights contract should distinguish at least:
+
+- source asset reuse explicitly permitted;
+- source asset reuse not permitted;
+- rights unknown but generic substitution possible;
+- asset required and therefore blocking.
 
 ## Readiness decision
 
@@ -140,17 +166,27 @@ a local fallback or a zero-game result. It writes:
 - JSON: complete typed report
 - CSV: one row per game/RuleSet for triage
 
-`.github/workflows/test-vrchat-readiness.yml` runs contract tests first, then pulls the Vercel
-production environment metadata read-only, executes the full-catalog audit, verifies that every
-canonical game is accounted for, and uploads the JSON/CSV report as a GitHub Actions artifact.
+The GitHub Actions security boundary is deliberate:
+
+- pull requests run compile, lint, and fixture/contract tests only;
+- production credentials are not consumed by the PR job;
+- the read-only production catalog audit runs only after a trusted `main` push, by
+  `workflow_dispatch`, or by the daily schedule;
+- trusted runs pull production environment metadata, execute the full-catalog audit, verify that
+  every canonical game is accounted for, and upload the JSON/CSV report as an artifact.
 
 The workflow passes when the audit is complete and internally consistent. It does not require every
 game to be ready; blockers are the product of the audit, not CI failures.
 
 ## Relationship to #184 production deployment
 
-#184's API implementation is merged, while its live production smoke remains open because the
-observed Vercel deployment budget was saturated. That external deployment blocker does not change
-the readiness audit inputs: #185 uses the merged manifest/catalog contracts and the canonical
-Supabase data directly. No #185 result is treated as live VRChat availability until #184's production
-smoke and the corresponding VRMine runtime gates are also satisfied.
+#184's API implementation is merged, while the Issue remains open. Two verification items remain:
+
+1. live production endpoint smoke once the deployment budget permits canonical production rollout;
+2. an explicit JSON Schema/validation gate for the catalog/envelope response, not only the nested
+   #183 manifest schema.
+
+Those transport blockers do not change #185's canonical audit inputs: #185 uses the merged
+manifest/catalog contracts and canonical Supabase data directly. No #185 result is treated as live
+VRChat availability until #184's production verification and the corresponding VRMine runtime gates
+are also satisfied.
