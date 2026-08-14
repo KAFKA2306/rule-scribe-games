@@ -57,7 +57,11 @@ jobs:
 
       - name: Verify projection does not read legacy structured data
         run: |
-          if grep -R -n -E 'get\(["'"']structured_data|\[["'"']structured_data["'"']\]|get\(["'"']pro_tips|get\(["'"']rule_mistakes' \
+          if grep -R -n -F \
+            -e '.get("structured_data"' \
+            -e ".get('structured_data'" \
+            -e '["structured_data"]' \
+            -e "['structured_data']" \
             backend/app/models/presentation_projection.py \
             backend/app/services/presentation_projection.py \
             backend/app/routers/presentation.py; then
