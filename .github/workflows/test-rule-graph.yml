@@ -1,0 +1,49 @@
+name: Rule graph contract
+
+on:
+  pull_request:
+    paths:
+      - "backend/app/models/rule_graph.py"
+      - "backend/app/services/rule_graph.py"
+      - "backend/app/routers/games.py"
+      - "backend/app/db/migrations/010_rule_graph.sql"
+      - "backend/tests/test_rule_graph.py"
+      - "evaluation/rules/rule-graph-v1-fixtures.json"
+      - "docs/RULE_GRAPH_V1.md"
+      - ".github/workflows/test-rule-graph.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "backend/app/models/rule_graph.py"
+      - "backend/app/services/rule_graph.py"
+      - "backend/app/routers/games.py"
+      - "backend/app/db/migrations/010_rule_graph.sql"
+      - "backend/tests/test_rule_graph.py"
+      - "evaluation/rules/rule-graph-v1-fixtures.json"
+      - "docs/RULE_GRAPH_V1.md"
+      - ".github/workflows/test-rule-graph.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  rule-graph:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+
+      - name: Install Python dependencies
+        run: uv sync --frozen --dev
+
+      - name: Compile rule graph modules
+        run: uv run python -m compileall -q backend/app/models/rule_graph.py backend/app/services/rule_graph.py backend/app/routers/games.py
+
+      - name: Run rule graph contract tests
+        env:
+          PYTHONPATH: backend
+        run: uv run pytest -q backend/tests/test_rule_graph.py

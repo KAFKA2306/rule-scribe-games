@@ -1,0 +1,95 @@
+{
+  "version": "rule-graph-fixtures-v1",
+  "note": "Structural fixtures only. Statements are test data, not production rule evidence.",
+  "cases": [
+    {
+      "name": "ordered-turn-flow",
+      "graph": {
+        "status": "available",
+        "game_id": "fixture-turn",
+        "slug": "fixture-turn",
+        "rule_set_id": "set-turn",
+        "nodes": [
+          {"rule_id": "turn.start", "node_type": "turn", "normalized_statement": "A turn begins.", "verification_status": "unverified", "sequence": 0},
+          {"rule_id": "action.choose", "node_type": "action", "normalized_statement": "Choose one permitted action.", "verification_status": "unverified", "sequence": 1},
+          {"rule_id": "effect.resolve", "node_type": "effect", "normalized_statement": "Resolve the chosen action.", "verification_status": "unverified", "sequence": 2}
+        ],
+        "edges": [
+          {"from_rule_id": "turn.start", "to_rule_id": "action.choose", "relation_type": "next", "sequence": 0},
+          {"from_rule_id": "action.choose", "to_rule_id": "effect.resolve", "relation_type": "results_in", "sequence": 1}
+        ]
+      },
+      "expected_node_types": ["turn", "action", "effect"]
+    },
+    {
+      "name": "round-end-vs-game-end",
+      "graph": {
+        "status": "available",
+        "game_id": "fixture-end",
+        "slug": "fixture-end",
+        "rule_set_id": "set-end",
+        "nodes": [
+          {"rule_id": "end.round", "node_type": "round_end", "normalized_statement": "The current round ends.", "verification_status": "unverified"},
+          {"rule_id": "end.game", "node_type": "game_end", "normalized_statement": "The game ends.", "verification_status": "unverified"},
+          {"rule_id": "win.determine", "node_type": "victory", "normalized_statement": "Determine the winner.", "verification_status": "unverified"}
+        ],
+        "edges": [{"from_rule_id": "end.game", "to_rule_id": "win.determine", "relation_type": "next"}]
+      },
+      "expected_node_types": ["round_end", "game_end", "victory"]
+    },
+    {
+      "name": "flip7-threshold-continues-round-structural",
+      "graph": {
+        "status": "available",
+        "game_id": "fixture-flip7",
+        "slug": "flip-7-structural-fixture",
+        "rule_set_id": "set-flip7",
+        "nodes": [
+          {"rule_id": "condition.score-threshold", "node_type": "condition", "normalized_statement": "A score threshold has been reached.", "verification_status": "unverified"},
+          {"rule_id": "effect.mark-final-round", "node_type": "effect", "normalized_statement": "Mark the current round as the final round.", "verification_status": "unverified"},
+          {"rule_id": "condition.duplicate-number", "node_type": "condition", "normalized_statement": "A duplicate number is drawn.", "verification_status": "unverified"},
+          {"rule_id": "effect.bust", "node_type": "effect", "normalized_statement": "Resolve the bust state.", "verification_status": "unverified"},
+          {"rule_id": "target.stayed-player", "node_type": "targeting", "normalized_statement": "A stayed player may remain a legal target when the rule permits it.", "verification_status": "unverified"},
+          {"rule_id": "variant.brutal", "node_type": "variant", "normalized_statement": "An optional variant changes selected scoring or interaction rules.", "verification_status": "unverified"},
+          {"rule_id": "end.game", "node_type": "game_end", "normalized_statement": "The game ends after the final-round condition is resolved.", "verification_status": "unverified"}
+        ],
+        "edges": [
+          {"from_rule_id": "condition.score-threshold", "to_rule_id": "effect.mark-final-round", "relation_type": "condition_effect"},
+          {"from_rule_id": "condition.duplicate-number", "to_rule_id": "effect.bust", "relation_type": "condition_effect"},
+          {"from_rule_id": "effect.mark-final-round", "to_rule_id": "end.game", "relation_type": "results_in"}
+        ]
+      },
+      "expected_node_types": ["condition", "effect", "targeting", "variant", "game_end"]
+    },
+    {
+      "name": "exception-overrides-base",
+      "graph": {
+        "status": "available",
+        "game_id": "fixture-exception",
+        "slug": "fixture-exception",
+        "rule_set_id": "set-exception",
+        "nodes": [
+          {"rule_id": "action.base", "node_type": "action", "normalized_statement": "Apply the base action rule.", "verification_status": "unverified"},
+          {"rule_id": "exception.special", "node_type": "exception", "normalized_statement": "Apply the special exception instead.", "verification_status": "unverified"}
+        ],
+        "edges": [{"from_rule_id": "exception.special", "to_rule_id": "action.base", "relation_type": "overrides"}]
+      },
+      "expected_relations": ["overrides"]
+    },
+    {
+      "name": "variant-delta",
+      "graph": {
+        "status": "available",
+        "game_id": "fixture-variant",
+        "slug": "fixture-variant",
+        "rule_set_id": "set-variant",
+        "nodes": [
+          {"rule_id": "score.base", "node_type": "scoring", "normalized_statement": "Use base scoring.", "verification_status": "unverified"},
+          {"rule_id": "variant.optional", "node_type": "variant", "normalized_statement": "Use the optional scoring change.", "verification_status": "unverified"}
+        ],
+        "edges": [{"from_rule_id": "variant.optional", "to_rule_id": "score.base", "relation_type": "variant_of"}]
+      },
+      "expected_relations": ["variant_of"]
+    }
+  ]
+}
