@@ -4,6 +4,7 @@ const DEFAULT_TIMEOUT_MS = Number(import.meta.env.VITE_API_TIMEOUT_MS || 15000)
 const GET_CACHE_TTL_MS = 2000
 const inflightGets = new Map()
 const recentGets = new Map()
+const inflightMutations = new Map()
 
 export class ApiError extends Error {
   constructor(message, { status = 0, code = 'api_error', retryable = false } = {}) {
@@ -95,10 +96,19 @@ const get = (path) => {
   return promise
 }
 
-const mutate = async (path, options) => {
-  const result = await request(path, options)
-  clearGetCache()
-  return result
+const mutate = (path, options) => {
+  const key = `${options.method}:${path}:${options.body || ''}`
+  const existing = inflightMutations.get(key)
+  if (existing) return existing
+
+  const promise = request(path, options)
+    .then((result) => {
+      clearGetCache()
+      return result
+    })
+    .finally(() => inflightMutations.delete(key))
+  inflightMutations.set(key, promise)
+  return promise
 }
 
 export const api = {
