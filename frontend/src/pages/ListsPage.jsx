@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 
 import { useAuth } from '../auth/authContext'
 import { api } from '../lib/api'
+import './ListsPage.css'
 
 const OWNED_SELECTION = '__owned__'
 
@@ -216,140 +217,155 @@ export default function ListsPage() {
 
   if (authLoading) {
     return (
-      <main style={{ maxWidth: '1100px', margin: '0 auto', padding: '2rem 1rem' }} aria-busy="true">
-        <div style={{ minHeight: '48px', marginBottom: '1rem' }}>認証状態を確認しています…</div>
-        <div className="pro-card" style={{ minHeight: '180px', opacity: 0.65 }}>マイリストを準備しています。</div>
+      <main className="lists-page" aria-busy="true">
+        <div className="lists-loading-shell">
+          <div className="lists-loading-shell__label">認証状態を確認しています…</div>
+          <div className="pro-card lists-loading-shell__card">マイリストを準備しています。</div>
+        </div>
       </main>
     )
   }
 
   if (!user) {
     return (
-      <main style={{ maxWidth: '720px', margin: '0 auto', padding: '3rem 1rem' }}>
-        <Link to="/" className="back-link">← DIRECTORY</Link>
-        <h1>マイリスト</h1>
-        <p>所持ゲームやリストの保存にはログインが必要です。</p>
-        <button type="button" className="filter-btn active" onClick={signInWithGoogle}>Googleでログイン</button>
+      <main className="lists-page">
+        <div className="lists-shell">
+          <header className="lists-header">
+            <div className="lists-header__identity">
+              <Link to="/" className="back-link">← DIRECTORY</Link>
+              <h1>マイリスト</h1>
+            </div>
+          </header>
+          <div className="pro-card lists-empty">
+            <div>
+              <p>所持ゲームやリストの保存にはログインが必要です。</p>
+              <button type="button" className="filter-btn active" onClick={signInWithGoogle}>Googleでログイン</button>
+            </div>
+          </div>
+        </div>
       </main>
     )
   }
 
   return (
-    <main style={{ maxWidth: '1100px', margin: '0 auto', padding: '2rem 1rem' }} aria-busy={loading || Boolean(busyAction)}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap', marginBottom: '1.5rem' }}>
-        <Link to="/" className="back-link">← DIRECTORY</Link>
-        <h1 style={{ margin: 0 }}>マイリスト</h1>
-      </div>
+    <main className="lists-page" aria-busy={loading || Boolean(busyAction)}>
+      <div className="lists-shell">
+        <header className="lists-header" data-auth-control-target>
+          <div className="lists-header__identity">
+            <Link to="/" className="back-link">← DIRECTORY</Link>
+            <h1>マイリスト</h1>
+          </div>
+        </header>
 
-      <form onSubmit={createList} style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '1.5rem' }}>
-        <input
-          className="search-input"
-          style={{ maxWidth: '360px' }}
-          value={newName}
-          maxLength={80}
-          disabled={Boolean(busyAction)}
-          onChange={(event) => setNewName(event.target.value)}
-          placeholder="新しいリスト名"
-          aria-label="新しいリスト名"
-        />
-        <button className="filter-btn" type="submit" disabled={Boolean(busyAction)}>
-          {busyAction === 'create' ? '作成中…' : 'リストを作成'}
-        </button>
-      </form>
-
-      {savedNotice && <div role="status" style={{ marginBottom: '1rem', color: 'var(--text-secondary)' }}>保存したリストを表示しています。</div>}
-      {error && (
-        <div role="alert" style={{ marginBottom: '1rem', color: '#ff7777' }}>
-          {error}{' '}
-          <button type="button" className="filter-btn" onClick={retryLoad} disabled={loading || Boolean(busyAction)}>再試行</button>
-        </div>
-      )}
-      {loading && <div role="status" style={{ marginBottom: '1rem', color: 'var(--text-secondary)' }}>読み込み中…</div>}
-      {busyAction && <div role="status" style={{ marginBottom: '1rem', color: 'var(--text-secondary)' }}>変更を反映しています…</div>}
-
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(180px, 260px) minmax(0, 1fr)', gap: '16px' }}>
-        <aside style={{ position: 'static', width: 'auto', height: 'auto' }}>
-          <button
-            type="button"
-            className={`filter-btn ${selectedId === OWNED_SELECTION ? 'active' : ''}`}
-            style={{ width: '100%', marginBottom: '8px', textAlign: 'left' }}
-            disabled={loading}
-            onClick={() => chooseList(OWNED_SELECTION)}
-          >
-            所持ゲーム
+        <form className="lists-create" onSubmit={createList}>
+          <input
+            className="search-input"
+            value={newName}
+            maxLength={80}
+            disabled={Boolean(busyAction)}
+            onChange={(event) => setNewName(event.target.value)}
+            placeholder="新しいリスト名"
+            aria-label="新しいリスト名"
+          />
+          <button className="filter-btn" type="submit" disabled={Boolean(busyAction)}>
+            {busyAction === 'create' ? '作成中…' : 'リストを作成'}
           </button>
-          {lists.map((list) => (
+        </form>
+
+        {savedNotice && <div role="status" className="lists-feedback">保存したリストを表示しています。</div>}
+        {error && (
+          <div role="alert" className="lists-feedback lists-feedback--error">
+            <span>{error}</span>
+            <button type="button" className="filter-btn" onClick={retryLoad} disabled={loading || Boolean(busyAction)}>再試行</button>
+          </div>
+        )}
+        {loading && <div role="status" className="lists-feedback">読み込み中…</div>}
+        {busyAction && <div role="status" className="lists-feedback">変更を反映しています…</div>}
+
+        <div className="lists-workspace">
+          <aside className="lists-nav" aria-label="マイリスト一覧">
             <button
               type="button"
-              key={list.id}
-              className={`filter-btn ${selectedId === list.id ? 'active' : ''}`}
-              style={{ width: '100%', marginBottom: '8px', textAlign: 'left' }}
+              className={`filter-btn lists-nav__button ${selectedId === OWNED_SELECTION ? 'active' : ''}`}
               disabled={loading}
-              onClick={() => chooseList(list.id)}
+              onClick={() => chooseList(OWNED_SELECTION)}
             >
-              {list.name}
+              所持ゲーム
             </button>
-          ))}
-          {lists.length === 0 && !loading && (
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', padding: '4px 2px' }}>
-              custom listはまだありません。
-            </div>
-          )}
-        </aside>
+            {lists.map((list) => (
+              <button
+                type="button"
+                key={list.id}
+                className={`filter-btn lists-nav__button ${selectedId === list.id ? 'active' : ''}`}
+                disabled={loading}
+                onClick={() => chooseList(list.id)}
+              >
+                {list.name}
+              </button>
+            ))}
+            {lists.length === 0 && !loading && <div className="lists-nav__empty">custom listはまだありません。</div>}
+          </aside>
 
-        <section style={{ minHeight: '180px' }}>
-          {detail && (
-            <>
-              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap', marginBottom: '1rem' }}>
-                <h2 style={{ margin: 0 }}>{detail.name}</h2>
-                {!detail.system_key && (
-                  <>
-                    <button type="button" className="filter-btn" disabled={Boolean(busyAction)} onClick={renameList}>
-                      {busyAction === 'rename' ? '変更中…' : '名前変更'}
-                    </button>
-                    <button type="button" className="filter-btn" disabled={Boolean(busyAction)} onClick={deleteList}>
-                      {busyAction === 'delete' ? '削除中…' : '削除'}
-                    </button>
-                  </>
-                )}
-              </div>
-
-              {detail.items.length === 0 ? (
-                <div className="pro-card">
-                  {detail.system_key === 'owned'
-                    ? '所持ゲームはまだありません。ゲーム詳細から「所持している」を選択してください。'
-                    : 'このリストは空です。ゲーム詳細から追加できます。'}
-                </div>
-              ) : detail.items.map((item, index) => {
-                const title = item.game?.title_ja || item.game?.title || item.game_title_snapshot
-                const removing = busyAction === `remove:${item.id}`
-                return (
-                  <div key={item.id} className="pro-card" style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '10px', flexWrap: 'wrap', opacity: removing ? 0.55 : 1 }}>
-                    <div style={{ flex: '1 1 220px' }}>
-                      {item.game ? <Link to={`/games/${item.game.slug}`}>{title}</Link> : <strong>{title}</strong>}
-                      {item.unavailable && <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>現在利用できないゲーム</div>}
-                      {detail.system_key === 'owned' && item.created_at && (
-                        <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
-                          登録: {new Date(item.created_at).toLocaleDateString('ja-JP')}
-                        </div>
-                      )}
-                    </div>
-                    <div style={{ display: 'flex', gap: '6px' }}>
-                      <button type="button" className="filter-btn" aria-label={`${title}を上へ`} disabled={Boolean(busyAction) || index === 0} onClick={() => moveItem(index, -1)}>↑</button>
-                      <button type="button" className="filter-btn" aria-label={`${title}を下へ`} disabled={Boolean(busyAction) || index === detail.items.length - 1} onClick={() => moveItem(index, 1)}>↓</button>
-                      <button type="button" className="filter-btn" disabled={Boolean(busyAction)} onClick={() => removeItem(item)}>
-                        {removing ? '反映中…' : detail.system_key === 'owned' ? '所持解除' : '削除'}
+          <section className="lists-detail" aria-live="polite">
+            {detail && (
+              <>
+                <div className="lists-detail__header">
+                  <h2>{detail.name}</h2>
+                  {!detail.system_key && (
+                    <div className="lists-detail__actions">
+                      <button type="button" className="filter-btn" disabled={Boolean(busyAction)} onClick={renameList}>
+                        {busyAction === 'rename' ? '変更中…' : '名前変更'}
+                      </button>
+                      <button type="button" className="filter-btn lists-danger" disabled={Boolean(busyAction)} onClick={deleteList}>
+                        {busyAction === 'delete' ? '削除中…' : 'リストを削除'}
                       </button>
                     </div>
-                  </div>
-                )
-              })}
-            </>
-          )}
-        </section>
-      </div>
+                  )}
+                </div>
 
-      <style>{`@media (max-width: 720px) { main > div[style*="grid-template-columns"] { grid-template-columns: 1fr !important; } }`}</style>
+                {detail.items.length === 0 ? (
+                  <div className="pro-card lists-empty">
+                    {detail.system_key === 'owned'
+                      ? '所持ゲームはまだありません。ゲーム詳細から「所持している」を選択してください。'
+                      : 'このリストは空です。ゲーム詳細から追加できます。'}
+                  </div>
+                ) : (
+                  <div className="lists-items">
+                    {detail.items.map((item, index) => {
+                      const title = item.game?.title_ja || item.game?.title || item.game_title_snapshot
+                      const removing = busyAction === `remove:${item.id}`
+                      return (
+                        <article key={item.id} className="pro-card lists-item" data-removing={removing ? 'true' : 'false'}>
+                          <div className="lists-item__content">
+                            {item.game ? (
+                              <Link className="lists-item__title" to={`/games/${item.game.slug}`}>{title}</Link>
+                            ) : (
+                              <strong className="lists-item__title">{title}</strong>
+                            )}
+                            {item.unavailable && <div className="lists-item__meta lists-item__meta--unavailable">現在利用できないゲーム</div>}
+                            {detail.system_key === 'owned' && item.created_at && (
+                              <div className="lists-item__meta">登録: {new Date(item.created_at).toLocaleDateString('ja-JP')}</div>
+                            )}
+                          </div>
+                          <div className="lists-item__actions">
+                            <div className="lists-item__reorder" aria-label={`${title}の並べ替え`}>
+                              <button type="button" className="filter-btn" aria-label={`${title}を上へ`} disabled={Boolean(busyAction) || index === 0} onClick={() => moveItem(index, -1)}>↑</button>
+                              <button type="button" className="filter-btn" aria-label={`${title}を下へ`} disabled={Boolean(busyAction) || index === detail.items.length - 1} onClick={() => moveItem(index, 1)}>↓</button>
+                            </div>
+                            <button type="button" className="filter-btn lists-danger" disabled={Boolean(busyAction)} onClick={() => removeItem(item)}>
+                              {removing ? '反映中…' : detail.system_key === 'owned' ? '所持解除' : 'リストから削除'}
+                            </button>
+                          </div>
+                        </article>
+                      )
+                    })}
+                  </div>
+                )}
+              </>
+            )}
+          </section>
+        </div>
+      </div>
     </main>
   )
 }
