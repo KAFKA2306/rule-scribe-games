@@ -12,6 +12,13 @@ RULESET = ResolvedRuleSet(
     ruleset_id="00000000-0000-0000-0000-000000000178",
     game_slug="yro",
 )
+YRO_SOURCE_COUNT = 2
+YRO_LOCATOR_COUNT = 4
+YRO_COMPONENT_SET_COUNT = 2
+YRO_PROPERTY_DEFINITION_COUNT = 4
+YRO_INGESTION_CLAIM_COUNT = 6
+FIXTURE_PROPERTY_VALUE_COUNT = 2
+FIXTURE_INGESTION_CLAIM_COUNT = 7
 
 
 def _yro_manifest() -> ComponentSourceManifest:
@@ -100,11 +107,21 @@ def _component_manifest() -> ComponentSourceManifest:
         ("component", {"target_type": "component", "component_id": "card.alpha"}),
         (
             "rank-0",
-            {"target_type": "component_property", "component_id": "card.alpha", "property_key": "rank", "ordinal": 0},
+            {
+                "target_type": "component_property",
+                "component_id": "card.alpha",
+                "property_key": "rank",
+                "ordinal": 0,
+            },
         ),
         (
             "rank-1",
-            {"target_type": "component_property", "component_id": "card.alpha", "property_key": "rank", "ordinal": 1},
+            {
+                "target_type": "component_property",
+                "component_id": "card.alpha",
+                "property_key": "rank",
+                "ordinal": 1,
+            },
         ),
         ("printed", {"target_type": "ability_printed_text", "ability_id": "ability.alpha"}),
         ("normalized", {"target_type": "ability_normalized", "ability_id": "ability.alpha"}),
@@ -128,34 +145,36 @@ def _component_manifest() -> ComponentSourceManifest:
 
 def test_yro_plan_preserves_zero_component_fail_closed_state():
     plan = ComponentIngestionPlanBuilder().build(_yro_manifest(), RULESET)
-    assert len(plan["sources"]) == 2
-    assert len(plan["source_locators"]) == 4
-    assert len(plan["component_sets"]) == 2
-    assert len(plan["property_definitions"]) == 4
+    assert len(plan["sources"]) == YRO_SOURCE_COUNT
+    assert len(plan["source_locators"]) == YRO_LOCATOR_COUNT
+    assert len(plan["component_sets"]) == YRO_COMPONENT_SET_COUNT
+    assert len(plan["property_definitions"]) == YRO_PROPERTY_DEFINITION_COUNT
     assert plan["components"] == []
     assert plan["component_properties"] == []
-    assert len(plan["claims"]) == 6
-    assert len(plan["evidence_bindings"]) == 6
+    assert len(plan["claims"]) == YRO_INGESTION_CLAIM_COUNT
+    assert len(plan["evidence_bindings"]) == YRO_INGESTION_CLAIM_COUNT
     assert plan["catalog_metadata"]["component_ingestion"]["completeness"] == "unknown"
 
 
 def test_plan_flattens_multi_value_property_and_two_ability_claim_targets():
-    plan = ComponentIngestionPlanBuilder().build(_component_manifest(), RULESET.model_copy(update={"game_slug": "fixture-game"}))
-    assert [row["ordinal"] for row in plan["component_properties"]] == [0, 1]
+    resolved = RULESET.model_copy(update={"game_slug": "fixture-game"})
+    plan = ComponentIngestionPlanBuilder().build(_component_manifest(), resolved)
+    assert [row["ordinal"] for row in plan["component_properties"]] == list(range(FIXTURE_PROPERTY_VALUE_COUNT))
     assert [row["integer_value"] for row in plan["component_properties"]] == [1, 2]
     assert len(plan["component_abilities"]) == 1
     target_types = {row["target_type"] for row in plan["claims"]}
     assert {"component", "component_set", "property_definition", "component_property"}.issubset(target_types)
     assert "ability_printed_text" in target_types
     assert "ability_normalized" in target_types
-    assert len(plan["claims"]) == 7
+    assert len(plan["claims"]) == FIXTURE_INGESTION_CLAIM_COUNT
 
 
 def test_claim_and_binding_ids_are_deterministic_across_reruns():
     manifest = _component_manifest()
     builder = ComponentIngestionPlanBuilder()
-    first = builder.build(manifest, RULESET.model_copy(update={"game_slug": "fixture-game"}))
-    second = builder.build(deepcopy(manifest), RULESET.model_copy(update={"game_slug": "fixture-game"}))
+    resolved = RULESET.model_copy(update={"game_slug": "fixture-game"})
+    first = builder.build(manifest, resolved)
+    second = builder.build(deepcopy(manifest), resolved)
     assert [row["claim_id"] for row in first["claims"]] == [row["claim_id"] for row in second["claims"]]
     assert [row["binding_id"] for row in first["evidence_bindings"]] == [
         row["binding_id"] for row in second["evidence_bindings"]
