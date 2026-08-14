@@ -20,6 +20,8 @@ on:
       - "frontend/src/pages/ListsPage.jsx"
       - "frontend/tests/lists.spec.js"
       - "frontend/tests/navigation.spec.js"
+      - "frontend/tests/performance.spec.js"
+      - "docs/performance/issue-100.md"
       - ".github/workflows/test-lists.yml"
   push:
     branches:
@@ -42,6 +44,8 @@ on:
       - "frontend/src/pages/ListsPage.jsx"
       - "frontend/tests/lists.spec.js"
       - "frontend/tests/navigation.spec.js"
+      - "frontend/tests/performance.spec.js"
+      - "docs/performance/issue-100.md"
       - ".github/workflows/test-lists.yml"
 
 permissions:
@@ -83,6 +87,7 @@ jobs:
     env:
       VITE_SUPABASE_URL: https://example.supabase.co
       VITE_SUPABASE_ANON_KEY: sb_publishable_test
+      VITE_API_TIMEOUT_MS: "800"
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v4
@@ -96,12 +101,12 @@ jobs:
       - name: Build frontend
         working-directory: frontend
         run: npm run build
-      - name: Lint list and navigation surface
+      - name: Lint list, navigation, and performance surface
         working-directory: frontend
-        run: npx eslint src/main.jsx src/lib/api.js src/components/AppShell.jsx src/components/AuthControlPortal.jsx src/components/GameListSavePortal.jsx src/components/game/AddToListButton.jsx src/components/game/OwnedGameButton.jsx src/pages/ListsPage.jsx tests/lists.spec.js tests/navigation.spec.js
+        run: npx eslint src/main.jsx src/lib/api.js src/components/AppShell.jsx src/components/AuthControlPortal.jsx src/components/GameListSavePortal.jsx src/components/game/AddToListButton.jsx src/components/game/OwnedGameButton.jsx src/pages/ListsPage.jsx tests/lists.spec.js tests/navigation.spec.js tests/performance.spec.js
       - name: Install Chromium
         working-directory: frontend
         run: npx playwright install --with-deps chromium
-      - name: Run list and navigation E2E
+      - name: Run list, navigation, and perceived-performance E2E
         working-directory: frontend
-        run: npx playwright test tests/lists.spec.js tests/navigation.spec.js --project=chromium
+        run: npx playwright test tests/lists.spec.js tests/navigation.spec.js tests/performance.spec.js --project=chromium
