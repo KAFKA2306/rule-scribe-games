@@ -175,12 +175,23 @@ jobs:
           test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.evidence_bindings where claim_id='claim.rule.end' and relation='supports';")" = "2"
           test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.evidence_bindings where claim_id='claim.rule.end' and relation='contradicts';")" = "1"
 
-          # Faction has a claim but no supporting binding: field-level unsupported data stays visible to the audit gate.
+          # Field-level unsupported and unreviewed claims stay visible to audit gates.
           test "$(psql "$DATABASE_URL" -Atc "select claims_without_support from public.claim_evidence_audit_summary;")" = "2"
+          test "$(psql "$DATABASE_URL" -Atc "select claims_not_accepted from public.claim_evidence_audit_summary;")" = "5"
 
           # Binding without a precise locator is valid; no locator row is fabricated.
           test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.evidence_bindings where locator_id is null;")" = "5"
           test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.source_locators;")" = "1"
+
+          # Duplicate no-locator binding is rejected even though locator_id is NULL.
+          if psql "$DATABASE_URL" -v ON_ERROR_STOP=1 <<'SQL'
+          INSERT INTO public.evidence_bindings(binding_id, claim_id, source_id, locator_id, relation)
+          VALUES ('binding.cost.publisher.duplicate', 'claim.component.cost', 'source.publisher.rules', NULL, 'supports');
+          SQL
+          then
+            echo "duplicate no-locator evidence binding unexpectedly accepted"
+            exit 1
+          fi
 
           # Printed text and normalized interpretation remain separate claims.
           test "$(psql "$DATABASE_URL" -Atc "select count(distinct target_type) from public.claims where ability_id='ability.scout';")" = "2"
@@ -197,9 +208,7 @@ jobs:
           fi
 
           # A physical RuleSet claim cannot target a component property that exists only in another RuleSet identity.
-          DELETE FROM public.component_properties
-          WHERE rule_set_id=(SELECT id FROM public.rule_sets WHERE platform='physical')
-            AND component_id='card.scout' AND property_key='faction';
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c "DELETE FROM public.component_properties WHERE rule_set_id=(SELECT id FROM public.rule_sets WHERE platform='physical') AND component_id='card.scout' AND property_key='faction';"
           if psql "$DATABASE_URL" -v ON_ERROR_STOP=1 <<'SQL'
           INSERT INTO public.claims(claim_id, rule_set_id, claim_type, normalized_payload, target_type, component_id, property_key, ordinal)
           SELECT 'claim.cross-ruleset.property', id, 'component_property', '{}'::jsonb, 'component_property', 'card.scout', 'faction', 0
