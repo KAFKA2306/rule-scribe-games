@@ -4,113 +4,147 @@ Status: canonical operator workflow for source-grounded game additions.
 
 ## Goal
 
-Add one verified game to ボドゲのミカタ with the smallest safe change set and no unrelated repair work.
+Add one verified game to ボドゲのミカタ with the smallest safe routine change set and no unrelated repair work.
 
-## One-command path
+## Routine path
 
-Prepare one structured file under `data/curated-games/<slug>.json`, then run:
+Prepare exactly one structured source file:
+
+`data/curated-games/<slug>.json`
+
+Then run only:
 
 ```bash
-task game:add \
-  SLUG=skull-king \
-  SOURCE_URL=https://www.grandpabecksgames.com/pages/skull-king \
-  DATA=data/curated-games/skull-king.json
+task game:add GAME=<slug>
 ```
 
-`game:add` performs the fixed path in one process:
+`GAME` is the only routine operator input. The command derives the spec path, canonical slug, primary source URL, rule version, source revision, assertions, and production expectations from the structured file. Filename, `GAME`, and `spec.slug` must match exactly.
 
-1. validates the structured input and source/revision contract;
-2. checks the primary source URL is reachable;
-3. validates focused game assertions;
-4. materializes `frontend/src/lib/generatedCuratedRuleGuides.js` from every structured curated input;
-5. validates the runtime guide returned by `getCuratedRuleGuide(slug)`;
-6. checks production `slug -> work` identity before any write;
-7. updates the existing canonical edition idempotently, or creates one canonical work+edition when none exists;
-8. verifies the production API provenance and `/games/{slug}` page once;
-9. prints the exact PR-ready changed-file set.
+## Ordered gates
 
-A slug collision with a different canonical work fails before mutation. A canonical work that already has the same edition/language under another slug also fails before mutation.
+`game:add` executes these gates in this order:
+
+1. load the one canonical structured spec;
+2. validate schema/cross-field invariants and focused assertions;
+3. verify the primary source HTTP status with a streamed request, without consuming the full response body;
+4. preflight production `slug -> work -> edition/language` identity;
+5. only after preflight succeeds, materialize generated frontend artifacts;
+6. validate the runtime guide returned by `getCuratedRuleGuide(slug)`;
+7. perform one idempotent catalog write using the already-resolved identity plan;
+8. verify the catalog fixed point once through the production API and game page;
+9. print the deterministic three-file routine PR set.
+
+A slug/work/edition collision therefore fails before generated files or production catalog rows are changed.
+
+## Routine PR shape
+
+For a normal new curated game, the routine change set is fixed to:
+
+1. `data/curated-games/<slug>.json`
+2. `frontend/src/lib/generatedCuratedRuleGuides.js`
+3. `frontend/public/curated-guides-manifest.json`
+
+Do not add a game-specific Python importer or game-specific test file. Assertions belong inside the structured spec and the generic focused CI evaluates them for every curated game.
 
 ## Structured input contract
 
-`data/curated-games/schema-v1.json` defines the versioned external contract. Each file contains:
+`data/curated-games/schema-v1.json` defines the external contract. Each file contains:
 
 - `work`: canonical work title and identity status;
 - `source`: explicit HTTPS primary source, rule version, and source revision;
-- `game`: the production catalog payload, including `source_url`, `source_revision`, and `generated_from_source_revision`;
-- `guide`: the reviewed Quick Rules/scoring/flow object;
-- `assertions`: focused facts that must remain true for this game.
+- `game`: production catalog payload including source provenance;
+- `guide`: reviewed Quick Rules/scoring/flow object;
+- `assertions`: game-specific facts that must remain true.
 
-The workflow also enforces cross-field invariants that JSON Schema alone cannot express: slug equality, source URL equality, source revision equality, and guide/source rule-version equality.
+The workflow additionally enforces cross-field invariants such as slug equality, source URL equality, source revision equality, and guide/source rule-version equality.
 
-## Generated guide boundary
+## Generated artifact boundary
 
-`frontend/src/lib/generatedCuratedRuleGuides.js` is generated output. Do not hand-edit it.
+Never hand-edit either generated artifact:
 
-Structured curated games are merged into the runtime registry by `frontend/src/lib/curatedRuleGuides.js`. Legacy hand-maintained guides may remain there, but migrated games must exist only in the structured input/generated registry. Skull King is the replay fixture for this contract.
+- `frontend/src/lib/generatedCuratedRuleGuides.js`
+- `frontend/public/curated-guides-manifest.json`
 
-## Fast path
+The deployment manifest contains a deterministic digest of the curated revision contract plus each game's rule/source revision. It provides a cheap production proof that the deployed frontend corresponds to the expected curated registry revision without Playwright or bundle scraping.
 
-1. **Lock one current primary source.** Record the official URL and the source/revision date. Do not keep searching after the primary source is sufficient unless a contradiction appears.
-2. **Check canonical identity once.** The command checks the production catalog for the work/slug before any write. If the same canonical edition already exists, update it instead of creating a duplicate.
-3. **Prepare one structured file.** Do not hand-edit a large JS guide block or create a game-specific import script.
-4. **Run `task game:add` once.** It handles validation, materialization, the idempotent DB write, production verification, and changed-file reporting.
-5. **Open one branch and one PR.** Do not create replacement branches/PRs for the same game unless the canonical branch is unusable.
-6. **Use the targeted CI gate first.** `Curated game fast path` runs the workflow unit tests plus offline materialization/runtime checks without installing browsers or running the full UI suite.
-7. **Retry a flaky CI job at most once.** Re-run the failed job/run directly. If it fails again, preserve the canonical work line and report the blocker.
-8. **Separate unrelated infrastructure failures.** If the curated-game gate passes but generic deployment infrastructure fails, open/link a separate infrastructure Issue. Do not repair deployment internals inside the game-add task.
-9. **Merge once and stop after the fixed point.** `task game:verify` is available when a post-merge production re-check is required.
+## Two fixed points
 
-## Commands
+Catalog publication and frontend release are deliberately separate.
 
-Offline validation without writes or source/network checks:
+### Catalog fixed point
 
-```bash
-task game:check DATA=data/curated-games/skull-king.json
-```
+`task game:add GAME=<slug>` completes when the production API and `/games/<slug>` expose the intended canonical game/source provenance. This can become live immediately for database-backed content.
 
-Post-merge production verification without a database write:
+### Frontend release fixed point
+
+After a successful Vercel production deployment, `Curated game release verification` automatically checks the deployed `curated-guides-manifest.json` against the commit that was deployed.
+
+Manual fallback:
 
 ```bash
-task game:verify \
-  SLUG=skull-king \
-  SOURCE_URL=https://www.grandpabecksgames.com/pages/skull-king \
-  DATA=data/curated-games/skull-king.json
+task game:verify GAME=<slug>
 ```
+
+Global deployed-registry check:
+
+```bash
+task game:release-check
+```
+
+A generic deployment failure is a separate infrastructure blocker; it does not cause the game-add workflow to branch into deployment repair.
+
+## Other commands
+
+Offline structured/generated-artifact validation:
+
+```bash
+task game:check GAME=<slug>
+```
+
+Full game fixed-point verification after deployment:
+
+```bash
+task game:verify GAME=<slug>
+```
+
+## CI
+
+`Curated game fast path` is path-scoped and browser-free. It runs:
+
+- generic v1/v2 workflow tests;
+- all structured assertions;
+- generated-guide freshness;
+- deployment-manifest freshness;
+- runtime guide integration.
+
+Do not make the full UI suite a prerequisite for routine curated-game changes.
 
 ## Minimal completion evidence
 
-A game-add task is complete when all of these are true:
+A curated game is fully released when:
 
-- the production catalog contains exactly one canonical game identity for the intended work/edition;
-- the current primary source URL/revision is stored;
-- the structured guide has focused regression assertions;
-- generated guide output is current and runtime-visible;
-- the targeted curated-game CI gate passes;
-- the production API returns matching source provenance and the production game page returns the expected title.
-
-A general deployment workflow failure does not invalidate an already-live database-backed game page. It becomes a separate infrastructure blocker unless the requested game content itself is unavailable.
+- production contains exactly one intended canonical work/edition identity;
+- the current primary source URL and revision are stored;
+- structured assertions pass;
+- generated artifacts are current;
+- targeted curated-game CI passes;
+- catalog fixed point is verified;
+- the post-deploy manifest verification confirms the frontend release fixed point.
 
 ## Scope guard
 
 During a game-add task, do not:
 
-- redesign unrelated schemas or UI;
-- repair generic deployment infrastructure;
-- perform repeated repository-wide searches after canonical paths are known;
-- create multiple speculative PRs;
-- rerun full CI suites to diagnose a single targeted failure before reading the failed job;
-- continue source research after the official source is locked without contradictory evidence;
-- hand-edit `generatedCuratedRuleGuides.js`.
+- repeat source research after the primary source/revision is locked unless contradictory evidence appears;
+- repeat repository-wide searches once canonical paths are known;
+- provide `SLUG`, `SOURCE_URL`, or `DATA` separately when they are already in the spec;
+- mutate generated files before identity preflight succeeds;
+- hand-edit generated artifacts;
+- create a game-specific regression test when the structured assertions can express the contract;
+- repair unrelated Vercel/CI infrastructure inside the game-add branch;
+- create replacement branches/PRs for the same task;
+- retry a failed job more than once without new evidence.
 
 ## Success retrospective
 
-After a successful addition, spend one short pass on workflow improvement:
-
-1. identify tool calls, searches, retries, branches, or checks that did not change the outcome;
-2. remove them from this fast path;
-3. automate only repeated deterministic steps;
-4. keep evidence/identity/source gates fail-closed;
-5. stop when no reusable improvement remains.
-
-Do not turn the retrospective into a second implementation project. Reusable improvements belong in a separate Issue/PR unless they are a trivial documentation/task wrapper change.
+After a successful addition, review only the steps that affected the outcome. Remove repeated deterministic work from the next run, but keep source, identity, semantic, and production fixed-point gates fail-closed. Stop once there is no reusable reduction left.
