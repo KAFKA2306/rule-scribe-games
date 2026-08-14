@@ -1,0 +1,47 @@
+name: Curated game fast path
+
+on:
+  pull_request:
+    paths:
+      - "data/curated-games/**"
+      - "backend/app/scripts/curated_game_workflow.py"
+      - "backend/tests/test_curated_game_workflow.py"
+      - "frontend/src/lib/curatedRuleGuides.js"
+      - "frontend/src/lib/generatedCuratedRuleGuides.js"
+      - "Taskfile.yml"
+      - "docs/CURATED_GAME_FAST_PATH.md"
+      - ".github/workflows/curated-game-fast-path.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "data/curated-games/**"
+      - "backend/app/scripts/curated_game_workflow.py"
+      - "backend/tests/test_curated_game_workflow.py"
+      - "frontend/src/lib/curatedRuleGuides.js"
+      - "frontend/src/lib/generatedCuratedRuleGuides.js"
+      - "Taskfile.yml"
+      - "docs/CURATED_GAME_FAST_PATH.md"
+      - ".github/workflows/curated-game-fast-path.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  curated-game:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install uv
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9
+      - name: Install Python dependencies
+        run: uv sync --frozen --dev
+      - name: Run focused workflow tests
+        env:
+          PYTHONPATH: backend
+        run: uv run pytest -q backend/tests/test_curated_game_workflow.py
+      - name: Check structured inputs and generated registry
+        env:
+          PYTHONPATH: backend
+        run: uv run python backend/app/scripts/curated_game_workflow.py --all --offline --check-materialization
