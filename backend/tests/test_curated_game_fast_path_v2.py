@@ -35,7 +35,7 @@ def test_deployment_manifest_is_deterministic_and_revision_bound():
 
     assert first == second
     payload = v2.deployment_manifest_payload(specs)
-    assert len(payload["registry_sha256"]) == 64
+    assert len(payload["revision_contract_sha256"]) == 64
     assert payload["games"]["skull-king"] == {
         "rule_version": "grandpa-becks-current-2026-08-14",
         "source_revision": "grandpa-becks-current-rulebook-accessed-2026-08-14",
@@ -75,9 +75,9 @@ def test_release_manifest_digest_mismatch_fails():
     specs = load_all_specs()
     expected = v2.deployment_manifest_payload(specs)
     deployed = dict(expected)
-    deployed["registry_sha256"] = "0" * 64
+    deployed["revision_contract_sha256"] = "0" * 64
 
-    with pytest.raises(WorkflowError, match="registry digest"):
+    with pytest.raises(WorkflowError, match="revision contract"):
         v2.validate_release_manifest(expected, deployed, game="skull-king")
 
 
