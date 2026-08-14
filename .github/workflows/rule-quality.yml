@@ -8,6 +8,7 @@ on:
       - "backend/app/services/rule_quality.py"
       - "backend/app/models/**"
       - "backend/tests/test_rule_quality.py"
+      - "backend/tests/test_rule_source_gate.py"
       - "evaluation/rules/**"
       - "scripts/evaluate_rule_quality.py"
       - ".github/workflows/rule-quality.yml"
@@ -20,6 +21,7 @@ on:
       - "backend/app/services/rule_quality.py"
       - "backend/app/models/**"
       - "backend/tests/test_rule_quality.py"
+      - "backend/tests/test_rule_source_gate.py"
       - "evaluation/rules/**"
       - "scripts/evaluate_rule_quality.py"
       - ".github/workflows/rule-quality.yml"
@@ -40,10 +42,13 @@ jobs:
       - name: Install Python dependencies
         run: uv sync --frozen --dev
 
+      - name: Compile rule-quality modules
+        run: uv run python -m compileall -q backend/app/services backend/app/models
+
       - name: Run deterministic regression tests
         env:
           PYTHONPATH: backend
-        run: uv run pytest -q backend/tests/test_rule_quality.py
+        run: uv run pytest -q backend/tests/test_rule_quality.py backend/tests/test_rule_source_gate.py
 
       - name: Build rule quality report
         env:
