@@ -50,7 +50,7 @@ function buildItems() {
     const name = index === 0 ? 'Scout' : `Component ${String(index + 1).padStart(3, '0')}`
     const componentId = index === 0 ? 'card.scout' : `${kind}.fixture-${index + 1}`
     const faction = index % 2 === 0 ? 'sun' : 'moon'
-    const item = {
+    return {
       component: {
         component_id: componentId,
         ruleset_id: 'ruleset-components',
@@ -95,7 +95,6 @@ function buildItems() {
         },
       } : {},
     }
-    return item
   })
 }
 
@@ -104,8 +103,7 @@ async function mockApi(page, { catalogAvailable = true } = {}) {
   const catalogRequests = []
 
   await page.route('**/api/**', async (route) => {
-    const request = route.request()
-    const url = new URL(request.url())
+    const url = new URL(route.request().url())
     const path = url.pathname
 
     if (path === '/api/games/component-fixture') {
@@ -208,6 +206,7 @@ test('component detail is keyboard reachable and traces field evidence without i
   await page.keyboard.press('Enter')
   await expect(page.getByRole('heading', { name: 'COMPONENTS' })).toBeVisible()
 
+  await page.getByLabel('SEARCH').fill('Scout')
   const firstCard = page.locator('.component-card-button').first()
   await firstCard.focus()
   await page.keyboard.press('Enter')
@@ -220,7 +219,7 @@ test('component detail is keyboard reachable and traces field evidence without i
   await expect(detail.locator('img')).toHaveCount(0)
 })
 
-test('Components UI has no horizontal page overflow at responsive target widths', async ({ page }) => {
+test('Components UI has no horizontal page overflow at responsive target widths', async ({ page }, testInfo) => {
   await mockApi(page)
   await page.goto('/games/component-fixture')
   await page.getByRole('tab', { name: /コンポーネント/ }).click()
@@ -233,4 +232,6 @@ test('Components UI has no horizontal page overflow at responsive target widths'
   }))
   expect(metrics.scrollWidth).toBe(metrics.clientWidth)
   expect(metrics.panelWidth).toBeLessThanOrEqual(metrics.clientWidth)
+
+  await page.screenshot({ path: testInfo.outputPath('components-panel.png'), fullPage: true })
 })
