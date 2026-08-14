@@ -1,0 +1,99 @@
+name: Test user lists
+
+on:
+  pull_request:
+    paths:
+      - "backend/app/db/migrations/005_user_lists.sql"
+      - "backend/app/db/tests/list_integration.sql"
+      - "backend/app/routers/lists.py"
+      - "backend/app/services/list_service.py"
+      - "backend/app/main.py"
+      - "backend/tests/test_lists.py"
+      - "frontend/src/lib/api.js"
+      - "frontend/src/main.jsx"
+      - "frontend/src/components/AuthControlPortal.jsx"
+      - "frontend/src/components/GameListSavePortal.jsx"
+      - "frontend/src/components/game/AddToListButton.jsx"
+      - "frontend/src/pages/ListsPage.jsx"
+      - "frontend/tests/lists.spec.js"
+      - ".github/workflows/test-lists.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "backend/app/db/migrations/005_user_lists.sql"
+      - "backend/app/db/tests/list_integration.sql"
+      - "backend/app/routers/lists.py"
+      - "backend/app/services/list_service.py"
+      - "backend/app/main.py"
+      - "backend/tests/test_lists.py"
+      - "frontend/src/lib/api.js"
+      - "frontend/src/main.jsx"
+      - "frontend/src/components/AuthControlPortal.jsx"
+      - "frontend/src/components/GameListSavePortal.jsx"
+      - "frontend/src/components/game/AddToListButton.jsx"
+      - "frontend/src/pages/ListsPage.jsx"
+      - "frontend/tests/lists.spec.js"
+      - ".github/workflows/test-lists.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  database-backend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
+      PGPASSWORD: postgres
+      PYTHONPATH: backend
+    steps:
+      - uses: actions/checkout@v5
+      - name: Apply list migration and verify RLS/reorder/dedupe/unavailable-game behavior
+        run: psql "$DATABASE_URL" -f backend/app/db/tests/list_integration.sql
+      - name: Install uv
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+      - run: uv sync --frozen --dev
+      - name: Run backend list authorization tests
+        run: uv run pytest -q backend/tests/test_lists.py backend/tests/test_auth.py
+
+  frontend-e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      VITE_SUPABASE_URL: https://example.supabase.co
+      VITE_SUPABASE_ANON_KEY: sb_publishable_test
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+      - name: Build frontend
+        working-directory: frontend
+        run: npm run build
+      - name: Lint list surface
+        working-directory: frontend
+        run: npx eslint src/main.jsx src/lib/api.js src/components/AuthControlPortal.jsx src/components/GameListSavePortal.jsx src/components/game/AddToListButton.jsx src/pages/ListsPage.jsx tests/lists.spec.js
+      - name: Install Chromium
+        working-directory: frontend
+        run: npx playwright install --with-deps chromium
+      - name: Run list E2E
+        working-directory: frontend
+        run: npx playwright test tests/lists.spec.js --project=chromium
