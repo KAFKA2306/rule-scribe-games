@@ -4,15 +4,15 @@ Status: canonical operator workflow for source-grounded game additions.
 
 ## Goal
 
-Add one verified game to ボドゲのミカタ with the smallest safe routine change set and no unrelated repair work.
+Add one verified game to ボドゲのミカタ with one canonical source file, fail-closed evidence/identity checks, and no committed generated artifacts.
 
 ## Routine path
 
-Prepare exactly one structured source file:
+Create or update exactly one Git-tracked source file:
 
 `data/curated-games/<slug>.json`
 
-Then run only:
+Then run:
 
 ```bash
 task game:add GAME=<slug>
@@ -26,25 +26,23 @@ task game:add GAME=<slug>
 
 1. load the one canonical structured spec;
 2. validate schema/cross-field invariants and focused assertions;
-3. verify the primary source HTTP status with a streamed request, without consuming the full response body;
+3. verify the primary source HTTP status with a streamed request without consuming the full body;
 4. preflight production `slug -> work -> edition/language` identity;
-5. only after preflight succeeds, materialize generated frontend artifacts;
-6. validate the runtime guide returned by `getCuratedRuleGuide(slug)`;
-7. perform one idempotent catalog write using the already-resolved identity plan;
-8. verify the catalog fixed point once through the production API and game page;
-9. print the deterministic three-file routine PR set.
+5. only after preflight succeeds, run the single Node artifact generator;
+6. verify the Node-generated deployment manifest against the Python revision contract;
+7. validate the runtime guide returned by `getCuratedRuleGuide(slug)`;
+8. perform one idempotent catalog write using the already-resolved identity plan;
+9. verify the catalog fixed point once through the production API and game page.
 
 A slug/work/edition collision therefore fails before generated files or production catalog rows are changed.
 
 ## Routine PR shape
 
-For a normal new curated game, the routine change set is fixed to:
+A normal game addition changes exactly one source file:
 
-1. `data/curated-games/<slug>.json`
-2. `frontend/src/lib/generatedCuratedRuleGuides.js`
-3. `frontend/public/curated-guides-manifest.json`
+`data/curated-games/<slug>.json`
 
-Do not add a game-specific Python importer or game-specific test file. Assertions belong inside the structured spec and the generic focused CI evaluates them for every curated game.
+Do not commit game-specific generated JavaScript, deployment manifests, importer scripts, or test files. Game-specific regression facts belong in the structured `assertions` array; generic CI evaluates those assertions for every curated game.
 
 ## Structured input contract
 
@@ -58,26 +56,39 @@ Do not add a game-specific Python importer or game-specific test file. Assertion
 
 The workflow additionally enforces cross-field invariants such as slug equality, source URL equality, source revision equality, and guide/source rule-version equality.
 
-## Generated artifact boundary
+## Single generated-artifact boundary
 
-Never hand-edit either generated artifact:
+`frontend/scripts/generate-curated-game-artifacts.mjs` is the only artifact generator. It derives both runtime artifacts from structured source:
 
 - `frontend/src/lib/generatedCuratedRuleGuides.js`
 - `frontend/public/curated-guides-manifest.json`
 
-The deployment manifest contains a deterministic digest of the curated revision contract plus each game's rule/source revision. It provides a cheap production proof that the deployed frontend corresponds to the expected curated registry revision without Playwright or bundle scraping.
+Both outputs are gitignored and must never be committed or hand-edited.
+
+Generation happens automatically through:
+
+- `npm run dev` via `predev`;
+- `npm run build` via `prebuild`;
+- Vercel production/preview builds, because Vercel runs the frontend build command;
+- `task game:add`, `task game:check`, and focused CI through the same Node generator.
+
+The Python fast path does not implement a second guide generator. It invokes Node and checks that the resulting deployment manifest exactly matches the Python revision-contract calculation.
+
+## Deployment manifest
+
+`curated-guides-manifest.json` contains each curated game's rule/source revision and a deterministic `revision_contract_sha256`. It is a cheap release proof that the deployed frontend corresponds to the intended curated revision contract without browser automation or bundle scraping.
 
 ## Two fixed points
 
-Catalog publication and frontend release are deliberately separate.
+Catalog publication and frontend release remain deliberately separate.
 
 ### Catalog fixed point
 
-`task game:add GAME=<slug>` completes when the production API and `/games/<slug>` expose the intended canonical game/source provenance. This can become live immediately for database-backed content.
+`task game:add GAME=<slug>` completes when the production API and `/games/<slug>` expose the intended canonical game/source provenance. Database-backed content can become live independently of a frontend deployment.
 
 ### Frontend release fixed point
 
-After a successful Vercel production deployment, `Curated game release verification` automatically checks the deployed `curated-guides-manifest.json` against the commit that was deployed.
+After a successful Vercel production deployment, `Curated game release verification` automatically checks the deployed manifest against the commit that was deployed.
 
 Manual fallback:
 
@@ -95,7 +106,7 @@ A generic deployment failure is a separate infrastructure blocker; it does not c
 
 ## Other commands
 
-Offline structured/generated-artifact validation:
+Source/runtime validation without a catalog write:
 
 ```bash
 task game:check GAME=<slug>
@@ -109,13 +120,13 @@ task game:verify GAME=<slug>
 
 ## CI
 
-`Curated game fast path` is path-scoped and browser-free. It runs:
+`Curated game fast path` is path-scoped and browser-free. From a clean checkout where generated artifacts do not exist, it:
 
-- generic v1/v2 workflow tests;
-- all structured assertions;
-- generated-guide freshness;
-- deployment-manifest freshness;
-- runtime guide integration.
+- runs generic workflow tests;
+- validates every structured assertion;
+- regenerates JS + manifest from source;
+- verifies Node/Python revision-contract agreement;
+- validates runtime guide integration.
 
 Do not make the full UI suite a prerequisite for routine curated-game changes.
 
@@ -124,12 +135,12 @@ Do not make the full UI suite a prerequisite for routine curated-game changes.
 A curated game is fully released when:
 
 - production contains exactly one intended canonical work/edition identity;
-- the current primary source URL and revision are stored;
+- the current primary source URL and revision are stored in the structured source;
 - structured assertions pass;
-- generated artifacts are current;
+- generated artifacts are reproducible from source;
 - targeted curated-game CI passes;
 - catalog fixed point is verified;
-- the post-deploy manifest verification confirms the frontend release fixed point.
+- post-deploy manifest verification confirms the frontend release fixed point.
 
 ## Scope guard
 
@@ -139,8 +150,8 @@ During a game-add task, do not:
 - repeat repository-wide searches once canonical paths are known;
 - provide `SLUG`, `SOURCE_URL`, or `DATA` separately when they are already in the spec;
 - mutate generated files before identity preflight succeeds;
-- hand-edit generated artifacts;
-- create a game-specific regression test when the structured assertions can express the contract;
+- commit or hand-edit generated artifacts;
+- create a game-specific regression test when structured assertions can express the contract;
 - repair unrelated Vercel/CI infrastructure inside the game-add branch;
 - create replacement branches/PRs for the same task;
 - retry a failed job more than once without new evidence.

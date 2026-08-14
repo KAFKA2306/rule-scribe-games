@@ -4,7 +4,10 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "curated:generate": "node scripts/generate-curated-game-artifacts.mjs",
+    "predev": "npm run curated:generate",
     "dev": "vite",
+    "prebuild": "npm run curated:generate",
     "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint .",

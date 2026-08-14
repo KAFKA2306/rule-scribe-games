@@ -3,12 +3,9 @@ from pathlib import Path
 import pytest
 
 from app.scripts.curated_game_workflow import (
-    GENERATED_GUIDES_PATH,
     WorkflowError,
-    load_all_specs,
     load_spec,
     plan_identity,
-    render_generated_registry,
     validate_assertions,
 )
 
@@ -25,7 +22,6 @@ def test_skull_king_replays_from_structured_input_without_semantic_diff():
     assert spec.source.revision == "grandpa-becks-current-rulebook-accessed-2026-08-14"
     assert spec.guide["facts"]["rounds"] == 10
     assert spec.guide["scoring"]["summary"].find("配札枚数×10点") >= 0
-    assert render_generated_registry(load_all_specs()) == GENERATED_GUIDES_PATH.read_text(encoding="utf-8")
 
 
 def test_existing_slug_for_same_work_is_idempotent_update():
