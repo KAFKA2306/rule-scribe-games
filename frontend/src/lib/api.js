@@ -5,6 +5,7 @@ const handleResponse = async (res) => {
     const errorBody = await res.json().catch(() => ({}))
     throw new Error(errorBody.message || errorBody.detail || `API Error: ${res.status} ${res.statusText}`)
   }
+  if (res.status === 204) return null
   return res.json()
 }
 
@@ -35,10 +36,17 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     }),
+  put: async (path, body) =>
+    request(path, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    }),
   patch: async (path, body) =>
     request(path, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     }),
+  delete: async (path) => request(path, { method: 'DELETE' }),
 }
