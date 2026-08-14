@@ -1,3 +1,5 @@
+import json
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -8,6 +10,7 @@ from app.scripts.curated_game_workflow import WorkflowError, load_all_specs, loa
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SKULL_KING = REPO_ROOT / "data" / "curated-games" / "skull-king.json"
 GENERATED_GUIDES = REPO_ROOT / "frontend" / "src" / "lib" / "generatedCuratedRuleGuides.js"
+PACKAGE_JSON = REPO_ROOT / "frontend" / "package.json"
 
 
 def test_single_input_resolves_canonical_spec():
@@ -50,6 +53,36 @@ def test_node_generator_matches_python_contract_from_source():
 
     assert v2.DEPLOYMENT_MANIFEST_PATH.read_text(encoding="utf-8") == v2.render_deployment_manifest(specs)
     assert GENERATED_GUIDES.is_file()
+
+
+def test_npm_dev_and_build_generate_curated_artifacts():
+    scripts = json.loads(PACKAGE_JSON.read_text(encoding="utf-8"))["scripts"]
+
+    assert scripts["curated:generate"] == "node scripts/generate-curated-game-artifacts.mjs"
+    assert scripts["predev"] == "npm run curated:generate"
+    assert scripts["prebuild"] == "npm run curated:generate"
+
+
+def test_git_tracks_curated_sources_but_ignores_generated_artifacts():
+    future_source = subprocess.run(
+        ["git", "check-ignore", "--no-index", "-q", "data/curated-games/future-game.json"],
+        cwd=REPO_ROOT,
+        check=False,
+    )
+    generated_guide = subprocess.run(
+        ["git", "check-ignore", "--no-index", "-q", "frontend/src/lib/generatedCuratedRuleGuides.js"],
+        cwd=REPO_ROOT,
+        check=False,
+    )
+    generated_manifest = subprocess.run(
+        ["git", "check-ignore", "--no-index", "-q", "frontend/public/curated-guides-manifest.json"],
+        cwd=REPO_ROOT,
+        check=False,
+    )
+
+    assert future_source.returncode == 1
+    assert generated_guide.returncode == 0
+    assert generated_manifest.returncode == 0
 
 
 def test_prepare_add_preflights_before_generation(monkeypatch):
