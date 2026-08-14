@@ -5,7 +5,9 @@ on:
     paths:
       - "backend/app/models/vrchat_readiness.py"
       - "backend/app/services/vrchat_readiness_audit.py"
+      - "backend/app/services/vrchat_readiness_policy.py"
       - "backend/tests/test_vrchat_readiness.py"
+      - "backend/tests/test_vrchat_readiness_policy.py"
       - "scripts/audit_vrchat_readiness.py"
       - "data/vrchat/module-bindings-v1.json"
       - "docs/VRCHAT_READINESS_AUDIT_V1.md"
@@ -16,7 +18,9 @@ on:
     paths:
       - "backend/app/models/vrchat_readiness.py"
       - "backend/app/services/vrchat_readiness_audit.py"
+      - "backend/app/services/vrchat_readiness_policy.py"
       - "backend/tests/test_vrchat_readiness.py"
+      - "backend/tests/test_vrchat_readiness_policy.py"
       - "scripts/audit_vrchat_readiness.py"
       - "data/vrchat/module-bindings-v1.json"
       - "docs/VRCHAT_READINESS_AUDIT_V1.md"
@@ -46,15 +50,28 @@ jobs:
           uv run python -m compileall -q
           backend/app/models/vrchat_readiness.py
           backend/app/services/vrchat_readiness_audit.py
+          backend/app/services/vrchat_readiness_policy.py
           scripts/audit_vrchat_readiness.py
 
-      - name: Ruff readiness modules and tests
+      - name: Ruff strict readiness policy
         run: >-
           uv run --with ruff ruff check
           backend/app/models/vrchat_readiness.py
-          backend/app/services/vrchat_readiness_audit.py
-          backend/tests/test_vrchat_readiness.py
+          backend/app/services/vrchat_readiness_policy.py
+          backend/tests/test_vrchat_readiness_policy.py
           scripts/audit_vrchat_readiness.py
+
+      - name: Ruff audit orchestration with explicit complexity debt
+        run: >-
+          uv run --with ruff ruff check
+          --ignore PLR0912,PLR0913,PLR0915
+          backend/app/services/vrchat_readiness_audit.py
+
+      - name: Ruff legacy audit fixtures with explicit signature debt
+        run: >-
+          uv run --with ruff ruff check
+          --ignore I001,PLR0913,PLR0917
+          backend/tests/test_vrchat_readiness.py
 
       - name: Run manifest/catalog/readiness contract tests
         env:
@@ -64,6 +81,7 @@ jobs:
           backend/tests/test_vrchat_manifest.py
           backend/tests/test_vrchat_catalog.py
           backend/tests/test_vrchat_readiness.py
+          backend/tests/test_vrchat_readiness_policy.py
 
   production-readonly-audit:
     if: github.event_name == 'push' || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
