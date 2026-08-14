@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import re
 import unicodedata
 from collections import defaultdict
@@ -11,10 +12,10 @@ from app.models.component_ingestion import (
     ComponentIngestAuditReport,
     ComponentSourceManifest,
     EvidenceCoverage,
-    EvidenceRelation,
     ManifestComponent,
     ManifestComponentSet,
 )
+from app.models.evidence import ClaimTarget, EvidenceRelation, EvidenceTargetType
 
 
 class ExistingComponentSnapshot(BaseModel):
@@ -33,6 +34,10 @@ def _normalized_name(value: str) -> str:
 
 def _jsonish(model) -> dict:
     return model.model_dump(mode="json", exclude_none=True)
+
+
+def _target_key(target: ClaimTarget) -> str:
+    return json.dumps(target.model_dump(mode="json", exclude_none=True), sort_keys=True, separators=(",", ":"))
 
 
 class ComponentIngestionDryRun:
@@ -73,6 +78,7 @@ class ComponentIngestionDryRun:
         creates, updates, unchanged = self._component_diff(manifest, existing)
         affected_records = {
             "sources": len(manifest.sources),
+            "source_locators": len(manifest.source_locators),
             "component_sets": len(manifest.component_sets),
             "property_definitions": len(manifest.property_definitions),
             "components": len(manifest.components),
@@ -136,42 +142,65 @@ class ComponentIngestionDryRun:
         buckets: dict[tuple[str, str], list[str]] = defaultdict(list)
         for component in manifest.components:
             buckets[(component.kind.value, _normalized_name(component.canonical_name))].append(component.component_id)
-        return sorted(
-            sorted(ids)
-            for ids in buckets.values()
-            if len(set(ids)) > 1
-        )
+        return sorted(sorted(ids) for ids in buckets.values() if len(set(ids)) > 1)
 
     @staticmethod
     def _required_evidence_targets(manifest: ComponentSourceManifest) -> dict[str, set[str]]:
         targets: dict[str, set[str]] = {}
 
-        def register(target: str, status: ComponentVerificationStatus, source_ids: list[str]) -> None:
+        def register(target: ClaimTarget, status: ComponentVerificationStatus, source_ids: list[str]) -> None:
             if status in {ComponentVerificationStatus.SOURCE_BOUND, ComponentVerificationStatus.VERIFIED}:
-                targets[target] = set(source_ids)
+                targets[_target_key(target)] = set(source_ids)
 
         for item in manifest.component_sets:
-            register(f"component_sets.{item.component_set_id}", item.verification_status, item.source_ids)
+            register(
+                ClaimTarget(target_type=EvidenceTargetType.COMPONENT_SET, component_set_id=item.component_set_id),
+                item.verification_status,
+                item.source_ids,
+            )
         for definition in manifest.property_definitions:
             register(
-                f"property_definitions.{definition.property_key}",
+                ClaimTarget(target_type=EvidenceTargetType.PROPERTY_DEFINITION, property_key=definition.property_key),
                 definition.verification_status,
                 definition.source_ids,
             )
         for component in manifest.components:
-            register(f"components.{component.component_id}", component.verification_status, component.source_ids)
+            register(
+                ClaimTarget(target_type=EvidenceTargetType.COMPONENT, component_id=component.component_id),
+                component.verification_status,
+                component.source_ids,
+            )
             for prop in component.properties:
-                register(
-                    f"components.{component.component_id}.properties.{prop.property_key}",
-                    prop.verification_status,
-                    prop.source_ids,
-                )
+                for ordinal, _value in enumerate(prop.values):
+                    register(
+                        ClaimTarget(
+                            target_type=EvidenceTargetType.COMPONENT_PROPERTY,
+                            component_id=component.component_id,
+                            property_key=prop.property_key,
+                            ordinal=ordinal,
+                        ),
+                        prop.verification_status,
+                        prop.source_ids,
+                    )
             for ability in component.abilities:
-                register(
-                    f"components.{component.component_id}.abilities.{ability.ability_id}",
-                    ability.verification_status,
-                    ability.source_ids,
-                )
+                if ability.printed_text:
+                    register(
+                        ClaimTarget(
+                            target_type=EvidenceTargetType.ABILITY_PRINTED_TEXT,
+                            ability_id=ability.ability_id,
+                        ),
+                        ability.verification_status,
+                        ability.source_ids,
+                    )
+                if ability.normalized_label:
+                    register(
+                        ClaimTarget(
+                            target_type=EvidenceTargetType.ABILITY_NORMALIZED,
+                            ability_id=ability.ability_id,
+                        ),
+                        ability.verification_status,
+                        ability.source_ids,
+                    )
         return targets
 
     @classmethod
@@ -180,7 +209,7 @@ class ComponentIngestionDryRun:
         supporting: dict[str, set[str]] = defaultdict(set)
         for binding in manifest.evidence_bindings:
             if binding.relation == EvidenceRelation.SUPPORTS:
-                supporting[binding.target_path].add(binding.source_id)
+                supporting[_target_key(binding.target)].add(binding.source_id)
         supported = sum(
             1
             for target, allowed_sources in required.items()
