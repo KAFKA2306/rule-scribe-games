@@ -43,3 +43,22 @@ async def test_image_entries_are_nested_under_their_game_url(monkeypatch: pytest
     assert len(images) == 1
     assert images[0].findtext(image_loc_tag) == "https://example.test/assets/games/catan.webp"
     assert images[0].find(image_title_tag) is None
+
+
+@pytest.mark.asyncio
+async def test_invalid_game_slugs_are_not_emitted(monkeypatch: pytest.MonkeyPatch) -> None:
+    async def fake_list_for_sitemap() -> list[dict[str, str | None]]:
+        return [
+            {"slug": "valid-game", "title": "Valid", "updated_at": None, "image_url": None},
+            {"slug": None, "title": "Legacy null", "updated_at": None, "image_url": None},
+            {"slug": "  ", "title": "Legacy blank", "updated_at": None, "image_url": None},
+        ]
+
+    monkeypatch.setattr(sitemap, "list_for_sitemap", fake_list_for_sitemap)
+    monkeypatch.setenv("NEXT_PUBLIC_BASE_URL", "https://example.test")
+
+    xml_text = await sitemap.get_sitemap_xml()
+
+    assert "https://example.test/games/valid-game" in xml_text
+    assert "/games/None" not in xml_text
+    assert "/games/  " not in xml_text
