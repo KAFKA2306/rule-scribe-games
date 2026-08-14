@@ -74,13 +74,14 @@ jobs:
         shell: bash
         run: |
           test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_sets rs join public.games g on g.id=rs.game_id where g.slug='yro';")" = "1"
-          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_sets rs join public.games g on g.id=rs.game_id where g.slug='yro' and rs.platform='Board Game Arena' and rs.revision_label='260725-1445' and rs.verification_status='source_bound' and rs.source_ids=ARRAY['bga:yro:260725-1445']::text[];")" = "1"
-          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='yro';")" = "16"
-          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='yro' and rn.node_type='phase';")" = "6"
-          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_edges re join public.rule_sets rs on rs.id=re.rule_set_id join public.games g on g.id=rs.game_id where g.slug='yro';")" = "13"
-          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='yro' and rn.verification_status='source_bound' and rn.source_claim_ref is not null and rn.evidence_ref is not null;")" = "16"
-          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.claims c join public.rule_sets rs on rs.id=c.rule_set_id join public.games g on g.id=rs.game_id where g.slug='yro';")" = "19"
-          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.evidence_bindings eb join public.claims c on c.claim_id=eb.claim_id join public.rule_sets rs on rs.id=c.rule_set_id join public.games g on g.id=rs.game_id where g.slug='yro' and eb.relation='supports';")" = "19"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_sets rs join public.games g on g.id=rs.game_id where g.slug='yro' and rs.platform='Board Game Arena' and rs.revision_label='260725-1445' and rs.verification_status='source_bound' and rs.source_ids=ARRAY['bga:yro:260725-1445']::text[] and rs.publication_date is null and rs.effective_date is null;")" = "1"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='yro';")" = "17"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='yro' and rn.node_type='phase' and rn.rule_id ~ '^phase\\.[1-6]\\.';")" = "6"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_edges re join public.rule_sets rs on rs.id=re.rule_set_id join public.games g on g.id=rs.game_id where g.slug='yro';")" = "19"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='yro' and rn.verification_status='source_bound' and rn.source_claim_ref is not null and rn.evidence_ref is not null;")" = "17"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.claims c join public.rule_sets rs on rs.id=c.rule_set_id join public.games g on g.id=rs.game_id where g.slug='yro';")" = "20"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.evidence_bindings eb join public.claims c on c.claim_id=eb.claim_id join public.rule_sets rs on rs.id=c.rule_set_id join public.games g on g.id=rs.game_id where g.slug='yro' and eb.relation='supports';")" = "20"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.evidence_bindings eb where eb.binding_id='yro:bga:260725-1445:binding:phase.round-structure:wiki-conflict' and eb.source_id='bga-wiki:yro:2026-08-14' and eb.relation='contradicts';")" = "1"
           test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.evidence_bindings where source_id='publisher:yro:studio-supernova-product';")" = "0"
           test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.component_sets cs join public.rule_sets rs on rs.id=cs.rule_set_id join public.games g on g.id=rs.game_id where g.slug='yro';")" = "2"
           test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.component_property_definitions pd join public.rule_sets rs on rs.id=pd.rule_set_id join public.games g on g.id=rs.game_id where g.slug='yro';")" = "4"
@@ -94,7 +95,7 @@ jobs:
           DELETE FROM public.games WHERE slug='yro';
           INSERT INTO public.game_works DEFAULT VALUES;
           INSERT INTO public.games(slug, title, work_id, identity_status)
-          SELECT 'yro', 'YRO', id, 'unverified' FROM public.game_works ORDER BY id DESC LIMIT 1;
+          SELECT 'yro', 'YRO', id, 'unverified' FROM public.game_works LIMIT 1;
           SQL
 
           if psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/017_seed_yro_bga_260725_1445.sql; then
