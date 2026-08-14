@@ -32,6 +32,9 @@ _ALLOWED_FIELDS = {
     "view_count",
     "search_count",
     "data_version",
+    "identity_status",
+    "source_trust_status",
+    "content_review_status",
     "is_official",
     "min_players",
     "max_players",
@@ -140,6 +143,10 @@ async def generate_metadata(query: str, context: str | None = None, source_bound
         "content_review_status": "ai_draft",
     }
     data["structured_data"] = structured_data
+    data["identity_status"] = "unverified"
+    data["source_trust_status"] = "unknown"
+    data["content_review_status"] = "ai_draft"
+    data["is_official"] = False
     data["updated_at"] = datetime.now(UTC).isoformat()
     data["amazon_url"] = amazon_search_url(str(data.get("title_ja") or query))
 
@@ -223,6 +230,9 @@ class GameService:
         merged["id"], merged["slug"] = game["id"], slug
         merged["work_id"] = game.get("work_id")
         merged["identity_status"] = game.get("identity_status", "unverified")
+        merged["source_trust_status"] = game.get("source_trust_status", "unknown")
+        merged["content_review_status"] = game.get("content_review_status", "ai_draft")
+        merged["is_official"] = bool(game.get("is_official")) and merged["identity_status"] == "verified"
         merged["data_version"] = int(game.get("data_version", 0) or 0) + 1
         out = await supabase.upsert(merged)
         if not out:
@@ -234,7 +244,7 @@ class GameService:
         if not game:
             raise ValueError(f"Game not found for slug: {slug}")
 
-        protected = {"id", "slug", "work_id", "identity_status"}
+        protected = {"id", "slug", "work_id", "identity_status", "is_official"}
         safe_updates = {key: value for key, value in updates.items() if key not in protected}
         merged = {**game, **safe_updates}
         merged["updated_at"] = datetime.now(UTC).isoformat()
