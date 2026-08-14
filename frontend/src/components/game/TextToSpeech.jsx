@@ -23,8 +23,8 @@ export const TextToSpeech = ({ text }) => {
 
     const utterance = new SpeechSynthesisUtterance(text)
     utterance.lang = 'ja-JP'
-    utterance.rate = 0.9 // Slower for clarity
-    utterance.pitch = 1.0 // Neutral pitch
+    utterance.rate = 0.9
+    utterance.pitch = 1.0
     utterance.onend = () => setSpeaking(false)
     utterance.onerror = () => setSpeaking(false)
 
@@ -40,7 +40,7 @@ export const TextToSpeech = ({ text }) => {
       className={`share-btn ${speaking ? 'speaking' : ''}`}
       title={speaking ? '読み上げ停止' : '読み上げ開始'}
       aria-label="Text to speech"
-      style={speaking ? { backgroundColor: '#e7f5ff', color: '#007bff' } : {}}
+      aria-pressed={speaking}
     >
       {speaking ? '⏹️ 停止' : '🔊 読上'}
     </button>
