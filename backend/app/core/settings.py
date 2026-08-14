@@ -7,18 +7,13 @@ from dotenv import load_dotenv
 
 
 def load_config() -> dict[str, Any]:
-    # Use absolute path based on Vercel environment or current file
     root = Path(os.getenv("LAMBDA_TASK_ROOT", Path(__file__).resolve().parent.parent.parent.parent))
-    possible_paths = [
-        root / "config.yaml",
-        root / "backend" / "config.yaml",
-    ]
-    for config_path in possible_paths:
-        if config_path.exists():
-            with open(config_path) as f:
-                data = yaml.safe_load(f)
-                return data if isinstance(data, dict) else {}
-    return {}
+    config_path = root / "config.yaml"
+    if not config_path.exists():
+        return {}
+    with open(config_path) as f:
+        data = yaml.safe_load(f)
+        return data if isinstance(data, dict) else {}
 
 
 _config = load_config()
@@ -33,10 +28,7 @@ class Settings:
     def __init__(self) -> None:
         self.gemini_api_key = os.getenv("GEMINI_API_KEY") or str(_config.get("gemini_api_key") or "")
         self.gemini_model = os.getenv("GEMINI_MODEL") or str(_config.get("gemini_model") or CANONICAL_GEMINI_MODEL)
-        self.supabase_url = (
-            os.getenv("SUPABASE_URL") or
-            os.getenv("NEXT_PUBLIC_SUPABASE_URL")
-        )
+        self.supabase_url = os.getenv("SUPABASE_URL") or os.getenv("NEXT_PUBLIC_SUPABASE_URL")
         # Backend database access is trusted/server-side only. Never fall back to a
         # browser-safe anon/publishable key: missing service-role configuration
         # must fail closed instead of silently widening the backend trust model.
