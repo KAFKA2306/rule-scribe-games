@@ -1,6 +1,6 @@
 import { supabase } from './supabase'
 
-const DEFAULT_TIMEOUT_MS = 15000
+const DEFAULT_TIMEOUT_MS = Number(import.meta.env.VITE_API_TIMEOUT_MS || 15000)
 const GET_CACHE_TTL_MS = 2000
 const inflightGets = new Map()
 const recentGets = new Map()
