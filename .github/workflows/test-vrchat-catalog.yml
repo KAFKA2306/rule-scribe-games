@@ -1,0 +1,72 @@
+name: VRChat manifest catalog
+
+on:
+  pull_request:
+    paths:
+      - "backend/app/main.py"
+      - "backend/app/models/vrchat_catalog.py"
+      - "backend/app/routers/vrchat.py"
+      - "backend/app/services/vrchat_manifest_catalog.py"
+      - "backend/app/models/vrchat_manifest.py"
+      - "backend/app/services/vrchat_manifest_projection.py"
+      - "backend/tests/test_vrchat_catalog.py"
+      - "backend/tests/test_vrchat_manifest.py"
+      - "data/vrchat/module-bindings-v1.json"
+      - "schemas/vrchat/board-game-module-manifest-v1.schema.json"
+      - "docs/VRCHAT_MANIFEST_CATALOG_V1.md"
+      - ".github/workflows/test-vrchat-catalog.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "backend/app/main.py"
+      - "backend/app/models/vrchat_catalog.py"
+      - "backend/app/routers/vrchat.py"
+      - "backend/app/services/vrchat_manifest_catalog.py"
+      - "backend/app/models/vrchat_manifest.py"
+      - "backend/app/services/vrchat_manifest_projection.py"
+      - "backend/tests/test_vrchat_catalog.py"
+      - "backend/tests/test_vrchat_manifest.py"
+      - "data/vrchat/module-bindings-v1.json"
+      - "schemas/vrchat/board-game-module-manifest-v1.schema.json"
+      - "docs/VRCHAT_MANIFEST_CATALOG_V1.md"
+      - ".github/workflows/test-vrchat-catalog.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  vrchat-catalog:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+
+      - name: Install Python dependencies
+        run: uv sync --frozen --dev
+
+      - name: Compile VRChat catalog modules
+        run: >-
+          uv run python -m compileall -q
+          backend/app/models/vrchat_catalog.py
+          backend/app/routers/vrchat.py
+          backend/app/services/vrchat_manifest_catalog.py
+
+      - name: Ruff VRChat catalog modules and tests
+        run: >-
+          uv run --with ruff ruff check
+          backend/app/models/vrchat_catalog.py
+          backend/app/routers/vrchat.py
+          backend/app/services/vrchat_manifest_catalog.py
+          backend/tests/test_vrchat_catalog.py
+
+      - name: Run manifest and catalog contract tests
+        env:
+          PYTHONPATH: backend
+        run: >-
+          uv run pytest -q
+          backend/tests/test_vrchat_manifest.py
+          backend/tests/test_vrchat_catalog.py

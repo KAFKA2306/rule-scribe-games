@@ -1,0 +1,100 @@
+# VRChat Manifest Catalog v1
+
+Issue: https://github.com/KAFKA2306/rule-scribe-games/issues/184
+
+## Public read contract
+
+RuleScribe exposes two read-only endpoints:
+
+- `GET /api/vrchat/v1/catalog`
+- `GET /api/vrchat/v1/manifests/{slug}/{ruleset_id}`
+
+Both responses are JSON, include `ETag`, and advertise:
+
+`Cache-Control: public, max-age=300, stale-while-revalidate=3600`
+
+Clients should cache the catalog and selected manifest instead of fetching on every interaction.
+If the client sends the current `If-None-Match`, the API returns `304 Not Modified` with no body.
+
+## Publication registry
+
+`data/vrchat/module-bindings-v1.json` is the only production publication registry.
+It is deployment metadata, not a second source of board-game rules.
+
+Each entry binds one canonical `(slug, rulesetId)` to the explicit `ModuleBinding` introduced by
+BoardGameModule Manifest v1 and declares one publication state:
+
+- `playable`
+- `unavailable`
+- `unsupported`
+- `retired`
+
+Non-playable records require a machine-readable `reasonCode`.
+
+The initial production registry is intentionally empty. Issue #185 owns full-catalog readiness,
+rights, and blocker auditing and may only promote audited games into this registry. VRMine #32 owns
+runtime module compatibility.
+
+## Fail-closed behavior
+
+A registry entry marked `playable` is still not trusted blindly. Before it is returned as playable,
+the service reloads and validates:
+
+1. canonical `GameDetail`;
+2. the exact canonical `RuleSet`;
+3. the exact Rule Graph for that RuleSet;
+4. the available Component Set/Property Definition catalog;
+5. the deterministic #183 manifest projection.
+
+If any required identity or Rule Graph is missing, mismatched, or invalid, the manifest response is
+`invalid` and the catalog entry is downgraded to `invalid`. The API never substitutes another
+edition, language, platform, or RuleSet.
+
+Known `unavailable`, `unsupported`, and `retired` entries are returned as such without reading the
+canonical services. An unknown `(slug, rulesetId)` returns `not_registered`.
+
+## Manifest response states
+
+`GET /api/vrchat/v1/manifests/{slug}/{ruleset_id}` returns one envelope with:
+
+- `available` — `manifest` contains one BoardGameModule Manifest v1;
+- `not_registered` — no publication binding exists;
+- `unavailable` — binding exists but is not publishable yet;
+- `unsupported` — current runtime contract cannot support the game;
+- `retired` — binding was intentionally retired;
+- `invalid` — a binding claimed playable but canonical projection validation failed.
+
+Only `available` contains a manifest payload.
+
+## Revisions and compatibility
+
+The catalog contains:
+
+- `schemaVersion` — catalog transport schema version;
+- `manifestSchemaVersion` — expected BoardGameModule Manifest version;
+- `catalogRevision` — SHA-256 of the validated public catalog entries;
+- per-entry `moduleId`, `moduleVersionRange`, status, reason, and manifest path.
+
+The manifest itself carries its canonical RuleSet revision and explicit `generatedAt` snapshot.
+A changed catalog or manifest payload produces a different HTTP ETag.
+
+## Security boundary
+
+This API has no POST/PATCH/PUT/DELETE route, accepts no credentials or service-role secret, and
+cannot mutate canonical game data. Runtime module binding is server-side versioned metadata; a
+client cannot supply an arbitrary `moduleId` or capability declaration to make a game playable.
+
+## Verification
+
+`backend/tests/test_vrchat_catalog.py` verifies:
+
+- production registry schema and empty fail-closed baseline;
+- one-fetch selected manifest projection;
+- `not_registered` and `unsupported` states;
+- downgrade from claimed `playable` to `invalid` when canonical Rule Graph is unavailable;
+- GET-only route surface;
+- catalog revision, cache headers, ETag, and conditional `304`;
+- manifest schema version and component-set references.
+
+The dedicated CI gate also runs the #183 manifest contract tests so transport changes cannot drift
+from the versioned BoardGameModule Manifest JSON Schema.
