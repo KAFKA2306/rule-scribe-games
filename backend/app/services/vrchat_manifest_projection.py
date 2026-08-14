@@ -3,10 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 
 from app.models import GameDetail
-from app.models.component_catalog import (
-    COMPONENT_CATALOG_SCHEMA_VERSION,
-    ComponentCatalog,
-)
+from app.models.component_catalog import COMPONENT_CATALOG_SCHEMA_VERSION, ComponentCatalog
 from app.models.rule_graph import (
     RULE_GRAPH_SCHEMA_VERSION,
     RuleGraphReadResponse,
@@ -186,7 +183,7 @@ def _evidence_summary(
     )
 
 
-def project_board_game_module_manifest(
+def project_board_game_module_manifest(  # noqa: PLR0913 - explicit source boundaries are part of the contract
     *,
     game: GameDetail,
     ruleset: RuleSet,
