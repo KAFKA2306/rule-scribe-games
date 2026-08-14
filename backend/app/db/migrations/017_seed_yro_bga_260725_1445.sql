@@ -3,7 +3,9 @@ BEGIN;
 -- YRO production pilot for Ontology v2.
 --
 -- Source policy:
---   * BGA Release 260725-1445 is the only detailed ruleset seeded here.
+--   * BGA Release 260725-1445 live game panel is canonical for this BGA RuleSet.
+--   * The BGA community wiki is retained as a lower-authority contradictory
+--     source for its stale three-phase description; it never defines this RuleSet.
 --   * Studio Supernova is retained as publisher/product provenance only.
 --   * No individual Adventurer/Quest records are generated because no complete
 --     first-party component list was found during the 2026-08-14 audit.
@@ -26,13 +28,24 @@ VALUES
   (
     'bga:yro:260725-1445',
     'https://en.boardgamearena.com/gamepanel?game=yro',
-    'Board Game Arena YRO game page / Rules summary / Release 260725-1445',
+    'Board Game Arena YRO live game page / Rules summary / Release 260725-1445',
     'platform_rules_summary',
     'Studio Supernova',
     'Board Game Arena',
     'en',
     '260725-1445',
-    '{"audit_date":"2026-08-14","role":"canonical_for_bga_implementation","scope":"rules_and_platform_metadata"}'::jsonb
+    '{"audit_date":"2026-08-14","authority":"current_platform_implementation","role":"canonical_for_bga_implementation","scope":"rules_and_platform_metadata"}'::jsonb
+  ),
+  (
+    'bga-wiki:yro:2026-08-14',
+    'https://en.doc.boardgamearena.com/Gamehelpyro',
+    'Board Game Arena community wiki Gamehelpyro snapshot observed 2026-08-14',
+    'community_rules_wiki',
+    NULL,
+    'Board Game Arena',
+    'en',
+    NULL,
+    '{"audit_date":"2026-08-14","authority":"community","role":"noncanonical_conflicting_context","conflict":"three_phase_summary_vs_live_six_phase_release"}'::jsonb
   ),
   (
     'publisher:yro:studio-supernova-product',
@@ -43,7 +56,7 @@ VALUES
     NULL,
     'it',
     NULL,
-    '{"audit_date":"2026-08-14","role":"publisher_product_context","scope":"product_and_component_classes_not_detailed_rules"}'::jsonb
+    '{"audit_date":"2026-08-14","authority":"publisher","role":"publisher_product_context","scope":"product_and_component_classes_not_detailed_rules"}'::jsonb
   )
 ON CONFLICT (source_id) DO UPDATE SET
   url = EXCLUDED.url,
@@ -74,6 +87,7 @@ VALUES
   ('yro:bga:phase:victory-point', 'bga:yro:260725-1445', 'Victory Point Phase', 'phase 6'),
   ('yro:bga:key-concepts', 'bga:yro:260725-1445', 'KEY CONCEPTS', 'factions, professions, Technology, Magic and Resources'),
   ('yro:bga:end-game', 'bga:yro:260725-1445', 'END OF GAME', '9-card/40-VP trigger, Money conversion and winner'),
+  ('yro:bga-wiki:gameplay', 'bga-wiki:yro:2026-08-14', 'GAMEPLAY (Multiple Rounds)', 'community wiki describes three simultaneous phases'),
   ('yro:publisher:description', 'publisher:yro:studio-supernova-product', 'YRO product description', 'adventurers, factions, formation, resources, strength, coins and VP')
 ON CONFLICT (locator_id) DO UPDATE SET
   source_id = EXCLUDED.source_id,
@@ -123,7 +137,6 @@ BEGIN
       revision_label,
       platform,
       publisher_name,
-      effective_date,
       status,
       verification_status,
       source_ids
@@ -139,7 +152,6 @@ BEGIN
       '260725-1445',
       'Board Game Arena',
       'Studio Supernova',
-      DATE '2026-07-15',
       'active',
       'source_bound',
       ARRAY['bga:yro:260725-1445']::text[]
@@ -153,7 +165,8 @@ BEGIN
       source_revision = 'BGA YRO Release 260725-1445; primary-source audit 2026-08-14',
       is_active = true,
       publisher_name = 'Studio Supernova',
-      effective_date = DATE '2026-07-15',
+      publication_date = NULL,
+      effective_date = NULL,
       status = 'active',
       verification_status = 'source_bound',
       source_ids = ARRAY['bga:yro:260725-1445']::text[],
@@ -228,7 +241,7 @@ BEGIN
     (v_catalog_id, v_ruleset_id, 'faction', '{"en":"Faction","ja":"派閥"}'::jsonb, 'text', 'one', true, false, 'source_bound', ARRAY['bga:yro:260725-1445','publisher:yro:studio-supernova-product']::text[], '{"applies_to":["adventurers"]}'::jsonb),
     (v_catalog_id, v_ruleset_id, 'profession', '{"en":"Profession","ja":"職業"}'::jsonb, 'text', 'one', true, false, 'source_bound', ARRAY['bga:yro:260725-1445']::text[], '{"applies_to":["adventurers"]}'::jsonb),
     (v_catalog_id, v_ruleset_id, 'combat_value', '{"en":"Combat Value","ja":"戦闘値"}'::jsonb, 'integer', 'one', false, true, 'source_bound', ARRAY['bga:yro:260725-1445']::text[], '{"applies_to":["adventurers"]}'::jsonb),
-    (v_catalog_id, v_ruleset_id, 'recruit_cost', '{"en":"Recruit Cost","ja":"雇用コスト"}'::jsonb, 'integer', 'one', false, true, 'source_bound', ARRAY['bga:yro:260725-1445']::text[], '{"applies_to":["adventurers"],"currency":"Money"}'::jsonb)
+    (v_catalog_id, v_ruleset_id, 'recruit_cost', '{"en":"Recruit Cost","ja":"雇用コスト"}'::jsonb, 'integer', 'one', false, true, 'source_bound', ARRAY['bga:yro:260725-1445']::text[], '{"applies_to":["adventurers"]}'::jsonb)
   ON CONFLICT (rule_set_id, property_key) DO UPDATE SET
     catalog_id = EXCLUDED.catalog_id,
     labels = EXCLUDED.labels,
@@ -256,6 +269,7 @@ BEGIN
     metadata
   ) VALUES
     (v_ruleset_id, 'setup.core', 'setup', 'Give each player a board, four track markers, 3 Money and five cards; place the shared Combat/Victory board and face-up Quests.', 0, NULL, 'source_bound', 'yro:bga:260725-1445:rule:setup.core', 'yro:bga:260725-1445:binding:setup.core', 'https://en.boardgamearena.com/gamepanel?game=yro', 'yro:bga:setup', '{"vrchat_capabilities":{"board":"required","tokens":"required","deck":"required"}}'::jsonb),
+    (v_ruleset_id, 'phase.round-structure', 'phase', 'Each round has six phases that players resolve simultaneously.', 0, NULL, 'source_bound', 'yro:bga:260725-1445:rule:phase.round-structure', 'yro:bga:260725-1445:binding:phase.round-structure', 'https://en.boardgamearena.com/gamepanel?game=yro', 'yro:bga:gameplay', '{}'::jsonb),
     (v_ruleset_id, 'phase.1.discard-draw', 'phase', 'Players simultaneously discard any number of hand cards and draw back to five.', 1, NULL, 'source_bound', 'yro:bga:260725-1445:rule:phase.1.discard-draw', 'yro:bga:260725-1445:binding:phase.1.discard-draw', 'https://en.boardgamearena.com/gamepanel?game=yro', 'yro:bga:phase:discard-draw', '{"vrchat_capabilities":{"deck":"required"}}'::jsonb),
     (v_ruleset_id, 'phase.2.recruit', 'phase', 'Players simultaneously resolve recruiting after the discard/draw phase.', 2, NULL, 'source_bound', 'yro:bga:260725-1445:rule:phase.2.recruit', 'yro:bga:260725-1445:binding:phase.2.recruit', 'https://en.boardgamearena.com/gamepanel?game=yro', 'yro:bga:phase:recruit', '{"vrchat_capabilities":{"deck":"required","board":"required"}}'::jsonb),
     (v_ruleset_id, 'phase.3.combat', 'phase', 'Compare Combat Power among all players and award VP according to the ranking for the player count.', 3, NULL, 'source_bound', 'yro:bga:260725-1445:rule:phase.3.combat', 'yro:bga:260725-1445:binding:phase.3.combat', 'https://en.boardgamearena.com/gamepanel?game=yro', 'yro:bga:phase:combat', '{}'::jsonb),
@@ -289,6 +303,12 @@ BEGIN
   INSERT INTO public.rule_edges (rule_set_id, from_rule_id, to_rule_id, relation_type, sequence, metadata)
   SELECT v_ruleset_id, e.from_rule_id, e.to_rule_id, e.relation_type, e.sequence, '{"seed_id":"yro-bga-260725-1445"}'::jsonb
   FROM (VALUES
+    ('phase.round-structure','phase.1.discard-draw','contains',1),
+    ('phase.round-structure','phase.2.recruit','contains',2),
+    ('phase.round-structure','phase.3.combat','contains',3),
+    ('phase.round-structure','phase.4.production','contains',4),
+    ('phase.round-structure','phase.5.income','contains',5),
+    ('phase.round-structure','phase.6.victory-point','contains',6),
     ('phase.1.discard-draw','phase.2.recruit','next',1),
     ('phase.2.recruit','phase.3.combat','next',2),
     ('phase.3.combat','phase.4.production','next',3),
@@ -326,7 +346,7 @@ BEGIN
     'yro:bga:260725-1445:rule:' || rn.rule_id,
     v_ruleset_id,
     'rule_statement',
-    jsonb_build_object('statement', rn.normalized_statement, 'source_scope', 'BGA implementation'),
+    jsonb_build_object('statement', rn.normalized_statement, 'source_scope', 'BGA live implementation'),
     'rule_node',
     rn.rule_id,
     'accepted',
@@ -359,11 +379,38 @@ BEGIN
     'bga:yro:260725-1445',
     rn.source_locator,
     'supports',
-    '{"audit_date":"2026-08-14","method":"manual primary-source verification","source_scope":"BGA implementation"}'::jsonb,
+    '{"audit_date":"2026-08-14","method":"manual primary-source verification","source_scope":"BGA live implementation"}'::jsonb,
     '{"seed":"017_seed_yro_bga_260725_1445"}'::jsonb
   FROM public.rule_nodes rn
   WHERE rn.rule_set_id = v_ruleset_id
     AND rn.source_claim_ref LIKE 'yro:bga:260725-1445:%'
+  ON CONFLICT (binding_id) DO UPDATE SET
+    claim_id = EXCLUDED.claim_id,
+    source_id = EXCLUDED.source_id,
+    locator_id = EXCLUDED.locator_id,
+    relation = EXCLUDED.relation,
+    reviewer_provenance = EXCLUDED.reviewer_provenance,
+    generator_provenance = EXCLUDED.generator_provenance;
+
+  -- Preserve the currently visible community-wiki disagreement instead of
+  -- deleting or silently normalizing it into the live BGA RuleSet.
+  INSERT INTO public.evidence_bindings (
+    binding_id,
+    claim_id,
+    source_id,
+    locator_id,
+    relation,
+    reviewer_provenance,
+    generator_provenance
+  ) VALUES (
+    'yro:bga:260725-1445:binding:phase.round-structure:wiki-conflict',
+    'yro:bga:260725-1445:rule:phase.round-structure',
+    'bga-wiki:yro:2026-08-14',
+    'yro:bga-wiki:gameplay',
+    'contradicts',
+    '{"audit_date":"2026-08-14","method":"source-conflict preservation","canonical_preference":"live BGA release 260725-1445"}'::jsonb,
+    '{"seed":"017_seed_yro_bga_260725_1445"}'::jsonb
+  )
   ON CONFLICT (binding_id) DO UPDATE SET
     claim_id = EXCLUDED.claim_id,
     source_id = EXCLUDED.source_id,
