@@ -10,6 +10,9 @@
 - **[`CURATED_GAME_FAST_PATH.md`](./CURATED_GAME_FAST_PATH.md)**
     - 一次情報に基づくゲーム追加の最短運用契約です。1ゲーム=1branch/1PR、対象CI優先、無関係なインフラ障害の分離、成功後の短い効率化レビューを定義します。
 
+- **[`RULESET_IDENTITY_V1.md`](./RULESET_IDENTITY_V1.md)**
+    - Ontology v2 の RuleSet identity contract。Gameとは別にedition / language / platform / revision / variantを保持し、Rule Graph・Component Catalogのtruth boundaryを定義します。
+
 - **[`RULE_GRAPH_V1.md`](./RULE_GRAPH_V1.md)**
     - Ontology v2 の canonical Rule Graph v1。RuleSet / RuleNode / RuleEdge、provenance境界、API、legacy migration mappingを定義します。
 
