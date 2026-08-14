@@ -80,6 +80,8 @@ class EvidenceService:
             query = query.eq("rule_id", target.rule_id)
         if target.component_id is not None:
             query = query.eq("component_id", target.component_id)
+        if target.component_set_id is not None:
+            query = query.eq("component_set_id", target.component_set_id)
         if target.property_key is not None:
             query = query.eq("property_key", target.property_key)
         if target.ordinal is not None:
@@ -171,6 +173,7 @@ class EvidenceService:
             target_type=row["target_type"],
             rule_id=row.get("rule_id"),
             component_id=row.get("component_id"),
+            component_set_id=row.get("component_set_id"),
             property_key=row.get("property_key"),
             ordinal=row.get("ordinal"),
             ability_id=row.get("ability_id"),
