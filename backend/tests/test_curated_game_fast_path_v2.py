@@ -85,7 +85,7 @@ def test_git_tracks_curated_sources_but_ignores_generated_artifacts():
     assert generated_manifest.returncode == 0
 
 
-def test_prepare_add_preflights_before_generation(monkeypatch):
+def test_prepare_preflights_before_generation(monkeypatch):
     spec = load_spec(SKULL_KING)
     specs = [spec]
     events = []
@@ -103,11 +103,47 @@ def test_prepare_add_preflights_before_generation(monkeypatch):
     monkeypatch.setattr(v2, "generate_artifacts", lambda values: events.append("generate"))
     monkeypatch.setattr(v2, "validate_runtime_guide", lambda value: events.append("runtime"))
 
-    actual_client, actual_plan = v2.prepare_add(spec, specs)
+    actual_client, actual_plan = v2.prepare_game(spec, specs)
 
     assert actual_client is client
     assert actual_plan is plan
     assert events == ["assertions", "source", "preflight", "generate", "runtime"]
+
+
+def test_game_add_is_prepare_only_and_never_writes(monkeypatch):
+    spec = load_spec(SKULL_KING)
+    events = []
+
+    monkeypatch.setattr(v2, "prepare_game", lambda value, specs: events.append("prepare"))
+    monkeypatch.setattr(v2, "print_routine_files", lambda value: events.append("report"))
+    monkeypatch.setattr(v2, "write_catalog_with_plan", lambda *args: events.append("write"))
+
+    v2.add_game(spec, [spec])
+
+    assert events == ["prepare", "report"]
+
+
+def test_publish_is_the_only_catalog_write_path(monkeypatch):
+    spec = load_spec(SKULL_KING)
+    client = object()
+    plan = object()
+    events = []
+
+    def fake_prepare(value, specs):
+        events.append("prepare")
+        return client, plan
+
+    monkeypatch.setattr(v2, "prepare_game", fake_prepare)
+    monkeypatch.setattr(
+        v2,
+        "write_catalog_with_plan",
+        lambda actual_client, value, actual_plan: events.append("write"),
+    )
+    monkeypatch.setattr(v2, "verify_catalog_live", lambda value, base_url: events.append("verify"))
+
+    v2.publish_game(spec, [spec], "https://example.invalid")
+
+    assert events == ["prepare", "write", "verify"]
 
 
 def test_release_manifest_digest_mismatch_fails():
