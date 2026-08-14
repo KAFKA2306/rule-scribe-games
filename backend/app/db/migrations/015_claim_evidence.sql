@@ -111,9 +111,15 @@ CREATE TABLE IF NOT EXISTS public.evidence_bindings (
   CONSTRAINT evidence_bindings_locator_fkey
     FOREIGN KEY (source_id, locator_id)
     REFERENCES public.source_locators(source_id, locator_id)
-    ON DELETE RESTRICT,
-  UNIQUE (claim_id, source_id, locator_id, relation)
+    ON DELETE RESTRICT
 );
+
+CREATE UNIQUE INDEX IF NOT EXISTS evidence_bindings_unique_with_locator_idx
+  ON public.evidence_bindings (claim_id, source_id, locator_id, relation)
+  WHERE locator_id IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS evidence_bindings_unique_without_locator_idx
+  ON public.evidence_bindings (claim_id, source_id, relation)
+  WHERE locator_id IS NULL;
 
 CREATE INDEX IF NOT EXISTS claims_ruleset_target_idx
   ON public.claims (rule_set_id, target_type);
@@ -147,6 +153,7 @@ SELECT
   (SELECT count(*) FROM public.evidence_bindings WHERE relation = 'contradicts') AS contradicting_bindings,
   (SELECT count(*) FROM public.claims c WHERE NOT EXISTS (
     SELECT 1 FROM public.evidence_bindings eb WHERE eb.claim_id = c.claim_id AND eb.relation = 'supports'
-  )) AS claims_without_support;
+  )) AS claims_without_support,
+  (SELECT count(*) FROM public.claims c WHERE c.lifecycle_status <> 'accepted') AS claims_not_accepted;
 
 COMMIT;
