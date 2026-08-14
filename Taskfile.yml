@@ -173,16 +173,6 @@ tasks:
     dir: backend
     cmd: uv run python scripts/create_composite_header.py --output "{{.OUTPUT}}" {{.INPUTS}}
 
-  birmingham:infographics:
-    desc: "Generate Brass Birmingham infographics from NotebookLM content via Gemini"
-    dir: backend
-    cmd: uv run python scripts/notebooklm_infographics_generator.py
-
-  birmingham:infographics:playwright:
-    desc: "Automate NotebookLM via Playwright to generate Brass Birmingham infographics"
-    dir: backend
-    cmd: uv run python scripts/notebooklm_playwright_automation.py
-
   dev:auth:
     desc: "Open browser with session injection (Requires SUPABASE_SESSION env)"
     cmd: uv run python scripts/open_browser_authenticated.py
