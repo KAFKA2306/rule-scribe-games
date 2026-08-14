@@ -1,0 +1,216 @@
+name: Component evidence targets
+
+on:
+  pull_request:
+    paths:
+      - "backend/app/db/migrations/018_component_evidence_targets.sql"
+      - "backend/app/models/evidence.py"
+      - "backend/app/services/evidence.py"
+      - "backend/app/routers/games.py"
+      - "backend/tests/test_component_evidence_targets.py"
+      - ".github/workflows/test-component-evidence-targets.yml"
+  push:
+    branches: [main]
+    paths:
+      - "backend/app/db/migrations/018_component_evidence_targets.sql"
+      - "backend/app/models/evidence.py"
+      - "backend/app/services/evidence.py"
+      - "backend/app/routers/games.py"
+      - "backend/tests/test_component_evidence_targets.py"
+      - ".github/workflows/test-component-evidence-targets.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  component-evidence-targets:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: component_evidence_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d component_evidence_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/component_evidence_test
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+
+      - name: Install Python dependencies
+        run: uv sync --frozen --dev
+
+      - name: Compile and lint evidence target slice
+        shell: bash
+        run: |
+          uv run python -m compileall -q \
+            backend/app/models/evidence.py \
+            backend/app/services/evidence.py \
+            backend/app/routers/games.py \
+            backend/tests/test_component_evidence_targets.py
+          uv run --with ruff ruff check \
+            backend/app/models/evidence.py \
+            backend/app/services/evidence.py \
+            backend/app/routers/games.py \
+            backend/tests/test_component_evidence_targets.py
+
+      - name: Run model, API and legacy evidence regression tests
+        env:
+          PYTHONPATH: backend
+        run: >-
+          uv run pytest -q
+          backend/tests/test_component_evidence_targets.py
+          backend/tests/test_claim_evidence.py
+          backend/tests/test_component_ingestion.py
+
+      - name: Build v15 schema and seed legacy claims
+        shell: bash
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 <<'SQL'
+          CREATE TABLE public.game_works (
+            id uuid PRIMARY KEY DEFAULT gen_random_uuid()
+          );
+          CREATE TABLE public.games (
+            id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+            slug text NOT NULL UNIQUE,
+            title text,
+            work_id uuid REFERENCES public.game_works(id)
+          );
+          INSERT INTO public.game_works DEFAULT VALUES;
+          INSERT INTO public.games(slug, title, work_id)
+          SELECT 'component-evidence-fixture', 'Component Evidence Fixture', id
+          FROM public.game_works LIMIT 1;
+          SQL
+
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/010_rule_graph.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/011_concept_taxonomy.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/013_ruleset_identity.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/014_component_catalog.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/015_claim_evidence.sql
+
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 <<'SQL'
+          INSERT INTO public.rule_sets(game_id, version, language_code, edition_label, platform, revision_label, status, is_active)
+          SELECT id, 1, 'en', 'physical', 'physical', 'r1', 'active', true
+          FROM public.games WHERE slug='component-evidence-fixture';
+          INSERT INTO public.rule_sets(game_id, version, language_code, edition_label, platform, revision_label, status, is_active)
+          SELECT id, 1, 'en', 'digital', 'digital', 'r2', 'active', true
+          FROM public.games WHERE slug='component-evidence-fixture';
+
+          INSERT INTO public.rule_nodes(rule_set_id, rule_id, node_type, normalized_statement)
+          SELECT id, 'rule.end', 'game_end', 'End the game.' FROM public.rule_sets;
+
+          INSERT INTO public.component_catalogs(rule_set_id) SELECT id FROM public.rule_sets;
+          INSERT INTO public.component_sets(catalog_id, rule_set_id, component_set_id, canonical_name, kind)
+          SELECT cc.id, rs.id,
+                 CASE WHEN rs.platform='physical' THEN 'cards' ELSE 'tokens' END,
+                 CASE WHEN rs.platform='physical' THEN 'Cards' ELSE 'Tokens' END,
+                 CASE WHEN rs.platform='physical' THEN 'card' ELSE 'token' END
+          FROM public.component_catalogs cc JOIN public.rule_sets rs ON rs.id=cc.rule_set_id;
+          INSERT INTO public.component_property_definitions(catalog_id, rule_set_id, property_key, value_type, cardinality)
+          SELECT cc.id, rs.id,
+                 CASE WHEN rs.platform='physical' THEN 'cost' ELSE 'speed' END,
+                 'integer', 'one'
+          FROM public.component_catalogs cc JOIN public.rule_sets rs ON rs.id=cc.rule_set_id;
+          INSERT INTO public.components(catalog_id, rule_set_id, component_id, component_set_id, canonical_name, kind)
+          SELECT cc.id, rs.id,
+                 CASE WHEN rs.platform='physical' THEN 'card.scout' ELSE 'token.runner' END,
+                 CASE WHEN rs.platform='physical' THEN 'cards' ELSE 'tokens' END,
+                 CASE WHEN rs.platform='physical' THEN 'Scout' ELSE 'Runner' END,
+                 CASE WHEN rs.platform='physical' THEN 'card' ELSE 'token' END
+          FROM public.component_catalogs cc JOIN public.rule_sets rs ON rs.id=cc.rule_set_id;
+          INSERT INTO public.component_properties(rule_set_id, component_id, property_key, value_type, cardinality, integer_value)
+          SELECT id, 'card.scout', 'cost', 'integer', 'one', 2
+          FROM public.rule_sets WHERE platform='physical';
+
+          -- Legacy v15 claims must survive the additive migration.
+          INSERT INTO public.claims(claim_id, rule_set_id, claim_type, normalized_payload, target_type, rule_id, lifecycle_status)
+          SELECT 'claim.legacy.rule', id, 'rule_statement', '{"statement":"End the game."}'::jsonb,
+                 'rule_node', 'rule.end', 'accepted'
+          FROM public.rule_sets WHERE platform='physical';
+          INSERT INTO public.claims(claim_id, rule_set_id, claim_type, normalized_payload, target_type, component_id, property_key, ordinal, lifecycle_status)
+          SELECT 'claim.legacy.cost', id, 'component_property', '{"value":2}'::jsonb,
+                 'component_property', 'card.scout', 'cost', 0, 'accepted'
+          FROM public.rule_sets WHERE platform='physical';
+          SQL
+
+      - name: Apply additive component evidence target migration
+        run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/018_component_evidence_targets.sql
+
+      - name: Verify new targets, legacy compatibility and RuleSet isolation
+        shell: bash
+        run: |
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.claims where claim_id like 'claim.legacy.%';")" = "2"
+
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 <<'SQL'
+          INSERT INTO public.claims(claim_id, rule_set_id, claim_type, normalized_payload, target_type, component_id, lifecycle_status)
+          SELECT 'claim.component.scout', id, 'component_identity', '{"canonical_name":"Scout"}'::jsonb,
+                 'component', 'card.scout', 'accepted'
+          FROM public.rule_sets WHERE platform='physical';
+          INSERT INTO public.claims(claim_id, rule_set_id, claim_type, normalized_payload, target_type, component_set_id, lifecycle_status)
+          SELECT 'claim.component-set.cards', id, 'component_set', '{"canonical_name":"Cards"}'::jsonb,
+                 'component_set', 'cards', 'accepted'
+          FROM public.rule_sets WHERE platform='physical';
+          INSERT INTO public.claims(claim_id, rule_set_id, claim_type, normalized_payload, target_type, property_key, lifecycle_status)
+          SELECT 'claim.property-definition.cost', id, 'property_definition', '{"value_type":"integer"}'::jsonb,
+                 'property_definition', 'cost', 'accepted'
+          FROM public.rule_sets WHERE platform='physical';
+          SQL
+
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.claims where target_type in ('component','component_set','property_definition');")" = "3"
+
+          if psql "$DATABASE_URL" -v ON_ERROR_STOP=1 <<'SQL'
+          INSERT INTO public.claims(claim_id, rule_set_id, claim_type, normalized_payload, target_type, component_id)
+          SELECT 'claim.cross-ruleset.component', id, 'component_identity', '{}'::jsonb,
+                 'component', 'token.runner'
+          FROM public.rule_sets WHERE platform='physical';
+          SQL
+          then
+            echo "cross-RuleSet component target unexpectedly accepted"
+            exit 1
+          fi
+
+          if psql "$DATABASE_URL" -v ON_ERROR_STOP=1 <<'SQL'
+          INSERT INTO public.claims(claim_id, rule_set_id, claim_type, normalized_payload, target_type, component_set_id)
+          SELECT 'claim.cross-ruleset.component-set', id, 'component_set', '{}'::jsonb,
+                 'component_set', 'tokens'
+          FROM public.rule_sets WHERE platform='physical';
+          SQL
+          then
+            echo "cross-RuleSet component-set target unexpectedly accepted"
+            exit 1
+          fi
+
+          if psql "$DATABASE_URL" -v ON_ERROR_STOP=1 <<'SQL'
+          INSERT INTO public.claims(claim_id, rule_set_id, claim_type, normalized_payload, target_type, property_key)
+          SELECT 'claim.cross-ruleset.definition', id, 'property_definition', '{}'::jsonb,
+                 'property_definition', 'speed'
+          FROM public.rule_sets WHERE platform='physical';
+          SQL
+          then
+            echo "cross-RuleSet property-definition target unexpectedly accepted"
+            exit 1
+          fi
+
+          if psql "$DATABASE_URL" -v ON_ERROR_STOP=1 <<'SQL'
+          INSERT INTO public.claims(claim_id, rule_set_id, claim_type, normalized_payload, target_type, component_set_id, field_path)
+          SELECT 'claim.invalid.mixed-target', id, 'component_set', '{}'::jsonb,
+                 'component_set', 'cards', 'metadata.fake'
+          FROM public.rule_sets WHERE platform='physical';
+          SQL
+          then
+            echo "mixed component-set target shape unexpectedly accepted"
+            exit 1
+          fi
