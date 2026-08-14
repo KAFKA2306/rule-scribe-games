@@ -46,6 +46,8 @@ jobs:
               raise SystemExit(1)
           print("Supabase auth environment contract: OK")
           PY
+      - name: Verify Google OAuth provider redirect
+        run: python scripts/check_google_oauth.py .vercel/.env.preview.local
       - name: Deploy Preview to Vercel
         run: vercel deploy --yes --token=${{ secrets.VERCEL_TOKEN }}
 
@@ -84,5 +86,7 @@ jobs:
               raise SystemExit(1)
           print("Supabase auth environment contract: OK")
           PY
+      - name: Verify Google OAuth provider redirect
+        run: python scripts/check_google_oauth.py .vercel/.env.production.local
       - name: Deploy Production to Vercel
         run: vercel deploy --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
