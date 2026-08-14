@@ -1,0 +1,137 @@
+name: Web quality
+
+on:
+  pull_request:
+    paths:
+      - "frontend/**"
+      - "README.md"
+      - "docs/**"
+      - ".github/workflows/web-quality.yml"
+  push:
+    branches: [main]
+    paths:
+      - "frontend/**"
+      - "README.md"
+      - "docs/**"
+      - ".github/workflows/web-quality.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: web-quality-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  static-and-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Biome lint
+        working-directory: frontend
+        run: npx --yes @biomejs/biome@2.5.6 lint src tests scripts vite.config.js
+
+      - name: Oxlint
+        working-directory: frontend
+        run: npx --yes oxlint@1.76.0 src tests scripts vite.config.js --deny-warnings
+
+      - name: Existing ESLint gate
+        working-directory: frontend
+        run: npm run lint
+
+      - name: Build production bundle
+        working-directory: frontend
+        run: npm run build
+
+      - name: Nu HTML Checker on production output
+        run: >-
+          docker run --rm
+          -v "${{ github.workspace }}/frontend/dist:/data:ro"
+          ghcr.io/validator/validator:latest
+          vnu --skip-non-html /data
+
+      - name: Lighthouse CI
+        working-directory: frontend
+        run: >-
+          npx --yes @lhci/cli@0.15.1 autorun
+          --collect.staticDistDir=dist
+          --collect.numberOfRuns=1
+          --upload.target=temporary-public-storage
+          --assert.preset=lighthouse:recommended
+
+  links:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - name: Check repository links with lychee
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: >-
+            --no-progress
+            --verbose
+            --exclude-mail
+            README.md
+            docs
+            frontend
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  browser-a11y:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: frontend
+        shell: bash
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Install axe Playwright adapter without changing lockfiles
+        run: npm install --no-save --package-lock=false @axe-core/playwright@4.12.1
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Add ephemeral axe smoke test
+        run: |
+          cat > tests/web-quality-a11y.spec.js <<'EOF'
+          import { test, expect } from '@playwright/test'
+          import AxeBuilder from '@axe-core/playwright'
+
+          test('home page has no automatically detectable accessibility violations', async ({ page }) => {
+            await page.goto('/')
+            await page.waitForLoadState('networkidle')
+            const results = await new AxeBuilder({ page }).analyze()
+            expect(results.violations).toEqual([])
+          })
+          EOF
+
+      - name: Playwright + axe
+        run: npx playwright test tests/web-quality-a11y.spec.js --project=chromium
