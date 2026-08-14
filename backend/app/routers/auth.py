@@ -64,9 +64,9 @@ async def get_current_user(
 
 
 async def require_catalog_editor(user: dict = Depends(get_current_user)) -> dict:
-    """Authorize global catalog mutation through an explicit server-side ACL."""
+    """Authorize global catalog mutation through an explicit active server-side ACL."""
     role = await catalog_access.get_catalog_editor_role(user.get("id"))
-    if role not in {"editor", "admin"}:
+    if role not in {"owner", "editor"}:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Catalog editor permission required",
