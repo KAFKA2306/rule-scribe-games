@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Response, status
+from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 
@@ -38,10 +38,31 @@ async def sitemap_xml():
     return Response(content=content, media_type="application/xml")
 
 
+def game_not_found_html() -> str:
+    return """<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>ゲームが見つかりません | ボドゲのミカタ</title>
+    <meta name="description" content="指定されたゲームは登録されていないか、URLが変更されています。" />
+  </head>
+  <body>
+    <main style="max-width:42rem;margin:10vh auto;padding:2rem;font-family:system-ui,sans-serif;line-height:1.7">
+      <p style="font-weight:700;letter-spacing:.08em">404 · GAME NOT FOUND</p>
+      <h1>ゲームが見つかりません</h1>
+      <p>指定されたゲームは登録されていないか、URLが変更されています。</p>
+      <p><a href="/">ゲーム一覧へ戻る</a></p>
+    </main>
+  </body>
+</html>"""
+
+
 @app.get("/games/{slug}", response_class=HTMLResponse)
 async def game_seo_page(slug: str):
     """Serve a crawlable game page with game-specific metadata and a real 404 boundary."""
     content = await generate_seo_html(slug)
     if content is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Game not found")
+        return HTMLResponse(content=game_not_found_html(), status_code=404)
     return HTMLResponse(content=content)
