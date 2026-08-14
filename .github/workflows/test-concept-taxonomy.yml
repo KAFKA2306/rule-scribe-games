@@ -8,7 +8,7 @@ on:
       - "backend/app/routers/games.py"
       - "backend/app/db/migrations/011_concept_taxonomy.sql"
       - "backend/app/db/migrations/012_seed_skull_king_glossary_concepts.sql"
-      - "backend/app/db/migrations/015_seed_skull_king_rule_concepts.sql"
+      - "backend/app/db/migrations/016_seed_skull_king_rule_concepts.sql"
       - "backend/tests/test_concept_taxonomy.py"
       - "backend/tests/test_skull_king_rule_concepts.py"
       - "evaluation/taxonomy/concept-taxonomy-v1-fixtures.json"
@@ -24,7 +24,7 @@ on:
       - "backend/app/routers/games.py"
       - "backend/app/db/migrations/011_concept_taxonomy.sql"
       - "backend/app/db/migrations/012_seed_skull_king_glossary_concepts.sql"
-      - "backend/app/db/migrations/015_seed_skull_king_rule_concepts.sql"
+      - "backend/app/db/migrations/016_seed_skull_king_rule_concepts.sql"
       - "backend/tests/test_concept_taxonomy.py"
       - "backend/tests/test_skull_king_rule_concepts.py"
       - "evaluation/taxonomy/concept-taxonomy-v1-fixtures.json"
@@ -66,11 +66,11 @@ jobs:
           grep -Fq "'source_bound'" backend/app/db/migrations/012_seed_skull_king_glossary_concepts.sql
       - name: Gate Rule Graph concept bridge pilot
         run: |
-          grep -Fq "INSERT INTO public.rule_nodes" backend/app/db/migrations/015_seed_skull_king_rule_concepts.sql
-          grep -Fq "INSERT INTO public.rule_node_concepts" backend/app/db/migrations/015_seed_skull_king_rule_concepts.sql
-          grep -Fq "rule-pattern.trick" backend/app/db/migrations/015_seed_skull_king_rule_concepts.sql
-          grep -Fq "player-action.bid" backend/app/db/migrations/015_seed_skull_king_rule_concepts.sql
-          grep -Fq "rule-pattern.trump-suit" backend/app/db/migrations/015_seed_skull_king_rule_concepts.sql
-          grep -Fq "component.special-card" backend/app/db/migrations/015_seed_skull_king_rule_concepts.sql
+          grep -Fq "INSERT INTO public.rule_nodes" backend/app/db/migrations/016_seed_skull_king_rule_concepts.sql
+          grep -Fq "INSERT INTO public.rule_node_concepts" backend/app/db/migrations/016_seed_skull_king_rule_concepts.sql
+          grep -Fq "rule-pattern.trick" backend/app/db/migrations/016_seed_skull_king_rule_concepts.sql
+          grep -Fq "player-action.bid" backend/app/db/migrations/016_seed_skull_king_rule_concepts.sql
+          grep -Fq "rule-pattern.trump-suit" backend/app/db/migrations/016_seed_skull_king_rule_concepts.sql
+          grep -Fq "component.special-card" backend/app/db/migrations/016_seed_skull_king_rule_concepts.sql
       - name: Build frontend linked glossary projection
         run: npm --prefix frontend ci && npm --prefix frontend run build
