@@ -8,6 +8,7 @@ import yaml
 
 from app.models.component_ingestion import ComponentSourceManifest
 from app.services.component_ingestion import ComponentIngestionDryRun, ExistingComponentSnapshot
+from app.services.component_ingestion_repository import ComponentIngestionRepository
 
 
 def _load_manifest(path: Path) -> ComponentSourceManifest:
@@ -26,21 +27,26 @@ def _existing_snapshot(path: Path, ruleset_id: str) -> ExistingComponentSnapshot
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Validate and dry-run a Component Source Manifest v1.")
+    parser = argparse.ArgumentParser(description="Validate, dry-run or atomically apply a Component Source Manifest v1.")
     parser.add_argument("manifest", type=Path)
     parser.add_argument(
         "--resolved-ruleset-id",
-        help="Exact RuleSet ID resolved by the caller. Required when the manifest uses a natural-key selector.",
+        help="Exact RuleSet ID resolved by the caller for offline dry-run mode.",
     )
     parser.add_argument(
         "--existing-manifest",
         type=Path,
-        help="Optional current-state fixture for deterministic diff testing. Production adapters may supply DB state instead.",
+        help="Optional current-state fixture for deterministic offline diff testing.",
     )
     parser.add_argument(
         "--schema",
         action="store_true",
         help="Print the generated JSON Schema for Component Source Manifest v1 and exit.",
+    )
+    parser.add_argument(
+        "--apply",
+        action="store_true",
+        help="Resolve the canonical RuleSet, run fail-closed validation, apply one atomic RPC transaction and verify read-back.",
     )
     args = parser.parse_args()
 
@@ -49,6 +55,13 @@ def main() -> int:
         return 0
 
     manifest = _load_manifest(args.manifest)
+    if args.apply:
+        if args.existing_manifest or args.resolved_ruleset_id:
+            raise SystemExit("--apply resolves production state itself; do not combine it with offline snapshot options")
+        result = ComponentIngestionRepository().apply(manifest)
+        print(result.model_dump_json(indent=2))
+        return 0
+
     resolved_ruleset_id = args.resolved_ruleset_id or manifest.ruleset.ruleset_id
     existing = None
     if args.existing_manifest:
