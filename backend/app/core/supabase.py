@@ -241,7 +241,8 @@ async def create_unverified_game(game_data: Dict[str, Any]) -> Dict[str, Any]:
         payload = dict(game_data)
         payload["work_id"] = work_id
         payload["identity_status"] = "unverified"
-        payload["is_official"] = False
+        payload["source_trust"] = "unknown"
+        payload["content_review_status"] = "ai_draft"
         try:
             rows = client.table(_TABLE).insert(payload).execute().data
             if not rows:
