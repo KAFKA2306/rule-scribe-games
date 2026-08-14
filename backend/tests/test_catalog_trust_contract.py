@@ -42,7 +42,9 @@ def test_catalog_schema_uses_compatible_trust_migration_then_removes_legacy_fiel
 
     assert "ADD COLUMN IF NOT EXISTS source_trust" in additive_sql
     assert "ADD COLUMN IF NOT EXISTS content_review_status" in additive_sql
-    assert "SET source_url = official_url" in additive_sql
+    assert "SET source_url = g.official_url" in additive_sql
+    assert "existing.source_url = g.official_url" in additive_sql
+    assert "legacy.official_url = g.official_url" in additive_sql
     assert "DROP COLUMN IF EXISTS is_official" not in additive_sql
     assert "DROP COLUMN IF EXISTS official_url" not in additive_sql
 
