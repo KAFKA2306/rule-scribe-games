@@ -57,24 +57,13 @@ $$;
 UPDATE public.games SET source_trust = 'unknown' WHERE source_trust IS DISTINCT FROM 'unknown';
 UPDATE public.games SET content_review_status = 'unknown' WHERE content_review_status IS NULL OR btrim(content_review_status) = '';
 
--- Preserve legacy links as unclassified sources before removing the misleading
--- field name. A URL is not promoted to official_publisher without evidence.
+-- Preserve legacy links as unclassified sources. The legacy columns remain only
+-- during the compatible rollout and are removed by migration 008 after the new
+-- application code is live.
 UPDATE public.games
 SET source_url = official_url
 WHERE source_url IS NULL
   AND official_url IS NOT NULL
   AND btrim(official_url) <> '';
-
--- The legacy boolean/URL pair conflated source authenticity, identity and
--- endorsement. The explicit fields above are now the only trust source of truth.
-ALTER TABLE public.games DROP COLUMN IF EXISTS is_official;
-ALTER TABLE public.games DROP COLUMN IF EXISTS official_url;
-
--- #138 production data is reconciled before this migration is applied. Fresh
--- databases have no historical exception, so the invariant is strict and valid.
-ALTER TABLE public.games DROP CONSTRAINT IF EXISTS games_slug_required;
-ALTER TABLE public.games
-  ADD CONSTRAINT games_slug_required
-  CHECK (slug IS NOT NULL AND btrim(slug) <> '');
 
 COMMIT;
