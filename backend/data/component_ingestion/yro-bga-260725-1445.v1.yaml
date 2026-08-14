@@ -1,0 +1,113 @@
+schema_version: "1.0"
+game_slug: yro
+ruleset:
+  platform: Board Game Arena
+  revision_label: "260725-1445"
+  language_code: en
+  edition_label: BGA Release 260725-1445
+sources:
+  - source_id: bga:yro:260725-1445
+    url: https://en.boardgamearena.com/gamepanel?game=yro
+    source_type: platform_rules_summary
+    authority: platform
+    revision_label: "260725-1445"
+    observed_date: "2026-08-14"
+    extraction_method: manual_primary_source_normalization
+  - source_id: publisher:yro:studio-supernova-product
+    url: https://www.studiosupernova.it/products/yro
+    source_type: publisher_product_page
+    authority: publisher
+    observed_date: "2026-08-14"
+    extraction_method: manual_primary_source_normalization
+component_sets:
+  - component_set_id: adventurers
+    canonical_name: Adventurers
+    kind: card
+    verification_status: source_bound
+    source_ids:
+      - bga:yro:260725-1445
+      - publisher:yro:studio-supernova-product
+  - component_set_id: quests
+    canonical_name: Quests
+    kind: card
+    verification_status: source_bound
+    source_ids:
+      - bga:yro:260725-1445
+property_definitions:
+  - property_key: faction
+    labels:
+      en: Faction
+      ja: 派閥
+    value_type: text
+    cardinality: one
+    filterable: true
+    verification_status: source_bound
+    source_ids:
+      - bga:yro:260725-1445
+      - publisher:yro:studio-supernova-product
+  - property_key: profession
+    labels:
+      en: Profession
+      ja: 職業
+    value_type: text
+    cardinality: one
+    filterable: true
+    verification_status: source_bound
+    source_ids:
+      - bga:yro:260725-1445
+  - property_key: combat_value
+    labels:
+      en: Combat Value
+      ja: 戦闘値
+    value_type: integer
+    cardinality: one
+    sortable: true
+    verification_status: source_bound
+    source_ids:
+      - bga:yro:260725-1445
+  - property_key: recruit_cost
+    labels:
+      en: Recruit Cost
+      ja: 雇用コスト
+    value_type: integer
+    cardinality: one
+    sortable: true
+    verification_status: source_bound
+    source_ids:
+      - bga:yro:260725-1445
+components: []
+evidence_bindings:
+  - binding_id: yro:component-set:adventurers:bga
+    target_path: component_sets.adventurers
+    source_id: bga:yro:260725-1445
+    locator_id: yro:bga:overview
+    relation: supports
+  - binding_id: yro:component-set:quests:bga
+    target_path: component_sets.quests
+    source_id: bga:yro:260725-1445
+    locator_id: yro:bga:setup
+    relation: supports
+  - binding_id: yro:property:faction:bga
+    target_path: property_definitions.faction
+    source_id: bga:yro:260725-1445
+    locator_id: yro:bga:key-concepts
+    relation: supports
+  - binding_id: yro:property:profession:bga
+    target_path: property_definitions.profession
+    source_id: bga:yro:260725-1445
+    locator_id: yro:bga:key-concepts
+    relation: supports
+  - binding_id: yro:property:combat-value:bga
+    target_path: property_definitions.combat_value
+    source_id: bga:yro:260725-1445
+    locator_id: yro:bga:overview
+    relation: supports
+  - binding_id: yro:property:recruit-cost:bga
+    target_path: property_definitions.recruit_cost
+    source_id: bga:yro:260725-1445
+    locator_id: yro:bga:phase:recruit
+    relation: supports
+completeness: unknown
+notes:
+  - Complete first-party Adventurer and Quest enumeration was not found in the 2026-08-14 audit.
+  - Individual component records must remain absent until a source proves their identities and fields.
