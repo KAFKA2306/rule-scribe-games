@@ -14,6 +14,7 @@ jobs:
   research:
     permissions:
       contents: write
-    uses: KAFKA2306/agent-resources/.github/workflows/reusable-weekly-repo-research.yml@main
+    # Pin the privileged reusable workflow: it receives a write token and XAI_API_KEY.
+    uses: KAFKA2306/agent-resources/.github/workflows/reusable-weekly-repo-research.yml@12067d726107329744846c6d33c8f423d78a87e9
     secrets:
       XAI_API_KEY: ${{ secrets.XAI_API_KEY }}

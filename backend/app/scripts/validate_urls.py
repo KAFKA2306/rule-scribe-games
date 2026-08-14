@@ -1,4 +1,4 @@
-import sys
+import argparse
 from datetime import UTC, datetime, timedelta
 
 import httpx
@@ -20,9 +20,12 @@ _VALIDATE_FIELDS = [
 def validate_url(url: str) -> tuple[str, bool]:
     if not url.startswith("http"):
         return "skipped_relative", False
-    resp = httpx.head(url, follow_redirects=True)
-    if resp.status_code == 405:  # noqa: PLR2004
-        resp = httpx.get(url, follow_redirects=True)
+    try:
+        resp = httpx.head(url, follow_redirects=True, timeout=10.0)
+        if resp.status_code == 405:  # noqa: PLR2004
+            resp = httpx.get(url, follow_redirects=True, timeout=10.0)
+    except httpx.HTTPError as exc:
+        return f"network_error:{type(exc).__name__}", False
     if resp.status_code == 200:  # noqa: PLR2004
         return "ok", False
     if resp.status_code in [400, 404, 410]:
@@ -30,7 +33,7 @@ def validate_url(url: str) -> tuple[str, bool]:
     return f"http_{resp.status_code}", False
 
 
-def run(hours: int | None = None):
+def run(hours: int | None = None, *, apply: bool = False):
     query = _client.table(_TABLE).select("id,slug,title," + ",".join(_VALIDATE_FIELDS))
     if hours:
         cutoff = (datetime.now(UTC) - timedelta(hours=hours)).isoformat()
@@ -48,23 +51,36 @@ def run(hours: int | None = None):
                 continue
             status, is_error = validate_url(val)
             if is_error:
-                _client.table(_TABLE).update({field: None}).eq("id", game_id).execute()
-                errors.append(f"[NULL化] {title} / {field}: {status} - {val[:60]}")
+                if apply:
+                    _client.table(_TABLE).update({field: None}).eq("id", game_id).execute()
+                    errors.append(f"[NULL化] {title} / {field}: {status} - {val[:60]}")
+                else:
+                    errors.append(f"[要修正] {title} / {field}: {status} - {val[:60]}")
             elif status != "ok":
                 warnings.append(f"[警告] {title} / {field}: {status} - {val[:60]}")
     print("=== URL検証結果 ===")
-    print(f"エラー（NULL化済み）: {len(errors)}件")
-    for e in errors:
-        print(f"  {e}")
+    mode = "APPLY" if apply else "DRY-RUN"
+    print(f"モード: {mode}")
+    print(f"エラー候補: {len(errors)}件")
+    for error in errors:
+        print(f"  {error}")
     print(f"\n警告（要確認）: {len(warnings)}件")
-    for w in warnings:
-        print(f"  {w}")
+    for warning in warnings:
+        print(f"  {warning}")
     print(f"\n合計検証: {len(games)}ゲーム")
 
 
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Audit game URLs; production mutation is opt-in.")
+    parser.add_argument("--hours", type=int, default=None)
+    parser.add_argument(
+        "--apply",
+        action="store_true",
+        help="NULL confirmed 400/404/410 URL fields. Omit for read-only audit.",
+    )
+    return parser.parse_args()
+
+
 if __name__ == "__main__":
-    hours = None
-    if "--hours" in sys.argv:
-        idx = sys.argv.index("--hours")
-        hours = int(sys.argv[idx + 1])
-    run(hours)
+    args = parse_args()
+    run(args.hours, apply=args.apply)

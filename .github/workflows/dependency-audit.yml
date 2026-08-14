@@ -5,6 +5,8 @@ on:
     paths:
       - "frontend/package.json"
       - "frontend/package-lock.json"
+      - "pyproject.toml"
+      - "uv.lock"
       - ".github/workflows/dependency-audit.yml"
   push:
     branches:
@@ -12,7 +14,11 @@ on:
     paths:
       - "frontend/package.json"
       - "frontend/package-lock.json"
+      - "pyproject.toml"
+      - "uv.lock"
       - ".github/workflows/dependency-audit.yml"
+  schedule:
+    - cron: "23 3 * * 1"
 
 permissions:
   contents: read
@@ -37,3 +43,15 @@ jobs:
         run: npm audit --omit=dev --audit-level=high
       - name: Audit all dependencies
         run: npm audit --audit-level=high
+
+  python-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install uv
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+      - name: Export locked runtime dependencies
+        run: uv export --frozen --no-dev --format requirements-txt --output-file /tmp/requirements.txt
+      - name: Audit Python dependencies
+        run: uvx pip-audit -r /tmp/requirements.txt
