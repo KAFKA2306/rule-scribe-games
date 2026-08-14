@@ -1,0 +1,76 @@
+name: Presentation Projection contract
+
+on:
+  pull_request:
+    paths:
+      - "backend/app/models/presentation_projection.py"
+      - "backend/app/services/presentation_projection.py"
+      - "backend/app/routers/presentation.py"
+      - "backend/app/main.py"
+      - "backend/tests/test_presentation_projection.py"
+      - "docs/PRESENTATION_PROJECTION_V1.md"
+      - ".github/workflows/test-presentation-projection.yml"
+  push:
+    branches: [main]
+    paths:
+      - "backend/app/models/presentation_projection.py"
+      - "backend/app/services/presentation_projection.py"
+      - "backend/app/routers/presentation.py"
+      - "backend/app/main.py"
+      - "backend/tests/test_presentation_projection.py"
+      - "docs/PRESENTATION_PROJECTION_V1.md"
+      - ".github/workflows/test-presentation-projection.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  presentation-projection:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+
+      - name: Install Python dependencies
+        run: uv sync --frozen --dev
+
+      - name: Compile projection modules
+        run: >-
+          uv run python -m compileall -q
+          backend/app/models/presentation_projection.py
+          backend/app/services/presentation_projection.py
+          backend/app/routers/presentation.py
+          backend/app/main.py
+
+      - name: Run projection and canonical dependency tests
+        env:
+          PYTHONPATH: backend
+        run: >-
+          uv run pytest -q
+          backend/tests/test_presentation_projection.py
+          backend/tests/test_claim_evidence.py
+          backend/tests/test_rule_graph.py
+          backend/tests/test_concept_taxonomy.py
+
+      - name: Verify projection does not read legacy structured data
+        run: |
+          if grep -R -n -F \
+            -e '.get("structured_data"' \
+            -e ".get('structured_data'" \
+            -e '["structured_data"]' \
+            -e "['structured_data']" \
+            backend/app/models/presentation_projection.py \
+            backend/app/services/presentation_projection.py \
+            backend/app/routers/presentation.py; then
+            echo "canonical presentation projection must not read legacy presentation fields"
+            exit 1
+          fi
+
+      - name: Verify accepted evidence and explicit RuleSet gates remain present
+        run: |
+          grep -q 'lifecycle_status.*accepted' backend/app/services/presentation_projection.py
+          grep -q 'contradicts' backend/app/services/presentation_projection.py
+          grep -q 'rule_set_id.*Query' backend/app/routers/presentation.py
