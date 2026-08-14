@@ -212,7 +212,7 @@ def print_routine_files(spec: CuratedGameSpec) -> None:
         print(f"- {path}")
 
 
-def prepare_add(
+def prepare_game(
     spec: CuratedGameSpec,
     specs: list[CuratedGameSpec],
 ) -> tuple[Any, IdentityPlan]:
@@ -224,13 +224,17 @@ def prepare_add(
     return client, plan
 
 
-def add_game(spec: CuratedGameSpec, specs: list[CuratedGameSpec], base_url: str) -> None:
-    client, plan = prepare_add(spec, specs)
+def add_game(spec: CuratedGameSpec, specs: list[CuratedGameSpec]) -> None:
+    prepare_game(spec, specs)
+    print_routine_files(spec)
+    print("Prepare fixed point: verified; production catalog unchanged until merge")
+
+
+def publish_game(spec: CuratedGameSpec, specs: list[CuratedGameSpec], base_url: str) -> None:
+    client, plan = prepare_game(spec, specs)
     write_catalog_with_plan(client, spec, plan)
     verify_catalog_live(spec, base_url)
-    print_routine_files(spec)
-    print("Catalog fixed point: verified")
-    print("Frontend release fixed point: pending deployment; verified automatically after a successful deploy")
+    print(f"Catalog publish fixed point: verified for {spec.slug}")
 
 
 def check_game(spec: CuratedGameSpec, specs: list[CuratedGameSpec]) -> None:
@@ -261,7 +265,7 @@ def check_all(specs: list[CuratedGameSpec]) -> None:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
-    parser.add_argument("mode", choices=("add", "check", "verify", "check-all", "release-check"))
+    parser.add_argument("mode", choices=("add", "publish", "check", "verify", "check-all", "release-check"))
     parser.add_argument("--game")
     parser.add_argument("--base-url", default=DEFAULT_BASE_URL)
     return parser.parse_args()
@@ -271,12 +275,14 @@ def main() -> None:
     args = parse_args()
     specs = load_all_specs()
 
-    if args.mode in {"add", "check", "verify"}:
+    if args.mode in {"add", "publish", "check", "verify"}:
         if not args.game:
             raise WorkflowError(f"{args.mode} requires --game")
         spec = load_named_spec(args.game, specs)
         if args.mode == "add":
-            add_game(spec, specs, args.base_url)
+            add_game(spec, specs)
+        elif args.mode == "publish":
+            publish_game(spec, specs, args.base_url)
         elif args.mode == "check":
             check_game(spec, specs)
         else:
@@ -286,12 +292,10 @@ def main() -> None:
     if args.game:
         raise WorkflowError(f"{args.mode} does not accept --game")
 
-    generate_artifacts(specs)
     if args.mode == "check-all":
-        for spec in specs:
-            validate_assertions(spec)
-            validate_runtime_guide(spec)
+        check_all(specs)
     else:
+        generate_artifacts(specs)
         verify_frontend_release(specs, args.base_url)
 
 
