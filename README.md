@@ -16,41 +16,39 @@
 
 ## ⚡ Zero-Fat Architecture
 
-本プロジェクトは、**「不純物ゼロ」**の設計思想に基づき、圧倒的な開発スピードとメンテナンス性を実現しています。
+本プロジェクトは、**「不純物ゼロ」**の設計思想に基づき、開発速度とメンテナンス性を高める構成を採用しています。
 
-- **Rapid Boot**: `uv` による 0.1秒での環境同期。`requirements.txt` の管理コストを排除。
-- **Single Command Orchestration**: すべての操作（Setup, Dev, Lint, Deploy, AI Skill）は `Taskfile` に集約。
-- **Zero-Fat Code**: `Ruff` による厳格なコード品質管理。冗長なコメントやエラーハンドリングを廃し、成功パスのロジックを鮮明化。
-- **Human-Centric Design**: デジタル庁 x Serendie の設計指針を継承した、美しく直感的な「Borderless」な体験。
+- **Rapid Boot**: `uv` によるPython依存関係の高速同期。
+- **Single Command Orchestration**: Setup、Dev、Lintなどの主要操作を `Taskfile` に集約。
+- **Zero-Fat Code**: `Ruff` を中心にコード品質を機械検証し、不要な重複を増やさない。
+- **Human-Centric Design**: 情報探索ではなく「すぐ遊べる理解」に到達することをUIの中心に置く。
 
 ## 👑 Why RuleScribe? — The Paradigm Shift
 
-既存のボードゲームデータベース（BoardGameGeek, Bodogamer）が抱える「言語の壁」「検索の揺らぎ」「情報の非構造化」を、AIの力で完全に解決します。
+既存のボードゲームデータベースで起こりやすい「言語の壁」「検索の揺らぎ」「情報の非構造化」に対し、検索・構造化・ルール理解を一つの体験へまとめます。
 
-| Feature | 🇺🇸 BoardGameGeek (BGG) | 🇯🇵 Bodogamer | ⚡ **RuleScribe Games** |
+| Feature | 🇺🇸 BoardGameGeek (BGG) | 🇯🇵 国内ルール情報 | ⚡ **RuleScribe Games** |
 | :--- | :--- | :--- | :--- |
-| **Language** | 英語 (English) | 日本語 (Manual) | **日本語 (AI Instant Translation)** |
-| **Speed** | 検索に時間がかかる | 投稿待ち | **全ゲーム即時生成 (Real-time)** |
-| **Structure** | フォーラム・PDF (非構造) | レビュー (非構造) | **完全構造化 (準備/プレイ/終了)** |
-| **Coverage** | 世界最大だが散乱 | 国内流通が中心 | **BGG全量 × AI構造化** |
-
-**「探す」時代は終わりました。これからは「AIに聞く」時代です。**
+| **Language** | 英語中心 | 日本語中心 | **日本語で構造化** |
+| **Discovery** | データベース検索 | 個別記事・説明書検索 | **検索からルール理解まで連続** |
+| **Structure** | PDF・フォーラム・DB | 記事・説明書 | **準備 / プレイ / 終了条件を構造化** |
+| **Goal** | 情報を探す | 説明を読む | **遊ぶために必要な理解へ早く到達** |
 
 ## 🚀 主要機能
 
-- **Gemini 3.0 Flash Preview Powered**: 最新のAIモデルによる高精度な日本語要約。
-- **Structural Rule Synthesis**: 「準備」「ゲームプレイ」「終了条件」を自動解析し、構造化。
-- **Intelligence Caching**: Supabase (PostgreSQL) を活用した、思考の永続化と高速レスポンス。
-- **SEO Optimized**: ボードゲーム検索での上位表示を狙う、セマンティックなマークアップ。
+- **AI-assisted Rule Synthesis**: サーバー側で設定したAIモデルを利用し、日本語のルール理解を支援。
+- **Structural Rule Synthesis**: 「準備」「ゲームプレイ」「終了条件」を解析し、構造化。
+- **Intelligence Caching**: Supabase (PostgreSQL) を利用した正準データの永続化と高速レスポンス。
+- **SEO-oriented Delivery**: ゲーム単位のURLとセマンティックなマークアップを提供。
 
 ## 🏗️ アーキテクチャ
 
 ```mermaid
 graph TD
-    User([User]) <--> Frontend[React/Vite - Human-Centric UI]
+    User([User]) <--> Frontend[React/Vite]
     Frontend <--> API[FastAPI - Vercel Serverless]
-    API <--> Cache[(Supabase Cache)]
-    API <--> AI[Gemini 2.5/3.0 - AI Engine]
+    API <--> Cache[(Supabase)]
+    API <--> AI[AI Engine]
     API <--> BGG[Board Game Geek API]
 ```
 
@@ -63,26 +61,21 @@ task setup
 # 2. 開発開始 (Hot-reload for both layers)
 task dev
 
-# 3. 品質担保 (Zero-Fat Cleanup & Lint)
+# 3. 品質確認
 task lint
 ```
 
 ## 🤖 AI Automation (Claude Skills)
 
-AIエージェントが自律的に実行可能な、4つの高度な自動化ワークフロー。
-
-1. **`add-game`**: 新規ボードゲームの追加（画像生成、DB登録、ドキュメント化を一括）。
-2. **`deploy`**: リリースの自動検証とデプロイの同期。
-3. **`fix-data`**: DBコンテンツの自動修正とフォーマット正規化。
-4. **`search-verify`**: 外部ソースとの一貫性チェック。
-5. **`fetch-docs`**: Context7 を使用した最新ドキュメントの取得。
+AIエージェント向けの自動化ワークフローを `.claude/skills/` に配置しています。実際に利用可能なskillと手順は、各 `SKILL.md` を正準として参照してください。
 
 ## 📂 リポジトリ構成
 
-- **[`app/`](./app/README.md)**: 基幹ロジック。AI連携、検索、キャッシュ制御。
-- **[`frontend/`](./frontend/README.md)**: 人間中心のUI設計。CSS Variablesを活用した透過的デザイン。
-- **[`scripts/`](./scripts/README.md)**: 運用を支える自動化の源泉。
-- **[`docs/`](./docs/README.md)**: [`SEO.md`](./docs/SEO.md), [`CONTENT_GUIDELINES.md`](./docs/CONTENT_GUIDELINES.md) 等の戦略ドキュメント。
+- **[`backend/app/`](./backend/app/README.md)**: FastAPI基幹ロジック、検索、AI連携、データアクセス。
+- **[`api/`](./api/)**: Vercel Serverlessのエントリーポイント。
+- **[`frontend/`](./frontend/README.md)**: React/Viteによるユーザーインターフェース。
+- **[`backend/scripts/`](./backend/scripts/README.md)**: backend運用・データ処理用スクリプト。
+- **[`docs/`](./docs/README.md)**: 正準仕様・設計・運用ドキュメント。
 
 ## 🧭 Issue workflow
 
