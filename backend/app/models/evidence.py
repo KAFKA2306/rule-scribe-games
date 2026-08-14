@@ -168,8 +168,9 @@ class ClaimTrace(EvidenceModel):
         expected = derive_claim_support_status([item.binding for item in self.bindings])
         if self.support_status != expected:
             raise ValueError("support_status must be derived from evidence relations")
-        if self.projection_eligible != (expected == ClaimSupportStatus.SUPPORTED):
-            raise ValueError("projection_eligible is true only for uncontradicted supported claims")
+        expected_eligible = claim_is_projection_eligible(self.claim, expected)
+        if self.projection_eligible != expected_eligible:
+            raise ValueError("projection_eligible requires an accepted, uncontradicted supported claim")
         return self
 
 
@@ -205,11 +206,15 @@ def derive_claim_support_status(bindings: list[EvidenceBinding]) -> ClaimSupport
     return ClaimSupportStatus.UNRESOLVED
 
 
+def claim_is_projection_eligible(claim: Claim, support_status: ClaimSupportStatus) -> bool:
+    return claim.lifecycle_status == ClaimLifecycleStatus.ACCEPTED and support_status == ClaimSupportStatus.SUPPORTED
+
+
 def build_claim_trace(claim: Claim, bindings: list[EvidenceBindingDetail]) -> ClaimTrace:
     support_status = derive_claim_support_status([item.binding for item in bindings])
     return ClaimTrace(
         claim=claim,
         support_status=support_status,
-        projection_eligible=support_status == ClaimSupportStatus.SUPPORTED,
+        projection_eligible=claim_is_projection_eligible(claim, support_status),
         bindings=bindings,
     )
