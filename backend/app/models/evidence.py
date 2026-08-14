@@ -15,6 +15,9 @@ class EvidenceModel(BaseModel):
 
 class EvidenceTargetType(StrEnum):
     RULE_NODE = "rule_node"
+    COMPONENT = "component"
+    COMPONENT_SET = "component_set"
+    PROPERTY_DEFINITION = "property_definition"
     COMPONENT_PROPERTY = "component_property"
     ABILITY_PRINTED_TEXT = "ability_printed_text"
     ABILITY_NORMALIZED = "ability_normalized"
@@ -91,26 +94,85 @@ class ClaimTarget(EvidenceModel):
     target_type: EvidenceTargetType
     rule_id: str | None = None
     component_id: str | None = None
+    component_set_id: str | None = None
     property_key: str | None = None
     ordinal: int | None = Field(default=None, ge=0)
     ability_id: str | None = None
     field_path: str | None = Field(default=None, pattern=FIELD_PATH_PATTERN)
 
     @model_validator(mode="after")
-    def validate_target(self):
+    def validate_target(self):  # noqa: PLR0912 - target union is intentionally explicit
         if self.target_type == EvidenceTargetType.RULE_NODE:
-            if not self.rule_id or any(value is not None for value in (self.component_id, self.property_key, self.ordinal, self.ability_id, self.field_path)):
+            unrelated = (
+                self.component_id,
+                self.component_set_id,
+                self.property_key,
+                self.ordinal,
+                self.ability_id,
+                self.field_path,
+            )
+            if not self.rule_id or any(value is not None for value in unrelated):
                 raise ValueError("rule_node target requires only rule_id")
+        elif self.target_type == EvidenceTargetType.COMPONENT:
+            unrelated = (
+                self.rule_id,
+                self.component_set_id,
+                self.property_key,
+                self.ordinal,
+                self.ability_id,
+                self.field_path,
+            )
+            if not self.component_id or any(value is not None for value in unrelated):
+                raise ValueError("component target requires only component_id")
+        elif self.target_type == EvidenceTargetType.COMPONENT_SET:
+            unrelated = (
+                self.rule_id,
+                self.component_id,
+                self.property_key,
+                self.ordinal,
+                self.ability_id,
+                self.field_path,
+            )
+            if not self.component_set_id or any(value is not None for value in unrelated):
+                raise ValueError("component_set target requires only component_set_id")
+        elif self.target_type == EvidenceTargetType.PROPERTY_DEFINITION:
+            unrelated = (
+                self.rule_id,
+                self.component_id,
+                self.component_set_id,
+                self.ordinal,
+                self.ability_id,
+                self.field_path,
+            )
+            if not self.property_key or any(value is not None for value in unrelated):
+                raise ValueError("property_definition target requires only property_key")
         elif self.target_type == EvidenceTargetType.COMPONENT_PROPERTY:
             if not self.component_id or not self.property_key or self.ordinal is None:
                 raise ValueError("component_property target requires component_id, property_key and ordinal")
-            if any(value is not None for value in (self.rule_id, self.ability_id, self.field_path)):
+            unrelated = (self.rule_id, self.component_set_id, self.ability_id, self.field_path)
+            if any(value is not None for value in unrelated):
                 raise ValueError("component_property target contains unrelated target fields")
         elif self.target_type in {EvidenceTargetType.ABILITY_PRINTED_TEXT, EvidenceTargetType.ABILITY_NORMALIZED}:
-            if not self.ability_id or any(value is not None for value in (self.rule_id, self.component_id, self.property_key, self.ordinal, self.field_path)):
+            unrelated = (
+                self.rule_id,
+                self.component_id,
+                self.component_set_id,
+                self.property_key,
+                self.ordinal,
+                self.field_path,
+            )
+            if not self.ability_id or any(value is not None for value in unrelated):
                 raise ValueError("ability target requires only ability_id")
         elif self.target_type == EvidenceTargetType.GAME_METADATA:
-            if not self.field_path or any(value is not None for value in (self.rule_id, self.component_id, self.property_key, self.ordinal, self.ability_id)):
+            unrelated = (
+                self.rule_id,
+                self.component_id,
+                self.component_set_id,
+                self.property_key,
+                self.ordinal,
+                self.ability_id,
+            )
+            if not self.field_path or any(value is not None for value in unrelated):
                 raise ValueError("game_metadata target requires only field_path")
         return self
 
