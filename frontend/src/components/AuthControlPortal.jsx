@@ -1,20 +1,24 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 
 import { useAuth } from '../auth/authContext'
 import LoginButton from './LoginButton'
 
-function findTarget() {
-  return document.querySelector('[data-auth-control-target]') || document.querySelector('header') || document.querySelector('.game-page-toolbar')
+function findTarget(pathname) {
+  const explicitTarget = document.querySelector('[data-auth-control-target]')
+  if (explicitTarget) return explicitTarget
+  if (pathname === '/lists') return null
+  return document.querySelector('header') || document.querySelector('.game-page-toolbar')
 }
 
 export default function AuthControlPortal() {
+  const location = useLocation()
   const [target, setTarget] = useState(null)
   const { user } = useAuth()
 
   useEffect(() => {
-    const resolveTarget = () => setTarget(findTarget())
+    const resolveTarget = () => setTarget(findTarget(location.pathname))
     resolveTarget()
 
     const root = document.getElementById('root')
@@ -23,7 +27,7 @@ export default function AuthControlPortal() {
     const observer = new MutationObserver(resolveTarget)
     observer.observe(root, { childList: true, subtree: true })
     return () => observer.disconnect()
-  }, [])
+  }, [location.pathname])
 
   if (!target) return null
 
