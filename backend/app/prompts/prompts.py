@@ -13,7 +13,7 @@ EVIDENCE CONTRACT:
 3. When `SOURCE_BOUND_CONTEXT=FALSE`, set rules_content, min_players, max_players, play_time, min_age, and bga_url to null. Keep structured_data rule-derived arrays empty.
 4. When a source-bound context does not support a field, return null for that field. Unknown is correct; guessing is not.
 5. Do not mix editions or languages. Preserve the edition/language stated in source-bound context.
-6. bga_url MUST be null unless the exact game's HTTPS Board Game Arena URL is explicitly present in source-bound context. Never infer a slug or fabricate a URL.
+6. bga_url MUST be null unless the exact game's HTTPS Board Game Arena URL is explicitly present in source-bound context. The URL host must be boardgamearena.com or a boardgamearena.com subdomain. Never infer a slug or fabricate a URL.
 
 Return ONLY valid JSON matching this schema:
 {{
@@ -55,7 +55,7 @@ CONTRACT:
 4. Fill a missing field only when the supplied source evidence supports it.
 5. Keep unknown fields unknown.
 6. Never infer rules from a similar game or another edition.
-7. Preserve bga_url only when the exact HTTPS Board Game Arena URL is explicitly verified by the supplied evidence. Never infer a slug or fabricate a URL.
+7. Preserve bga_url only when the exact HTTPS Board Game Arena URL is explicitly verified by the supplied evidence. The URL host must be boardgamearena.com or a boardgamearena.com subdomain. Never infer a slug or fabricate a URL.
 Return only the corrected JSON.
 """
     },
