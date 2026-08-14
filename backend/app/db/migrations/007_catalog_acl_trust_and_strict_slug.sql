@@ -83,12 +83,29 @@ WHERE slug IS NOT NULL
     )
   );
 
-UPDATE public.games
-SET source_url = official_url
-WHERE slug IS NOT NULL
-  AND btrim(slug) <> ''
-  AND source_url IS NULL
-  AND official_url IS NOT NULL
-  AND btrim(official_url) <> '';
+-- Legacy official_url is not trust evidence. Preserve it only when the mapping
+-- is unambiguous and cannot violate the canonical source_url uniqueness contract.
+-- Shared publisher landing pages are intentionally left unclassified for review.
+UPDATE public.games AS g
+SET source_url = g.official_url
+WHERE g.slug IS NOT NULL
+  AND btrim(g.slug) <> ''
+  AND g.source_url IS NULL
+  AND g.official_url IS NOT NULL
+  AND btrim(g.official_url) <> ''
+  AND NOT EXISTS (
+    SELECT 1
+    FROM public.games AS existing
+    WHERE existing.id <> g.id
+      AND existing.source_url = g.official_url
+  )
+  AND 1 = (
+    SELECT count(*)
+    FROM public.games AS legacy
+    WHERE legacy.official_url = g.official_url
+      AND legacy.slug IS NOT NULL
+      AND btrim(legacy.slug) <> ''
+      AND legacy.source_url IS NULL
+  );
 
 COMMIT;
