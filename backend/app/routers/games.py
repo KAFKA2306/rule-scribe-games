@@ -216,7 +216,8 @@ async def get_game_evidence_trace(
             field_path=field_path,
         )
     except ValidationError as exc:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=exc.errors()) from exc
+        detail = exc.errors(include_context=False, include_input=False, include_url=False)
+        raise HTTPException(status_code=422, detail=detail) from exc
     result = await service.get_trace(slug, rule_set_id, target)
     if result is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Game not found")
