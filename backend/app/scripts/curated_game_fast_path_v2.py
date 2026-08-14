@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import subprocess
 from pathlib import Path
 from typing import Any
 
@@ -10,20 +11,19 @@ import httpx
 
 from app.scripts.curated_game_workflow import (
     CURATED_DIR,
-    GENERATED_GUIDES_PATH,
     REPO_ROOT,
     CuratedGameSpec,
     IdentityPlan,
     WorkflowError,
     load_all_specs,
     load_spec,
-    materialize_registry,
     preflight_identity,
     validate_assertions,
     validate_runtime_guide,
 )
 
 DEFAULT_BASE_URL = "https://bodoge-no-mikata.vercel.app"
+CURATED_GENERATOR_PATH = REPO_ROOT / "frontend" / "scripts" / "generate-curated-game-artifacts.mjs"
 DEPLOYMENT_MANIFEST_PATH = REPO_ROOT / "frontend" / "public" / "curated-guides-manifest.json"
 
 
@@ -82,17 +82,20 @@ def render_deployment_manifest(specs: list[CuratedGameSpec]) -> str:
     ) + "\n"
 
 
-def materialize_artifacts(specs: list[CuratedGameSpec], check_only: bool) -> None:
-    materialize_registry(specs, check_only=check_only)
-    expected = render_deployment_manifest(specs)
-    current = DEPLOYMENT_MANIFEST_PATH.read_text(encoding="utf-8") if DEPLOYMENT_MANIFEST_PATH.exists() else ""
-    if check_only:
-        if current != expected:
-            raise WorkflowError("curated-guides-manifest.json is stale; run task game:add GAME=<slug>")
-        return
-    if current != expected:
-        DEPLOYMENT_MANIFEST_PATH.parent.mkdir(parents=True, exist_ok=True)
-        DEPLOYMENT_MANIFEST_PATH.write_text(expected, encoding="utf-8")
+def generate_artifacts(specs: list[CuratedGameSpec]) -> None:
+    subprocess.run(
+        ["node", str(CURATED_GENERATOR_PATH)],
+        cwd=REPO_ROOT,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    if not DEPLOYMENT_MANIFEST_PATH.is_file():
+        raise WorkflowError("curated artifact generator did not create deployment manifest")
+    actual_manifest = DEPLOYMENT_MANIFEST_PATH.read_text(encoding="utf-8")
+    expected_manifest = render_deployment_manifest(specs)
+    if actual_manifest != expected_manifest:
+        raise WorkflowError("Node/Python curated revision manifest contract mismatch")
 
 
 def preflight_catalog(spec: CuratedGameSpec) -> tuple[Any, IdentityPlan]:
@@ -200,11 +203,7 @@ def verify_frontend_release(
 
 
 def routine_files(spec: CuratedGameSpec) -> list[str]:
-    return [
-        f"data/curated-games/{spec.slug}.json",
-        str(GENERATED_GUIDES_PATH.relative_to(REPO_ROOT)),
-        str(DEPLOYMENT_MANIFEST_PATH.relative_to(REPO_ROOT)),
-    ]
+    return [f"data/curated-games/{spec.slug}.json"]
 
 
 def print_routine_files(spec: CuratedGameSpec) -> None:
@@ -220,7 +219,7 @@ def prepare_add(
     validate_assertions(spec)
     verify_source_reachable_streamed(spec)
     client, plan = preflight_catalog(spec)
-    materialize_artifacts(specs, check_only=False)
+    generate_artifacts(specs)
     validate_runtime_guide(spec)
     return client, plan
 
@@ -231,12 +230,12 @@ def add_game(spec: CuratedGameSpec, specs: list[CuratedGameSpec], base_url: str)
     verify_catalog_live(spec, base_url)
     print_routine_files(spec)
     print("Catalog fixed point: verified")
-    print("Frontend release fixed point: pending deployment; run task game:verify GAME=<slug> after deploy")
+    print("Frontend release fixed point: pending deployment; verified automatically after a successful deploy")
 
 
 def check_game(spec: CuratedGameSpec, specs: list[CuratedGameSpec]) -> None:
     validate_assertions(spec)
-    materialize_artifacts(specs, check_only=True)
+    generate_artifacts(specs)
     validate_runtime_guide(spec)
     print_routine_files(spec)
 
@@ -244,7 +243,7 @@ def check_game(spec: CuratedGameSpec, specs: list[CuratedGameSpec]) -> None:
 def verify_game(spec: CuratedGameSpec, specs: list[CuratedGameSpec], base_url: str) -> None:
     validate_assertions(spec)
     verify_source_reachable_streamed(spec)
-    materialize_artifacts(specs, check_only=True)
+    generate_artifacts(specs)
     validate_runtime_guide(spec)
     verify_catalog_live(spec, base_url)
     verify_frontend_release(specs, base_url, game=spec.slug)
@@ -255,7 +254,7 @@ def verify_game(spec: CuratedGameSpec, specs: list[CuratedGameSpec], base_url: s
 def check_all(specs: list[CuratedGameSpec]) -> None:
     for spec in specs:
         validate_assertions(spec)
-    materialize_artifacts(specs, check_only=True)
+    generate_artifacts(specs)
     for spec in specs:
         validate_runtime_guide(spec)
 
@@ -287,10 +286,12 @@ def main() -> None:
     if args.game:
         raise WorkflowError(f"{args.mode} does not accept --game")
 
+    generate_artifacts(specs)
     if args.mode == "check-all":
-        check_all(specs)
+        for spec in specs:
+            validate_assertions(spec)
+            validate_runtime_guide(spec)
     else:
-        materialize_artifacts(specs, check_only=True)
         verify_frontend_release(specs, args.base_url)
 
 

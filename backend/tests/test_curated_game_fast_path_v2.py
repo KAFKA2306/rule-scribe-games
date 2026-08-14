@@ -7,6 +7,7 @@ from app.scripts.curated_game_workflow import WorkflowError, load_all_specs, loa
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SKULL_KING = REPO_ROOT / "data" / "curated-games" / "skull-king.json"
+GENERATED_GUIDES = REPO_ROOT / "frontend" / "src" / "lib" / "generatedCuratedRuleGuides.js"
 
 
 def test_single_input_resolves_canonical_spec():
@@ -42,7 +43,16 @@ def test_deployment_manifest_is_deterministic_and_revision_bound():
     }
 
 
-def test_prepare_add_preflights_before_materialization(monkeypatch):
+def test_node_generator_matches_python_contract_from_source():
+    specs = load_all_specs()
+
+    v2.generate_artifacts(specs)
+
+    assert v2.DEPLOYMENT_MANIFEST_PATH.read_text(encoding="utf-8") == v2.render_deployment_manifest(specs)
+    assert GENERATED_GUIDES.is_file()
+
+
+def test_prepare_add_preflights_before_generation(monkeypatch):
     spec = load_spec(SKULL_KING)
     specs = [spec]
     events = []
@@ -57,18 +67,14 @@ def test_prepare_add_preflights_before_materialization(monkeypatch):
         return client, plan
 
     monkeypatch.setattr(v2, "preflight_catalog", fake_preflight)
-    monkeypatch.setattr(
-        v2,
-        "materialize_artifacts",
-        lambda values, check_only: events.append("materialize"),
-    )
+    monkeypatch.setattr(v2, "generate_artifacts", lambda values: events.append("generate"))
     monkeypatch.setattr(v2, "validate_runtime_guide", lambda value: events.append("runtime"))
 
     actual_client, actual_plan = v2.prepare_add(spec, specs)
 
     assert actual_client is client
     assert actual_plan is plan
-    assert events == ["assertions", "source", "preflight", "materialize", "runtime"]
+    assert events == ["assertions", "source", "preflight", "generate", "runtime"]
 
 
 def test_release_manifest_digest_mismatch_fails():
@@ -81,11 +87,7 @@ def test_release_manifest_digest_mismatch_fails():
         v2.validate_release_manifest(expected, deployed, game="skull-king")
 
 
-def test_routine_files_are_deterministic_and_ignore_worktree_noise():
+def test_routine_pr_contains_only_structured_source():
     spec = load_spec(SKULL_KING)
 
-    assert v2.routine_files(spec) == [
-        "data/curated-games/skull-king.json",
-        "frontend/src/lib/generatedCuratedRuleGuides.js",
-        "frontend/public/curated-guides-manifest.json",
-    ]
+    assert v2.routine_files(spec) == ["data/curated-games/skull-king.json"]
