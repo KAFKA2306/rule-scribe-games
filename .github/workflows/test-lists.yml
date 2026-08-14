@@ -14,6 +14,7 @@ on:
       - "frontend/src/components/AuthControlPortal.jsx"
       - "frontend/src/components/GameListSavePortal.jsx"
       - "frontend/src/components/game/AddToListButton.jsx"
+      - "frontend/src/components/game/OwnedGameButton.jsx"
       - "frontend/src/pages/ListsPage.jsx"
       - "frontend/tests/lists.spec.js"
       - ".github/workflows/test-lists.yml"
@@ -32,6 +33,7 @@ on:
       - "frontend/src/components/AuthControlPortal.jsx"
       - "frontend/src/components/GameListSavePortal.jsx"
       - "frontend/src/components/game/AddToListButton.jsx"
+      - "frontend/src/components/game/OwnedGameButton.jsx"
       - "frontend/src/pages/ListsPage.jsx"
       - "frontend/tests/lists.spec.js"
       - ".github/workflows/test-lists.yml"
@@ -61,7 +63,7 @@ jobs:
       PYTHONPATH: backend
     steps:
       - uses: actions/checkout@v5
-      - name: Apply list migration and verify RLS/reorder/dedupe/unavailable-game behavior
+      - name: Apply list migration and verify RLS/reorder/dedupe/system-list behavior
         run: psql "$DATABASE_URL" -f backend/app/db/tests/list_integration.sql
       - name: Install uv
         uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
@@ -90,7 +92,7 @@ jobs:
         run: npm run build
       - name: Lint list surface
         working-directory: frontend
-        run: npx eslint src/main.jsx src/lib/api.js src/components/AuthControlPortal.jsx src/components/GameListSavePortal.jsx src/components/game/AddToListButton.jsx src/pages/ListsPage.jsx tests/lists.spec.js
+        run: npx eslint src/main.jsx src/lib/api.js src/components/AuthControlPortal.jsx src/components/GameListSavePortal.jsx src/components/game/AddToListButton.jsx src/components/game/OwnedGameButton.jsx src/pages/ListsPage.jsx tests/lists.spec.js
       - name: Install Chromium
         working-directory: frontend
         run: npx playwright install --with-deps chromium
