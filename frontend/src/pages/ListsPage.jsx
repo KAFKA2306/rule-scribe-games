@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 
 import { useAuth } from '../auth/authContext'
 import { api } from '../lib/api'
@@ -8,8 +8,10 @@ const OWNED_SELECTION = '__owned__'
 
 export default function ListsPage() {
   const { user, loading: authLoading, signInWithGoogle } = useAuth()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const selectedId = searchParams.get('list') || OWNED_SELECTION
+  const savedNotice = searchParams.get('notice') === 'saved'
   const [lists, setLists] = useState([])
-  const [selectedId, setSelectedId] = useState(OWNED_SELECTION)
   const [detail, setDetail] = useState(null)
   const [newName, setNewName] = useState('')
   const [loading, setLoading] = useState(false)
@@ -21,16 +23,29 @@ export default function ListsPage() {
       : api.get(`/api/lists/${id}`)
   )
 
-  const loadLists = async (preferredId = '') => {
+  const chooseList = (id, { replace = false, notice = '' } = {}) => {
+    const next = new URLSearchParams(searchParams)
+    if (id === OWNED_SELECTION) next.delete('list')
+    else next.set('list', id)
+    if (notice) next.set('notice', notice)
+    else next.delete('notice')
+    setSearchParams(next, { replace })
+  }
+
+  const loadLists = async (preferredId = selectedId) => {
     setLoading(true)
     setError('')
     try {
       const data = await api.get('/api/lists')
       const next = data.lists || []
       setLists(next)
-      const nextId = preferredId || selectedId || OWNED_SELECTION
-      setSelectedId(nextId)
-      setDetail(await loadDetail(nextId))
+      const validId = preferredId === OWNED_SELECTION || next.some((list) => list.id === preferredId)
+        ? preferredId
+        : OWNED_SELECTION
+      if (validId !== selectedId) {
+        chooseList(validId, { replace: true })
+      }
+      setDetail(await loadDetail(validId))
     } catch (err) {
       setError(err.message)
     } finally {
@@ -39,27 +54,14 @@ export default function ListsPage() {
   }
 
   useEffect(() => {
-    if (user) loadLists(OWNED_SELECTION)
+    if (user) loadLists(selectedId)
     else {
       setLists([])
-      setSelectedId(OWNED_SELECTION)
       setDetail(null)
     }
+    // selectedId intentionally drives browser back/forward restoration.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user])
-
-  const selectList = async (id) => {
-    setSelectedId(id)
-    setLoading(true)
-    setError('')
-    try {
-      setDetail(await loadDetail(id))
-    } catch (err) {
-      setError(err.message)
-    } finally {
-      setLoading(false)
-    }
-  }
+  }, [user, selectedId])
 
   const createList = async (event) => {
     event.preventDefault()
@@ -69,7 +71,7 @@ export default function ListsPage() {
     try {
       const created = await api.post('/api/lists', { name, visibility: 'private' })
       setNewName('')
-      await loadLists(created.id)
+      chooseList(created.id)
     } catch (err) {
       setError(err.message)
     }
@@ -91,9 +93,8 @@ export default function ListsPage() {
     if (!detail || detail.system_key || !window.confirm(`「${detail.name}」を削除しますか？`)) return
     try {
       await api.delete(`/api/lists/${detail.id}`)
-      setSelectedId(OWNED_SELECTION)
       setDetail(null)
-      await loadLists(OWNED_SELECTION)
+      chooseList(OWNED_SELECTION)
     } catch (err) {
       setError(err.message)
     }
@@ -104,11 +105,10 @@ export default function ListsPage() {
     try {
       if (detail.system_key === 'owned' && item.game_id) {
         await api.delete(`/api/owned-games/${item.game_id}`)
-        await selectList(OWNED_SELECTION)
       } else if (detail.id) {
         await api.delete(`/api/lists/${detail.id}/items/${item.id}`)
-        await selectList(selectedId)
       }
+      await loadLists(selectedId)
     } catch (err) {
       setError(err.message)
     }
@@ -125,7 +125,7 @@ export default function ListsPage() {
       await api.put(`/api/lists/${detail.id}/order`, { item_ids: items.map((item) => item.id) })
     } catch (err) {
       setError(err.message)
-      await selectList(selectedId)
+      await loadLists(selectedId)
     }
   }
 
@@ -162,6 +162,7 @@ export default function ListsPage() {
         <button className="filter-btn" type="submit">リストを作成</button>
       </form>
 
+      {savedNotice && <div role="status" style={{ marginBottom: '1rem', color: 'var(--text-secondary)' }}>保存したリストを表示しています。</div>}
       {error && <div role="alert" style={{ marginBottom: '1rem', color: '#ff7777' }}>{error}</div>}
       {loading && <div style={{ marginBottom: '1rem', color: 'var(--text-secondary)' }}>読み込み中…</div>}
 
@@ -171,7 +172,7 @@ export default function ListsPage() {
             type="button"
             className={`filter-btn ${selectedId === OWNED_SELECTION ? 'active' : ''}`}
             style={{ width: '100%', marginBottom: '8px', textAlign: 'left' }}
-            onClick={() => selectList(OWNED_SELECTION)}
+            onClick={() => chooseList(OWNED_SELECTION)}
           >
             所持ゲーム
           </button>
@@ -181,7 +182,7 @@ export default function ListsPage() {
               key={list.id}
               className={`filter-btn ${selectedId === list.id ? 'active' : ''}`}
               style={{ width: '100%', marginBottom: '8px', textAlign: 'left' }}
-              onClick={() => selectList(list.id)}
+              onClick={() => chooseList(list.id)}
             >
               {list.name}
             </button>
