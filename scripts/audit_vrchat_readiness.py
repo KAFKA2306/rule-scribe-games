@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import csv
+import importlib
 import json
 import os
 import sys
@@ -12,6 +13,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 BACKEND = ROOT / "backend"
+_QUOTED_VALUE_MIN_LENGTH = 2
 
 
 def _load_env_file(path: Path) -> None:
@@ -22,7 +24,11 @@ def _load_env_file(path: Path) -> None:
         key, raw_value = line.split("=", 1)
         key = key.strip()
         value = raw_value.strip()
-        if len(value) >= 2 and value[0] == value[-1] and value[0] in {'"', "'"}:
+        if (
+            len(value) >= _QUOTED_VALUE_MIN_LENGTH
+            and value[0] == value[-1]
+            and value[0] in {'"', "'"}
+        ):
             value = value[1:-1]
         os.environ[key] = value.replace("\\n", "\n")
 
@@ -68,12 +74,12 @@ async def _run(args: argparse.Namespace) -> int:
     if args.env_file:
         _load_env_file(args.env_file)
     sys.path.insert(0, str(BACKEND))
-
-    from app.services.vrchat_readiness_audit import VrchatReadinessAuditService
-
-    service = VrchatReadinessAuditService()
+    audit_module = importlib.import_module("app.services.vrchat_readiness_audit")
+    service = audit_module.VrchatReadinessAuditService()
     if getattr(service.game_service, "use_local", False):
-        raise RuntimeError("production readiness audit requires configured Supabase; local fallback is not accepted")
+        raise RuntimeError(
+            "production readiness audit requires configured Supabase; local fallback is not accepted"
+        )
 
     audited_at = datetime.now(UTC)
     report = await service.audit_all(audited_at=audited_at)
