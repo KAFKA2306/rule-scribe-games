@@ -73,19 +73,18 @@ async def search_games_post(
     body: SearchRequest,
     service: GameService = Depends(get_game_service),
 ):
-    # Always honor the DB-first contract even when a legacy client asks to generate.
-    matches = await service.search_games(body.query.strip())
-    if matches:
-        return matches
-
+    # Legacy clients may still send generate=true. Public search is deliberately
+    # read-only; catalog generation requires an authenticated editor workflow.
     if body.generate:
-        if not gen_limiter.acquire():
-            raise HTTPException(status_code=429, detail="Generation rate limit exceeded")
-
-        new_game = await service.create_game_from_query(body.query.strip())
-        if new_game and new_game.get("slug"):
-            return [new_game]
-    return []
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Catalog generation is not available from public search",
+        )
+    if not search_limiter.acquire():
+        raise HTTPException(status_code=429, detail="Search rate limit exceeded")
+    if not body.query or not body.query.strip():
+        return []
+    return await service.search_games(body.query.strip())
 
 
 @router.get("/games", response_model=GameListResponse)
