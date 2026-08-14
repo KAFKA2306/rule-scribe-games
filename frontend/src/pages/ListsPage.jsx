@@ -175,19 +175,16 @@ export default function ListsPage() {
     if (!detail || busyAction) return
     setBusyAction(`remove:${item.id}`)
     setError('')
-    const previous = detail
-    const optimistic = { ...detail, items: detail.items.filter((candidate) => candidate.id !== item.id) }
-    detailCache.current.set(selectedId, optimistic)
-    setDetail(optimistic)
     try {
       if (detail.system_key === 'owned' && item.game_id) {
         await api.delete(`/api/owned-games/${item.game_id}`)
       } else if (detail.id) {
         await api.delete(`/api/lists/${detail.id}/items/${item.id}`)
       }
+      const nextDetail = { ...detail, items: detail.items.filter((candidate) => candidate.id !== item.id) }
+      detailCache.current.set(selectedId, nextDetail)
+      setDetail(nextDetail)
     } catch (err) {
-      detailCache.current.set(selectedId, previous)
-      setDetail(previous)
       setError(err.message)
     } finally {
       setBusyAction('')
