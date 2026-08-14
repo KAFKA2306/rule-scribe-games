@@ -1,15 +1,16 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;700;900&display=swap');
 
+/* Legacy class names remain for compatibility, but every color resolves through KAFKA SIGNAL. */
 :root {
-  --bg-dark: #0a0a0a;
-  --bg-card: #141414;
-  --border-color: #2a2a2a;
-  --border-hover: #555555;
-  --text-primary: #ffffff;
-  --text-secondary: #a0a0a0;
-  --text-muted: #666666;
-  --accent: #ffffff;
-  --accent-secondary: #aaaaaa;
+  --bg-dark: var(--ks-canvas);
+  --bg-card: var(--ks-surface);
+  --border-color: var(--ks-border);
+  --border-hover: var(--ks-primary);
+  --text-primary: var(--ks-ink);
+  --text-secondary: var(--ks-ink-muted);
+  --text-muted: var(--ks-ink-muted);
+  --accent: var(--ks-primary);
+  --accent-secondary: var(--ks-secondary);
   --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-heading: 'Outfit', sans-serif;
 }
@@ -37,7 +38,7 @@ body {
 /* Header */
 header {
   grid-area: header;
-  background: var(--bg-dark);
+  background: var(--bg-card);
   border-bottom: 1px solid var(--border-color);
   padding: 0.75rem 1.5rem;
   display: flex;
@@ -70,11 +71,11 @@ header {
 
 .search-input {
   width: 100%;
-  background: #1a1a1a;
+  background: var(--ks-surface);
   border: 1px solid var(--border-color);
   border-radius: 8px;
   padding: 0.6rem 1rem;
-  color: #ffffff;
+  color: var(--ks-ink);
   font-size: 0.9rem;
   outline: none;
   transition: all 0.2s ease;
@@ -91,7 +92,8 @@ header {
   font-size: 0.8rem;
   font-weight: 600;
   padding: 6px 12px;
-  background: #1a1a1a;
+  background: var(--ks-primary-soft);
+  color: var(--ks-primary);
   border: 1px solid var(--border-color);
   border-radius: 6px;
 }
@@ -99,7 +101,7 @@ header {
 /* Sidebar */
 aside {
   grid-area: sidebar;
-  background: var(--bg-dark);
+  background: var(--ks-surface-subtle);
   border-right: 1px solid var(--border-color);
   padding: 1.5rem;
   overflow-y: auto;
@@ -124,7 +126,7 @@ aside {
 }
 
 .filter-btn {
-  background: #1a1a1a;
+  background: var(--ks-surface);
   border: 1px solid var(--border-color);
   border-radius: 6px;
   padding: 6px 8px;
@@ -137,14 +139,15 @@ aside {
 }
 
 .filter-btn:hover {
-  border-color: var(--text-secondary);
-  color: #ffffff;
+  background: var(--ks-primary-soft);
+  border-color: var(--ks-primary);
+  color: var(--ks-primary);
 }
 
 .filter-btn.active {
-  background: #2a2a2a;
-  border-color: #ffffff;
-  color: #ffffff;
+  background: var(--ks-primary);
+  border-color: var(--ks-primary);
+  color: var(--ks-surface);
 }
 
 .tag-cloud {
@@ -178,8 +181,9 @@ main {
 }
 
 .filter-chip {
-  background: #1a1a1a;
-  border: 1px solid var(--border-color);
+  background: var(--ks-secondary-soft);
+  color: var(--ks-secondary);
+  border: 1px solid color-mix(in srgb, var(--ks-secondary) 32%, var(--ks-border));
   border-radius: 4px;
   padding: 4px 8px;
   font-size: 0.75rem;
@@ -191,20 +195,20 @@ main {
 .filter-chip button {
   background: none;
   border: none;
-  color: var(--text-muted);
+  color: currentColor;
   cursor: pointer;
 }
 
 .filter-chip button:hover {
-  color: #fff;
+  color: var(--ks-ink);
 }
 
 .sort-select {
-  background: #1a1a1a;
+  background: var(--ks-surface);
   border: 1px solid var(--border-color);
   border-radius: 6px;
   padding: 6px 12px;
-  color: #ffffff;
+  color: var(--ks-ink);
   font-size: 0.8rem;
   outline: none;
   cursor: pointer;
@@ -233,14 +237,14 @@ main {
 
 .asset-card:hover {
   transform: translateY(-4px);
-  border-color: var(--text-secondary);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  border-color: var(--ks-primary);
+  box-shadow: 0 8px 24px rgb(36 54 83 / 0.12);
 }
 
 .asset-thumb-container {
   width: 100%;
   aspect-ratio: 4/3;
-  background: #000;
+  background: var(--ks-surface-subtle);
   overflow: hidden;
   position: relative;
 }
@@ -260,9 +264,9 @@ main {
   position: absolute;
   top: 8px;
   left: 8px;
-  background: rgba(0, 0, 0, 0.8);
-  border: 1px solid var(--border-color);
-  color: #fff;
+  background: var(--ks-secondary);
+  border: 1px solid var(--ks-secondary);
+  color: var(--ks-surface);
   padding: 2px 8px;
   border-radius: 4px;
   font-size: 0.7rem;
@@ -299,10 +303,10 @@ main {
   display: flex;
   align-items: center;
   gap: 4px;
-  background: #1a1a1a;
+  background: transparent;
   padding: 2px 6px;
   border-radius: 4px;
-  border: 1px solid var(--border-color);
+  border: 0;
 }
 
 .asset-summary {
@@ -315,44 +319,50 @@ main {
   margin-top: auto;
 }
 
-/* --- Game Page Styles (Zero-Fat) --- */
+/* --- Game Page Styles --- */
 .game-detail-content {
   padding: 2rem;
   max-width: 1200px;
   margin: 0 auto;
 }
+
 .game-hero-image {
   width: 100%;
   height: 300px;
   border-radius: 12px;
   overflow: hidden;
   margin-bottom: 2rem;
-  background: #000;
+  background: var(--ks-surface-subtle);
   border: 1px solid var(--border-color);
 }
+
 .game-hero-image img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  opacity: 0.8;
 }
+
 .game-content {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 2rem;
 }
+
 .game-title {
   font-family: var(--font-heading);
   font-size: 2.5rem;
   font-weight: 900;
   color: var(--text-primary);
 }
+
 .header-actions {
   display: flex;
   gap: 8px;
 }
-.header-actions button, .header-actions a {
+
+.header-actions button,
+.header-actions a {
   background: var(--bg-card);
   border: 1px solid var(--border-color);
   color: var(--text-primary);
@@ -364,10 +374,14 @@ main {
   font-size: 0.85rem;
   transition: all 0.2s ease;
 }
-.header-actions button:hover, .header-actions a:hover {
-  background: #2a2a2a;
-  border-color: var(--text-secondary);
+
+.header-actions button:hover,
+.header-actions a:hover {
+  background: var(--ks-primary-soft);
+  color: var(--ks-primary);
+  border-color: var(--ks-primary);
 }
+
 .info-section {
   background: var(--bg-card);
   border: 1px solid var(--border-color);
@@ -375,16 +389,19 @@ main {
   border-radius: 8px;
   margin-bottom: 2rem;
 }
+
 .info-section h3 {
   font-size: 0.9rem;
   color: var(--text-secondary);
   text-transform: uppercase;
   margin-bottom: 1rem;
 }
+
 .summary-text {
   font-size: 1.1rem;
   line-height: 1.6;
 }
+
 .rules-tabs {
   display: flex;
   gap: 8px;
@@ -392,6 +409,7 @@ main {
   margin-bottom: 1.5rem;
   padding-bottom: 8px;
 }
+
 .rules-tabs button {
   background: transparent;
   border: none;
@@ -402,18 +420,22 @@ main {
   border-radius: 6px;
   transition: all 0.2s ease;
 }
+
 .rules-tabs button.active {
-  background: var(--text-primary);
-  color: var(--bg-dark);
+  background: var(--ks-primary-soft);
+  color: var(--ks-ink);
 }
+
 .rules-tabs button:hover:not(.active) {
-  background: var(--bg-card);
-  color: var(--text-primary);
+  background: var(--ks-surface-subtle);
+  color: var(--ks-ink);
 }
+
 .markdown-content {
   line-height: 1.8;
   font-size: 1.05rem;
 }
+
 .markdown-content h2 {
   margin-top: 2rem;
   margin-bottom: 1rem;
@@ -421,14 +443,18 @@ main {
   border-bottom: 1px solid var(--border-color);
   color: var(--accent);
 }
+
 .markdown-content h3 {
   margin-top: 1.5rem;
   margin-bottom: 1rem;
 }
-.markdown-content ul, .markdown-content ol {
+
+.markdown-content ul,
+.markdown-content ol {
   padding-left: 1.5rem;
   margin-bottom: 1rem;
 }
+
 .back-link {
   display: inline-block;
   margin-bottom: 1rem;
@@ -436,8 +462,9 @@ main {
   text-decoration: none;
   font-weight: 600;
 }
+
 .back-link:hover {
-  color: var(--text-primary);
+  color: var(--ks-primary);
 }
 
 /* --- Pro Dashboard / High-Density Layout --- */
@@ -447,6 +474,7 @@ main {
   gap: 12px;
   margin-bottom: 2rem;
 }
+
 .pro-stat-card {
   background: var(--bg-card);
   border: 1px solid var(--border-color);
@@ -454,6 +482,7 @@ main {
   border-radius: 8px;
   text-align: center;
 }
+
 .pro-stat-label {
   font-size: 0.7rem;
   color: var(--text-muted);
@@ -461,6 +490,7 @@ main {
   letter-spacing: 0.5px;
   margin-bottom: 4px;
 }
+
 .pro-stat-value {
   font-size: 1.1rem;
   font-weight: 700;
@@ -472,6 +502,7 @@ main {
   grid-template-columns: 2fr 1fr;
   gap: 2rem;
 }
+
 @media (max-width: 900px) {
   .pro-section-grid {
     grid-template-columns: 1fr;
@@ -485,6 +516,7 @@ main {
   padding: 1.5rem;
   margin-bottom: 1.5rem;
 }
+
 .pro-card-title {
   font-size: 0.9rem;
   font-weight: 700;
@@ -503,18 +535,19 @@ main {
   font-size: 0.9rem;
   color: var(--text-primary);
 }
+
 .tip-bullet {
   color: var(--accent);
   font-weight: bold;
 }
 
 .mistake-item {
-  background: rgba(255, 68, 68, 0.05);
-  border-left: 3px solid #ff4444;
+  background: var(--ks-rejected-soft);
+  border-left: 3px solid var(--ks-rejected);
   padding: 10px 12px;
   margin-bottom: 8px;
   font-size: 0.85rem;
-  color: #ffcccc;
+  color: var(--ks-rejected);
 }
 
 .tag-list {
@@ -522,43 +555,49 @@ main {
   flex-wrap: wrap;
   gap: 8px;
 }
+
 .tag-item {
-  background: #1a1a1a;
-  border: 1px solid var(--border-color);
+  background: var(--ks-primary-soft);
+  border: 1px solid color-mix(in srgb, var(--ks-primary) 28%, var(--ks-border));
   padding: 2px 8px;
   border-radius: 4px;
   font-size: 0.75rem;
-  color: var(--text-secondary);
+  color: var(--ks-ink);
 }
 
 /* --- Review Persona Styles --- */
 .review-card {
-  background: #1a1a1a;
+  background: var(--ks-surface);
   border: 1px solid var(--border-color);
   border-radius: 12px;
   padding: 1.25rem;
   margin-bottom: 1rem;
 }
+
 .review-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 0.75rem;
 }
+
 .persona-badge {
   font-size: 0.75rem;
   font-weight: 700;
   color: var(--accent);
   text-transform: uppercase;
 }
+
 .rating-badge {
-  background: var(--bg-dark);
-  border: 1px solid var(--border-color);
+  background: var(--ks-secondary-soft);
+  color: var(--ks-ink);
+  border: 1px solid color-mix(in srgb, var(--ks-secondary) 28%, var(--ks-border));
   padding: 2px 8px;
   border-radius: 4px;
   font-size: 0.9rem;
   font-weight: 900;
 }
+
 .review-text {
   font-size: 0.9rem;
   line-height: 1.5;
@@ -566,10 +605,9 @@ main {
   font-style: italic;
 }
 
-
 /* --- Coach Mode Styles --- */
 .coach-step {
-  background: #111;
+  background: var(--ks-surface-subtle);
   border: 1px solid var(--border-color);
   border-radius: 12px;
   padding: 1.5rem;
@@ -577,10 +615,12 @@ main {
   position: relative;
   transition: all 0.2s ease;
 }
+
 .coach-step.active {
-  border-color: #fff;
-  box-shadow: 0 0 20px rgba(255, 255, 255, 0.05);
+  border-color: var(--ks-primary);
+  box-shadow: 0 6px 18px rgb(36 54 83 / 0.08);
 }
+
 .coach-step-num {
   font-family: var(--font-heading);
   font-size: 0.8rem;
@@ -589,6 +629,7 @@ main {
   margin-bottom: 0.5rem;
   display: block;
 }
+
 .coach-step-title {
   font-size: 1.2rem;
   font-weight: 700;
@@ -602,7 +643,7 @@ main {
   bottom: 2rem;
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(0, 0, 0, 0.9);
+  background: color-mix(in srgb, var(--ks-surface) 96%, transparent);
   backdrop-filter: blur(12px);
   border: 1px solid var(--border-color);
   border-radius: 40px;
@@ -611,23 +652,25 @@ main {
   align-items: center;
   gap: 16px;
   z-index: 1000;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 10px 30px rgb(36 54 83 / 0.16);
 }
+
 .compare-item {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  border: 1px solid #444;
+  border: 1px solid var(--ks-border);
   overflow: hidden;
-  background: #222;
+  background: var(--ks-surface-subtle);
   position: relative;
 }
+
 .compare-item button {
   position: absolute;
   top: -2px;
   right: -2px;
-  background: #ff4444;
-  color: #fff;
+  background: var(--ks-rejected);
+  color: var(--ks-surface);
   border: none;
   border-radius: 50%;
   width: 14px;
@@ -645,14 +688,17 @@ main {
   border-radius: 12px;
   overflow: hidden;
 }
+
 .battle-col {
-  background: var(--bg-dark);
+  background: var(--ks-canvas);
   padding: 2rem;
 }
+
 .battle-attr {
   padding: 1rem 0;
-  border-bottom: 1px solid #1a1a1a;
+  border-bottom: 1px solid var(--ks-border);
 }
+
 .battle-attr-label {
   font-size: 0.7rem;
   color: var(--text-muted);
@@ -673,11 +719,10 @@ main {
   text-decoration: none;
   color: inherit;
 }
+
 .relation-line {
   width: 2px;
   height: 20px;
   background: var(--border-color);
   margin-left: 2rem;
 }
-
-
