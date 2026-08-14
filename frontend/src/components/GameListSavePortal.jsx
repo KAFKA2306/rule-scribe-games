@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useLocation } from 'react-router-dom'
 
@@ -13,15 +13,14 @@ function gameSlug(pathname) {
 
 export default function GameListSavePortal() {
   const location = useLocation()
-  const hostRef = useRef(null)
+  const [host] = useState(() => {
+    if (typeof document === 'undefined') return null
+    const node = document.createElement('span')
+    node.dataset.gameListSavePortal = 'true'
+    node.style.display = 'contents'
+    return node
+  })
   const [portal, setPortal] = useState(null)
-
-  if (!hostRef.current && typeof document !== 'undefined') {
-    const host = document.createElement('span')
-    host.dataset.gameListSavePortal = 'true'
-    host.style.display = 'contents'
-    hostRef.current = host
-  }
 
   useEffect(() => {
     let active = true
@@ -29,7 +28,6 @@ export default function GameListSavePortal() {
     let game = null
     const pathname = location.pathname
     const slug = gameSlug(pathname)
-    const host = hostRef.current
 
     if (!slug || !host) return () => { active = false }
 
@@ -63,9 +61,8 @@ export default function GameListSavePortal() {
       observer?.disconnect()
       if (host.parentNode) host.remove()
     }
-  }, [location.pathname])
+  }, [host, location.pathname])
 
-  const host = hostRef.current
   if (!host || !portal || portal.pathname !== location.pathname || !portal.game) return null
   return createPortal(
     <>
