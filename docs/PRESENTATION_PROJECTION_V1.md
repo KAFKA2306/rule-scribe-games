@@ -21,6 +21,7 @@ Game
 - ProjectionはDBへ保存しない。canonical Rule/Concept更新を次回readへ即反映する。
 - Rule truthは `Claim.lifecycle_status=accepted` かつ `supports` が存在し、`contradicts` が無い場合だけ採用する。
 - Claimの `normalized_payload.statement` と現在の `RuleNode.normalized_statement` が完全一致しない場合、そのevidenceはstaleとして採用しない。
+- 同じRuleNodeに複数のaccepted/supported Claimが存在する場合、claim ID順に現在のRuleNode statementと一致するClaimを選ぶ。古いClaimが先にあっても現行Claimを隠さない。
 - `verification_status`、source URL、publisher identityだけではRuleをverified表示へ昇格させない。
 - `variant` RuleNodeをbase Quick Rulesへ混ぜない。variantは明示的なderived/variant RuleSetを選択して扱う。
 - unknown / unsupported / stale / contested contentを補完生成しない。
@@ -86,13 +87,23 @@ v1ではcanonical Advice/Strategy layerが未実装のため `not_available`。l
 - current canonical text
 - sequence
 - accepted `claim_id`
-- supporting `source_ids`
+- `claim_lifecycle=accepted`
+- `support_status=supported`
+- supporting `source_ids`（最低1件）
 
 Source URL等の詳細は#175 Evidence APIでtraceできる。ProjectionはEvidenceの複製storeにならない。
 
 ## SEO / JSON-LD
 
-Projection outputはstable `rule_id` / `concept_id` / selected `rule_set_id` を保持するため、SEO rendererやJSON-LD adapterはlegacy `structured_data`を再解釈せず同じProjectionから生成できる。v1ではJSON-LD markup自体をDBへ保存しない。
+`projection_to_json_ld(projection, title)` がPresentation ProjectionからJSON-LDを決定論的に生成する。
+
+- selected RuleSetは`PropertyValue(propertyID=ruleSet)`としてidentityを保持する
+- QUICK RULESは`CreativeWork`として`subjectOf`へ投影する
+- GLOSSARYは`DefinedTerm`として`about`へ投影する
+- unavailableなCOMMON ERRORS / PRO TIPS等はJSON-LDへ混入しない
+- JSON-LD自体はDBへ保存しない
+
+既存SEO rendererは段階移行対象であり、#153のlegacy cleanupまでに同じProjection入力へ寄せる。
 
 ## Failure semantics
 
@@ -107,8 +118,11 @@ Projection outputはstable `rule_id` / `concept_id` / selected `rule_set_id` を
 - candidate / unknown / rejected exclusion
 - contradiction exclusion
 - stale Claim exclusion after RuleNode update
+- stale Claimの後ろに現行Claimがある場合の選択
 - variant exclusion from base projection
 - explicit RuleSet required
+- Evidence state / supporting source cardinality
+- JSON-LDがcanonical Rule/Conceptだけを含む
 - missing projection != missing game
 - section status contract
 
