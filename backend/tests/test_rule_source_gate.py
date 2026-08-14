@@ -43,6 +43,10 @@ async def test_unsourced_generation_discards_rule_derived_fields(monkeypatch, ge
     assert result["min_age"] is None
     assert result["bga_url"] is None
     assert result["structured_data"]["keywords"] == []
+    assert result["identity_status"] == "unverified"
+    assert result["source_trust_status"] == "unknown"
+    assert result["content_review_status"] == "ai_draft"
+    assert result["is_official"] is False
     provenance = result["structured_data"]["generation_provenance"]
     assert provenance["source_bound"] is False
     assert provenance["content_review_status"] == "ai_draft"
@@ -50,7 +54,7 @@ async def test_unsourced_generation_discards_rule_derived_fields(monkeypatch, ge
 
 
 @pytest.mark.asyncio
-async def test_source_bound_generation_preserves_supported_rule_fields(monkeypatch, generated_payload):
+async def test_source_bound_generation_preserves_supported_rule_fields_without_promoting_trust(monkeypatch, generated_payload):
     async def fake_generate(*_args, **_kwargs):
         return generated_payload
 
@@ -67,6 +71,9 @@ async def test_source_bound_generation_preserves_supported_rule_fields(monkeypat
     assert result["rules_content"] == "invented rule text"
     assert result["min_players"] == 2
     assert result["bga_url"] == "https://boardgamearena.com/gamepanel?game=example"
+    assert result["source_trust_status"] == "unknown"
+    assert result["content_review_status"] == "ai_draft"
+    assert result["is_official"] is False
     assert result["structured_data"]["generation_provenance"]["source_bound"] is True
 
 
