@@ -1,0 +1,128 @@
+{
+  "version": "golden-v1",
+  "games": [
+    {
+      "slug": "yro",
+      "edition": "BGA 260725-1445",
+      "language": "en",
+      "sources": [
+        {
+          "id": "yro-bga-260725-1445",
+          "title": "YRO | Board Game Arena",
+          "url": "https://en.boardgamearena.com/gamepanel?game=yro",
+          "type": "platform_official_rules",
+          "locator": "Rules summary: Setup, Round phases, End of the Game"
+        },
+        {
+          "id": "yro-studio-supernova",
+          "title": "YRO | Studio Supernova",
+          "url": "https://www.studiosupernova.it/products/yro",
+          "type": "publisher_official",
+          "locator": "Product description"
+        }
+      ],
+      "claims": [
+        {
+          "id": "setup-3-money-5-cards",
+          "field": "setup",
+          "critical": true,
+          "expected": "Players start with 3 Money and 5 cards, with the shared Combat/Victory board and Quest cards prepared.",
+          "source_ids": ["yro-bga-260725-1445"]
+        },
+        {
+          "id": "round-six-phases",
+          "field": "gameplay",
+          "critical": true,
+          "expected": "Each round has six simultaneously played phases: discard/draw, recruit, combat, production, income, victory points.",
+          "source_ids": ["yro-bga-260725-1445"]
+        },
+        {
+          "id": "recruit-zero-one-two",
+          "field": "gameplay",
+          "critical": false,
+          "expected": "In recruitment, play 0, 1, or 2 adventurers; each unplayed recruitment earns 1 Money.",
+          "source_ids": ["yro-bga-260725-1445"]
+        },
+        {
+          "id": "end-nine-or-forty-end-round",
+          "field": "end_game",
+          "critical": true,
+          "expected": "The game ends at the end of a round in which someone has 9 guild cards or reaches 40 victory points.",
+          "source_ids": ["yro-bga-260725-1445"]
+        },
+        {
+          "id": "money-three-to-one-vp",
+          "field": "end_game",
+          "critical": false,
+          "expected": "At game end, every 3 remaining Money converts to 1 victory point.",
+          "source_ids": ["yro-bga-260725-1445"]
+        }
+      ]
+    },
+    {
+      "slug": "flip-7-with-a-vengeance",
+      "edition": "BGA 260716-1823 / The Op 2026",
+      "language": "en",
+      "sources": [
+        {
+          "id": "flip7-op-product",
+          "title": "Flip 7: With A Vengeance | The Op Games",
+          "url": "https://theop.games/products/flip-7-with-a-vengeance",
+          "type": "publisher_official",
+          "locator": "Product overview and components"
+        },
+        {
+          "id": "flip7-op-faq",
+          "title": "Flip 7: With a Vengeance FAQs | The Op Games",
+          "url": "https://theop.games/pages/flip-7-wav-faqs",
+          "type": "publisher_official_faq",
+          "locator": "Flip Four and action-card FAQ"
+        },
+        {
+          "id": "flip7-bga",
+          "title": "Flip 7: Vengeance | Board Game Arena Help",
+          "url": "https://en.doc.boardgamearena.com/Gamehelpflipsevenwithavengeance",
+          "type": "platform_official_rules",
+          "locator": "Game flow, scoring, special cards, Brutal Mode"
+        }
+      ],
+      "claims": [
+        {
+          "id": "end-two-hundred-end-round",
+          "field": "end_game",
+          "critical": true,
+          "expected": "The game ends after a round in which a player reaches at least 200 total points; highest total wins.",
+          "source_ids": ["flip7-bga"]
+        },
+        {
+          "id": "hit-stay-targetable",
+          "field": "gameplay",
+          "critical": true,
+          "expected": "An active player chooses Hit or Stay; a player who stays remains in the round and can still be targeted by actions.",
+          "source_ids": ["flip7-bga"]
+        },
+        {
+          "id": "duplicate-number-bust",
+          "field": "gameplay",
+          "critical": true,
+          "expected": "Receiving a duplicate number normally busts the player and makes that round score zero.",
+          "source_ids": ["flip7-bga"]
+        },
+        {
+          "id": "flip-seven-ends-round",
+          "field": "gameplay",
+          "critical": true,
+          "expected": "Seven distinct number cards achieves Flip 7 and ends the round.",
+          "source_ids": ["flip7-bga"]
+        },
+        {
+          "id": "flip-four-stop-order",
+          "field": "faq",
+          "critical": false,
+          "expected": "Flip Four reveals one card at a time up to four and stops immediately on a bust or Flip 7; actions drawn during a busting Flip Four cannot rescue that bust.",
+          "source_ids": ["flip7-op-faq"]
+        }
+      ]
+    }
+  ]
+}
