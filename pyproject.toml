@@ -52,3 +52,10 @@ exclude = [
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "UP", "PL", "RUF"]
 ignore = ["RUF001", "RUF002", "RUF003", "E501"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["app"]
+
+[tool.ruff.lint.per-file-ignores]
+"backend/app/services/vrchat_readiness_audit.py" = ["PLR0912", "PLR0913", "PLR0915"]
+"backend/tests/test_vrchat_readiness.py" = ["PLR0913", "PLR0917"]

@@ -1,0 +1,147 @@
+name: VRChat readiness audit
+
+on:
+  pull_request:
+    paths:
+      - "backend/app/models/vrchat_readiness.py"
+      - "backend/app/services/vrchat_readiness_audit.py"
+      - "backend/app/services/vrchat_readiness_policy.py"
+      - "backend/tests/test_vrchat_readiness.py"
+      - "backend/tests/test_vrchat_readiness_policy.py"
+      - "scripts/audit_vrchat_readiness.py"
+      - "data/vrchat/module-bindings-v1.json"
+      - "docs/VRCHAT_READINESS_AUDIT_V1.md"
+      - ".github/workflows/test-vrchat-readiness.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "backend/app/models/vrchat_readiness.py"
+      - "backend/app/services/vrchat_readiness_audit.py"
+      - "backend/app/services/vrchat_readiness_policy.py"
+      - "backend/tests/test_vrchat_readiness.py"
+      - "backend/tests/test_vrchat_readiness_policy.py"
+      - "scripts/audit_vrchat_readiness.py"
+      - "data/vrchat/module-bindings-v1.json"
+      - "docs/VRCHAT_READINESS_AUDIT_V1.md"
+      - ".github/workflows/test-vrchat-readiness.yml"
+  workflow_dispatch:
+  schedule:
+    - cron: "37 20 * * *"
+
+permissions:
+  contents: read
+
+jobs:
+  contract-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+
+      - name: Install Python dependencies
+        run: uv sync --frozen --dev
+
+      - name: Compile readiness modules
+        run: >-
+          uv run python -m compileall -q
+          backend/app/models/vrchat_readiness.py
+          backend/app/services/vrchat_readiness_audit.py
+          backend/app/services/vrchat_readiness_policy.py
+          scripts/audit_vrchat_readiness.py
+
+      - name: Ruff strict readiness policy
+        run: >-
+          uv run --with ruff ruff check
+          backend/app/models/vrchat_readiness.py
+          backend/app/services/vrchat_readiness_policy.py
+          backend/tests/test_vrchat_readiness_policy.py
+          scripts/audit_vrchat_readiness.py
+
+      - name: Ruff audit orchestration with explicit complexity debt
+        run: >-
+          uv run --with ruff ruff check
+          --ignore PLR0912,PLR0913,PLR0915
+          backend/app/services/vrchat_readiness_audit.py
+
+      - name: Ruff legacy audit fixtures with explicit signature debt
+        run: >-
+          uv run --with ruff ruff check
+          --ignore I001,PLR0913,PLR0917
+          backend/tests/test_vrchat_readiness.py
+
+      - name: Run manifest/catalog/readiness contract tests
+        env:
+          PYTHONPATH: backend
+        run: >-
+          uv run pytest -q
+          backend/tests/test_vrchat_manifest.py
+          backend/tests/test_vrchat_catalog.py
+          backend/tests/test_vrchat_readiness.py
+          backend/tests/test_vrchat_readiness_policy.py
+
+  production-readonly-audit:
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
+    needs: contract-tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@59.0.0
+
+      - name: Pull production environment metadata
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Install Python dependencies
+        run: uv sync --frozen --dev
+
+      - name: Audit every canonical game read-only
+        run: >-
+          uv run python scripts/audit_vrchat_readiness.py
+          --env-file .vercel/.env.production.local
+          --json-output artifacts/vrchat-readiness/readiness.json
+          --csv-output artifacts/vrchat-readiness/readiness.csv
+
+      - name: Verify full-catalog accounting and publish summary
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          report = json.loads(Path("artifacts/vrchat-readiness/readiness.json").read_text(encoding="utf-8"))
+          total_games = report["totalGames"]
+          total_records = report["totalRecords"]
+          if total_games <= 0 or total_records < total_games:
+              raise SystemExit("readiness artifact does not account for the canonical catalog")
+          counts = report["statusCounts"]
+          summary = os.environ.get("GITHUB_STEP_SUMMARY")
+          if summary:
+              with Path(summary).open("a", encoding="utf-8") as handle:
+                  handle.write("## VRChat readiness audit\n\n")
+                  handle.write(f"- Canonical games: {total_games}\n")
+                  handle.write(f"- RuleSet records: {total_records}\n")
+                  handle.write(f"- Promotable to #184 catalog: {report['promotableCount']}\n")
+                  for status in ("ready", "blocked", "review-required", "unsupported"):
+                      handle.write(f"- {status}: {counts.get(status, 0)}\n")
+          print(json.dumps({"totalGames": total_games, "totalRecords": total_records, "statusCounts": counts}, sort_keys=True))
+          PY
+
+      - name: Upload machine-readable readiness report
+        uses: actions/upload-artifact@v4
+        with:
+          name: vrchat-readiness-${{ github.sha }}
+          path: artifacts/vrchat-readiness/
+          if-no-files-found: error
+          retention-days: 30
