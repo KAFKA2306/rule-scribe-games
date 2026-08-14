@@ -57,12 +57,44 @@ $$;
 UPDATE public.games SET source_trust = 'unknown' WHERE source_trust IS DISTINCT FROM 'unknown';
 UPDATE public.games SET content_review_status = 'unknown' WHERE content_review_status IS NULL OR btrim(content_review_status) = '';
 
+-- Promote only explicit provenance already recorded in source_documents. A URL
+-- or legacy is_official flag alone is never enough to establish source trust.
+UPDATE public.games
+SET source_trust = 'official_publisher'
+WHERE slug IS NOT NULL
+  AND btrim(slug) <> ''
+  AND EXISTS (
+    SELECT 1
+    FROM jsonb_array_elements(coalesce(structured_data->'source_documents', '[]'::jsonb)) AS doc
+    WHERE doc->>'type' IN ('publisher_official', 'publisher_official_faq')
+  );
+
+UPDATE public.games
+SET source_trust = 'third_party'
+WHERE slug IS NOT NULL
+  AND btrim(slug) <> ''
+  AND source_trust = 'unknown'
+  AND EXISTS (
+    SELECT 1
+    FROM jsonb_array_elements(coalesce(structured_data->'source_documents', '[]'::jsonb)) AS doc
+    WHERE doc->>'type' IN (
+      'platform_official_rules',
+      'platform_official_game',
+      'platform_official_game_page',
+      'platform_rules_summary',
+      'user_supplied_replay_log'
+    )
+  );
+
 -- Preserve legacy links as unclassified sources. The legacy columns remain only
 -- during the compatible rollout and are removed by migration 008 after the new
--- application code is live.
+-- application code is live. Skip invalid legacy slug rows so migration 006's
+-- NOT VALID constraint does not reject an unrelated compatibility update.
 UPDATE public.games
 SET source_url = official_url
-WHERE source_url IS NULL
+WHERE slug IS NOT NULL
+  AND btrim(slug) <> ''
+  AND source_url IS NULL
   AND official_url IS NOT NULL
   AND btrim(official_url) <> '';
 
