@@ -18,12 +18,7 @@ export const ExternalLinks = ({ game }) => {
     { url: yahoo, label: 'Yahoo!で見る', class: 'yahoo' },
     { url: official_url, label: '公式サイト', class: 'official' },
     { url: bgg_url, label: 'BoardGameGeek', class: 'bgg' },
-    {
-      url: game.bga_url,
-      label: 'Board Game Arena',
-      class: 'bga',
-      style: { backgroundColor: '#000', color: '#fff' },
-    },
+    { url: game.bga_url, label: 'Board Game Arena', class: 'bga' },
   ].filter((link) => isValidUrl(link.url))
 
   if (links.length === 0) return null
@@ -38,8 +33,7 @@ export const ExternalLinks = ({ game }) => {
             href={link.url}
             target="_blank"
             rel="noopener noreferrer sponsored"
-            className={`link-button ${link.class} `}
-            style={link.style || {}}
+            className={`link-button ${link.class}`}
           >
             {link.label}
           </a>

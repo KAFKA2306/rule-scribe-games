@@ -5,21 +5,19 @@ import { api } from './lib/api'
 function App() {
   const [searchParams, setSearchParams] = useSearchParams()
   const navigate = useNavigate()
-  
+
   const [initialGames, setInitialGames] = useState([])
   const [totalGamesCount, setTotalGamesCount] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [generating, setGenerating] = useState(false)
 
-  // Filters state
   const [query, setQuery] = useState(searchParams.get('q') || '')
   const [activePlayers, setActivePlayers] = useState(null)
   const [activeTime, setActiveTime] = useState(null)
   const [activeTier, setActiveTier] = useState(null)
   const [sortOption, setSortOption] = useState('recent')
 
-  // Comparison State
   const [compareList, setCompareList] = useState([])
   const [isBattleMode, setIsBattleMode] = useState(false)
 
@@ -59,17 +57,14 @@ function App() {
     loadAllGames()
   }, [])
 
-  // Derived unique values
   const availableTiers = useMemo(() => {
     const tiers = new Set(initialGames.map(g => g.strategy_tier).filter(Boolean))
     return Array.from(tiers).sort()
   }, [initialGames])
 
-  // Filtering Logic
   const filteredGames = useMemo(() => {
     let result = [...initialGames]
 
-    // Search Query
     if (query) {
       const q = query.trim().normalize('NFKC').toLowerCase()
       result = result.filter((game) => {
@@ -81,7 +76,6 @@ function App() {
       })
     }
 
-    // Player Count Filter
     if (activePlayers) {
       const p = parseInt(activePlayers)
       result = result.filter(g => {
@@ -92,7 +86,6 @@ function App() {
       })
     }
 
-    // Play Time Filter
     if (activeTime) {
       result = result.filter(g => {
         const t = g.play_time || 0
@@ -104,12 +97,10 @@ function App() {
       })
     }
 
-    // Tier Filter
     if (activeTier) {
       result = result.filter(g => g.strategy_tier === activeTier)
     }
 
-    // Sorting
     result.sort((a, b) => {
       if (sortOption === 'recent') {
         const dateA = a.created_at ? new Date(a.created_at).getTime() : 0
@@ -137,7 +128,6 @@ function App() {
     return result
   }, [initialGames, query, activePlayers, activeTime, activeTier, sortOption])
 
-  // Sync Search Query to URL
   useEffect(() => {
     const timer = setTimeout(() => {
       if (query) {
@@ -195,9 +185,9 @@ function App() {
       <div className="game-detail-content" style={{ overflowY: 'auto', height: '100dvh', padding: '2rem' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
           <h1 className="game-title">COMPARISON BATTLE</h1>
-          <button className="filter-btn" style={{ borderColor: '#fff' }} onClick={() => setIsBattleMode(false)}>CLOSE BATTLE</button>
+          <button className="filter-btn" onClick={() => setIsBattleMode(false)}>CLOSE BATTLE</button>
         </div>
-        
+
         <div className="battle-grid">
           {compareList.map(game => (
             <div key={game.id} className="battle-col">
@@ -228,7 +218,7 @@ function App() {
                   </div>
                 </div>
               )}
-              
+
               <div style={{ marginTop: '2rem' }}>
                 <Link to={`/games/${game.slug}`} className="filter-btn" style={{ width: '100%', display: 'block', textDecoration: 'none' }}>VIEW FULL ANALYSIS</Link>
               </div>
@@ -245,11 +235,11 @@ function App() {
         <Link to="/" className="logo">
           <div className="logo-text">ボドゲのミカタ</div>
         </Link>
-        
+
         <form className="search-container" onSubmit={handleSearchSubmit}>
-          <input 
-            type="text" 
-            className="search-input" 
+          <input
+            type="text"
+            className="search-input"
             placeholder="ゲームを検索、または未登録ゲームをAI生成..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -267,8 +257,8 @@ function App() {
           <h3>プレイ人数</h3>
           <div className="filter-grid">
             {['1', '2', '3', '4', '5+'].map(p => (
-              <button 
-                key={p} 
+              <button
+                key={p}
                 className={`filter-btn ${activePlayers === p ? 'active' : ''}`}
                 onClick={() => setActivePlayers(activePlayers === p ? null : p)}
               >
@@ -287,8 +277,8 @@ function App() {
               { id: '60-120', label: '60-120分' },
               { id: '120+', label: '120分以上' }
             ].map(t => (
-              <button 
-                key={t.id} 
+              <button
+                key={t.id}
                 className={`filter-btn ${activeTime === t.id ? 'active' : ''}`}
                 onClick={() => setActiveTime(activeTime === t.id ? null : t.id)}
               >
@@ -303,8 +293,8 @@ function App() {
             <h3>戦略ティア</h3>
             <div className="filter-grid">
               {availableTiers.map(t => (
-                <button 
-                  key={t} 
+                <button
+                  key={t}
                   className={`filter-btn ${activeTier === t ? 'active' : ''}`}
                   onClick={() => setActiveTier(activeTier === t ? null : t)}
                 >
@@ -316,8 +306,8 @@ function App() {
         )}
 
         <div className="filter-section">
-          <button 
-            className="filter-btn" 
+          <button
+            className="filter-btn"
             style={{ width: '100%', borderColor: 'var(--accent-secondary)' }}
             onClick={clearFilters}
           >
@@ -336,10 +326,10 @@ function App() {
             {activeTime && <div className="filter-chip">時間: {activeTime} <button onClick={() => setActiveTime(null)}>×</button></div>}
             {activeTier && <div className="filter-chip">Tier: {activeTier} <button onClick={() => setActiveTier(null)}>×</button></div>}
           </div>
-          
-          <select 
-            className="sort-select" 
-            value={sortOption} 
+
+          <select
+            className="sort-select"
+            value={sortOption}
             onChange={(e) => setSortOption(e.target.value)}
           >
             <option value="recent">最近追加</option>
@@ -349,11 +339,11 @@ function App() {
           </select>
         </div>
 
-        {error && <div style={{ color: '#ff4444', padding: '1rem', background: '#2a0000', borderRadius: '8px' }}>{error}</div>}
-        {generating && <div style={{ padding: '1rem', background: '#1a1a1a', borderRadius: '8px', border: '1px solid #444', color: '#aaa', textAlign: 'center' }}>AIが新しいゲーム情報を生成しています...</div>}
+        {error && <div className="app-feedback app-feedback--error" role="alert">{error}</div>}
+        {generating && <div className="app-feedback app-feedback--progress" role="status">AIが新しいゲーム情報を生成しています...</div>}
 
         {loading ? (
-          <div style={{ textAlign: 'center', padding: '2rem', color: '#666' }}>ARCHIVE INITIALIZING...</div>
+          <div className="app-loading-state" role="status">ARCHIVE INITIALIZING...</div>
         ) : (
           <div className="asset-grid">
             {filteredGames.map(game => (
@@ -361,9 +351,9 @@ function App() {
                 <Link to={`/games/${game.slug}`} className="asset-card" style={{ height: '100%' }}>
                   <div className="asset-thumb-container">
                     {game.strategy_tier && <div className="tier-badge">Tier {game.strategy_tier}</div>}
-                    <img 
-                      src={game.image_url || '/assets/no-image.webp'} 
-                      alt={game.title_ja || game.title} 
+                    <img
+                      src={game.image_url || '/assets/no-image.webp'}
+                      alt={game.title_ja || game.title}
                       className="asset-thumb"
                       loading="lazy"
                     />
@@ -378,7 +368,7 @@ function App() {
                     <div className="asset-summary">{game.summary || game.description}</div>
                   </div>
                 </Link>
-                <button 
+                <button
                   onClick={(e) => { e.preventDefault(); toggleCompare(game); }}
                   className={`filter-btn ${compareList.find(g => g.id === game.id) ? 'active' : ''}`}
                   style={{ position: 'absolute', top: '8px', right: '8px', zIndex: 10, padding: '4px 8px', fontSize: '0.65rem' }}
@@ -388,17 +378,17 @@ function App() {
               </div>
             ))}
             {filteredGames.length === 0 && !loading && (
-              <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '3rem', color: '#666' }}>
+              <div className="app-empty-state">
                 条件に一致するゲームが見つかりません。
               </div>
             )}
           </div>
         )}
-        
+
         {!loading && initialGames.length < totalGamesCount && (
           <div style={{ textAlign: 'center', padding: '2rem' }}>
-            <button 
-              className="filter-btn" 
+            <button
+              className="filter-btn"
               style={{ padding: '10px 24px', fontSize: '0.9rem', borderColor: 'var(--accent)' }}
               onClick={handleLoadMore}
             >
@@ -410,7 +400,7 @@ function App() {
 
       {compareList.length > 0 && (
         <div className="comparison-tray">
-          <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#666' }}>BATTLE TRAY</div>
+          <div className="comparison-tray__label" style={{ fontSize: '0.75rem', fontWeight: 700 }}>BATTLE TRAY</div>
           {compareList.map(g => (
             <div key={g.id} className="compare-item">
               <img src={g.image_url || '/assets/no-image.webp'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Compare Item" />
@@ -418,8 +408,8 @@ function App() {
             </div>
           ))}
           {compareList.length >= 2 && (
-            <button 
-              className="filter-btn active" 
+            <button
+              className="filter-btn active"
               style={{ padding: '6px 16px', borderRadius: '20px' }}
               onClick={() => setIsBattleMode(true)}
             >

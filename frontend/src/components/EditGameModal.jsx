@@ -78,7 +78,7 @@ export default function EditGameModal({ game, isOpen, onClose, onSave }) {
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h3>ゲーム情報を編集</h3>
-          <button className="close-btn" onClick={onClose}>
+          <button className="close-btn" onClick={onClose} aria-label="編集画面を閉じる">
             &times;
           </button>
         </div>
@@ -97,51 +97,26 @@ export default function EditGameModal({ game, isOpen, onClose, onSave }) {
           <div className="form-row">
             <div className="form-group">
               <label>最小人数</label>
-              <input
-                type="number"
-                name="min_players"
-                value={formData.min_players}
-                onChange={handleChange}
-              />
+              <input type="number" name="min_players" value={formData.min_players} onChange={handleChange} />
             </div>
             <div className="form-group">
               <label>最大人数</label>
-              <input
-                type="number"
-                name="max_players"
-                value={formData.max_players}
-                onChange={handleChange}
-              />
+              <input type="number" name="max_players" value={formData.max_players} onChange={handleChange} />
             </div>
             <div className="form-group">
               <label>プレイ時間(分)</label>
-              <input
-                type="number"
-                name="play_time"
-                value={formData.play_time}
-                onChange={handleChange}
-              />
+              <input type="number" name="play_time" value={formData.play_time} onChange={handleChange} />
             </div>
           </div>
 
           <div className="form-row">
             <div className="form-group">
               <label>対象年齢</label>
-              <input
-                type="number"
-                name="min_age"
-                value={formData.min_age}
-                onChange={handleChange}
-              />
+              <input type="number" name="min_age" value={formData.min_age} onChange={handleChange} />
             </div>
             <div className="form-group">
               <label>発行年</label>
-              <input
-                type="number"
-                name="published_year"
-                value={formData.published_year}
-                onChange={handleChange}
-              />
+              <input type="number" name="published_year" value={formData.published_year} onChange={handleChange} />
             </div>
           </div>
 
@@ -152,51 +127,26 @@ export default function EditGameModal({ game, isOpen, onClose, onSave }) {
 
           <div className="form-group">
             <label>詳細説明 (Description)</label>
-            <textarea
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              rows={5}
-            />
+            <textarea name="description" value={formData.description} onChange={handleChange} rows={5} />
           </div>
 
           <div className="form-group">
             <label>ルール詳細 (Rules Content Markdown)</label>
-            <textarea
-              name="rules_content"
-              value={formData.rules_content}
-              onChange={handleChange}
-              rows={8}
-            />
+            <textarea name="rules_content" value={formData.rules_content} onChange={handleChange} rows={8} />
           </div>
 
           <div className="form-group">
             <label>キーワード (Keywords)</label>
             <div style={{ marginBottom: '10px' }}>
               {(formData.structured_data?.keywords || []).map((k, i) => (
-                <div
-                  key={i}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '10px',
-                    marginBottom: '5px',
-                  }}
-                >
-                  <input
-                    readOnly
-                    value={k.term}
-                    style={{ width: '120px', background: '#f5f5f5' }}
-                  />
-                  <input
-                    readOnly
-                    value={k.description}
-                    style={{ flex: 1, background: '#f5f5f5' }}
-                  />
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '5px' }}>
+                  <input readOnly value={k.term} style={{ width: '120px' }} />
+                  <input readOnly value={k.description} style={{ flex: 1 }} />
                   <button
                     type="button"
                     onClick={() => handleRemoveKeyword(i)}
-                    style={{ color: 'red', border: 'none', background: 'none', cursor: 'pointer' }}
+                    className="keyword-remove-button"
+                    aria-label={`${k.term || 'キーワード'}を削除`}
                   >
                     ×
                   </button>
@@ -216,12 +166,7 @@ export default function EditGameModal({ game, isOpen, onClose, onSave }) {
                 onChange={(e) => setNewKeyword({ ...newKeyword, description: e.target.value })}
                 style={{ flex: 1 }}
               />
-              <button
-                type="button"
-                onClick={handleAddKeyword}
-                className="btn-secondary"
-                style={{ padding: '0 15px' }}
-              >
+              <button type="button" onClick={handleAddKeyword} className="btn-secondary" style={{ padding: '0 15px' }}>
                 追加
               </button>
             </div>

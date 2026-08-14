@@ -1,0 +1,334 @@
+/* Canonical light palette bindings for every route and transient UI state.
+   KAFKA SIGNAL tokens are the source of truth; legacy names remain aliases only. */
+
+:root {
+  --bg-dark: var(--ks-canvas);
+  --bg-card: var(--ks-surface);
+  --border-color: var(--ks-border);
+  --border-hover: var(--ks-primary);
+  --text-primary: var(--ks-ink);
+  --text-secondary: var(--ks-ink-muted);
+  --text-muted: var(--ks-ink-muted);
+  --accent: var(--ks-primary);
+  --accent-secondary: var(--ks-secondary);
+
+  /* Compatibility aliases used by older route components. */
+  --bg-primary: var(--ks-canvas);
+  --bg-secondary: var(--ks-surface);
+  --bg-tertiary: var(--ks-surface-subtle);
+  --border-subtle: var(--ks-border);
+  --accent-primary: var(--ks-primary);
+}
+
+html,
+body,
+#root {
+  background: var(--ks-canvas);
+  color: var(--ks-ink);
+}
+
+/* Header, navigation, filters and form controls. */
+header,
+aside,
+main {
+  color: var(--ks-ink);
+}
+
+.search-input,
+.sort-select,
+.filter-btn,
+.button-secondary,
+.btn-secondary,
+.btn-primary,
+.share-btn,
+.gallery-btn,
+.quick-rule-action {
+  background: var(--ks-surface);
+  color: var(--ks-ink);
+  border-color: var(--ks-border);
+}
+
+.search-input:hover,
+.sort-select:hover,
+.filter-btn:hover:not(:disabled),
+.button-secondary:hover:not(:disabled),
+.btn-secondary:hover:not(:disabled),
+.share-btn:hover:not(:disabled),
+.gallery-btn:hover:not(:disabled) {
+  background: var(--ks-primary-soft);
+  color: var(--ks-primary);
+  border-color: var(--ks-primary);
+}
+
+.filter-btn.active,
+.filter-btn[aria-pressed="true"],
+.btn-primary {
+  background: var(--ks-primary);
+  color: var(--ks-surface);
+  border-color: var(--ks-primary);
+}
+
+button:disabled,
+select:disabled,
+input:disabled,
+textarea:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.filter-chip {
+  background: var(--ks-secondary-soft);
+  color: var(--ks-secondary);
+  border-color: color-mix(in srgb, var(--ks-secondary) 32%, var(--ks-border));
+}
+
+.filter-chip button {
+  color: currentColor;
+}
+
+.db-status {
+  background: var(--ks-primary-soft);
+  color: var(--ks-primary);
+  border-color: color-mix(in srgb, var(--ks-primary) 34%, var(--ks-border));
+}
+
+/* Catalogue cards and comparison mode. */
+.asset-card,
+.pro-card,
+.pro-stat-card,
+.info-section,
+.review-card,
+.relation-node,
+.stat-card {
+  background: var(--ks-surface);
+  color: var(--ks-ink);
+  border-color: var(--ks-border);
+  box-shadow: var(--ks-shadow-low);
+}
+
+.asset-thumb-container,
+.game-hero-image {
+  background: var(--ks-surface-subtle);
+}
+
+.asset-card:hover {
+  border-color: color-mix(in srgb, var(--ks-primary) 48%, var(--ks-border));
+  box-shadow: 0 8px 24px rgb(36 54 83 / 0.12);
+}
+
+.tier-badge {
+  background: var(--ks-secondary);
+  color: var(--ks-surface);
+  border-color: var(--ks-secondary);
+}
+
+.tag-item {
+  background: var(--ks-primary-soft);
+  color: var(--ks-ink);
+  border-color: color-mix(in srgb, var(--ks-primary) 28%, var(--ks-border));
+}
+
+.mistake-item {
+  background: var(--ks-rejected-soft);
+  color: var(--ks-rejected);
+  border-left-color: var(--ks-rejected);
+}
+
+.comparison-tray {
+  background: color-mix(in srgb, var(--ks-surface) 96%, transparent);
+  color: var(--ks-ink);
+  border-color: var(--ks-border);
+  box-shadow: 0 10px 30px rgb(36 54 83 / 0.16);
+}
+
+.comparison-tray__label {
+  color: var(--ks-ink-muted);
+}
+
+.compare-item {
+  background: var(--ks-surface-subtle);
+  border-color: var(--ks-border);
+}
+
+.compare-item button {
+  background: var(--ks-rejected);
+  color: var(--ks-surface);
+}
+
+.battle-grid {
+  background: var(--ks-border);
+  border-color: var(--ks-border);
+}
+
+.battle-col {
+  background: var(--ks-canvas);
+}
+
+.battle-attr {
+  border-bottom-color: var(--ks-border);
+}
+
+/* Route-level feedback, loading and empty states. */
+.app-feedback,
+.app-loading-state,
+.app-empty-state {
+  width: 100%;
+  border: 1px solid var(--ks-border);
+  border-radius: var(--ks-radius-md);
+  background: var(--ks-surface-subtle);
+  color: var(--ks-ink-muted);
+  padding: 1rem;
+}
+
+.app-feedback--error {
+  background: var(--ks-rejected-soft);
+  color: var(--ks-rejected);
+  border-color: color-mix(in srgb, var(--ks-rejected) 48%, var(--ks-border));
+}
+
+.app-feedback--progress {
+  background: var(--ks-primary-soft);
+  color: var(--ks-primary);
+  border-color: color-mix(in srgb, var(--ks-primary) 38%, var(--ks-border));
+  text-align: center;
+}
+
+.app-loading-state,
+.app-empty-state {
+  text-align: center;
+}
+
+.app-empty-state {
+  grid-column: 1 / -1;
+  padding-block: 3rem;
+}
+
+.loading-fallback {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100dvh;
+  background: var(--ks-canvas);
+  color: var(--ks-ink);
+}
+
+/* Game actions, external links and media states. */
+.share-btn.speaking {
+  background: var(--ks-primary-soft);
+  color: var(--ks-primary);
+  border-color: var(--ks-primary);
+}
+
+.link-button,
+.link-button.bga {
+  background: var(--ks-surface);
+  color: var(--ks-primary);
+  border: 1px solid var(--ks-border);
+}
+
+.link-button:hover,
+.link-button.bga:hover {
+  background: var(--ks-primary-soft);
+  color: var(--ks-primary);
+  border-color: var(--ks-primary);
+}
+
+.no-infographics,
+.loading-error {
+  padding: 1rem;
+  border: 1px dashed var(--ks-border);
+  border-radius: var(--ks-radius-md);
+  background: var(--ks-surface-subtle);
+  color: var(--ks-ink-muted);
+}
+
+.gallery-image {
+  background: var(--ks-surface-subtle);
+  border-color: var(--ks-border);
+}
+
+.gallery-dot {
+  background: var(--ks-border);
+}
+
+.gallery-dot.active {
+  background: var(--ks-primary);
+}
+
+.gallery-counter,
+.rule-flow-source {
+  color: var(--ks-ink-muted);
+}
+
+/* Editor modal. */
+.modal-overlay {
+  background: rgb(36 54 83 / 0.28);
+}
+
+.modal-content {
+  background: var(--ks-surface);
+  color: var(--ks-ink);
+  border: 1px solid var(--ks-border);
+  box-shadow: 0 18px 48px rgb(36 54 83 / 0.18);
+}
+
+.modal-header,
+.modal-actions {
+  border-color: var(--ks-border);
+}
+
+.edit-form input,
+.edit-form textarea,
+.edit-form select {
+  background: var(--ks-surface);
+  color: var(--ks-ink);
+  border-color: var(--ks-border);
+}
+
+.edit-form input[readonly] {
+  background: var(--ks-surface-subtle);
+  color: var(--ks-ink-muted);
+}
+
+.keyword-remove-button {
+  color: var(--ks-rejected);
+  background: transparent;
+  border: 0;
+}
+
+/* Data route. */
+.app-container,
+.main-header,
+.main-footer {
+  background: var(--ks-canvas);
+  color: var(--ks-ink);
+}
+
+.main-header,
+.main-footer {
+  border-color: var(--ks-border);
+}
+
+.stat-card {
+  padding: 1.25rem;
+  border: 1px solid var(--ks-border);
+  border-radius: var(--ks-radius-md);
+}
+
+.spinner {
+  width: 2rem;
+  height: 2rem;
+  margin: 2rem auto;
+  border: 3px solid var(--ks-border);
+  border-top-color: var(--ks-primary);
+  border-radius: 50%;
+  animation: ui-palette-spin 800ms linear infinite;
+}
+
+@keyframes ui-palette-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner { animation: none; }
+}

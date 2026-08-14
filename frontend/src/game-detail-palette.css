@@ -1,19 +1,21 @@
-/* Game detail palette repair.
-   The legacy game page still contains dark-theme literals in index.css.
-   Keep this layer after layout.css so KAFKA SIGNAL's light product palette wins. */
+/* Game-detail color system.
+   This file is intentionally token-only so detail states cannot drift back to the retired dark palette. */
 
 .game-detail-content {
-  --game-wash-blue: #eaf4ff;
-  --game-wash-lilac: #f0ebfa;
-  --game-wash-pink: #fcebf1;
   --game-ink: var(--ks-ink);
+  --game-wash-blue: color-mix(in srgb, var(--ks-primary-soft) 72%, var(--ks-surface));
+  --game-wash-lilac: color-mix(in srgb, var(--ks-secondary-soft) 72%, var(--ks-surface));
+  --game-wash-pink: color-mix(in srgb, var(--ks-accent-soft) 72%, var(--ks-surface));
   background:
-    radial-gradient(circle at 78% 0%, rgb(240 235 250 / 0.46), transparent 30rem),
+    radial-gradient(
+      circle at 78% 0%,
+      color-mix(in srgb, var(--ks-secondary-soft) 46%, transparent),
+      transparent 30rem
+    ),
     var(--ks-canvas);
   color: var(--game-ink);
 }
 
-/* Tabs should read as a light editorial control, not a dark dashboard. */
 .rules-tabs button {
   color: var(--ks-ink-muted);
 }
@@ -29,12 +31,10 @@
   color: var(--game-ink);
 }
 
-/* The old coach cards used #111 with dark navy text after the light-theme token swap.
-   Use three restrained pastel washes while keeping all copy on the high-contrast ink. */
 .coach-step {
   --coach-accent: var(--ks-primary);
   --coach-soft: var(--game-wash-blue);
-  background: color-mix(in srgb, var(--coach-soft) 74%, var(--ks-surface));
+  background: var(--coach-soft);
   color: var(--game-ink);
   border: 1px solid color-mix(in srgb, var(--coach-accent) 32%, var(--ks-border));
   border-left: 4px solid var(--coach-accent);
@@ -52,7 +52,6 @@
 }
 
 .coach-step.active {
-  background: var(--coach-soft);
   border-color: color-mix(in srgb, var(--coach-accent) 58%, var(--ks-border));
   border-left-color: var(--coach-accent);
   box-shadow: 0 6px 18px rgb(36 54 83 / 0.08);
@@ -66,7 +65,6 @@
   color: var(--game-ink);
 }
 
-/* Remove the remaining black chips/cards inherited from the original dark UI. */
 .game-sidebar .tag-item {
   background: color-mix(in srgb, var(--ks-primary-soft) 62%, var(--ks-surface));
   color: var(--game-ink);
@@ -86,6 +84,56 @@
   background: var(--ks-secondary-soft);
   color: var(--game-ink);
   border-color: color-mix(in srgb, var(--ks-secondary) 28%, var(--ks-border));
+}
+
+.pro-card--synopsis {
+  border-left: 4px solid var(--ks-primary);
+}
+
+.game-empty-state,
+.game-data-dump {
+  padding: 1.25rem;
+  border: 1px solid var(--ks-border);
+  border-radius: var(--ks-radius-md);
+  background: var(--ks-surface-subtle);
+  color: var(--ks-ink-muted);
+  box-shadow: var(--ks-shadow-low);
+}
+
+.game-empty-state {
+  min-height: 6rem;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  line-height: 1.65;
+}
+
+.game-empty-note {
+  padding: 0.625rem 0;
+  color: var(--ks-ink-muted);
+  font-size: 0.82rem;
+}
+
+.game-data-dump {
+  overflow-x: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-family: var(--ks-font-mono);
+  font-size: 0.78rem;
+}
+
+.page-state {
+  min-height: 40vh;
+  display: grid;
+  place-items: center;
+  padding: 2rem;
+  text-align: center;
+  background: var(--ks-canvas);
+  color: var(--ks-ink-muted);
+}
+
+.page-state--error {
+  color: var(--ks-rejected);
 }
 
 @media (max-width: 680px) {
