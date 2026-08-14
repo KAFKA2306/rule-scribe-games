@@ -22,13 +22,11 @@ on:
       - "docs/VRCHAT_READINESS_AUDIT_V1.md"
       - ".github/workflows/test-vrchat-readiness.yml"
   workflow_dispatch:
+  schedule:
+    - cron: "37 20 * * *"
 
 permissions:
   contents: read
-
-env:
-  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
 jobs:
   contract-tests:
@@ -68,10 +66,13 @@ jobs:
           backend/tests/test_vrchat_readiness.py
 
   production-readonly-audit:
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
     needs: contract-tests
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
     steps:
       - uses: actions/checkout@v5
 
