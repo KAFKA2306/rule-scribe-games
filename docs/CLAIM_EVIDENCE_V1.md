@@ -56,7 +56,7 @@ Sourceから評価する最小の事実単位です。
 - lifecycle status
 - generator provenance
 
-Claim lifecycle (`unknown / candidate / accepted / rejected`) と Evidence support status は別概念です。
+Claim lifecycle (`unknown / candidate / accepted / rejected`) と Evidence support status は別概念です。Evidenceが支持していても、review lifecycleが`accepted`になるまではpresentation truthへ昇格させません。
 
 ### EvidenceBinding
 
@@ -70,6 +70,8 @@ Relations:
 - `unresolved`
 
 1 Source -> 複数Claim、複数Source -> 1 Claimを許可します。相反するSourceを上書きで消さず、`supports`と`contradicts`を同じClaimに保持できます。
+
+同一 `(claim, source, locator, relation)` の重複bindingは拒否します。locatorが取得できず`NULL`の場合も、partial unique indexにより同一`(claim, source, relation)`の重複を許可しません。
 
 ## Target contract
 
@@ -124,14 +126,19 @@ field_path = min_age
 
 ## Support status
 
-API projection用statusはEvidenceBinding relationから決定論的に導出します。
+Evidence support statusはEvidenceBinding relationから決定論的に導出します。
 
 - supportsのみ -> `supported`
 - supports + contradicts -> `contested`
 - contradictsのみ -> `contradicted`
 - supporting evidenceなし -> `unresolved`
 
-`projection_eligible=true`となるのは**uncontradicted supported claimのみ**です。
+`projection_eligible=true`となるのは、次の両方を満たすclaimだけです。
+
+1. lifecycleが`accepted`
+2. support statusが`SUPPORTED`、すなわちsupportが存在しcontradictionがない
+
+したがって`unknown / candidate / rejected`は、supporting sourceが存在してもprojection対象になりません。
 
 Source trust、publisher identity、URL domain、entity-level `verification_status`から`projection_eligible`を推測しません。
 
@@ -154,6 +161,8 @@ GET /api/games/{slug}/claims/{claim_id}?rule_set_id=...
 
 全APIでRuleSetを明示し、別Game/RuleSetからclaimを取り込まないようfail-closedにします。
 
+canonical evidence backendのread自体に失敗した場合は、`not_available`や404へ潰しません。`EvidenceReadError`として失敗させ、利用側が「evidenceが存在しない」と「backend障害」を区別できるようにします。
+
 ## Legacy fields
 
 `rule_nodes.source_claim_ref / evidence_ref / source_url / source_locator` は既存互換のlegacy fieldです。v1導入後、claim supportの正準判定には使用しません。
@@ -175,20 +184,23 @@ Tables:
 
 TargetはRule Graph / Component Catalogの既存composite identityへFKで接続します。EvidenceSourceは複数RuleSetで再利用できますが、EvidenceBindingは必ず特定RuleSetのClaimを介して明示的に作成します。
 
+EvidenceBindingの一意性はlocator有無を分けたpartial unique indexで保証し、`locator_id=NULL`でも重複relationを作れないようにします。
+
 全tableでRLSを有効化し、public anonymous write policyは追加しません。
 
 ## Projection / release gate
 
-#151 Presentation Projectionは`projection_eligible=true`のClaimだけをrule truthの候補として使います。`contested / contradicted / unresolved`をverified Quick Rulesへ混ぜません。
+#151 Presentation Projectionは`projection_eligible=true`のClaimだけをrule truthの候補として使います。`unknown / candidate / rejected / contested / contradicted / unresolved`をverified Quick Rulesへ混ぜません。
 
 #71 provenance release gateは少なくとも次を検知可能にします。
 
 - Claimはあるがsupporting EvidenceBindingがない
+- Claim lifecycleがacceptedではない
 - contradictionを含むclaim
 - RuleSet mismatchでbinding/target作成が拒否された
 - locatorが無いsourceを架空locator付きとして扱っていない
 
-`claim_evidence_audit_summary.claims_without_support`を機械監査入口として利用できます。
+`claim_evidence_audit_summary.claims_without_support` と `claims_not_accepted` を機械監査入口として利用できます。
 
 ## Primary standards
 
