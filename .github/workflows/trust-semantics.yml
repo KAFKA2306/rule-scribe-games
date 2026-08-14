@@ -1,0 +1,60 @@
+name: Trust semantics
+
+on:
+  pull_request:
+    paths:
+      - "backend/app/models/**"
+      - "backend/app/services/game_service.py"
+      - "backend/tests/test_rule_source_gate.py"
+      - "backend/tests/test_trust_semantics.py"
+      - "frontend/src/components/game/ExternalLinks.jsx"
+      - "supabase/migrations/**"
+      - "docs/TRUST_MODEL.md"
+      - ".github/workflows/trust-semantics.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "backend/app/models/**"
+      - "backend/app/services/game_service.py"
+      - "backend/tests/test_rule_source_gate.py"
+      - "backend/tests/test_trust_semantics.py"
+      - "frontend/src/components/game/ExternalLinks.jsx"
+      - "supabase/migrations/**"
+      - "docs/TRUST_MODEL.md"
+      - ".github/workflows/trust-semantics.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  trust-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+
+      - name: Install Python dependencies
+        run: uv sync --frozen --dev
+
+      - name: Test trust and source contracts
+        env:
+          PYTHONPATH: backend
+        run: uv run pytest -q backend/tests/test_rule_source_gate.py backend/tests/test_trust_semantics.py
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Build frontend
+        working-directory: frontend
+        run: npm run build
+
+      - name: Assert UI ignores legacy is_official trust flag
+        run: |
+          ! grep -q 'game\.is_official' frontend/src/components/game/ExternalLinks.jsx
+          grep -q 'source_trust_status' frontend/src/components/game/ExternalLinks.jsx
+          grep -q 'content_review_status' frontend/src/components/game/ExternalLinks.jsx
