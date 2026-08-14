@@ -1,7 +1,7 @@
+import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from pydantic import ValidationError
-import pytest
 
 from app.models.ruleset import RuleSet, RuleSetListResponse
 from app.routers import games
@@ -77,6 +77,28 @@ def test_ruleset_response_rejects_cross_game_mix():
             slug="example",
             rulesets=[_ruleset(game_id="game-2")],
         )
+
+
+def test_publisher_and_platform_source_lineage_stays_isolated_by_ruleset():
+    publisher = _ruleset(source_ids=["source.publisher.rules"])
+    bga = _ruleset(
+        ruleset_id="set-bga",
+        language_code="en",
+        edition_label="digital",
+        platform="boardgamearena",
+        source_ids=["source.bga.rules"],
+    )
+
+    response = RuleSetListResponse(
+        status="available",
+        game_id="game-1",
+        slug="example",
+        rulesets=[publisher, bga],
+    )
+
+    assert response.rulesets[0].source_ids == ["source.publisher.rules"]
+    assert response.rulesets[1].source_ids == ["source.bga.rules"]
+    assert set(response.rulesets[0].source_ids).isdisjoint(response.rulesets[1].source_ids)
 
 
 class FakeRuleSetService:
