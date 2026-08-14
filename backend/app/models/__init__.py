@@ -101,7 +101,6 @@ class GameDetail(BaseSchema):
     published_year: int | None = None
     title_ja: str | None = None
     title_en: str | None = None
-    official_url: str | None = None
     bgg_url: str | None = None
     bga_url: str | None = None
     amazon_url: str | None = None
@@ -132,7 +131,6 @@ class GameUpdate(BaseSchema):
     min_age: int | None = None
     published_year: int | None = None
     image_url: str | None = None
-    official_url: str | None = None
     source_url: str | None = None
     source_trust: SourceTrust | None = None
     content_review_status: ContentReviewStatus | None = None
