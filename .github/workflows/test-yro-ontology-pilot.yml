@@ -1,0 +1,103 @@
+name: YRO Ontology pilot contract
+
+on:
+  pull_request:
+    paths:
+      - "backend/app/db/migrations/017_seed_yro_bga_260725_1445.sql"
+      - ".github/workflows/test-yro-ontology-pilot.yml"
+  push:
+    branches: [main]
+    paths:
+      - "backend/app/db/migrations/017_seed_yro_bga_260725_1445.sql"
+      - ".github/workflows/test-yro-ontology-pilot.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  yro-ontology-pilot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: yro_pilot_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d yro_pilot_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/yro_pilot_test
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Build minimal canonical catalog schema
+        shell: bash
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 <<'SQL'
+          CREATE TABLE public.game_works (
+            id uuid PRIMARY KEY DEFAULT gen_random_uuid()
+          );
+          CREATE TABLE public.games (
+            id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+            slug text NOT NULL UNIQUE,
+            title text,
+            work_id uuid REFERENCES public.game_works(id),
+            identity_status text NOT NULL DEFAULT 'unverified'
+          );
+          INSERT INTO public.game_works DEFAULT VALUES;
+          INSERT INTO public.games(slug, title, work_id, identity_status)
+          SELECT 'yro', 'YRO', id, 'verified' FROM public.game_works LIMIT 1;
+          SQL
+
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/010_rule_graph.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/011_concept_taxonomy.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/013_ruleset_identity.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/014_component_catalog.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/015_claim_evidence.sql
+
+      - name: Apply YRO pilot twice
+        shell: bash
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/017_seed_yro_bga_260725_1445.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/017_seed_yro_bga_260725_1445.sql
+
+      - name: Verify source isolation and idempotent cardinalities
+        shell: bash
+        run: |
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_sets rs join public.games g on g.id=rs.game_id where g.slug='yro';")" = "1"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_sets rs join public.games g on g.id=rs.game_id where g.slug='yro' and rs.platform='Board Game Arena' and rs.revision_label='260725-1445' and rs.verification_status='source_bound' and rs.source_ids=ARRAY['bga:yro:260725-1445']::text[];")" = "1"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='yro';")" = "16"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='yro' and rn.node_type='phase';")" = "6"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_edges re join public.rule_sets rs on rs.id=re.rule_set_id join public.games g on g.id=rs.game_id where g.slug='yro';")" = "13"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='yro' and rn.verification_status='source_bound' and rn.source_claim_ref is not null and rn.evidence_ref is not null;")" = "16"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.claims c join public.rule_sets rs on rs.id=c.rule_set_id join public.games g on g.id=rs.game_id where g.slug='yro';")" = "19"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.evidence_bindings eb join public.claims c on c.claim_id=eb.claim_id join public.rule_sets rs on rs.id=c.rule_set_id join public.games g on g.id=rs.game_id where g.slug='yro' and eb.relation='supports';")" = "19"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.evidence_bindings where source_id='publisher:yro:studio-supernova-product';")" = "0"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.component_sets cs join public.rule_sets rs on rs.id=cs.rule_set_id join public.games g on g.id=rs.game_id where g.slug='yro';")" = "2"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.component_property_definitions pd join public.rule_sets rs on rs.id=pd.rule_set_id join public.games g on g.id=rs.game_id where g.slug='yro';")" = "4"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.components c join public.rule_sets rs on rs.id=c.rule_set_id join public.games g on g.id=rs.game_id where g.slug='yro';")" = "0"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.component_catalogs cc join public.rule_sets rs on rs.id=cc.rule_set_id join public.games g on g.id=rs.game_id where g.slug='yro' and cc.metadata->>'coverage_status'='incomplete' and cc.metadata->>'enumeration_status'='unknown';")" = "1"
+
+      - name: Verify fail-closed identity prerequisite
+        shell: bash
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 <<'SQL'
+          DELETE FROM public.games WHERE slug='yro';
+          INSERT INTO public.game_works DEFAULT VALUES;
+          INSERT INTO public.games(slug, title, work_id, identity_status)
+          SELECT 'yro', 'YRO', id, 'unverified' FROM public.game_works ORDER BY id DESC LIMIT 1;
+          SQL
+
+          if psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/017_seed_yro_bga_260725_1445.sql; then
+            echo "YRO pilot unexpectedly accepted an unverified Game identity"
+            exit 1
+          fi
