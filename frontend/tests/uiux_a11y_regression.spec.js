@@ -79,6 +79,8 @@ test('directory keeps search local, labels controls, exposes mobile filters, and
     await filterPanel.getByRole('button', { name: '2人' }).click()
     await filterPanel.getByRole('button', { name: 'フィルターを閉じる' }).click()
     await expect(page.getByText('人数: 2')).toBeVisible()
+    await page.getByRole('button', { name: '人数フィルターを解除' }).click()
+    await expect(page.getByText('ゲーム2', { exact: true }).first()).toBeVisible()
   }
 
   for (const title of ['ゲーム1', 'ゲーム2', 'ゲーム3']) {
