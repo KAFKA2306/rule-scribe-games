@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Outlet, useLocation, useNavigationType } from 'react-router-dom'
 
 import AuthControlPortal from './AuthControlPortal.jsx'
+import GameListSavePortal from './GameListSavePortal.jsx'
 
 function isPlainPrimaryClick(event) {
   return event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey
@@ -95,6 +96,7 @@ export default function AppShell() {
       )}
       <Outlet />
       <AuthControlPortal />
+      <GameListSavePortal />
     </>
   )
 }
