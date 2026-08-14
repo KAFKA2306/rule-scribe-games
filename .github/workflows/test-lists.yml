@@ -104,6 +104,9 @@ jobs:
       - name: Lint list, navigation, and performance surface
         working-directory: frontend
         run: npx eslint src/main.jsx src/lib/api.js src/components/AppShell.jsx src/components/AuthControlPortal.jsx src/components/GameListSavePortal.jsx src/components/game/AddToListButton.jsx src/components/game/OwnedGameButton.jsx src/pages/ListsPage.jsx tests/lists.spec.js tests/navigation.spec.js tests/performance.spec.js
+      - name: Install Chromium
+        working-directory: frontend
+        run: npx playwright install --with-deps chromium
       - name: Gate anonymous list route
         working-directory: frontend
         run: npx playwright test tests/lists.spec.js --project=chromium --grep "anonymous list route"
