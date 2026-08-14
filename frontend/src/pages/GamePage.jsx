@@ -5,7 +5,6 @@ import ReactMarkdown from 'react-markdown'
 import { api } from '../lib/api'
 import { getCuratedRuleGuide } from '../lib/curatedRuleGuides'
 import { ShareButton, TwitterShareButton } from '../components/game/ShareButtons'
-import { RegenerateButton } from '../components/game/RegenerateButton'
 import { TextToSpeech } from '../components/game/TextToSpeech'
 import { ExternalLinks } from '../components/game/ExternalLinks'
 import { InfographicsGallery } from '../components/game/InfographicsGallery'
@@ -126,7 +125,6 @@ export default function GamePage({ slug: propSlug, initialGame, allGames: propAl
           <TextToSpeech text={`${title}. ${ruleGuide?.quick?.turnSteps?.join(' ') || description}`} />
           <TwitterShareButton slug={slug} title={title} />
           <ShareButton slug={slug} />
-          <RegenerateButton title={title} onRegenerate={setGame} />
         </div>
       </div>
 
