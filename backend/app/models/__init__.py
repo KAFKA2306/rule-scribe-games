@@ -1,8 +1,11 @@
 from datetime import datetime
-from typing import Any
+from typing import Any, Literal
 from urllib.parse import urlparse
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+SourceTrust = Literal["unknown", "official_publisher", "authorized_partner", "third_party"]
+ContentReviewStatus = Literal["unknown", "ai_draft", "review_required", "human_reviewed", "publisher_reviewed"]
 
 
 def validate_bga_url(value: str | None) -> str | None:
@@ -50,7 +53,7 @@ class GenerationProvenance(BaseSchema):
     prompt_version: str
     golden_version: str
     source_bound: bool
-    content_review_status: str = "ai_draft"
+    content_review_status: ContentReviewStatus = "ai_draft"
 
 
 class StructuredData(BaseSchema):
@@ -84,12 +87,13 @@ class GameDetail(BaseSchema):
     structured_data: StructuredData | None = None
     infographics: dict[str, str] | None = None
     source_url: str | None = None
+    source_trust: SourceTrust = "unknown"
+    content_review_status: ContentReviewStatus = "unknown"
     affiliate_urls: dict[str, str | None] | None = None
     view_count: int | None = 0
     search_count: int | None = 0
     data_version: int = 1
     last_regenerated_at: datetime | None = None
-    is_official: bool | None = False
     min_players: int | None = None
     max_players: int | None = None
     play_time: int | None = None
@@ -129,6 +133,9 @@ class GameUpdate(BaseSchema):
     published_year: int | None = None
     image_url: str | None = None
     official_url: str | None = None
+    source_url: str | None = None
+    source_trust: SourceTrust | None = None
+    content_review_status: ContentReviewStatus | None = None
     bgg_url: str | None = None
     bga_url: str | None = None
     structured_data: StructuredData | None = None
