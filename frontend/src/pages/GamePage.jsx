@@ -11,6 +11,7 @@ import { InfographicsGallery } from '../components/game/InfographicsGallery'
 import { QuickRulesPanel } from '../components/game/QuickRulesPanel'
 import { RuleFlowDiagram } from '../components/game/RuleFlowDiagram'
 import { ConceptGlossary } from '../components/game/ConceptGlossary'
+import { ComponentsPanel } from '../components/game/ComponentsPanel'
 
 const IDENTITY_LABELS = {
   verified: 'IDENTITY VERIFIED',
@@ -42,6 +43,7 @@ export default function GamePage({ slug: propSlug, initialGame, allGames: propAl
   const [loading, setLoading] = useState(!initialGame)
   const [error, setError] = useState(null)
   const [activeTab, setActiveTab] = useState('rules')
+  const [componentCatalogAvailability, setComponentCatalogAvailability] = useState(null)
 
   const BASE_URL = 'https://bodoge-no-mikata.vercel.app'
 
@@ -73,6 +75,34 @@ export default function GamePage({ slug: propSlug, initialGame, allGames: propAl
     }
     fetchData()
   }, [slug, initialGame, allGames.length])
+
+  useEffect(() => {
+    let cancelled = false
+    setComponentCatalogAvailability(null)
+    setActiveTab('rules')
+
+    api.get(`/api/games/${encodeURIComponent(slug)}/component-catalog-availability`)
+      .then((payload) => {
+        if (!cancelled) setComponentCatalogAvailability(payload)
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          console.error('Failed to check component catalog availability:', err)
+          setComponentCatalogAvailability({ status: 'not_available', rule_set_ids: [] })
+        }
+      })
+
+    return () => { cancelled = true }
+  }, [slug])
+
+  const componentRuleSetIds = componentCatalogAvailability?.rule_set_ids || []
+  const hasComponents = componentCatalogAvailability?.status === 'available' && componentRuleSetIds.length > 0
+
+  useEffect(() => {
+    if (componentCatalogAvailability && !hasComponents && activeTab === 'components') {
+      setActiveTab('rules')
+    }
+  }, [componentCatalogAvailability, hasComponents, activeTab])
 
   if (loading) {
     return <div className="page-state page-state--loading" role="status">ARCHIVE LOADING...</div>
@@ -218,6 +248,11 @@ export default function GamePage({ slug: propSlug, initialGame, allGames: propAl
             <button role="tab" aria-selected={activeTab === 'coach'} className={activeTab === 'coach' ? 'active' : ''} onClick={() => setActiveTab('coach')}>
               セットアップ <span className="sr-only">INST COACH</span>
             </button>
+            {hasComponents && (
+              <button role="tab" aria-selected={activeTab === 'components'} className={activeTab === 'components' ? 'active' : ''} onClick={() => setActiveTab('components')}>
+                コンポーネント <span className="sr-only">COMPONENTS</span>
+              </button>
+            )}
             <button role="tab" aria-selected={activeTab === 'strategy'} className={activeTab === 'strategy' ? 'active' : ''} onClick={() => setActiveTab('strategy')}>
               戦略 <span className="sr-only">STRATEGY GUIDE</span>
             </button>
@@ -277,6 +312,10 @@ export default function GamePage({ slug: propSlug, initialGame, allGames: propAl
                   )}
                 </div>
               </div>
+            )}
+
+            {activeTab === 'components' && hasComponents && (
+              <ComponentsPanel slug={slug} ruleSetIds={componentRuleSetIds} />
             )}
 
             {activeTab === 'strategy' && (
