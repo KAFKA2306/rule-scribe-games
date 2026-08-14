@@ -31,6 +31,28 @@ def _payload() -> dict:
                 "extraction_method": "fixture",
             }
         ],
+        "source_locators": [
+            {
+                "locator_id": "locator:set:cards",
+                "source_id": "source:fixture:1",
+                "section_heading": "Components",
+            },
+            {
+                "locator_id": "locator:def:rank",
+                "source_id": "source:fixture:1",
+                "section_heading": "Card fields",
+            },
+            {
+                "locator_id": "locator:component:alpha",
+                "source_id": "source:fixture:1",
+                "external_reference": "Alpha",
+            },
+            {
+                "locator_id": "locator:component:alpha:rank",
+                "source_id": "source:fixture:1",
+                "external_reference": "Alpha rank",
+            },
+        ],
         "component_sets": [
             {
                 "component_set_id": "cards",
@@ -71,28 +93,33 @@ def _payload() -> dict:
         "evidence_bindings": [
             {
                 "binding_id": "binding:set:cards",
-                "target_path": "component_sets.cards",
+                "target": {"target_type": "component_set", "component_set_id": "cards"},
                 "source_id": "source:fixture:1",
                 "locator_id": "locator:set:cards",
                 "relation": "supports",
             },
             {
                 "binding_id": "binding:def:rank",
-                "target_path": "property_definitions.rank",
+                "target": {"target_type": "property_definition", "property_key": "rank"},
                 "source_id": "source:fixture:1",
                 "locator_id": "locator:def:rank",
                 "relation": "supports",
             },
             {
                 "binding_id": "binding:component:alpha",
-                "target_path": "components.card.alpha",
+                "target": {"target_type": "component", "component_id": "card.alpha"},
                 "source_id": "source:fixture:1",
                 "locator_id": "locator:component:alpha",
                 "relation": "supports",
             },
             {
-                "binding_id": "binding:component:alpha:rank",
-                "target_path": "components.card.alpha.properties.rank",
+                "binding_id": "binding:component:alpha:rank:0",
+                "target": {
+                    "target_type": "component_property",
+                    "component_id": "card.alpha",
+                    "property_key": "rank",
+                    "ordinal": 0,
+                },
                 "source_id": "source:fixture:1",
                 "locator_id": "locator:component:alpha:rank",
                 "relation": "supports",
@@ -117,6 +144,7 @@ def test_yro_manifest_is_source_bound_unknown_and_does_not_fabricate_cards():
     assert manifest.expected_count is None
     assert manifest.components == []
     assert {item.component_set_id for item in manifest.component_sets} == {"adventurers", "quests"}
+    assert len(manifest.source_locators) == 4
     assert report.blockers == []
     assert report.evidence_coverage.required_fields == YRO_EVIDENCE_FIELDS
     assert report.evidence_coverage.supported_fields == YRO_EVIDENCE_FIELDS
@@ -131,6 +159,7 @@ def test_ruleset_must_resolve_before_dry_run_can_promote():
 def test_unknown_property_definition_is_rejected_in_report():
     payload = _payload()
     payload["components"][0]["properties"][0]["property_key"] = "mystery"
+    payload["evidence_bindings"][3]["target"]["property_key"] = "mystery"
     manifest = _manifest(payload)
     report = ComponentIngestionDryRun().run(manifest, resolved_ruleset_id=RULESET_ID)
     assert report.rejected_unknown_properties == ["card.alpha:mystery"]
@@ -148,7 +177,7 @@ def test_property_type_mismatch_is_fail_closed():
 def test_field_level_evidence_must_cover_source_bound_property():
     payload = _payload()
     payload["evidence_bindings"] = [
-        item for item in payload["evidence_bindings"] if item["binding_id"] != "binding:component:alpha:rank"
+        item for item in payload["evidence_bindings"] if item["binding_id"] != "binding:component:alpha:rank:0"
     ]
     report = ComponentIngestionDryRun().run(_manifest(payload), resolved_ruleset_id=RULESET_ID)
     assert "FIELD_EVIDENCE_COVERAGE_INCOMPLETE" in report.blockers
@@ -167,11 +196,97 @@ def test_source_url_does_not_implicitly_verify_a_field():
             "extraction_method": "fixture",
         }
     )
-    for binding in payload["evidence_bindings"]:
-        if binding["binding_id"] == "binding:component:alpha:rank":
-            binding["source_id"] = "source:fixture:2"
+    payload["source_locators"].append(
+        {
+            "locator_id": "locator:other:alpha-rank",
+            "source_id": "source:fixture:2",
+            "section_heading": "Other",
+        }
+    )
+    binding = next(item for item in payload["evidence_bindings"] if item["binding_id"] == "binding:component:alpha:rank:0")
+    binding["source_id"] = "source:fixture:2"
+    binding["locator_id"] = "locator:other:alpha-rank"
     report = ComponentIngestionDryRun().run(_manifest(payload), resolved_ruleset_id=RULESET_ID)
     assert "FIELD_EVIDENCE_COVERAGE_INCOMPLETE" in report.blockers
+
+
+def test_binding_requires_declared_locator_and_matching_source():
+    payload = _payload()
+    payload["evidence_bindings"][0]["locator_id"] = "locator:not-declared"
+    with pytest.raises(ValidationError, match="references unknown locator"):
+        _manifest(payload)
+
+    payload = _payload()
+    payload["sources"].append(
+        {
+            "source_id": "source:fixture:2",
+            "url": "https://example.org/other",
+            "source_type": "community_list",
+            "authority": "community",
+            "extraction_method": "fixture",
+        }
+    )
+    payload["evidence_bindings"][0]["source_id"] = "source:fixture:2"
+    with pytest.raises(ValidationError, match="source does not match locator source"):
+        _manifest(payload)
+
+
+def test_component_property_evidence_is_ordinal_specific():
+    payload = _payload()
+    payload["property_definitions"][0]["cardinality"] = "many"
+    payload["components"][0]["properties"][0]["values"].append({"value_type": "integer", "value": 2})
+    payload["completeness"] = "partial"
+    payload["expected_count"] = 2
+    payload["unresolved_count"] = 1
+    report = ComponentIngestionDryRun().run(_manifest(payload), resolved_ruleset_id=RULESET_ID)
+    assert report.evidence_coverage.required_fields == FIXTURE_EVIDENCE_FIELDS + 1
+    assert report.evidence_coverage.supported_fields == FIXTURE_EVIDENCE_FIELDS
+    assert "FIELD_EVIDENCE_COVERAGE_INCOMPLETE" in report.blockers
+
+
+def test_ability_printed_and_normalized_evidence_are_independent_targets():
+    payload = _payload()
+    payload["components"][0]["abilities"] = [
+        {
+            "ability_id": "ability.alpha",
+            "printed_text": "Printed ability text",
+            "normalized_label": "Normalized effect",
+            "verification_status": "source_bound",
+            "source_ids": ["source:fixture:1"],
+        }
+    ]
+    payload["source_locators"].append(
+        {
+            "locator_id": "locator:ability:alpha",
+            "source_id": "source:fixture:1",
+            "external_reference": "Alpha ability",
+        }
+    )
+    payload["evidence_bindings"].append(
+        {
+            "binding_id": "binding:ability:alpha:printed",
+            "target": {"target_type": "ability_printed_text", "ability_id": "ability.alpha"},
+            "source_id": "source:fixture:1",
+            "locator_id": "locator:ability:alpha",
+            "relation": "supports",
+        }
+    )
+    report = ComponentIngestionDryRun().run(_manifest(payload), resolved_ruleset_id=RULESET_ID)
+    assert report.evidence_coverage.required_fields == FIXTURE_EVIDENCE_FIELDS + 2
+    assert report.evidence_coverage.supported_fields == FIXTURE_EVIDENCE_FIELDS + 1
+    assert "FIELD_EVIDENCE_COVERAGE_INCOMPLETE" in report.blockers
+
+
+def test_structured_target_must_resolve_to_manifest_entity():
+    payload = _payload()
+    payload["evidence_bindings"][0]["target"]["component_set_id"] = "missing"
+    with pytest.raises(ValidationError, match="unknown component set"):
+        _manifest(payload)
+
+    payload = _payload()
+    payload["evidence_bindings"][3]["target"]["ordinal"] = 1
+    with pytest.raises(ValidationError, match="ordinal is out of range"):
+        _manifest(payload)
 
 
 def test_duplicate_stable_identity_candidate_is_reported_even_with_distinct_ids():
