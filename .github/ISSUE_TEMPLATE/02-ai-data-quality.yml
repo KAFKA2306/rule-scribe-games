@@ -1,0 +1,79 @@
+name: AI / data quality change
+description: Define source-grounded AI or data-quality work with evaluation, provenance, and release evidence.
+title: "[AI/Data] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use primary or canonical sources where possible. Unknown or unverified data must remain unknown; do not request secrets, tokens, private credentials, or copyrighted source dumps in the issue.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / user value
+      description: What quality failure or data problem is being solved?
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence / current behavior
+      description: Provide current measurements, failing examples, code/data locations, or reproducible observations.
+    validations:
+      required: true
+  - type: textarea
+    id: source_contract
+    attributes:
+      label: Source / provenance contract
+      description: Identify authoritative sources, edition/language/revision where relevant, and how source locators will be preserved.
+    validations:
+      required: true
+  - type: textarea
+    id: evaluation
+    attributes:
+      label: Evaluation / baseline
+      description: Define golden fixtures, metrics, thresholds, or before/after baseline. Separate unknown from failure.
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope / non-scope
+      description: State what the change may modify and what it must not infer, overwrite, publish, or auto-connect.
+    validations:
+      required: true
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies / blockers
+      description: List upstream schemas, services, permissions, external settings, or issues. Separate external blockers from code blockers.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance Criteria
+      description: Define machine-checkable quality and provenance outcomes.
+      placeholder: "- [ ] Metric or invariant 1\n- [ ] Metric or invariant 2"
+    validations:
+      required: true
+  - type: textarea
+    id: tests
+    attributes:
+      label: Tests
+      description: Include known-good, failure, unknown/unverified, malformed, and regression fixtures as applicable.
+    validations:
+      required: true
+  - type: textarea
+    id: production_verification
+    attributes:
+      label: Production verification
+      description: Define production-equivalent data, artifact/report, and deployment/runtime checks required before close.
+    validations:
+      required: true
+  - type: textarea
+    id: cleanup_rollback
+    attributes:
+      label: Cleanup / rollback condition
+      description: Define stale artifacts/overrides to remove and the condition that rejects or rolls back the change.
+    validations:
+      required: true
