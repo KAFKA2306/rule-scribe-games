@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/KAFKA2306/rule-scribe-games/schemas/vrchat/manifest-read-response-v1.schema.json",
+  "title": "VRChat Manifest Read Response v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "status",
+    "slug",
+    "rulesetId",
+    "reasonCode",
+    "manifest"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0"
+    },
+    "status": {
+      "enum": [
+        "available",
+        "not_registered",
+        "unavailable",
+        "unsupported",
+        "retired",
+        "invalid"
+      ]
+    },
+    "slug": {
+      "type": "string",
+      "minLength": 1
+    },
+    "rulesetId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "reasonCode": {
+      "anyOf": [
+        {
+          "type": "string",
+          "minLength": 1
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "manifest": {
+      "anyOf": [
+        {
+          "$ref": "board-game-module-manifest-v1.schema.json"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "available"
+          }
+        },
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "reasonCode": {
+            "type": "null"
+          },
+          "manifest": {
+            "$ref": "board-game-module-manifest-v1.schema.json"
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "reasonCode": {
+            "type": "string",
+            "minLength": 1
+          },
+          "manifest": {
+            "type": "null"
+          }
+        }
+      }
+    }
+  ]
+}
