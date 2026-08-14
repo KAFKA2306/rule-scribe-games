@@ -35,6 +35,20 @@ SET request.jwt.claim.sub = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
 INSERT INTO public.user_lists(id, owner_id, name)
 VALUES ('aaaaaaaa-0000-4000-8000-000000000001','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','Favorites');
 
+INSERT INTO public.user_lists(id, owner_id, name, visibility, system_key)
+VALUES ('aaaaaaaa-0000-4000-8000-000000000002','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','所持ゲーム','private','owned');
+
+DO $$
+BEGIN
+  BEGIN
+    INSERT INTO public.user_lists(owner_id, name, visibility, system_key)
+    VALUES ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','duplicate owned','private','owned');
+    RAISE EXCEPTION 'duplicate owned system list unexpectedly accepted';
+  EXCEPTION WHEN unique_violation THEN NULL;
+  END;
+END;
+$$;
+
 INSERT INTO public.user_list_items(id, list_id, game_id, game_title_snapshot, position) VALUES
 ('aaaaaaaa-1000-4000-8000-000000000001','aaaaaaaa-0000-4000-8000-000000000001','11111111-1111-4111-8111-111111111111','ゲーム1',0),
 ('aaaaaaaa-1000-4000-8000-000000000002','aaaaaaaa-0000-4000-8000-000000000001','22222222-2222-4222-8222-222222222222','ゲーム2',1);
@@ -77,6 +91,9 @@ BEGIN
   END IF;
   IF (SELECT count(*) FROM public.user_list_items WHERE list_id='aaaaaaaa-0000-4000-8000-000000000001') <> 2 THEN
     RAISE EXCEPTION 'user B deleted user A item';
+  END IF;
+  IF (SELECT count(*) FROM public.user_lists WHERE owner_id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' AND system_key='owned') <> 1 THEN
+    RAISE EXCEPTION 'owned system list uniqueness was not preserved';
   END IF;
 END;
 $$;

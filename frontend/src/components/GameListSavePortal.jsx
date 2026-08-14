@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 
 import { api } from '../lib/api'
 import AddToListButton from './game/AddToListButton'
+import OwnedGameButton from './game/OwnedGameButton'
 
 function currentGameSlug() {
   const match = window.location.pathname.match(/^\/games\/([^/]+)\/?$/)
@@ -44,5 +45,11 @@ export default function GameListSavePortal() {
   }, [])
 
   if (!target || !game) return null
-  return createPortal(<AddToListButton game={game} />, target)
+  return createPortal(
+    <>
+      <OwnedGameButton game={game} />
+      <AddToListButton game={game} />
+    </>,
+    target,
+  )
 }
