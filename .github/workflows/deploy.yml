@@ -98,5 +98,5 @@ jobs:
         run: python scripts/check_google_oauth.py .vercel/.env.production.local
       - name: Build Production with Vercel
         run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
-      - name: Deploy Production prebuilt output
-        run: vercel deploy --prebuilt --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
+      - name: Deploy Production to Vercel
+        run: vercel deploy --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
