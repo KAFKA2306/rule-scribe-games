@@ -1,0 +1,321 @@
+/* Product overrides for KAFKA SIGNAL.
+   Canonical tokens are vendored from prompt-vault and imported before this file. */
+
+html {
+  background: var(--ks-canvas);
+}
+
+body {
+  margin: 0;
+  background: var(--ks-canvas);
+  color: var(--ks-ink);
+  font-family: var(--ks-font-body);
+  font-size: 16px;
+  line-height: 1.55;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button,
+select,
+input[type="button"],
+input[type="submit"] {
+  min-height: var(--ks-control-min);
+}
+
+::selection {
+  background: var(--ks-primary-soft);
+  color: var(--ks-ink);
+}
+
+/* Header: warm paper, editorial navy, one restrained accent. */
+.navbar {
+  background: color-mix(in srgb, var(--ks-surface) 94%, transparent);
+  color: var(--ks-ink);
+  border-bottom: 1px solid var(--ks-border);
+  box-shadow: var(--ks-shadow-low);
+  backdrop-filter: blur(12px);
+}
+
+.logo {
+  color: var(--ks-ink);
+  font-family: var(--ks-font-display);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.search-input,
+.sort-select {
+  min-height: var(--ks-control-min);
+  background: var(--ks-surface);
+  color: var(--ks-ink);
+  border: 1px solid var(--ks-border);
+  border-radius: var(--ks-radius-md);
+  box-shadow: none;
+}
+
+.search-input::placeholder {
+  color: var(--ks-ink-muted);
+}
+
+.search-input:hover,
+.sort-select:hover {
+  border-color: var(--ks-primary);
+}
+
+.game-count {
+  min-height: var(--ks-control-min);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--ks-primary-soft);
+  color: var(--ks-primary);
+  border: 1px solid color-mix(in srgb, var(--ks-primary) 35%, var(--ks-border));
+  border-radius: var(--ks-radius-md);
+  font-family: var(--ks-font-mono);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+/* Navigation / filters: dense, calm, not a wall of dark pills. */
+.home-main,
+.results-area {
+  background: var(--ks-canvas);
+  color: var(--ks-ink);
+}
+
+.filter-sidebar {
+  background: var(--ks-surface-subtle);
+  color: var(--ks-ink);
+  border-right: 1px solid var(--ks-border);
+}
+
+.filter-section {
+  border-color: var(--ks-border);
+}
+
+.filter-section-title,
+.results-header {
+  color: var(--ks-ink-muted);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.results-header {
+  border-color: var(--ks-border);
+}
+
+.filter-button,
+.filter-reset,
+.button-secondary {
+  min-height: var(--ks-control-min);
+  background: var(--ks-surface);
+  color: var(--ks-ink);
+  border: 1px solid var(--ks-border);
+  border-radius: var(--ks-radius-md);
+  box-shadow: none;
+}
+
+.filter-button:hover,
+.filter-reset:hover,
+.button-secondary:hover:not(:disabled) {
+  background: var(--ks-primary-soft);
+  color: var(--ks-primary);
+  border-color: var(--ks-primary);
+}
+
+.filter-button.active,
+.filter-button.selected,
+.filter-button[aria-pressed="true"] {
+  background: var(--ks-primary);
+  color: var(--ks-surface);
+  border-color: var(--ks-primary);
+}
+
+/* Cards: paper surfaces, visible source images, compact radii. */
+.game-card {
+  background: var(--ks-surface);
+  color: var(--ks-ink);
+  border: 1px solid var(--ks-border);
+  border-radius: var(--ks-radius-md);
+  box-shadow: var(--ks-shadow-low);
+  overflow: hidden;
+  transition:
+    transform 140ms ease,
+    box-shadow 140ms ease,
+    border-color 140ms ease;
+}
+
+.game-card:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--ks-primary) 45%, var(--ks-border));
+  box-shadow: 0 8px 24px rgb(36 54 83 / 0.12);
+}
+
+.game-card-image {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  object-position: center;
+  background: var(--ks-surface-subtle);
+  border-bottom: 1px solid var(--ks-border);
+}
+
+/* Missing images should read as an empty state, not as a repeated game cover. */
+.game-card-image[src$="/assets/no-image.webp"] {
+  object-fit: contain;
+  padding: clamp(1.5rem, 4vw, 3rem);
+  box-sizing: border-box;
+  background: linear-gradient(
+    135deg,
+    var(--ks-surface-subtle),
+    color-mix(in srgb, var(--ks-primary-soft) 42%, var(--ks-surface))
+  );
+  opacity: 0.44;
+  filter: grayscale(0.2);
+}
+
+.game-card-content {
+  background: var(--ks-surface);
+  color: var(--ks-ink);
+}
+
+.game-card h3,
+.game-card-title {
+  color: var(--ks-ink);
+  font-family: var(--ks-font-body);
+  font-weight: 750;
+}
+
+.game-card-description,
+.game-card p {
+  color: var(--ks-ink-muted);
+}
+
+.game-card-meta,
+.meta-row {
+  color: var(--ks-ink-muted);
+}
+
+.meta-item {
+  background: transparent;
+  color: var(--ks-ink-muted);
+  border: 0;
+  border-radius: 0;
+  padding-inline: 0;
+}
+
+.meta-icon {
+  color: var(--ks-secondary);
+}
+
+/* Compare is a control, not a badge. */
+.compare-button {
+  min-width: var(--ks-control-min);
+  min-height: var(--ks-control-min);
+  background: color-mix(in srgb, var(--ks-surface) 94%, transparent);
+  color: var(--ks-ink-muted);
+  border: 1px solid var(--ks-border);
+  border-radius: var(--ks-radius-sm);
+  box-shadow: var(--ks-shadow-low);
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+.compare-button:hover {
+  background: var(--ks-secondary-soft);
+  color: var(--ks-secondary);
+  border-color: var(--ks-secondary);
+}
+
+.compare-button.selected,
+.compare-button[aria-pressed="true"] {
+  background: var(--ks-secondary);
+  color: var(--ks-surface);
+  border-color: var(--ks-secondary);
+}
+
+.button-primary {
+  min-height: var(--ks-control-min);
+  background: var(--ks-primary);
+  color: var(--ks-surface);
+  border: 1px solid var(--ks-primary);
+  border-radius: var(--ks-radius-md);
+}
+
+.button-primary:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--ks-primary) 86%, var(--ks-ink));
+}
+
+.button-secondary:disabled,
+.button-primary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.user-menu {
+  color: var(--ks-ink);
+}
+
+.user-avatar {
+  border: 1px solid var(--ks-border);
+}
+
+/* Shared detail/search surfaces inherit the same identity without changing IA. */
+.search-results,
+.game-detail,
+.game-detail-card,
+.detail-card,
+.panel,
+.modal-content {
+  background: var(--ks-surface);
+  color: var(--ks-ink);
+  border-color: var(--ks-border);
+  box-shadow: var(--ks-shadow-low);
+}
+
+a {
+  color: var(--ks-primary);
+}
+
+a:hover {
+  color: var(--ks-secondary);
+}
+
+hr {
+  border-color: var(--ks-border);
+}
+
+/* Preserve focus and reduced-motion behavior from canonical tokens. */
+@media (prefers-reduced-motion: no-preference) {
+  .filter-button,
+  .filter-reset,
+  .button-primary,
+  .button-secondary,
+  .compare-button,
+  .search-input,
+  .sort-select {
+    transition:
+      background-color 140ms ease,
+      color 140ms ease,
+      border-color 140ms ease,
+      box-shadow 140ms ease;
+  }
+}
+
+@media (max-width: 900px) {
+  .filter-sidebar {
+    border-right: 0;
+    border-bottom: 1px solid var(--ks-border);
+  }
+
+  .game-card:hover {
+    transform: none;
+  }
+}

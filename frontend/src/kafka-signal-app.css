@@ -1,0 +1,290 @@
+/* KAFKA SIGNAL product bindings for the existing catalogue IA. */
+
+:root {
+  --bg-dark: var(--ks-canvas);
+  --bg-card: var(--ks-surface);
+  --border-color: var(--ks-border);
+  --border-hover: var(--ks-primary);
+  --text-primary: var(--ks-ink);
+  --text-secondary: var(--ks-ink-muted);
+  --text-muted: var(--ks-ink-muted);
+  --accent: var(--ks-primary);
+  --accent-secondary: var(--ks-secondary);
+  --font-family: var(--ks-font-body);
+  --font-heading: var(--ks-font-display);
+}
+
+html,
+body {
+  background: var(--ks-canvas);
+  color: var(--ks-ink);
+}
+
+body {
+  font-family: var(--ks-font-body);
+}
+
+header {
+  background: color-mix(in srgb, var(--ks-surface) 96%, transparent);
+  border-top: 3px solid var(--ks-primary);
+  border-bottom: 1px solid var(--ks-border);
+  box-shadow: var(--ks-shadow-low);
+  backdrop-filter: blur(12px);
+}
+
+.logo-text {
+  color: var(--ks-ink);
+  font-family: var(--ks-font-display);
+  font-weight: 700;
+  letter-spacing: 0.015em;
+}
+
+.search-input,
+.sort-select {
+  min-height: var(--ks-control-min);
+  background: var(--ks-surface);
+  color: var(--ks-ink);
+  border: 1px solid var(--ks-border);
+  border-radius: var(--ks-radius-md);
+  box-shadow: none;
+}
+
+.search-input::placeholder {
+  color: var(--ks-ink-muted);
+}
+
+.search-input:hover,
+.search-input:focus,
+.sort-select:hover,
+.sort-select:focus {
+  border-color: var(--ks-primary);
+}
+
+.db-status {
+  min-height: var(--ks-control-min);
+  background: var(--ks-primary-soft);
+  color: var(--ks-primary);
+  border: 1px solid color-mix(in srgb, var(--ks-primary) 36%, var(--ks-border));
+  border-radius: var(--ks-radius-md);
+  font-family: var(--ks-font-mono);
+  letter-spacing: 0.04em;
+}
+
+.status-dot.connected {
+  background: var(--ks-verified);
+  box-shadow: 0 0 0 3px var(--ks-verified-soft);
+}
+
+aside {
+  background: var(--ks-surface-subtle);
+  color: var(--ks-ink);
+  border-right: 1px solid var(--ks-border);
+}
+
+.filter-section h3 {
+  color: var(--ks-ink-muted);
+  font-family: var(--ks-font-body);
+  letter-spacing: 0.08em;
+}
+
+.filter-btn,
+.button-secondary {
+  min-height: var(--ks-control-min);
+  background: var(--ks-surface);
+  color: var(--ks-ink);
+  border: 1px solid var(--ks-border);
+  border-radius: var(--ks-radius-md);
+  box-shadow: none;
+}
+
+.filter-btn:hover,
+.button-secondary:hover:not(:disabled) {
+  background: var(--ks-primary-soft);
+  color: var(--ks-primary);
+  border-color: var(--ks-primary);
+}
+
+.filter-btn.active {
+  background: var(--ks-primary);
+  color: var(--ks-surface);
+  border-color: var(--ks-primary);
+}
+
+main {
+  background: var(--ks-canvas);
+  color: var(--ks-ink);
+}
+
+.control-panel {
+  border-bottom-color: var(--ks-border);
+}
+
+.active-filters > span {
+  color: var(--ks-ink-muted) !important;
+  font-family: var(--ks-font-mono);
+  letter-spacing: 0.05em;
+}
+
+.filter-chip {
+  background: var(--ks-secondary-soft);
+  color: var(--ks-secondary);
+  border: 1px solid color-mix(in srgb, var(--ks-secondary) 34%, var(--ks-border));
+  border-radius: var(--ks-radius-pill);
+}
+
+.filter-chip button {
+  color: currentColor;
+  min-width: 1.5rem;
+  min-height: 1.5rem;
+}
+
+.asset-grid {
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 1.25rem;
+}
+
+.asset-card {
+  background: var(--ks-surface);
+  color: var(--ks-ink);
+  border: 1px solid var(--ks-border);
+  border-radius: var(--ks-radius-md);
+  box-shadow: var(--ks-shadow-low);
+}
+
+.asset-card:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--ks-primary) 48%, var(--ks-border));
+  box-shadow: 0 8px 24px rgb(36 54 83 / 0.12);
+}
+
+.asset-thumb-container {
+  background: var(--ks-surface-subtle);
+  border-bottom: 1px solid var(--ks-border);
+}
+
+.asset-thumb {
+  background: var(--ks-surface-subtle);
+}
+
+.asset-thumb[src$="/assets/no-image.webp"] {
+  object-fit: contain;
+  padding: clamp(1.75rem, 4vw, 3rem);
+  background: linear-gradient(135deg, var(--ks-surface-subtle), var(--ks-primary-soft));
+  opacity: 0.24;
+  filter: grayscale(1);
+  transform: none !important;
+}
+
+.asset-info {
+  background: var(--ks-surface);
+}
+
+.asset-title {
+  color: var(--ks-ink);
+  font-weight: 700;
+}
+
+.asset-meta,
+.asset-summary {
+  color: var(--ks-ink-muted);
+}
+
+.meta-item {
+  background: transparent;
+  color: var(--ks-ink-muted);
+  border: 0;
+  padding: 0;
+}
+
+.tier-badge {
+  background: color-mix(in srgb, var(--ks-secondary) 92%, transparent);
+  color: var(--ks-surface);
+  border: 1px solid var(--ks-secondary);
+  border-radius: var(--ks-radius-sm);
+}
+
+.asset-grid > div > .filter-btn[style*="position: absolute"] {
+  background: color-mix(in srgb, var(--ks-surface) 92%, transparent);
+  color: var(--ks-ink-muted);
+  border-color: var(--ks-border);
+  box-shadow: var(--ks-shadow-low);
+  min-height: 2rem;
+}
+
+.asset-grid > div > .filter-btn[style*="position: absolute"].active {
+  background: var(--ks-secondary);
+  color: var(--ks-surface);
+  border-color: var(--ks-secondary);
+}
+
+.comparison-tray {
+  background: color-mix(in srgb, var(--ks-surface) 96%, transparent);
+  color: var(--ks-ink);
+  border-color: var(--ks-border);
+  box-shadow: 0 -8px 28px rgb(36 54 83 / 0.12);
+}
+
+.game-detail-content,
+.pro-card,
+.battle-attr,
+.pro-stat-card {
+  color: var(--ks-ink);
+  border-color: var(--ks-border);
+}
+
+.game-title {
+  color: var(--ks-ink);
+  font-family: var(--ks-font-display);
+}
+
+a {
+  color: var(--ks-primary);
+}
+
+.user-menu {
+  color: var(--ks-ink);
+}
+
+.user-avatar {
+  border: 1px solid var(--ks-border);
+}
+
+@media (max-width: 900px) {
+  body {
+    height: auto;
+    min-height: 100dvh;
+    overflow: auto;
+    grid-template-areas:
+      "header"
+      "sidebar"
+      "main";
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto 1fr;
+  }
+
+  header {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .search-container {
+    order: 3;
+    flex-basis: 100%;
+    max-width: none;
+    margin: 0;
+  }
+
+  aside {
+    border-right: 0;
+    border-bottom: 1px solid var(--ks-border);
+    max-height: none;
+  }
+
+  main {
+    overflow: visible;
+  }
+
+  .asset-card:hover {
+    transform: none;
+  }
+}

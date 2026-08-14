@@ -1,0 +1,14 @@
+{
+  "system": "KAFKA SIGNAL",
+  "source_repository": "KAFKA2306/prompt-vault",
+  "source_commit": "c148a833369c552c29126b6c60b4ef3f4f378a2e",
+  "applied_at": "2026-08-14",
+  "files": [
+    {
+      "source_path": "design-systems/kafka-signal/tokens.css",
+      "vendored_path": "vendor/kafka-signal/tokens.css",
+      "source_blob_sha": "dd5581b138a44244dded00b3c5ec891e327c6512",
+      "sha256": "7a4299563d5cf74ff4e5f19e7d046cdbb7d0530fadbaa04ce4eb49ed7d606a70"
+    }
+  ]
+}

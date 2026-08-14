@@ -1,3 +1,7 @@
+@import '../vendor/kafka-signal/tokens.css';
+@import './kafka-signal.css';
+@import './kafka-signal-app.css';
+
 /* Layout ownership: body is the viewport, #root owns route layout. */
 body {
   display: block;
