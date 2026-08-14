@@ -18,6 +18,10 @@ from app.models.evidence import (
 logger = logging.getLogger("services.evidence")
 
 
+class EvidenceReadError(RuntimeError):
+    """Raised when canonical evidence exists behind an unreadable backend path."""
+
+
 class EvidenceService:
     async def get_trace(self, slug: str, ruleset_id: str, target: ClaimTarget) -> EvidenceTraceResponse | None:
         game = await supabase.get_by_slug(slug)
@@ -34,8 +38,8 @@ class EvidenceService:
         try:
             return await anyio.to_thread.run_sync(self._load_trace, game, ruleset_id, target, base)
         except Exception as exc:
-            logger.warning("Evidence trace unavailable for %s/%s: %s", slug, ruleset_id, exc)
-            return EvidenceTraceResponse(status="not_available", **base)
+            logger.exception("Evidence trace read failed for %s/%s", slug, ruleset_id)
+            raise EvidenceReadError(f"evidence trace backend failure for {slug}/{ruleset_id}") from exc
 
     async def get_claim(self, slug: str, ruleset_id: str, claim_id: str) -> ClaimDetailResponse | None:
         game = await supabase.get_by_slug(slug)
@@ -44,8 +48,8 @@ class EvidenceService:
         try:
             return await anyio.to_thread.run_sync(self._load_claim_detail, game, ruleset_id, claim_id)
         except Exception as exc:
-            logger.warning("Claim detail unavailable for %s/%s/%s: %s", slug, ruleset_id, claim_id, exc)
-            return None
+            logger.exception("Claim detail read failed for %s/%s/%s", slug, ruleset_id, claim_id)
+            raise EvidenceReadError(f"claim evidence backend failure for {slug}/{ruleset_id}/{claim_id}") from exc
 
     @staticmethod
     def _validate_ruleset(client, game: dict, ruleset_id: str) -> bool:
