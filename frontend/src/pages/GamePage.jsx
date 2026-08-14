@@ -53,13 +53,17 @@ export default function GamePage({ slug: propSlug, initialGame, allGames: propAl
     fetchData()
   }, [slug, initialGame, allGames.length])
 
-  if (loading) return <div style={{ padding: '4rem', textAlign: 'center', color: '#666' }}>ARCHIVE LOADING...</div>
+  if (loading) {
+    return <div className="page-state page-state--loading" role="status">ARCHIVE LOADING...</div>
+  }
 
   if (error || !game) {
     return (
-      <div style={{ padding: '4rem', textAlign: 'center' }}>
-        <p>{error || 'Game not found'}</p>
-        <Link to="/" className="back-link">ディレクトリに戻る</Link>
+      <div className="page-state page-state--error" role="alert">
+        <div>
+          <p>{error || 'Game not found'}</p>
+          <Link to="/" className="back-link">ディレクトリに戻る</Link>
+        </div>
       </div>
     )
   }
@@ -127,7 +131,7 @@ export default function GamePage({ slug: propSlug, initialGame, allGames: propAl
             </div>
           </div>
 
-          <div className="pro-card" style={{ borderLeft: '4px solid #fff' }}>
+          <div className="pro-card pro-card--synopsis">
             <div className="pro-card-title">SYNOPSIS</div>
             <div className="summary-text">{game.summary || game.description}</div>
           </div>
@@ -259,8 +263,8 @@ export default function GamePage({ slug: propSlug, initialGame, allGames: propAl
                 {sd.strategy_analysis ? (
                   <ReactMarkdown>{sd.strategy_analysis}</ReactMarkdown>
                 ) : (
-                  <div style={{ padding: '2rem', textAlign: 'center', background: '#111', borderRadius: '8px', color: '#666' }}>
-                    No deep strategy analysis available yet. Try regenerating.
+                  <div className="game-empty-state" role="status">
+                    戦略解説はまだ登録されていません。必要に応じて再生成してください。
                   </div>
                 )}
               </div>
@@ -282,8 +286,8 @@ export default function GamePage({ slug: propSlug, initialGame, allGames: propAl
                     <div className="review-text">「{rev.review_text}」</div>
                   </div>
                 )) : (
-                  <div style={{ padding: '2rem', textAlign: 'center', background: '#111', borderRadius: '8px', color: '#666' }}>
-                    No persona reviews available yet. Try regenerating.
+                  <div className="game-empty-state" role="status">
+                    レビューはまだ登録されていません。必要に応じて再生成してください。
                   </div>
                 )}
               </div>
@@ -314,7 +318,7 @@ export default function GamePage({ slug: propSlug, initialGame, allGames: propAl
                           </div>
                         </Link>
                       )) : (
-                        <div style={{ fontSize: '0.8rem', color: '#444', padding: '10px' }}>No direct connections found in archive.</div>
+                        <div className="game-empty-note">関連ゲームはまだ見つかっていません。</div>
                       )}
                     </div>
                   )
@@ -335,7 +339,7 @@ export default function GamePage({ slug: propSlug, initialGame, allGames: propAl
               </div>
             )}
 
-            {activeTab === 'data' && <pre style={{ background: '#111', padding: '1rem', borderRadius: '8px', overflowX: 'auto' }}>{JSON.stringify(game, null, 2)}</pre>}
+            {activeTab === 'data' && <pre className="game-data-dump">{JSON.stringify(game, null, 2)}</pre>}
           </div>
         </div>
       </div>
