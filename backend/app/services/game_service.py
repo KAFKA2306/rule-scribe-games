@@ -9,6 +9,7 @@ from app.core.gemini import GeminiClient
 from app.core.llm_manager import LLMKeyRotator
 from app.models import GeneratedGameMetadata
 from app.prompts.prompts import PROMPTS
+from app.services.rule_quality import RULE_PROMPT_VERSION, RULE_QUALITY_GOLDEN_VERSION
 from app.utils.affiliate import amazon_search_url
 from app.utils.slugify import slugify
 
@@ -46,6 +47,7 @@ _ALLOWED_FIELDS = {
     "created_at",
     "updated_at",
 }
+_RULE_DERIVED_FIELDS = ("rules_content", "min_players", "max_players", "play_time", "min_age", "bga_url")
 
 
 def _load_prompt(key: str) -> str:
@@ -55,7 +57,7 @@ def _load_prompt(key: str) -> str:
     return str(data).strip()
 
 
-async def generate_metadata(query: str, context: str | None = None) -> dict[str, Any]:
+async def generate_metadata(query: str, context: str | None = None, source_bound: bool = False) -> dict[str, Any]:
     task_id = str(uuid.uuid4())[:8]
     start_time = time.time()
 
@@ -66,6 +68,8 @@ async def generate_metadata(query: str, context: str | None = None) -> dict[str,
             "task_id": task_id,
             "query": query,
             "available_keys": _key_rotator.get_status()["total_keys"],
+            "source_bound": source_bound,
+            "rule_quality_version": RULE_QUALITY_GOLDEN_VERSION,
         },
     )
 
@@ -76,15 +80,15 @@ async def generate_metadata(query: str, context: str | None = None) -> dict[str,
                 context = "\n".join(
                     f"[{i}] {r.get('title', 'Unknown')!s}: {r.get('summary', '')!s}" for i, r in enumerate(rows[:3], 1)
                 )
-                logger.info(f"Context retrieved from DB for {query}")
+                logger.info(f"Unverified DB context retrieved for {query}")
         except Exception as e:
             logger.warning(f"Could not retrieve context from DB: {e}")
 
     if not context:
-        context = "New game discovery. No existing context in database. Use general knowledge and search grounding."
-        logger.info(f"Using default context for {query}")
+        context = "No verified source evidence was supplied for this request."
 
-    prompt = _load_prompt("metadata_generator.generate").format(query=query, context=context)
+    evidence_context = f"SOURCE_BOUND_CONTEXT={'TRUE' if source_bound else 'FALSE'}\n{context}"
+    prompt = _load_prompt("metadata_generator.generate").format(query=query, context=evidence_context)
 
     key = _key_rotator.get_next_key()
     key_index = _key_rotator.keys.index(key) + 1
@@ -113,6 +117,29 @@ async def generate_metadata(query: str, context: str | None = None) -> dict[str,
 
     data = validated_data.model_dump()
     data = {k: v for k, v in data.items() if k in _ALLOWED_FIELDS}
+    if not source_bound:
+        for field in _RULE_DERIVED_FIELDS:
+            data[field] = None
+        data["structured_data"] = {
+            "keywords": [],
+            "key_elements": [],
+            "mechanics": [],
+            "best_player_count": None,
+            "pro_tips": [],
+            "rule_mistakes": [],
+            "strategy_analysis": None,
+            "persona_reviews": [],
+        }
+
+    structured_data = dict(data.get("structured_data") or {})
+    structured_data["generation_provenance"] = {
+        "model": _gemini.model,
+        "prompt_version": RULE_PROMPT_VERSION,
+        "golden_version": RULE_QUALITY_GOLDEN_VERSION,
+        "source_bound": source_bound,
+        "content_review_status": "ai_draft",
+    }
+    data["structured_data"] = structured_data
     data["updated_at"] = datetime.now(UTC).isoformat()
     data["amazon_url"] = amazon_search_url(str(data.get("title_ja") or query))
 
@@ -123,6 +150,7 @@ async def generate_metadata(query: str, context: str | None = None) -> dict[str,
             "task_id": task_id,
             "status": "success",
             "total_duration_ms": int(total_duration),
+            "source_bound": source_bound,
         },
     )
     return data
@@ -156,7 +184,6 @@ class GameService:
         if not query:
             raise ValueError("Game query must not be blank")
 
-        # Recheck immediately before generation to avoid duplicate writes when requests race.
         existing = await supabase.search(query)
         if existing:
             return existing[0]
@@ -193,7 +220,6 @@ class GameService:
         if not merged.get("id") or not slug:
             raise ValueError("Corrupt game record: missing id or slug")
 
-        # Canonical identity never changes through content regeneration.
         merged["id"], merged["slug"] = game["id"], slug
         merged["work_id"] = game.get("work_id")
         merged["identity_status"] = game.get("identity_status", "unverified")
@@ -208,7 +234,6 @@ class GameService:
         if not game:
             raise ValueError(f"Game not found for slug: {slug}")
 
-        # Identity fields are not mutable through the generic content endpoint.
         protected = {"id", "slug", "work_id", "identity_status"}
         safe_updates = {key: value for key, value in updates.items() if key not in protected}
         merged = {**game, **safe_updates}
@@ -232,11 +257,14 @@ class GameService:
 
 
 def _merge_fields(original: dict[str, Any], incoming: dict[str, Any], fill_missing_only: bool) -> dict[str, Any]:
-    if not fill_missing_only:
-        return {**original, **incoming}
     merged = dict(original)
     for key, value in incoming.items():
+        if value is None:
+            continue
         current = merged.get(key)
+        if not fill_missing_only:
+            merged[key] = value
+            continue
         is_missing = current is None or (isinstance(current, str) and current.strip() == "")
         if is_missing:
             merged[key] = value
