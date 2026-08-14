@@ -45,6 +45,14 @@ class PersonaReview(BaseSchema):
     rating: float
 
 
+class GenerationProvenance(BaseSchema):
+    model: str
+    prompt_version: str
+    golden_version: str
+    source_bound: bool
+    content_review_status: str = "ai_draft"
+
+
 class StructuredData(BaseSchema):
     keywords: list[Keyword] = []
     key_elements: list[KeyElement] = []
@@ -54,6 +62,7 @@ class StructuredData(BaseSchema):
     rule_mistakes: list[str] = []
     strategy_analysis: str | None = None
     persona_reviews: list[PersonaReview] = []
+    generation_provenance: GenerationProvenance | None = None
 
 
 class GameDetail(BaseSchema):
@@ -137,14 +146,14 @@ SEARCH_RESULT = GameDetail
 class GeneratedGameMetadata(BaseSchema):
     title: str
     title_ja: str | None = None
-    summary: str
-    description: str
-    min_players: int
-    max_players: int
-    play_time: int
-    min_age: int
-    rules_content: str
-    structured_data: StructuredData
+    summary: str | None = None
+    description: str | None = None
+    min_players: int | None = None
+    max_players: int | None = None
+    play_time: int | None = None
+    min_age: int | None = None
+    rules_content: str | None = None
+    structured_data: StructuredData = StructuredData()
     bga_url: str | None = None
     infographics: dict[str, str] | None = None
 
