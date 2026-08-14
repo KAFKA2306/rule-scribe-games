@@ -2,21 +2,41 @@ name: Validate URLs
 
 on:
   schedule:
-    - cron: "0 9,21 * * *" # 毎日 6:00, 18:00 JST
+    - cron: "0 9,21 * * *" # 18:00 / 06:00 JST
   workflow_dispatch:
+    inputs:
+      apply:
+        description: "Apply destructive NULL updates for confirmed 400/404/410 results"
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
 
 jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: astral-sh/setup-uv@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
 
-      - run: uv sync
+      - name: Install backend dependencies
+        working-directory: backend
+        run: uv sync --frozen
 
       - name: Validate URLs
-        run: uv run python -m app.scripts.validate_urls
+        working-directory: backend
+        shell: bash
         env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          SUPABASE_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          APPLY_URL_FIXES: ${{ github.event_name == 'workflow_dispatch' && inputs.apply || false }}
+        run: |
+          args=()
+          if [ "$APPLY_URL_FIXES" = "true" ]; then
+            args+=(--apply)
+          fi
+          uv run python -m app.scripts.validate_urls "${args[@]}"
