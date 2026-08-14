@@ -1,7 +1,11 @@
 import { useState } from 'react'
 
-export function InfographicsGallery({ infographics }) {
+export function InfographicsGallery({ infographics, verified = false, sourceUrl = null }) {
   const [currentIndex, setCurrentIndex] = useState(0)
+
+  if (!verified || !sourceUrl) {
+    return <p className="no-infographics">図解は検証待ちのため表示していません</p>
+  }
 
   const infographicTypes = [
     { key: 'turn_flow', title: '手番の流れ', icon: '🔄' },
@@ -11,8 +15,7 @@ export function InfographicsGallery({ infographics }) {
     { key: 'components', title: 'コンポーネント', icon: '🧩' },
   ]
 
-  // Add any 'slide_N' keys found in infographics
-  const slideKeys = Object.keys(infographics)
+  const slideKeys = Object.keys(infographics || {})
     .filter((key) => key.startsWith('slide_'))
     .sort((a, b) => {
       const numA = parseInt(a.split('_')[1], 10)
@@ -26,7 +29,7 @@ export function InfographicsGallery({ infographics }) {
     }))
 
   const allTypes = [...infographicTypes, ...slideKeys]
-  const available = allTypes.filter((inf) => infographics[inf.key])
+  const available = allTypes.filter((inf) => infographics?.[inf.key])
 
   if (!available.length) {
     return <p className="no-infographics">図解はまだ利用できません</p>
@@ -49,7 +52,7 @@ export function InfographicsGallery({ infographics }) {
           onError={(e) => {
             e.target.style.display = 'none'
             e.target.parentElement.innerHTML =
-              '<p className="loading-error">画像を読み込めませんでした</p>'
+              '<p class="loading-error">画像を読み込めませんでした</p>'
           }}
         />
       </div>
@@ -88,6 +91,10 @@ export function InfographicsGallery({ infographics }) {
 
       <div className="gallery-counter">
         {currentIndex + 1} / {available.length}
+      </div>
+
+      <div className="rule-flow-source">
+        出典: <a href={sourceUrl} target="_blank" rel="noreferrer">検証済みルール資料</a>
       </div>
     </div>
   )

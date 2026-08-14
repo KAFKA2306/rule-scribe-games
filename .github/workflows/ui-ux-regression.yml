@@ -103,6 +103,14 @@ jobs:
           --project=ux-tablet
           --project=ux-desktop
 
+      - name: Gate reviewed rules and new-user comprehension flow
+        working-directory: frontend
+        run: >-
+          npx playwright test tests/rule_guide.spec.js
+          --project=ux-mobile
+          --project=ux-tablet
+          --project=ux-desktop
+
       - name: Upload reviewable UI UX evidence
         if: ${{ success() || failure() }}
         uses: actions/upload-artifact@v4

@@ -169,6 +169,11 @@ body {
 
   .game-main {
     max-width: none;
+    order: -1;
+  }
+
+  .game-sidebar {
+    order: 0;
   }
 }
 

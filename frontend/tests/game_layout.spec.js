@@ -59,13 +59,13 @@ async function readLayout(page) {
   })
 }
 
-test('game detail keeps a readable desktop main and collapses cleanly at 800px', async ({ page }) => {
+test('game detail keeps a readable desktop main and puts quick rules before metadata at 800px', async ({ page }) => {
   await mockGameApi(page)
   await page.setViewportSize({ width: 1280, height: 900 })
   await page.goto('/games/big-shot')
 
   await expect(page.getByRole('heading', { name: 'ビッグショット' })).toBeVisible()
-  await expect(page.getByRole('tab', { name: 'ANALYSIS & RULES' })).toBeVisible()
+  await expect(page.getByRole('tab', { name: /詳しいルール/ })).toBeVisible()
 
   const desktop = await readLayout(page)
   expect(desktop.scrollWidth).toBe(desktop.clientWidth)
@@ -83,13 +83,14 @@ test('game detail keeps a readable desktop main and collapses cleanly at 800px',
   expect(compact.scrollWidth).toBe(compact.clientWidth)
   expect(Math.abs(compact.sidebar.x - compact.main.x)).toBeLessThan(2)
   expect(Math.abs(compact.sidebar.width - compact.main.width)).toBeLessThan(2)
-  expect(compact.main.y).toBeGreaterThan(compact.sidebar.y + compact.sidebar.height - 2)
+  expect(compact.sidebar.y).toBeGreaterThan(compact.main.y + compact.main.height - 2)
+  await expect(page.getByText('検証済みの要約はまだありません')).toBeVisible()
 })
 
-test('INST COACH shows only game-specific summaries and fails closed when missing', async ({ page }) => {
+test('setup tab shows only game-specific summaries and fails closed when missing', async ({ page }) => {
   await mockGameApi(page)
   await page.goto('/games/big-shot')
-  await page.getByRole('tab', { name: 'INST COACH' }).click()
+  await page.getByRole('tab', { name: /セットアップ/ }).click()
 
   await expect(page.getByText(bigShot.setup_summary)).toBeVisible()
   await expect(page.getByText(bigShot.gameplay_summary)).toBeVisible()
@@ -109,7 +110,7 @@ test('INST COACH shows only game-specific summaries and fails closed when missin
   await page.unrouteAll({ behavior: 'wait' })
   await mockGameApi(page, missing)
   await page.reload()
-  await page.getByRole('tab', { name: 'INST COACH' }).click()
+  await page.getByRole('tab', { name: /セットアップ/ }).click()
 
   await expect(page.getByText('このゲーム固有のセットアップ要約は未確認です。')).toBeVisible()
   await expect(page.getByText('このゲーム固有のゲーム進行要約は未確認です。')).toBeVisible()

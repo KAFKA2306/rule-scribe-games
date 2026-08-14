@@ -3,11 +3,14 @@ import { useParams, Link } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
 import ReactMarkdown from 'react-markdown'
 import { api } from '../lib/api'
+import { getCuratedRuleGuide } from '../lib/curatedRuleGuides'
 import { ShareButton, TwitterShareButton } from '../components/game/ShareButtons'
 import { RegenerateButton } from '../components/game/RegenerateButton'
 import { TextToSpeech } from '../components/game/TextToSpeech'
 import { ExternalLinks } from '../components/game/ExternalLinks'
 import { InfographicsGallery } from '../components/game/InfographicsGallery'
+import { QuickRulesPanel } from '../components/game/QuickRulesPanel'
+import { RuleFlowDiagram } from '../components/game/RuleFlowDiagram'
 
 export default function GamePage({ slug: propSlug, initialGame, allGames: propAllGames }) {
   const { slug: urlSlug } = useParams()
@@ -65,6 +68,15 @@ export default function GamePage({ slug: propSlug, initialGame, allGames: propAl
   const rules = game.rules_content || ''
   const sd = game.structured_data || {}
   const coachSourceUrl = game.official_url || game.source_url || null
+  const ruleGuide = getCuratedRuleGuide(slug)
+  const legacyInfographicsSourceUrl = game.infographics_source_url || coachSourceUrl
+  const legacyInfographicsVerified = Boolean(
+    game.infographics &&
+    game.infographics_reviewed === true &&
+    legacyInfographicsSourceUrl,
+  )
+  const hasRuleFlow = Boolean(ruleGuide?.flow?.length)
+  const hasInfographics = hasRuleFlow || legacyInfographicsVerified
 
   const pageTitle = `「${title}」のルール・戦略・インスト要約 | ボドゲのミカタ`
   const description = game.summary || `「${title}」の登録済みルール要約と出典情報を確認できます。`
@@ -83,7 +95,7 @@ export default function GamePage({ slug: propSlug, initialGame, allGames: propAl
       <div className="game-page-toolbar">
         <Link to="/" className="back-link" style={{ margin: 0 }}>← DIRECTORY</Link>
         <div className="header-actions">
-          <TextToSpeech text={`${title}. ${description}`} />
+          <TextToSpeech text={`${title}. ${ruleGuide?.quick?.turnSteps?.join(' ') || description}`} />
           <TwitterShareButton slug={slug} title={title} />
           <ShareButton slug={slug} />
           <RegenerateButton title={title} onRegenerate={setGame} />
@@ -168,13 +180,33 @@ export default function GamePage({ slug: propSlug, initialGame, allGames: propAl
             )}
           </div>
 
+          <QuickRulesPanel
+            guide={ruleGuide}
+            onShowFlow={hasInfographics ? () => setActiveTab('infographics') : null}
+            onShowRules={() => setActiveTab('rules')}
+          />
+
           <div className="rules-tabs" role="tablist" aria-label="ゲーム詳細表示">
-            <button role="tab" aria-selected={activeTab === 'rules'} className={activeTab === 'rules' ? 'active' : ''} onClick={() => setActiveTab('rules')}>ANALYSIS & RULES</button>
-            <button role="tab" aria-selected={activeTab === 'coach'} className={activeTab === 'coach' ? 'active' : ''} onClick={() => setActiveTab('coach')}>INST COACH</button>
-            <button role="tab" aria-selected={activeTab === 'strategy'} className={activeTab === 'strategy' ? 'active' : ''} onClick={() => setActiveTab('strategy')}>STRATEGY GUIDE</button>
-            <button role="tab" aria-selected={activeTab === 'reviews'} className={activeTab === 'reviews' ? 'active' : ''} onClick={() => setActiveTab('reviews')}>SUBAGENT REVIEWS</button>
-            <button role="tab" aria-selected={activeTab === 'graph'} className={activeTab === 'graph' ? 'active' : ''} onClick={() => setActiveTab('graph')}>CONNECTIONS</button>
-            {game.infographics && <button role="tab" aria-selected={activeTab === 'infographics'} className={activeTab === 'infographics' ? 'active' : ''} onClick={() => setActiveTab('infographics')}>INFOGRAPHICS</button>}
+            <button role="tab" aria-selected={activeTab === 'rules'} className={activeTab === 'rules' ? 'active' : ''} onClick={() => setActiveTab('rules')}>
+              詳しいルール <span className="sr-only">ANALYSIS & RULES</span>
+            </button>
+            <button role="tab" aria-selected={activeTab === 'coach'} className={activeTab === 'coach' ? 'active' : ''} onClick={() => setActiveTab('coach')}>
+              セットアップ <span className="sr-only">INST COACH</span>
+            </button>
+            <button role="tab" aria-selected={activeTab === 'strategy'} className={activeTab === 'strategy' ? 'active' : ''} onClick={() => setActiveTab('strategy')}>
+              戦略 <span className="sr-only">STRATEGY GUIDE</span>
+            </button>
+            <button role="tab" aria-selected={activeTab === 'reviews'} className={activeTab === 'reviews' ? 'active' : ''} onClick={() => setActiveTab('reviews')}>
+              レビュー <span className="sr-only">SUBAGENT REVIEWS</span>
+            </button>
+            <button role="tab" aria-selected={activeTab === 'graph'} className={activeTab === 'graph' ? 'active' : ''} onClick={() => setActiveTab('graph')}>
+              関連ゲーム <span className="sr-only">CONNECTIONS</span>
+            </button>
+            {hasInfographics && (
+              <button role="tab" aria-selected={activeTab === 'infographics'} className={activeTab === 'infographics' ? 'active' : ''} onClick={() => setActiveTab('infographics')}>
+                図で見る <span className="sr-only">INFOGRAPHICS</span>
+              </button>
+            )}
           </div>
 
           <div className="pro-main-col">
@@ -188,7 +220,7 @@ export default function GamePage({ slug: propSlug, initialGame, allGames: propAl
               <div className="coach-mode">
                 <div className="coach-step active">
                   <span className="coach-step-num">STEP 1</span>
-                  <div className="coach-step-title">セットアップ (Setup)</div>
+                  <div className="coach-step-title">セットアップ</div>
                   <div style={{ fontSize: '0.95rem', lineHeight: 1.6 }}>
                     {game.setup_summary || 'このゲーム固有のセットアップ要約は未確認です。'}
                   </div>
@@ -196,7 +228,7 @@ export default function GamePage({ slug: propSlug, initialGame, allGames: propAl
 
                 <div className="coach-step">
                   <span className="coach-step-num">STEP 2</span>
-                  <div className="coach-step-title">ゲームの流れ (Gameplay)</div>
+                  <div className="coach-step-title">ゲームの流れ</div>
                   <div style={{ fontSize: '0.95rem', lineHeight: 1.6 }}>
                     {game.gameplay_summary || 'このゲーム固有のゲーム進行要約は未確認です。'}
                   </div>
@@ -204,7 +236,7 @@ export default function GamePage({ slug: propSlug, initialGame, allGames: propAl
 
                 <div className="coach-step">
                   <span className="coach-step-num">STEP 3</span>
-                  <div className="coach-step-title">ゲーム終了 (End Game)</div>
+                  <div className="coach-step-title">ゲーム終了</div>
                   <div style={{ fontSize: '0.95rem', lineHeight: 1.6 }}>
                     {game.end_game_summary || 'このゲーム固有の終了条件要約は未確認です。'}
                   </div>
@@ -290,7 +322,19 @@ export default function GamePage({ slug: propSlug, initialGame, allGames: propAl
               </div>
             )}
 
-            {activeTab === 'infographics' && <InfographicsGallery infographics={game.infographics} />}
+            {activeTab === 'infographics' && (
+              <div style={{ display: 'grid', gap: '1rem' }}>
+                {hasRuleFlow && <RuleFlowDiagram guide={ruleGuide} />}
+                {legacyInfographicsVerified && (
+                  <InfographicsGallery
+                    infographics={game.infographics}
+                    verified={legacyInfographicsVerified}
+                    sourceUrl={legacyInfographicsSourceUrl}
+                  />
+                )}
+              </div>
+            )}
+
             {activeTab === 'data' && <pre style={{ background: '#111', padding: '1rem', borderRadius: '8px', overflowX: 'auto' }}>{JSON.stringify(game, null, 2)}</pre>}
           </div>
         </div>

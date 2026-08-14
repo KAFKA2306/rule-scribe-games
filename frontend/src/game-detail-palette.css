@@ -1,0 +1,95 @@
+/* Game detail palette repair.
+   The legacy game page still contains dark-theme literals in index.css.
+   Keep this layer after layout.css so KAFKA SIGNAL's light product palette wins. */
+
+.game-detail-content {
+  --game-wash-blue: #eaf4ff;
+  --game-wash-lilac: #f0ebfa;
+  --game-wash-pink: #fcebf1;
+  --game-ink: var(--ks-ink);
+  background:
+    radial-gradient(circle at 78% 0%, rgb(240 235 250 / 0.46), transparent 30rem),
+    var(--ks-canvas);
+  color: var(--game-ink);
+}
+
+/* Tabs should read as a light editorial control, not a dark dashboard. */
+.rules-tabs button {
+  color: var(--ks-ink-muted);
+}
+
+.rules-tabs button.active {
+  background: var(--ks-primary-soft);
+  color: var(--game-ink);
+  box-shadow: inset 0 -2px 0 var(--ks-primary);
+}
+
+.rules-tabs button:hover:not(.active) {
+  background: var(--ks-surface-subtle);
+  color: var(--game-ink);
+}
+
+/* The old coach cards used #111 with dark navy text after the light-theme token swap.
+   Use three restrained pastel washes while keeping all copy on the high-contrast ink. */
+.coach-step {
+  --coach-accent: var(--ks-primary);
+  --coach-soft: var(--game-wash-blue);
+  background: color-mix(in srgb, var(--coach-soft) 74%, var(--ks-surface));
+  color: var(--game-ink);
+  border: 1px solid color-mix(in srgb, var(--coach-accent) 32%, var(--ks-border));
+  border-left: 4px solid var(--coach-accent);
+  box-shadow: var(--ks-shadow-low);
+}
+
+.coach-step:nth-child(2) {
+  --coach-accent: var(--ks-secondary);
+  --coach-soft: var(--game-wash-lilac);
+}
+
+.coach-step:nth-child(3) {
+  --coach-accent: var(--ks-accent);
+  --coach-soft: var(--game-wash-pink);
+}
+
+.coach-step.active {
+  background: var(--coach-soft);
+  border-color: color-mix(in srgb, var(--coach-accent) 58%, var(--ks-border));
+  border-left-color: var(--coach-accent);
+  box-shadow: 0 6px 18px rgb(36 54 83 / 0.08);
+}
+
+.coach-step-num {
+  color: var(--ks-ink-muted);
+}
+
+.coach-step-title {
+  color: var(--game-ink);
+}
+
+/* Remove the remaining black chips/cards inherited from the original dark UI. */
+.game-sidebar .tag-item {
+  background: color-mix(in srgb, var(--ks-primary-soft) 62%, var(--ks-surface));
+  color: var(--game-ink);
+  border-color: color-mix(in srgb, var(--ks-primary) 26%, var(--ks-border));
+  border-radius: var(--ks-radius-pill);
+}
+
+.review-card,
+.relation-node {
+  background: var(--ks-surface);
+  color: var(--game-ink);
+  border-color: var(--ks-border);
+  box-shadow: var(--ks-shadow-low);
+}
+
+.rating-badge {
+  background: var(--ks-secondary-soft);
+  color: var(--game-ink);
+  border-color: color-mix(in srgb, var(--ks-secondary) 28%, var(--ks-border));
+}
+
+@media (max-width: 680px) {
+  .game-detail-content {
+    background: var(--ks-canvas);
+  }
+}
