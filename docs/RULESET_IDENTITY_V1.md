@@ -100,6 +100,18 @@ RuleSet候補は次で取得します。
 GET /api/games/{slug}/rule-sets
 ```
 
+## Presentation Projection boundary
+
+#151 Presentation Projection は別truth storeを作らず、必ず選択済みRuleSetのRule Graph / Concept / Evidenceから生成します。
+
+- projection request/outputは対象`rule_set_id`を追跡可能にする
+- active RuleSetが複数ある場合、projection側でpublisher/BGAや言語を自動mergeしない
+- `rule_set_id`未選択でtruth boundaryが一意でなければfail-closedする
+- Quick Rules / setup / scoring / end condition等を別RuleSetから継ぎ合わせない
+- source間の矛盾は上書きで消さず、#175のClaim/Evidence BindingでRuleSetごとに保持する
+
+これにより、同じGameのpublisher rulesとplatform implementationで記述が異なっても、表示projectionが暗黙に混合しません。
+
 ## API response
 
 `RuleSetListResponse`は:
@@ -131,6 +143,7 @@ Rollbackで旧`one active per game`制約を復元すると複数RuleSetを表�
 
 - #148 Ontology v2
 - #149 Rule Graph
+- #151 Presentation Projection
 - #173 Component Catalog
 - #174 RuleSet identity
 - #175 Claim/Evidence Binding
