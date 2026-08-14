@@ -42,12 +42,16 @@ jobs:
       PGPASSWORD: postgres
     steps:
       - uses: actions/checkout@v4
-      - name: Apply identity migrations to same-title fixtures
+      - name: Apply identity migrations to identity fixtures
         run: psql "$DATABASE_URL" -f backend/app/db/tests/identity_integration.sql
-      - name: Verify title alone did not merge records
+      - name: Verify migration did not infer legacy merges
         run: |
-          test "$(psql "$DATABASE_URL" -Atc 'select count(*) from public.games;')" = "3"
-          test "$(psql "$DATABASE_URL" -Atc 'select count(*) from public.game_works;')" = "3"
+          test "$(psql "$DATABASE_URL" -Atc 'select count(*) from public.games;')" = "4"
+          test "$(psql "$DATABASE_URL" -Atc 'select count(*) from public.game_works;')" = "4"
+      - name: Verify verified EN/JA editions stay separate under one work
+        run: |
+          test "$(psql "$DATABASE_URL" -Atc "select count(distinct work_id) from public.games where id in ('cccccccc-cccc-4ccc-8ccc-cccccccccccc','dddddddd-dddd-4ddd-8ddd-dddddddddddd');")" = "1"
+          test "$(psql "$DATABASE_URL" -Atc "select count(distinct bgg_version_id) from public.games where id in ('cccccccc-cccc-4ccc-8ccc-cccccccccccc','dddddddd-dddd-4ddd-8ddd-dddddddddddd');")" = "2"
       - name: Verify old slug resolves to the same game ID
         run: |
           test "$(psql "$DATABASE_URL" -Atc "select game_id from public.game_slug_aliases where alias_slug='twin-a';")" = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"

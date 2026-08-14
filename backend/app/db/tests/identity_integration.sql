@@ -19,21 +19,25 @@ CREATE TABLE public.games (
   updated_at timestamptz NOT NULL DEFAULT now()
 );
 
+-- A/B: same title but verified distinct BGG work IDs.
+-- C/D: same work represented by separate English/Japanese editions; D starts
+-- unlinked and is linked only after explicit verification in the fixture.
 INSERT INTO public.games (id,title,title_ja,title_en,slug,bgg_url) VALUES
 ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','Twin Game','ツインゲーム','Twin Game','twin-a','https://boardgamegeek.com/boardgame/100/twin-game-a'),
-('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb','Twin Game','ツインゲーム別版','Twin Game','twin-b','https://boardgamegeek.com/boardgame/200/twin-game-b'),
-('cccccccc-cccc-4ccc-8ccc-cccccccccccc','Other Game','別ゲーム','Other Game','other',NULL);
+('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb','Twin Game','ツインゲーム別作品','Twin Game','twin-b','https://boardgamegeek.com/boardgame/200/twin-game-b'),
+('cccccccc-cccc-4ccc-8ccc-cccccccccccc','Shared Work','共有ゲーム','Shared Work','shared-en','https://boardgamegeek.com/boardgame/300/shared-work'),
+('dddddddd-dddd-4ddd-8ddd-dddddddddddd','共有ゲーム 日本語版','共有ゲーム 日本語版','Shared Work Japanese Edition','shared-ja',NULL);
 
 \ir ../migrations/003_canonical_game_identity.sql
 \ir ../migrations/004_lock_identity_metadata.sql
 
 DO $$
 BEGIN
-  IF (SELECT count(*) FROM public.games) <> 3 THEN
+  IF (SELECT count(*) FROM public.games) <> 4 THEN
     RAISE EXCEPTION 'migration changed game row count';
   END IF;
-  IF (SELECT count(*) FROM public.game_works) <> 3 THEN
-    RAISE EXCEPTION 'title similarity caused an inferred work merge';
+  IF (SELECT count(*) FROM public.game_works) <> 4 THEN
+    RAISE EXCEPTION 'migration inferred a work merge';
   END IF;
   IF EXISTS (SELECT 1 FROM public.games WHERE work_id <> id) THEN
     RAISE EXCEPTION 'legacy bootstrap must preserve one distinct work per game';
@@ -45,14 +49,38 @@ BEGIN
     SELECT 1 FROM public.game_identity_duplicate_candidates
     WHERE normalized_title = public.normalize_game_title('Twin Game')
   ) THEN
-    RAISE EXCEPTION 'same-title duplicate candidate was not surfaced';
+    RAISE EXCEPTION 'same-title distinct-work candidate was not surfaced';
+  END IF;
+END;
+$$;
+
+-- Simulate verified same-work evidence. The two editions remain distinct rows and
+-- receive distinct BGG version IDs and language codes.
+UPDATE public.games
+SET language_code='en', edition_label='English edition', bgg_version_id=3001
+WHERE id='cccccccc-cccc-4ccc-8ccc-cccccccccccc';
+
+UPDATE public.games
+SET work_id='cccccccc-cccc-4ccc-8ccc-cccccccccccc',
+    language_code='ja', edition_label='Japanese edition', bgg_version_id=3002
+WHERE id='dddddddd-dddd-4ddd-8ddd-dddddddddddd';
+
+DO $$
+BEGIN
+  IF (SELECT work_id FROM public.games WHERE id='cccccccc-cccc-4ccc-8ccc-cccccccccccc')
+     IS DISTINCT FROM
+     (SELECT work_id FROM public.games WHERE id='dddddddd-dddd-4ddd-8ddd-dddddddddddd') THEN
+    RAISE EXCEPTION 'verified EN/JA editions do not share work identity';
+  END IF;
+  IF (SELECT bgg_version_id FROM public.games WHERE id='cccccccc-cccc-4ccc-8ccc-cccccccccccc') =
+     (SELECT bgg_version_id FROM public.games WHERE id='dddddddd-dddd-4ddd-8ddd-dddddddddddd') THEN
+    RAISE EXCEPTION 'separate editions collapsed to one edition identity';
   END IF;
 END;
 $$;
 
 UPDATE public.games
-SET language_code='en', edition_label='First edition', bgg_version_id=1001,
-    source_revision='rev-2', generated_from_source_revision='rev-1'
+SET source_revision='rev-2', generated_from_source_revision='rev-1'
 WHERE id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
 
 DO $$
@@ -76,7 +104,7 @@ BEGIN
   END IF;
   IF NOT EXISTS (
     SELECT 1 FROM public.game_title_aliases
-    WHERE game_id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' AND language_code='ja'
+    WHERE game_id='cccccccc-cccc-4ccc-8ccc-cccccccccccc' AND language_code='ja'
   ) THEN
     RAISE EXCEPTION 'localized title alias missing';
   END IF;
