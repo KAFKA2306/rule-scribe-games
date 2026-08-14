@@ -7,7 +7,9 @@ on:
       - "backend/app/services/rule_graph.py"
       - "backend/app/routers/games.py"
       - "backend/app/db/migrations/010_rule_graph.sql"
+      - "backend/app/db/migrations/015_seed_skull_king_rule_concepts.sql"
       - "backend/tests/test_rule_graph.py"
+      - "backend/tests/test_skull_king_rule_concepts.py"
       - "evaluation/rules/rule-graph-v1-fixtures.json"
       - "docs/RULE_GRAPH_V1.md"
       - ".github/workflows/test-rule-graph.yml"
@@ -19,7 +21,9 @@ on:
       - "backend/app/services/rule_graph.py"
       - "backend/app/routers/games.py"
       - "backend/app/db/migrations/010_rule_graph.sql"
+      - "backend/app/db/migrations/015_seed_skull_king_rule_concepts.sql"
       - "backend/tests/test_rule_graph.py"
+      - "backend/tests/test_skull_king_rule_concepts.py"
       - "evaluation/rules/rule-graph-v1-fixtures.json"
       - "docs/RULE_GRAPH_V1.md"
       - ".github/workflows/test-rule-graph.yml"
@@ -46,4 +50,4 @@ jobs:
       - name: Run rule graph contract tests
         env:
           PYTHONPATH: backend
-        run: uv run pytest -q backend/tests/test_rule_graph.py
+        run: uv run pytest -q backend/tests/test_rule_graph.py backend/tests/test_skull_king_rule_concepts.py
