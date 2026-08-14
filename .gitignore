@@ -28,6 +28,9 @@ pnpm-debug.log*
 .env.*
 !.env.example
 
+# Local deployment/link metadata
+.vercel/
+
 # OS-specific
 .DS_Store
 
