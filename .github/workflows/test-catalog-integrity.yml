@@ -99,7 +99,7 @@ jobs:
           backend/tests/test_sitemap.py
           backend/tests/test_supabase_images.py
 
-      - name: Verify compatible rollout then strict cleanup migration
+      - name: Verify compatible rollout then independent cleanup migrations
         shell: bash
         run: |
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 <<'SQL'
@@ -130,8 +130,6 @@ jobs:
             exit 1
           fi
 
-          # Additive migration must not touch the known invalid legacy row, while
-          # explicit publisher provenance on valid rows may be promoted safely.
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/007_catalog_acl_trust_and_strict_slug.sql
           test "$(psql "$DATABASE_URL" -Atc "select count(*) from information_schema.columns where table_schema='public' and table_name='games' and column_name in ('source_trust','content_review_status');")" = "2"
           test "$(psql "$DATABASE_URL" -Atc "select count(*) from information_schema.columns where table_schema='public' and table_name='games' and column_name in ('is_official','official_url');")" = "2"
@@ -139,18 +137,21 @@ jobs:
           test "$(psql "$DATABASE_URL" -Atc "select source_url from public.games where slug='publisher-game';")" = "https://publisher.example/game"
           test "$(psql "$DATABASE_URL" -Atc "select source_trust from public.games where slug='publisher-game';")" = "official_publisher"
 
-          # Production reconciliation removes the audited legacy row before
-          # cleanup migration 008 validates the invariant and removes old trust fields.
+          # Reconcile historical invalid rows, then validate the slug invariant.
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c "DELETE FROM public.games WHERE slug IS NULL OR btrim(slug)='';"
-          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/008_remove_legacy_trust_and_validate_slug.sql
-
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/008_validate_games_slug.sql
           test "$(psql "$DATABASE_URL" -Atc "select count(*) from pg_constraint where conname='games_slug_required' and convalidated=true;")" = "1"
-          test "$(psql "$DATABASE_URL" -Atc "select count(*) from information_schema.columns where table_schema='public' and table_name='games' and column_name in ('is_official','official_url');")" = "0"
-          test "$(psql "$DATABASE_URL" -Atc "select count(*) from information_schema.tables where table_schema='public' and table_name in ('catalog_editors','catalog_mutation_audit');")" = "2"
+          # Slug validation is independent: legacy trust fields are still present.
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from information_schema.columns where table_schema='public' and table_name='games' and column_name in ('is_official','official_url');")" = "2"
           if psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c "INSERT INTO public.games(slug) VALUES (NULL);"; then
-            echo "null slug unexpectedly accepted after reconciliation"
+            echo "null slug unexpectedly accepted after validation"
             exit 1
           fi
+
+          # Final trust cleanup is a distinct post-deploy step.
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/009_remove_legacy_trust.sql
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from information_schema.columns where table_schema='public' and table_name='games' and column_name in ('is_official','official_url');")" = "0"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from information_schema.tables where table_schema='public' and table_name in ('catalog_editors','catalog_mutation_audit');")" = "2"
 
       - name: Setup Node
         uses: actions/setup-node@v4
