@@ -60,7 +60,6 @@ def _with_canonical_storage_image(game: Dict[str, Any]) -> Dict[str, Any]:
 
 async def search(query: str) -> List[Dict[str, Any]]:
     if is_local():
-        # Search the entire local DB
         res = local_db.list_recent(limit=10000)
         q = query.lower()
         return [
@@ -112,6 +111,22 @@ async def get_by_slug(slug: str) -> Optional[Dict[str, Any]]:
 
     def _q():
         rows = _get_client().table(_TABLE).select("*").eq("slug", slug).execute().data
+        if rows:
+            return _with_canonical_storage_image(rows[0])
+
+        aliases = (
+            _get_client()
+            .table("game_slug_aliases")
+            .select("game_id")
+            .eq("alias_slug", slug)
+            .limit(1)
+            .execute()
+            .data
+        )
+        if not aliases:
+            return None
+
+        rows = _get_client().table(_TABLE).select("*").eq("id", aliases[0]["game_id"]).execute().data
         return _with_canonical_storage_image(rows[0]) if rows else None
 
     return await anyio.to_thread.run_sync(_q)

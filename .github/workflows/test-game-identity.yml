@@ -1,0 +1,55 @@
+name: Test Canonical Game Identity
+
+on:
+  pull_request:
+    paths:
+      - 'backend/app/db/migrations/**'
+      - 'backend/app/db/tests/identity_integration.sql'
+      - 'backend/app/core/supabase.py'
+      - 'backend/app/core/local_db.py'
+      - 'backend/app/models/__init__.py'
+      - 'docs/CANONICAL_GAME_IDENTITY.md'
+      - '.github/workflows/test-game-identity.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'backend/app/db/migrations/**'
+      - 'backend/app/db/tests/identity_integration.sql'
+      - 'backend/app/core/supabase.py'
+      - 'backend/app/core/local_db.py'
+      - 'backend/app/models/__init__.py'
+      - 'docs/CANONICAL_GAME_IDENTITY.md'
+      - '.github/workflows/test-game-identity.yml'
+
+jobs:
+  identity-contract:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
+      PGPASSWORD: postgres
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply identity migrations to same-title fixtures
+        run: psql "$DATABASE_URL" -f backend/app/db/tests/identity_integration.sql
+      - name: Verify title alone did not merge records
+        run: |
+          test "$(psql "$DATABASE_URL" -Atc 'select count(*) from public.games;')" = "3"
+          test "$(psql "$DATABASE_URL" -Atc 'select count(*) from public.game_works;')" = "3"
+      - name: Verify old slug resolves to the same game ID
+        run: |
+          test "$(psql "$DATABASE_URL" -Atc "select game_id from public.game_slug_aliases where alias_slug='twin-a';")" = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
+      - name: Verify audit surface exists
+        run: psql "$DATABASE_URL" -c 'select * from public.game_identity_audit_summary;'
