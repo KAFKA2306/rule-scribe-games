@@ -5,6 +5,7 @@ import { HelmetProvider } from 'react-helmet-async'
 import App from './App.jsx'
 import './index.css'
 import './layout.css'
+import './game-detail-palette.css'
 
 const GamePage = lazy(() => import('./pages/GamePage.jsx'))
 const DataPage = lazy(() => import('./pages/DataPage.jsx'))
