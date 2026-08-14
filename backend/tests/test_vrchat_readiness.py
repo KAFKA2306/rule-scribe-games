@@ -17,6 +17,8 @@ from app.models.vrchat_manifest import CapabilityName
 from app.models.vrchat_readiness import ReadinessStatus, RequirementState
 from app.services.vrchat_readiness_audit import VrchatReadinessAuditService
 
+EXPECTED_GAME_COUNT = 2
+PAGINATED_GAME_COUNT = 105
 AUDITED_AT = datetime(2026, 8, 14, tzinfo=UTC)
 
 
@@ -221,7 +223,10 @@ def _registry_file(tmp_path, *, include_binding: bool = True):
                 "snapshotAt": "2026-08-14T00:00:00Z",
             }
         )
-    path.write_text(json.dumps({"schemaVersion": "1.0", "entries": entries), encoding="utf-8")
+    path.write_text(
+        json.dumps({"schemaVersion": "1.0", "entries": entries}),
+        encoding="utf-8",
+    )
     return path
 
 
@@ -244,10 +249,10 @@ def _service(tmp_path, *, include_binding: bool = True):
 async def test_full_catalog_audit_accounts_for_every_canonical_game(tmp_path):
     report = await _service(tmp_path).audit_all(audited_at=AUDITED_AT)
 
-    assert report.total_games == 2
-    assert report.total_records == 2
+    assert report.total_games == EXPECTED_GAME_COUNT
+    assert report.total_records == EXPECTED_GAME_COUNT
     assert {record.game_id for record in report.records} == {"game-1", "game-2"}
-    assert sum(report.status_counts.values()) == 2
+    assert sum(report.status_counts.values()) == EXPECTED_GAME_COUNT
 
 
 @pytest.mark.asyncio
@@ -307,7 +312,7 @@ async def test_no_ruleset_game_is_preserved_as_blocked_record(tmp_path):
 
 @pytest.mark.asyncio
 async def test_audit_paginates_past_first_hundred_games(tmp_path):
-    games = [_game(f"game-{index}", f"game-{index}") for index in range(105)]
+    games = [_game(f"game-{index}", f"game-{index}") for index in range(PAGINATED_GAME_COUNT)]
     service = VrchatReadinessAuditService(
         registry_path=_registry_file(tmp_path, include_binding=False),
         game_service=FakeGameService(games),
@@ -318,8 +323,8 @@ async def test_audit_paginates_past_first_hundred_games(tmp_path):
 
     report = await service.audit_all(audited_at=AUDITED_AT)
 
-    assert report.total_games == 105
-    assert report.total_records == 105
+    assert report.total_games == PAGINATED_GAME_COUNT
+    assert report.total_records == PAGINATED_GAME_COUNT
     assert all(record.readiness_status == ReadinessStatus.BLOCKED for record in report.records)
 
 
