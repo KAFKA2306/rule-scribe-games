@@ -13,6 +13,7 @@ from app.services.list_service import (
     InvalidReorderError,
     ListNotFoundError,
     ListService,
+    SystemListMutationError,
     list_service,
 )
 
@@ -71,6 +72,10 @@ def _not_found() -> HTTPException:
     return HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="List or item not found")
 
 
+def _system_list_conflict() -> HTTPException:
+    return HTTPException(status_code=status.HTTP_409_CONFLICT, detail="System lists cannot be renamed or deleted")
+
+
 @router.get("/lists")
 async def list_user_lists(
     user: dict = Depends(get_current_user),
@@ -86,6 +91,44 @@ async def create_user_list(
     service: ListService = Depends(get_list_service),
 ):
     return await service.create_list(_owner_id(user), payload.name, payload.visibility)
+
+
+@router.get("/owned-games")
+async def get_owned_games(
+    user: dict = Depends(get_current_user),
+    service: ListService = Depends(get_list_service),
+):
+    return await service.get_owned_collection(_owner_id(user))
+
+
+@router.get("/owned-games/{game_id}")
+async def get_owned_game_status(
+    game_id: UUID,
+    user: dict = Depends(get_current_user),
+    service: ListService = Depends(get_list_service),
+):
+    return await service.owned_status(_owner_id(user), str(game_id))
+
+
+@router.put("/owned-games/{game_id}")
+async def set_owned_game(
+    game_id: UUID,
+    user: dict = Depends(get_current_user),
+    service: ListService = Depends(get_list_service),
+):
+    try:
+        return await service.set_owned(_owner_id(user), str(game_id))
+    except GameNotFoundError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Canonical game not found") from exc
+
+
+@router.delete("/owned-games/{game_id}")
+async def remove_owned_game(
+    game_id: UUID,
+    user: dict = Depends(get_current_user),
+    service: ListService = Depends(get_list_service),
+):
+    return await service.remove_owned(_owner_id(user), str(game_id))
 
 
 @router.get("/lists/{list_id}")
@@ -111,6 +154,8 @@ async def rename_user_list(
         return await service.rename_list(_owner_id(user), str(list_id), payload.name)
     except ListNotFoundError as exc:
         raise _not_found() from exc
+    except SystemListMutationError as exc:
+        raise _system_list_conflict() from exc
 
 
 @router.delete("/lists/{list_id}")
@@ -124,6 +169,8 @@ async def delete_user_list(
         return {"status": "deleted"}
     except ListNotFoundError as exc:
         raise _not_found() from exc
+    except SystemListMutationError as exc:
+        raise _system_list_conflict() from exc
 
 
 @router.post("/lists/{list_id}/items", status_code=status.HTTP_201_CREATED)
