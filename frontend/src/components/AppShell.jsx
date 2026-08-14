@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Outlet, ScrollRestoration, useLocation, useNavigationType } from 'react-router-dom'
+import { Outlet, useLocation, useNavigationType } from 'react-router-dom'
 
 import AuthControlPortal from './AuthControlPortal.jsx'
 import GameListSavePortal from './GameListSavePortal.jsx'
@@ -8,11 +8,24 @@ function isPlainPrimaryClick(event) {
   return event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey
 }
 
+function focusRouteContent() {
+  const target = document.querySelector('main, .game-detail-content')
+  if (!target) return
+  if (!target.hasAttribute('tabindex')) target.setAttribute('tabindex', '-1')
+  target.focus({ preventScroll: true })
+}
+
 export default function AppShell() {
   const location = useLocation()
   const navigationType = useNavigationType()
-  const routeRef = useRef(null)
+  const scrollPositions = useRef(new Map())
   const [navigating, setNavigating] = useState(false)
+
+  useEffect(() => {
+    const previous = window.history.scrollRestoration
+    window.history.scrollRestoration = 'manual'
+    return () => { window.history.scrollRestoration = previous }
+  }, [])
 
   useEffect(() => {
     const onClick = (event) => {
@@ -29,14 +42,21 @@ export default function AppShell() {
   }, [])
 
   useEffect(() => {
+    const key = location.key
     const timer = window.setTimeout(() => setNavigating(false), 150)
-    if (navigationType !== 'POP') {
-      window.requestAnimationFrame(() => {
-        routeRef.current?.focus({ preventScroll: true })
+    window.requestAnimationFrame(() => {
+      if (navigationType === 'POP') {
+        const saved = scrollPositions.current.get(key)
+        if (saved) window.scrollTo({ top: saved.y, left: saved.x, behavior: 'auto' })
+      } else {
+        focusRouteContent()
         window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
-      })
+      }
+    })
+    return () => {
+      window.clearTimeout(timer)
+      scrollPositions.current.set(key, { x: window.scrollX, y: window.scrollY })
     }
-    return () => window.clearTimeout(timer)
   }, [location.key, navigationType])
 
   return (
@@ -46,17 +66,16 @@ export default function AppShell() {
           role="status"
           aria-live="polite"
           data-navigation-feedback
-          style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 10000, height: '3px', background: 'var(--accent-primary, currentColor)' }}
+          style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 10000, height: '3px', overflow: 'hidden', background: 'var(--accent-primary, currentColor)' }}
         >
-          <span className="sr-only">画面を切り替えています</span>
+          <span style={{ position: 'absolute', width: '1px', height: '1px', overflow: 'hidden', clip: 'rect(0 0 0 0)', whiteSpace: 'nowrap' }}>
+            画面を切り替えています
+          </span>
         </div>
       )}
-      <div id="route-content" ref={routeRef} tabIndex={-1} style={{ outline: 'none' }}>
-        <Outlet />
-      </div>
+      <Outlet />
       <AuthControlPortal />
       <GameListSavePortal />
-      <ScrollRestoration />
     </>
   )
 }
