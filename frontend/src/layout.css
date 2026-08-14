@@ -1,3 +1,7 @@
+@import '../vendor/kafka-signal/tokens.css';
+@import './kafka-signal.css';
+@import './kafka-signal-app.css';
+
 /* Layout ownership: body is the viewport, #root owns route layout. */
 body {
   display: block;
@@ -19,21 +23,9 @@ body {
   height: 100dvh;
 }
 
-#root > header {
-  grid-area: header;
-}
-
-#root > aside {
-  grid-area: sidebar;
-  min-width: 0;
-}
-
-#root > main {
-  grid-area: main;
-  min-width: 0;
-}
-
-/* Route pages that are not the directory shell must span the whole viewport. */
+#root > header { grid-area: header; }
+#root > aside { grid-area: sidebar; min-width: 0; }
+#root > main { grid-area: main; min-width: 0; }
 #root > :not(header):not(aside):not(main) {
   grid-column: 1 / -1;
   grid-row: 1 / -1;
@@ -72,35 +64,13 @@ body {
 .game-main,
 .game-main > *,
 .pro-main-col,
-.markdown-content {
-  min-width: 0;
-}
-
-.game-sidebar {
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
-}
-
+.markdown-content { min-width: 0; }
+.game-sidebar { display: flex; flex-direction: column; gap: 1.25rem; }
 .game-sidebar .pro-stats-grid,
-.game-sidebar .pro-card {
-  margin-bottom: 0;
-}
-
-.game-sidebar .pro-stats-grid {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.game-main {
-  width: 100%;
-  max-width: 900px;
-}
-
-.game-main .game-content {
-  min-width: 0;
-  margin-bottom: 1.5rem;
-}
-
+.game-sidebar .pro-card { margin-bottom: 0; }
+.game-sidebar .pro-stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.game-main { width: 100%; max-width: 900px; }
+.game-main .game-content { min-width: 0; margin-bottom: 1.5rem; }
 .game-main .game-title {
   min-width: 0;
   max-width: 100%;
@@ -109,89 +79,32 @@ body {
   letter-spacing: -0.04em;
   overflow-wrap: anywhere;
 }
-
-.rules-tabs {
-  flex-wrap: wrap;
-  max-width: 100%;
-  overflow: visible;
-}
-
-.rules-tabs button {
-  min-height: 44px;
-  white-space: nowrap;
-}
-
+.rules-tabs { flex-wrap: wrap; max-width: 100%; overflow: visible; }
+.rules-tabs button { min-height: 44px; white-space: nowrap; }
 .markdown-content,
 .summary-text,
 .review-text,
 .tip-item,
-.mistake-item {
-  overflow-wrap: anywhere;
-}
-
+.mistake-item { overflow-wrap: anywhere; }
 .markdown-content img,
 .markdown-content video,
-.markdown-content iframe {
-  max-width: 100%;
-}
-
+.markdown-content iframe { max-width: 100%; }
 .markdown-content pre,
-.markdown-content table {
-  max-width: 100%;
-  overflow-x: auto;
-}
-
-.header-actions {
-  flex-wrap: wrap;
-  justify-content: flex-end;
-}
+.markdown-content table { max-width: 100%; overflow-x: auto; }
+.header-actions { flex-wrap: wrap; justify-content: flex-end; }
 
 @media (max-width: 900px) {
-  #root {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-areas:
-      "header"
-      "main";
-  }
-
-  #root > aside {
-    display: none;
-  }
-
-  .game-layout {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 1.5rem;
-  }
-
-  .game-main {
-    max-width: none;
-  }
+  #root { grid-template-columns: minmax(0, 1fr); grid-template-areas: "header" "main"; }
+  #root > aside { display: none; }
+  .game-layout { grid-template-columns: minmax(0, 1fr); gap: 1.5rem; }
+  .game-main { max-width: none; }
 }
 
 @media (max-width: 680px) {
-  .game-detail-content {
-    padding: 1rem;
-  }
-
-  .game-page-toolbar {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-
-  .header-actions {
-    justify-content: flex-start;
-  }
-
-  .game-main .game-title {
-    font-size: clamp(2rem, 12vw, 3rem);
-  }
-
-  .rules-tabs {
-    gap: 4px;
-  }
-
-  .rules-tabs button {
-    padding-inline: 10px;
-    font-size: 0.78rem;
-  }
+  .game-detail-content { padding: 1rem; }
+  .game-page-toolbar { align-items: flex-start; flex-direction: column; }
+  .header-actions { justify-content: flex-start; }
+  .game-main .game-title { font-size: clamp(2rem, 12vw, 3rem); }
+  .rules-tabs { gap: 4px; }
+  .rules-tabs button { padding-inline: 10px; font-size: 0.78rem; }
 }
