@@ -40,6 +40,46 @@ class PresentationProjectionReadError(RuntimeError):
     """Raised when canonical projection inputs cannot be read safely."""
 
 
+def accepted_supported_claim(claim: dict, bindings: list[dict]) -> dict | None:
+    """Return projection evidence only when lifecycle and evidence gates both pass."""
+    if claim.get("lifecycle_status") != "accepted":
+        return None
+    relations = {row.get("relation") for row in bindings}
+    if "supports" not in relations or "contradicts" in relations:
+        return None
+    source_ids = sorted({str(row["source_id"]) for row in bindings if row.get("relation") == "supports"})
+    if not source_ids:
+        return None
+    return {**claim, "source_ids": source_ids}
+
+
+def project_rule_rows(rule_rows: list[dict], eligible_claims: dict[str, dict]) -> list[ProjectedRule]:
+    """Project only current, evidence-backed base RuleNodes; stale claims fail closed."""
+    projected: list[ProjectedRule] = []
+    for row in rule_rows:
+        if row["node_type"] == "variant":
+            continue
+        evidence = eligible_claims.get(row["rule_id"])
+        if evidence is None:
+            continue
+        claim_statement = (evidence.get("normalized_payload") or {}).get("statement")
+        if claim_statement != row["normalized_statement"]:
+            continue
+        projected.append(
+            ProjectedRule(
+                rule_id=row["rule_id"],
+                node_type=row["node_type"],
+                text=row["normalized_statement"],
+                sequence=row.get("sequence"),
+                evidence=ProjectionEvidence(
+                    claim_id=evidence["claim_id"],
+                    source_ids=evidence["source_ids"],
+                ),
+            )
+        )
+    return projected
+
+
 class PresentationProjectionService:
     async def get_by_slug(
         self,
@@ -112,30 +152,7 @@ class PresentationProjectionService:
             .data
         )
         eligible_claims = cls._load_eligible_rule_claims(client, rule_set_id)
-        projected_rules: list[ProjectedRule] = []
-        for row in rule_rows:
-            if row["node_type"] == "variant":
-                continue
-            evidence = eligible_claims.get(row["rule_id"])
-            if evidence is None:
-                continue
-            claim_statement = evidence["normalized_payload"].get("statement")
-            if claim_statement != row["normalized_statement"]:
-                # Evidence for a stale statement must not verify a newly edited RuleNode.
-                continue
-            projected_rules.append(
-                ProjectedRule(
-                    rule_id=row["rule_id"],
-                    node_type=row["node_type"],
-                    text=row["normalized_statement"],
-                    sequence=row.get("sequence"),
-                    evidence=ProjectionEvidence(
-                        claim_id=evidence["claim_id"],
-                        source_ids=evidence["source_ids"],
-                    ),
-                )
-            )
-
+        projected_rules = project_rule_rows(rule_rows, eligible_claims)
         glossary_items = cls._load_glossary(client, str(game["id"]), rule_set_id, language_code)
 
         quick_rules = [item for item in projected_rules if item.node_type in _QUICK_RULE_TYPES]
@@ -184,10 +201,9 @@ class PresentationProjectionService:
     def _load_eligible_rule_claims(client, rule_set_id: str) -> dict[str, dict]:
         claims = (
             client.table("claims")
-            .select("claim_id,rule_id,normalized_payload")
+            .select("claim_id,rule_id,normalized_payload,lifecycle_status")
             .eq("rule_set_id", rule_set_id)
             .eq("target_type", "rule_node")
-            .eq("lifecycle_status", "accepted")
             .order("claim_id")
             .execute()
             .data
@@ -201,15 +217,10 @@ class PresentationProjectionService:
                 .execute()
                 .data
             )
-            relations = {row["relation"] for row in bindings}
-            if "supports" not in relations or "contradicts" in relations:
-                continue
-            source_ids = sorted({row["source_id"] for row in bindings if row["relation"] == "supports"})
-            if not source_ids:
-                continue
+            evidence = accepted_supported_claim(claim, bindings)
             rule_id = claim.get("rule_id")
-            if rule_id and rule_id not in eligible:
-                eligible[rule_id] = {**claim, "source_ids": source_ids}
+            if evidence is not None and rule_id and rule_id not in eligible:
+                eligible[rule_id] = evidence
         return eligible
 
     @staticmethod
