@@ -120,7 +120,13 @@ async def test_unverified_source_asset_reuse_prevents_ready_promotion(monkeypatc
         )
 
     monkeypatch.setattr(VrchatReadinessAuditService, "_audit_ruleset", fake_base_audit_ruleset)
-    service = StrictVrchatReadinessAuditService()
+    dependency = object()
+    service = StrictVrchatReadinessAuditService(
+        game_service=dependency,
+        ruleset_service=dependency,
+        rule_graph_service=dependency,
+        component_catalog_service=dependency,
+    )
 
     record = await service._audit_ruleset(object(), object())
 
