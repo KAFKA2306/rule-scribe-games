@@ -1,19 +1,31 @@
 import { useState } from 'react'
 import { api } from '../../lib/api'
 
-export const RegenerateButton = ({ title, onRegenerate }) => {
+const currentGameSlug = () => {
+  if (typeof window === 'undefined') return ''
+  const match = window.location.pathname.match(/^\/games\/([^/]+)/)
+  return match ? decodeURIComponent(match[1]) : ''
+}
+
+export const RegenerateButton = ({ slug: propSlug, onRegenerate }) => {
   const [regenerating, setRegenerating] = useState(false)
+  const slug = propSlug || currentGameSlug()
 
   const handleRegenerate = async () => {
+    if (!slug) return
+
     setRegenerating(true)
     try {
-      const data = await api.post('/api/search', { query: title, generate: true })
-      if (onRegenerate && Array.isArray(data) && data[0]) {
-        onRegenerate(data[0])
+      const data = await api.patch(`/api/games/${encodeURIComponent(slug)}?regenerate=true&fill_missing_only=true`)
+      if (onRegenerate && data?.id) {
+        onRegenerate(data)
       }
     } catch (err) {
       console.error('Regeneration failed:', err)
-      alert('再生成に失敗しました')
+      const message = err?.status === 401
+        ? '再生成にはログインが必要です'
+        : '再生成に失敗しました'
+      alert(message)
     } finally {
       setRegenerating(false)
     }
@@ -23,9 +35,9 @@ export const RegenerateButton = ({ title, onRegenerate }) => {
     <button
       onClick={handleRegenerate}
       className="share-btn"
-      title="AIで再生成"
-      disabled={regenerating}
-      aria-label="Regenerate game data with AI"
+      title="AIで不足情報を再生成"
+      disabled={regenerating || !slug}
+      aria-label="Regenerate missing game data with AI"
     >
       {regenerating ? '⏳ 生成中' : '✨ 再生成'}
     </button>

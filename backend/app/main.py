@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Response
+from fastapi import FastAPI, HTTPException, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 
@@ -38,8 +38,10 @@ async def sitemap_xml():
     return Response(content=content, media_type="application/xml")
 
 
-@app.get("/games/{slug}")
+@app.get("/games/{slug}", response_class=HTMLResponse)
 async def game_seo_page(slug: str):
-    """Serve the game page with server-side injected SEO tags."""
+    """Serve a crawlable game page with game-specific metadata and a real 404 boundary."""
     content = await generate_seo_html(slug)
+    if content is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Game not found")
     return HTMLResponse(content=content)

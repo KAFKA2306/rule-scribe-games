@@ -11,6 +11,10 @@
       "destination": "/api/index.py"
     },
     {
+      "source": "/games/:slug",
+      "destination": "/api/index.py"
+    },
+    {
       "source": "/((?!assets|api|output_slides).*)",
       "destination": "/index.html"
     }

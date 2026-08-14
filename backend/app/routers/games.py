@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from app.core.rate_limiter import RateLimiter
-from app.models import GameDetail, GameUpdate, SearchRequest, GameListResponse
+from app.models import GameDetail, GameListResponse, GameUpdate, SearchRequest
+from app.routers.auth import get_current_user
 from app.services.game_service import GameService
 
 router = APIRouter()
@@ -30,14 +31,19 @@ async def search_games_post(
     body: SearchRequest,
     service: GameService = Depends(get_game_service),
 ):
+    # Always honor the DB-first contract even when a legacy client asks to generate.
+    matches = await service.search_games(body.query.strip())
+    if matches:
+        return matches
+
     if body.generate:
         if not gen_limiter.acquire():
             raise HTTPException(status_code=429, detail="Generation rate limit exceeded")
 
-        new_game = await service.generate_with_notebooklm(body.query)
+        new_game = await service.create_game_from_query(body.query.strip())
         if new_game and new_game.get("slug"):
             return [new_game]
-    return await service.search_games(body.query)
+    return []
 
 
 @router.get("/games", response_model=GameListResponse)
@@ -47,15 +53,15 @@ async def list_recent_games(limit: int = 100, offset: int = 0, service: GameServ
         "games": result["data"],
         "total": result["total"] or 0,
         "limit": limit,
-        "offset": offset
+        "offset": offset,
     }
 
 
 @router.get("/games/{slug}", response_model=GameDetail)
 async def get_game_details(slug: str, service: GameService = Depends(get_game_service)):
     game = await service.get_game_by_slug(slug)
-    if game is None:
-        raise HTTPException(status_code=404, detail="Game not found")
+    if not game:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Game not found")
     return game
 
 
@@ -65,16 +71,20 @@ async def update_game(
     game_update: GameUpdate | None = None,
     regenerate: bool = False,
     fill_missing_only: bool = False,
+    _user: dict = Depends(get_current_user),
     service: GameService = Depends(get_game_service),
 ) -> dict[str, object]:
-    if regenerate:
-        if not gen_limiter.acquire():
-            raise HTTPException(status_code=429, detail="Generation rate limit exceeded")
-        return await service.update_game_content(slug, fill_missing_only=fill_missing_only)
+    try:
+        if regenerate:
+            if not gen_limiter.acquire():
+                raise HTTPException(status_code=429, detail="Generation rate limit exceeded")
+            return await service.update_game_content(slug, fill_missing_only=fill_missing_only)
 
-    if game_update:
-        updates = game_update.model_dump(exclude_unset=True)
-        if updates:
-            return await service.update_game_manual(slug, updates)
+        if game_update:
+            updates = game_update.model_dump(exclude_unset=True)
+            if updates:
+                return await service.update_game_manual(slug, updates)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Game not found") from exc
 
     return {"status": "ok", "message": "No action taken (regenerate=False, no body)"}
