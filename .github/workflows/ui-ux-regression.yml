@@ -85,6 +85,10 @@ jobs:
         working-directory: frontend
         run: npm run lint
 
+      - name: Gate UI UX accessibility source contracts
+        working-directory: frontend
+        run: node scripts/check-uiux-accessibility-contracts.mjs
+
       - name: Install Chromium
         working-directory: frontend
         run: npx playwright install --with-deps chromium
@@ -104,10 +108,12 @@ jobs:
         working-directory: frontend
         run: npx playwright test tests/lists_layout.spec.js --project=chromium
 
-      - name: Gate cross-flow UX at 375 768 and 1440 widths
+      - name: Gate cross-flow UX and accessibility at 375 768 and 1440 widths
         working-directory: frontend
         run: >-
-          npx playwright test tests/ui_ux_regression.spec.js
+          npx playwright test
+          tests/ui_ux_regression.spec.js
+          tests/uiux_a11y_regression.spec.js
           --project=ux-mobile
           --project=ux-tablet
           --project=ux-desktop
