@@ -3,9 +3,6 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
-from fastapi import FastAPI
-from fastapi.testclient import TestClient
-
 from app.models import GameDetail
 from app.models.component_catalog import ComponentKind, ComponentSet, ComponentSetListResponse
 from app.models.rule_graph import RuleGraphReadResponse, RuleNode, RuleNodeType
@@ -13,7 +10,12 @@ from app.models.ruleset import RuleSet, RuleSetListResponse
 from app.models.vrchat_catalog import BindingRegistryFile, ManifestReadStatus, PublicationStatus
 from app.routers import vrchat
 from app.services.vrchat_manifest_catalog import VrchatManifestCatalogService
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
 
+HTTP_OK = 200
+HTTP_NOT_MODIFIED = 304
+SHA256_HEX_LENGTH = 64
 SNAPSHOT_AT = datetime(2026, 8, 14, tzinfo=UTC)
 
 
@@ -229,17 +231,17 @@ def test_catalog_api_is_cacheable_and_supports_conditional_get(tmp_path):
     client = _client(_service(tmp_path))
 
     first = client.get("/api/vrchat/v1/catalog")
-    assert first.status_code == 200
+    assert first.status_code == HTTP_OK
     assert first.headers["cache-control"] == "public, max-age=300, stale-while-revalidate=3600"
     etag = first.headers["etag"]
     payload = first.json()
     assert payload["schemaVersion"] == "1.0"
     assert payload["manifestSchemaVersion"] == "1.0"
-    assert len(payload["catalogRevision"]) == 64
+    assert len(payload["catalogRevision"]) == SHA256_HEX_LENGTH
     assert payload["entries"][0]["status"] == "playable"
 
     second = client.get("/api/vrchat/v1/catalog", headers={"If-None-Match": etag})
-    assert second.status_code == 304
+    assert second.status_code == HTTP_NOT_MODIFIED
     assert second.content == b""
     assert second.headers["etag"] == etag
 
@@ -248,7 +250,7 @@ def test_selected_manifest_api_returns_valid_manifest_in_one_fetch(tmp_path):
     client = _client(_service(tmp_path))
 
     response = client.get("/api/vrchat/v1/manifests/example-game/ruleset-ja-v1")
-    assert response.status_code == 200
+    assert response.status_code == HTTP_OK
     payload = response.json()
     assert payload["status"] == "available"
     assert payload["manifest"]["schemaVersion"] == "1.0"
