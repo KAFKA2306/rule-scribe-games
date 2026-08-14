@@ -9,7 +9,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from app.core import supabase
 from app.models.component_catalog import ComponentVerificationStatus
 from app.models.component_ingestion import ComponentSourceManifest
-from app.models.evidence import ClaimTarget, EvidenceRelation, EvidenceTargetType
+from app.models.evidence import ClaimTarget, EvidenceTargetType
 from app.services.component_ingestion import ComponentIngestionDryRun
 
 
@@ -111,7 +111,7 @@ def _claim_lifecycle(status: ComponentVerificationStatus) -> str:
     return "candidate"
 
 
-def _property_row(
+def _property_row(  # noqa: PLR0913
     *,
     ruleset_id: str,
     component_id: str,
