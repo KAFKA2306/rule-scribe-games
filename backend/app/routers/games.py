@@ -2,11 +2,18 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from app.core.rate_limiter import RateLimiter
 from app.models import GameDetail, GameListResponse, GameUpdate, SearchRequest
+from app.models.component_catalog import (
+    ComponentDetailResponse,
+    ComponentKind,
+    ComponentListResponse,
+    ComponentSetListResponse,
+)
 from app.models.concept_taxonomy import ConceptDetailResponse, GameConceptsReadResponse, GameGlossaryReadResponse
 from app.models.rule_graph import RuleGraphReadResponse, RuleNodeType
 from app.models.ruleset import RuleSetListResponse
 from app.routers.auth import require_catalog_editor
 from app.services import catalog_access
+from app.services.component_catalog import ComponentCatalogService
 from app.services.concept_taxonomy import ConceptTaxonomyService
 from app.services.game_service import GameService
 from app.services.rule_graph import RuleGraphService
@@ -29,6 +36,10 @@ def get_rule_graph_service():
 
 def get_ruleset_service():
     return RuleSetService()
+
+
+def get_component_catalog_service():
+    return ComponentCatalogService()
 
 
 def get_concept_taxonomy_service():
@@ -119,6 +130,54 @@ async def get_game_rule_sets(
     if rulesets is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Game not found")
     return rulesets
+
+
+@router.get("/games/{slug}/component-sets", response_model=ComponentSetListResponse)
+async def get_game_component_sets(
+    slug: str,
+    rule_set_id: str = Query(..., min_length=1),
+    service: ComponentCatalogService = Depends(get_component_catalog_service),
+):
+    result = await service.get_sets(slug, rule_set_id)
+    if result is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Game not found")
+    return result
+
+
+@router.get("/games/{slug}/components", response_model=ComponentListResponse)
+async def list_game_components(
+    slug: str,
+    rule_set_id: str = Query(..., min_length=1),
+    component_set_id: str | None = Query(default=None),
+    kind: ComponentKind | None = Query(default=None),
+    limit: int = Query(default=100, ge=1, le=500),
+    offset: int = Query(default=0, ge=0),
+    service: ComponentCatalogService = Depends(get_component_catalog_service),
+):
+    result = await service.list_components(
+        slug,
+        rule_set_id,
+        component_set_id=component_set_id,
+        kind=kind.value if kind else None,
+        limit=limit,
+        offset=offset,
+    )
+    if result is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Game not found")
+    return result
+
+
+@router.get("/games/{slug}/components/{component_id}", response_model=ComponentDetailResponse)
+async def get_game_component(
+    slug: str,
+    component_id: str,
+    rule_set_id: str = Query(..., min_length=1),
+    service: ComponentCatalogService = Depends(get_component_catalog_service),
+):
+    result = await service.get_component(slug, rule_set_id, component_id)
+    if result is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Component not found")
+    return result
 
 
 @router.get("/games/{slug}/rule-graph", response_model=RuleGraphReadResponse)

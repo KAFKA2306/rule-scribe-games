@@ -1,0 +1,227 @@
+name: Component Catalog contract
+
+on:
+  pull_request:
+    paths:
+      - "backend/app/models/component_catalog.py"
+      - "backend/app/services/component_catalog.py"
+      - "backend/app/routers/games.py"
+      - "backend/app/db/migrations/014_component_catalog.sql"
+      - "backend/tests/test_component_catalog.py"
+      - "docs/COMPONENT_CATALOG_V1.md"
+      - "docs/README.md"
+      - ".github/workflows/test-component-catalog.yml"
+  push:
+    branches: [main]
+    paths:
+      - "backend/app/models/component_catalog.py"
+      - "backend/app/services/component_catalog.py"
+      - "backend/app/routers/games.py"
+      - "backend/app/db/migrations/014_component_catalog.sql"
+      - "backend/tests/test_component_catalog.py"
+      - "docs/COMPONENT_CATALOG_V1.md"
+      - "docs/README.md"
+      - ".github/workflows/test-component-catalog.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  component-catalog:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: component_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d component_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/component_test
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+
+      - name: Install Python dependencies
+        run: uv sync --frozen --dev
+
+      - name: Compile Component Catalog modules
+        run: >-
+          uv run python -m compileall -q
+          backend/app/models/component_catalog.py
+          backend/app/services/component_catalog.py
+          backend/app/routers/games.py
+
+      - name: Run generic Component Catalog tests
+        env:
+          PYTHONPATH: backend
+        run: uv run pytest -q backend/tests/test_component_catalog.py backend/tests/test_ruleset_identity.py backend/tests/test_rule_graph.py
+
+      - name: Verify relational type and RuleSet boundaries
+        shell: bash
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 <<'SQL'
+          CREATE TABLE public.game_works (
+            id uuid PRIMARY KEY DEFAULT gen_random_uuid()
+          );
+          CREATE TABLE public.games (
+            id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+            slug text NOT NULL UNIQUE,
+            title text,
+            work_id uuid REFERENCES public.game_works(id)
+          );
+          INSERT INTO public.game_works DEFAULT VALUES;
+          INSERT INTO public.games(slug, title, work_id)
+          SELECT 'component-fixture', 'Component Fixture', id FROM public.game_works LIMIT 1;
+          SQL
+
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/010_rule_graph.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/011_concept_taxonomy.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/013_ruleset_identity.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/014_component_catalog.sql
+
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 <<'SQL'
+          INSERT INTO public.rule_sets(game_id, version, language_code, edition_label, platform, status, is_active)
+          SELECT id, 1, 'en', 'base', 'physical', 'active', true FROM public.games WHERE slug='component-fixture';
+          INSERT INTO public.rule_sets(game_id, version, language_code, edition_label, platform, status, is_active)
+          SELECT id, 1, 'en', 'digital', 'boardgamearena', 'active', true FROM public.games WHERE slug='component-fixture';
+
+          INSERT INTO public.component_catalogs(rule_set_id)
+          SELECT id FROM public.rule_sets;
+
+          INSERT INTO public.concepts(concept_id, concept_type, definition)
+          VALUES ('resource.energy', 'resource', 'Fixture resource concept');
+
+          INSERT INTO public.rule_nodes(rule_set_id, rule_id, node_type, normalized_statement)
+          SELECT id, 'rule.scout', 'effect', 'Scout effect.' FROM public.rule_sets WHERE platform='physical';
+
+          INSERT INTO public.component_sets(catalog_id, rule_set_id, component_set_id, canonical_name, kind)
+          SELECT cc.id, rs.id, 'cards', 'Cards', 'card'
+          FROM public.component_catalogs cc JOIN public.rule_sets rs ON rs.id=cc.rule_set_id;
+
+          INSERT INTO public.component_sets(catalog_id, rule_set_id, component_set_id, canonical_name, kind)
+          SELECT cc.id, rs.id, 'tiles', 'Tiles', 'tile'
+          FROM public.component_catalogs cc JOIN public.rule_sets rs ON rs.id=cc.rule_set_id WHERE rs.platform='physical';
+
+          INSERT INTO public.component_sets(catalog_id, rule_set_id, component_set_id, canonical_name, kind)
+          SELECT cc.id, rs.id, 'dice', 'Dice', 'die'
+          FROM public.component_catalogs cc JOIN public.rule_sets rs ON rs.id=cc.rule_set_id WHERE rs.platform='physical';
+
+          INSERT INTO public.component_sets(catalog_id, rule_set_id, component_set_id, canonical_name, kind)
+          SELECT cc.id, rs.id, 'tokens', 'Tokens', 'token'
+          FROM public.component_catalogs cc JOIN public.rule_sets rs ON rs.id=cc.rule_set_id WHERE rs.platform='physical';
+
+          INSERT INTO public.component_property_definitions(catalog_id, rule_set_id, property_key, labels, value_type, cardinality, enum_values, filterable)
+          SELECT cc.id, rs.id, 'faction', '{"en":"Faction"}'::jsonb, 'enum', 'one', ARRAY['sun','moon'], true
+          FROM public.component_catalogs cc JOIN public.rule_sets rs ON rs.id=cc.rule_set_id;
+
+          INSERT INTO public.component_property_definitions(catalog_id, rule_set_id, property_key, value_type, cardinality, sortable)
+          SELECT cc.id, rs.id, 'combat_value', 'integer', 'one', true
+          FROM public.component_catalogs cc JOIN public.rule_sets rs ON rs.id=cc.rule_set_id WHERE rs.platform='physical';
+
+          INSERT INTO public.component_property_definitions(catalog_id, rule_set_id, property_key, value_type, cardinality)
+          SELECT cc.id, rs.id, 'resource_type', 'concept_ref', 'one'
+          FROM public.component_catalogs cc JOIN public.rule_sets rs ON rs.id=cc.rule_set_id WHERE rs.platform='physical';
+
+          INSERT INTO public.component_property_definitions(catalog_id, rule_set_id, property_key, value_type, cardinality)
+          SELECT cc.id, rs.id, 'targets', 'component_ref', 'many'
+          FROM public.component_catalogs cc JOIN public.rule_sets rs ON rs.id=cc.rule_set_id WHERE rs.platform='physical';
+
+          INSERT INTO public.components(catalog_id, rule_set_id, component_id, component_set_id, canonical_name, kind)
+          SELECT cc.id, rs.id, 'card.scout', 'cards', 'Scout', 'card'
+          FROM public.component_catalogs cc JOIN public.rule_sets rs ON rs.id=cc.rule_set_id;
+
+          INSERT INTO public.components(catalog_id, rule_set_id, component_id, component_set_id, canonical_name, kind)
+          SELECT cc.id, rs.id, 'token.energy', 'tokens', 'Energy Token', 'token'
+          FROM public.component_catalogs cc JOIN public.rule_sets rs ON rs.id=cc.rule_set_id WHERE rs.platform='physical';
+
+          INSERT INTO public.components(catalog_id, rule_set_id, component_id, component_set_id, canonical_name, kind)
+          SELECT cc.id, rs.id, 'tile.forest', 'tiles', 'Forest Tile', 'tile'
+          FROM public.component_catalogs cc JOIN public.rule_sets rs ON rs.id=cc.rule_set_id WHERE rs.platform='physical';
+
+          INSERT INTO public.components(catalog_id, rule_set_id, component_id, component_set_id, canonical_name, kind)
+          SELECT cc.id, rs.id, 'die.action', 'dice', 'Action Die', 'die'
+          FROM public.component_catalogs cc JOIN public.rule_sets rs ON rs.id=cc.rule_set_id WHERE rs.platform='physical';
+
+          INSERT INTO public.component_properties(rule_set_id, component_id, property_key, value_type, cardinality, enum_value)
+          SELECT id, 'card.scout', 'faction', 'enum', 'one', 'sun' FROM public.rule_sets WHERE platform='physical';
+          INSERT INTO public.component_properties(rule_set_id, component_id, property_key, value_type, cardinality, integer_value)
+          SELECT id, 'card.scout', 'combat_value', 'integer', 'one', 3 FROM public.rule_sets WHERE platform='physical';
+          INSERT INTO public.component_properties(rule_set_id, component_id, property_key, value_type, cardinality, concept_ref_id)
+          SELECT id, 'card.scout', 'resource_type', 'concept_ref', 'one', 'resource.energy' FROM public.rule_sets WHERE platform='physical';
+          INSERT INTO public.component_properties(rule_set_id, component_id, property_key, value_type, cardinality, ordinal, component_ref_id)
+          SELECT id, 'die.action', 'targets', 'component_ref', 'many', 0, 'token.energy' FROM public.rule_sets WHERE platform='physical';
+
+          INSERT INTO public.component_abilities(rule_set_id, component_id, ability_id, printed_text)
+          SELECT id, 'card.scout', 'ability.scout', 'Scout printed text.' FROM public.rule_sets WHERE platform='physical';
+          INSERT INTO public.component_concepts(rule_set_id, component_id, concept_id)
+          SELECT id, 'token.energy', 'resource.energy' FROM public.rule_sets WHERE platform='physical';
+          INSERT INTO public.component_rule_nodes(rule_set_id, component_id, rule_id)
+          SELECT id, 'card.scout', 'rule.scout' FROM public.rule_sets WHERE platform='physical';
+          INSERT INTO public.component_ability_concepts(rule_set_id, ability_id, concept_id)
+          SELECT id, 'ability.scout', 'resource.energy' FROM public.rule_sets WHERE platform='physical';
+          INSERT INTO public.component_ability_rule_nodes(rule_set_id, ability_id, rule_id)
+          SELECT id, 'ability.scout', 'rule.scout' FROM public.rule_sets WHERE platform='physical';
+          SQL
+
+          # Same stable component ID/name is valid in two RuleSets, but remains two rows.
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.components where component_id='card.scout' and canonical_name='Scout';")" = "2"
+          test "$(psql "$DATABASE_URL" -Atc "select count(distinct kind) from public.components;")" = "4"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.component_concepts;")" = "1"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.component_rule_nodes;")" = "1"
+
+          # A cardinality-one definition cannot accept a second value.
+          if psql "$DATABASE_URL" -v ON_ERROR_STOP=1 <<'SQL'
+          INSERT INTO public.component_properties(rule_set_id, component_id, property_key, value_type, cardinality, ordinal, enum_value)
+          SELECT id, 'card.scout', 'faction', 'enum', 'one', 1, 'moon' FROM public.rule_sets WHERE platform='physical';
+          SQL
+          then
+            echo "cardinality-one duplicate unexpectedly accepted"
+            exit 1
+          fi
+
+          # Definition/type mismatch is rejected by the composite FK.
+          if psql "$DATABASE_URL" -v ON_ERROR_STOP=1 <<'SQL'
+          INSERT INTO public.component_properties(rule_set_id, component_id, property_key, value_type, cardinality, text_value)
+          SELECT id, 'card.scout', 'combat_value', 'text', 'one', 'three' FROM public.rule_sets WHERE platform='physical';
+          SQL
+          then
+            echo "property type mismatch unexpectedly accepted"
+            exit 1
+          fi
+
+          # Verified/source-bound data cannot omit source IDs.
+          if psql "$DATABASE_URL" -v ON_ERROR_STOP=1 <<'SQL'
+          INSERT INTO public.components(catalog_id, rule_set_id, component_id, canonical_name, kind, verification_status)
+          SELECT cc.id, rs.id, 'card.unsourced', 'Unsourced', 'card', 'verified'
+          FROM public.component_catalogs cc JOIN public.rule_sets rs ON rs.id=cc.rule_set_id WHERE rs.platform='physical';
+          SQL
+          then
+            echo "verified unsourced component unexpectedly accepted"
+            exit 1
+          fi
+
+          # Cross-RuleSet component references are rejected by the composite FK.
+          if psql "$DATABASE_URL" -v ON_ERROR_STOP=1 <<'SQL'
+          INSERT INTO public.component_property_definitions(catalog_id, rule_set_id, property_key, value_type, cardinality)
+          SELECT cc.id, rs.id, 'digital_target', 'component_ref', 'many'
+          FROM public.component_catalogs cc JOIN public.rule_sets rs ON rs.id=cc.rule_set_id WHERE rs.platform='physical';
+          INSERT INTO public.component_properties(rule_set_id, component_id, property_key, value_type, cardinality, component_ref_id)
+          SELECT id, 'card.scout', 'digital_target', 'component_ref', 'many', 'card.digital-only' FROM public.rule_sets WHERE platform='physical';
+          SQL
+          then
+            echo "cross/missing RuleSet component reference unexpectedly accepted"
+            exit 1
+          fi

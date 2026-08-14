@@ -19,6 +19,9 @@
 - **[`CONCEPT_TAXONOMY_V1.md`](./CONCEPT_TAXONOMY_V1.md)**
     - stable concept ID、多言語label、SKOS型relation、Rule Graph backlinks、linked glossary projectionを定義します。
 
+- **[`COMPONENT_CATALOG_V1.md`](./COMPONENT_CATALOG_V1.md)**
+    - Ontology v2 のgame-content instance layer。cards / tiles / tokens / diceを同じgeneric schemaで扱い、PropertyDefinition・typed values・RuleSet/Concept/RuleNode境界を定義します。
+
 - **[`diagrams.md`](./diagrams.md)**
     - システムアーキテクチャ、シーケンス図、ER図などの視覚的な資料が含まれています。
 
