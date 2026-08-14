@@ -4,6 +4,7 @@ from urllib.parse import urlparse
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+IdentityStatus = Literal["unverified", "verified", "needs_review"]
 SourceTrust = Literal["unknown", "official_publisher", "authorized_partner", "third_party"]
 ContentReviewStatus = Literal["unknown", "ai_draft", "review_required", "human_reviewed", "publisher_reviewed"]
 
@@ -71,6 +72,9 @@ class StructuredData(BaseSchema):
 class GameDetail(BaseSchema):
     id: Any
     slug: str | None = None
+    work_id: Any | None = None
+    identity_status: IdentityStatus = "unverified"
+    identity_source: str | None = None
     title: str
     description: str | None = None
     rules_content: str | None = None
