@@ -1,0 +1,221 @@
+name: Claim Evidence contract
+
+on:
+  pull_request:
+    paths:
+      - "backend/app/models/evidence.py"
+      - "backend/app/services/evidence.py"
+      - "backend/app/routers/games.py"
+      - "backend/app/db/migrations/015_claim_evidence.sql"
+      - "backend/tests/test_claim_evidence.py"
+      - "docs/CLAIM_EVIDENCE_V1.md"
+      - ".github/workflows/test-claim-evidence.yml"
+  push:
+    branches: [main]
+    paths:
+      - "backend/app/models/evidence.py"
+      - "backend/app/services/evidence.py"
+      - "backend/app/routers/games.py"
+      - "backend/app/db/migrations/015_claim_evidence.sql"
+      - "backend/tests/test_claim_evidence.py"
+      - "docs/CLAIM_EVIDENCE_V1.md"
+      - ".github/workflows/test-claim-evidence.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  claim-evidence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: evidence_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d evidence_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/evidence_test
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+
+      - name: Install Python dependencies
+        run: uv sync --frozen --dev
+
+      - name: Compile Claim Evidence modules
+        run: >-
+          uv run python -m compileall -q
+          backend/app/models/evidence.py
+          backend/app/services/evidence.py
+          backend/app/routers/games.py
+
+      - name: Run evidence, component, RuleSet and Rule Graph contract tests
+        env:
+          PYTHONPATH: backend
+        run: >-
+          uv run pytest -q
+          backend/tests/test_claim_evidence.py
+          backend/tests/test_component_catalog.py
+          backend/tests/test_ruleset_identity.py
+          backend/tests/test_rule_graph.py
+
+      - name: Verify claim/source cardinality, conflict preservation and RuleSet isolation
+        shell: bash
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 <<'SQL'
+          CREATE TABLE public.game_works (
+            id uuid PRIMARY KEY DEFAULT gen_random_uuid()
+          );
+          CREATE TABLE public.games (
+            id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+            slug text NOT NULL UNIQUE,
+            title text,
+            work_id uuid REFERENCES public.game_works(id)
+          );
+          INSERT INTO public.game_works DEFAULT VALUES;
+          INSERT INTO public.games(slug, title, work_id)
+          SELECT 'evidence-fixture', 'Evidence Fixture', id FROM public.game_works LIMIT 1;
+          SQL
+
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/010_rule_graph.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/011_concept_taxonomy.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/013_ruleset_identity.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/014_component_catalog.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/015_claim_evidence.sql
+
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 <<'SQL'
+          INSERT INTO public.rule_sets(game_id, version, language_code, edition_label, platform, status, is_active)
+          SELECT id, 1, 'en', 'base', 'physical', 'active', true FROM public.games WHERE slug='evidence-fixture';
+          INSERT INTO public.rule_sets(game_id, version, language_code, edition_label, platform, status, is_active)
+          SELECT id, 1, 'en', 'digital', 'boardgamearena', 'active', true FROM public.games WHERE slug='evidence-fixture';
+
+          INSERT INTO public.rule_nodes(rule_set_id, rule_id, node_type, normalized_statement)
+          SELECT id, 'rule.game-end', 'game_end', 'End at round end.' FROM public.rule_sets;
+          INSERT INTO public.rule_nodes(rule_set_id, rule_id, node_type, normalized_statement)
+          SELECT id, 'rule.digital-only', 'effect', 'Digital-only effect.' FROM public.rule_sets WHERE platform='boardgamearena';
+
+          INSERT INTO public.component_catalogs(rule_set_id) SELECT id FROM public.rule_sets;
+          INSERT INTO public.component_sets(catalog_id, rule_set_id, component_set_id, canonical_name, kind)
+          SELECT cc.id, rs.id, 'cards', 'Cards', 'card'
+          FROM public.component_catalogs cc JOIN public.rule_sets rs ON rs.id=cc.rule_set_id;
+          INSERT INTO public.component_property_definitions(catalog_id, rule_set_id, property_key, value_type, cardinality)
+          SELECT cc.id, rs.id, 'cost', 'integer', 'one'
+          FROM public.component_catalogs cc JOIN public.rule_sets rs ON rs.id=cc.rule_set_id;
+          INSERT INTO public.component_property_definitions(catalog_id, rule_set_id, property_key, value_type, cardinality, enum_values)
+          SELECT cc.id, rs.id, 'faction', 'enum', 'one', ARRAY['sun','moon']
+          FROM public.component_catalogs cc JOIN public.rule_sets rs ON rs.id=cc.rule_set_id;
+          INSERT INTO public.components(catalog_id, rule_set_id, component_id, component_set_id, canonical_name, kind)
+          SELECT cc.id, rs.id, 'card.scout', 'cards', 'Scout', 'card'
+          FROM public.component_catalogs cc JOIN public.rule_sets rs ON rs.id=cc.rule_set_id;
+          INSERT INTO public.component_properties(rule_set_id, component_id, property_key, value_type, cardinality, integer_value)
+          SELECT id, 'card.scout', 'cost', 'integer', 'one', CASE WHEN platform='physical' THEN 2 ELSE 3 END
+          FROM public.rule_sets;
+          INSERT INTO public.component_properties(rule_set_id, component_id, property_key, value_type, cardinality, enum_value)
+          SELECT id, 'card.scout', 'faction', 'enum', 'one', 'sun'
+          FROM public.rule_sets;
+          INSERT INTO public.component_abilities(rule_set_id, component_id, ability_id, printed_text, normalized_label)
+          SELECT id, 'card.scout', 'ability.scout', 'Gain 1 gold.', 'Gain gold'
+          FROM public.rule_sets;
+
+          INSERT INTO public.evidence_sources(source_id, url, source_type, publisher_name, trust_metadata)
+          VALUES
+            ('source.publisher.rules', 'https://publisher.example/rules', 'publisher_rules', 'Publisher', '{"official_source":true}'::jsonb),
+            ('source.platform.rules', 'https://platform.example/rules', 'platform_rules', NULL, '{"official_source":false}'::jsonb),
+            ('source.publisher.errata', 'https://publisher.example/errata', 'publisher_errata', 'Publisher', '{"official_source":true}'::jsonb);
+
+          INSERT INTO public.source_locators(locator_id, source_id, page_number, section_heading)
+          VALUES ('locator.publisher.end', 'source.publisher.rules', 4, 'Game End');
+
+          INSERT INTO public.claims(claim_id, rule_set_id, claim_type, normalized_payload, target_type, rule_id)
+          SELECT 'claim.rule.end', id, 'rule_statement', '{"statement":"End at round end."}'::jsonb, 'rule_node', 'rule.game-end'
+          FROM public.rule_sets WHERE platform='physical';
+
+          INSERT INTO public.claims(claim_id, rule_set_id, claim_type, normalized_payload, target_type, component_id, property_key, ordinal)
+          SELECT 'claim.component.cost', id, 'component_property', '{"value":2}'::jsonb, 'component_property', 'card.scout', 'cost', 0
+          FROM public.rule_sets WHERE platform='physical';
+          INSERT INTO public.claims(claim_id, rule_set_id, claim_type, normalized_payload, target_type, component_id, property_key, ordinal)
+          SELECT 'claim.component.faction', id, 'component_property', '{"value":"sun"}'::jsonb, 'component_property', 'card.scout', 'faction', 0
+          FROM public.rule_sets WHERE platform='physical';
+
+          INSERT INTO public.claims(claim_id, rule_set_id, claim_type, normalized_payload, target_type, ability_id)
+          SELECT 'claim.ability.printed', id, 'printed_text', '{"text":"Gain 1 gold."}'::jsonb, 'ability_printed_text', 'ability.scout'
+          FROM public.rule_sets WHERE platform='physical';
+          INSERT INTO public.claims(claim_id, rule_set_id, claim_type, normalized_payload, target_type, ability_id)
+          SELECT 'claim.ability.normalized', id, 'normalized_rule', '{"resource":"gold","delta":1}'::jsonb, 'ability_normalized', 'ability.scout'
+          FROM public.rule_sets WHERE platform='physical';
+
+          INSERT INTO public.evidence_bindings(binding_id, claim_id, source_id, locator_id, relation)
+          VALUES
+            ('binding.rule.publisher', 'claim.rule.end', 'source.publisher.rules', 'locator.publisher.end', 'supports'),
+            ('binding.rule.platform', 'claim.rule.end', 'source.platform.rules', NULL, 'supports'),
+            ('binding.rule.errata', 'claim.rule.end', 'source.publisher.errata', NULL, 'contradicts'),
+            ('binding.cost.publisher', 'claim.component.cost', 'source.publisher.rules', NULL, 'supports'),
+            ('binding.ability.printed', 'claim.ability.printed', 'source.publisher.rules', NULL, 'supports'),
+            ('binding.ability.normalized', 'claim.ability.normalized', 'source.publisher.rules', NULL, 'contextualizes');
+          SQL
+
+          # One source -> many claims and many sources -> one claim are both explicit.
+          test "$(psql "$DATABASE_URL" -Atc "select count(distinct claim_id) from public.evidence_bindings where source_id='source.publisher.rules';")" = "4"
+          test "$(psql "$DATABASE_URL" -Atc "select count(distinct source_id) from public.evidence_bindings where claim_id='claim.rule.end';")" = "3"
+
+          # Contradiction is preserved alongside support, not overwritten.
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.evidence_bindings where claim_id='claim.rule.end' and relation='supports';")" = "2"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.evidence_bindings where claim_id='claim.rule.end' and relation='contradicts';")" = "1"
+
+          # Faction has a claim but no supporting binding: field-level unsupported data stays visible to the audit gate.
+          test "$(psql "$DATABASE_URL" -Atc "select claims_without_support from public.claim_evidence_audit_summary;")" = "2"
+
+          # Binding without a precise locator is valid; no locator row is fabricated.
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.evidence_bindings where locator_id is null;")" = "5"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.source_locators;")" = "1"
+
+          # Printed text and normalized interpretation remain separate claims.
+          test "$(psql "$DATABASE_URL" -Atc "select count(distinct target_type) from public.claims where ability_id='ability.scout';")" = "2"
+
+          # A physical RuleSet claim cannot target a digital-only RuleNode.
+          if psql "$DATABASE_URL" -v ON_ERROR_STOP=1 <<'SQL'
+          INSERT INTO public.claims(claim_id, rule_set_id, claim_type, normalized_payload, target_type, rule_id)
+          SELECT 'claim.cross-ruleset.rule', id, 'rule_statement', '{}'::jsonb, 'rule_node', 'rule.digital-only'
+          FROM public.rule_sets WHERE platform='physical';
+          SQL
+          then
+            echo "cross-RuleSet RuleNode claim unexpectedly accepted"
+            exit 1
+          fi
+
+          # A physical RuleSet claim cannot target a component property that exists only in another RuleSet identity.
+          DELETE FROM public.component_properties
+          WHERE rule_set_id=(SELECT id FROM public.rule_sets WHERE platform='physical')
+            AND component_id='card.scout' AND property_key='faction';
+          if psql "$DATABASE_URL" -v ON_ERROR_STOP=1 <<'SQL'
+          INSERT INTO public.claims(claim_id, rule_set_id, claim_type, normalized_payload, target_type, component_id, property_key, ordinal)
+          SELECT 'claim.cross-ruleset.property', id, 'component_property', '{}'::jsonb, 'component_property', 'card.scout', 'faction', 0
+          FROM public.rule_sets WHERE platform='physical';
+          SQL
+          then
+            echo "cross-RuleSet ComponentProperty claim unexpectedly accepted"
+            exit 1
+          fi
+
+          # A locator from a different source cannot be attached to a binding.
+          if psql "$DATABASE_URL" -v ON_ERROR_STOP=1 <<'SQL'
+          INSERT INTO public.evidence_bindings(binding_id, claim_id, source_id, locator_id, relation)
+          VALUES ('binding.bad-locator', 'claim.component.cost', 'source.platform.rules', 'locator.publisher.end', 'supports');
+          SQL
+          then
+            echo "cross-source locator unexpectedly accepted"
+            exit 1
+          fi
