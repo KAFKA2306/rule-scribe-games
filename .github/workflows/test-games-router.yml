@@ -1,0 +1,40 @@
+name: Test games router
+
+on:
+  pull_request:
+    paths:
+      - "backend/app/routers/games.py"
+      - "backend/app/services/game_service.py"
+      - "backend/app/core/supabase.py"
+      - "backend/tests/test_games_router.py"
+      - ".github/workflows/test-games-router.yml"
+      - "pyproject.toml"
+      - "uv.lock"
+  push:
+    branches:
+      - main
+    paths:
+      - "backend/app/routers/games.py"
+      - "backend/app/services/game_service.py"
+      - "backend/app/core/supabase.py"
+      - "backend/tests/test_games_router.py"
+      - ".github/workflows/test-games-router.yml"
+      - "pyproject.toml"
+      - "uv.lock"
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install uv
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+      - run: uv sync --frozen --dev
+      - name: Run games router regression tests
+        run: uv run pytest -q backend/tests/test_games_router.py
+        env:
+          PYTHONPATH: backend
