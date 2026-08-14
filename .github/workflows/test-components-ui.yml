@@ -1,0 +1,112 @@
+name: Components UI contract
+
+on:
+  pull_request:
+    paths:
+      - "backend/app/models/component_catalog_view.py"
+      - "backend/app/services/component_catalog_view.py"
+      - "backend/app/routers/component_catalog_view.py"
+      - "backend/app/main.py"
+      - "backend/tests/test_component_catalog_view.py"
+      - "frontend/src/lib/componentCatalog.js"
+      - "frontend/src/components/game/ComponentsPanel.jsx"
+      - "frontend/src/components/game/components-panel.css"
+      - "frontend/src/pages/GamePage.jsx"
+      - "frontend/tests/componentCatalog.test.mjs"
+      - "frontend/tests/components_ui.spec.js"
+      - ".github/workflows/test-components-ui.yml"
+  push:
+    branches: [main]
+    paths:
+      - "backend/app/models/component_catalog_view.py"
+      - "backend/app/services/component_catalog_view.py"
+      - "backend/app/routers/component_catalog_view.py"
+      - "backend/app/main.py"
+      - "backend/tests/test_component_catalog_view.py"
+      - "frontend/src/lib/componentCatalog.js"
+      - "frontend/src/components/game/ComponentsPanel.jsx"
+      - "frontend/src/components/game/components-panel.css"
+      - "frontend/src/pages/GamePage.jsx"
+      - "frontend/tests/componentCatalog.test.mjs"
+      - "frontend/tests/components_ui.spec.js"
+      - ".github/workflows/test-components-ui.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  backend-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install uv
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+      - name: Install Python dependencies
+        run: uv sync --frozen --dev
+      - name: Compile component UI projection modules
+        run: >-
+          uv run python -m compileall -q
+          backend/app/models/component_catalog_view.py
+          backend/app/services/component_catalog_view.py
+          backend/app/routers/component_catalog_view.py
+          backend/app/main.py
+      - name: Run component view and canonical dependency tests
+        env:
+          PYTHONPATH: backend
+        run: >-
+          uv run pytest -q
+          backend/tests/test_component_catalog_view.py
+          backend/tests/test_component_catalog.py
+          backend/tests/test_claim_evidence.py
+          backend/tests/test_ruleset_identity.py
+
+  frontend-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      VITE_SUPABASE_URL: https://example.supabase.co
+      VITE_SUPABASE_ANON_KEY: sb_publishable_test
+    steps:
+      - uses: actions/checkout@v5
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+      - name: Run schema-driven filter unit tests
+        working-directory: frontend
+        run: node --test tests/componentCatalog.test.mjs
+      - name: Lint Components UI surfaces
+        working-directory: frontend
+        run: >-
+          npx eslint
+          src/lib/componentCatalog.js
+          src/components/game/ComponentsPanel.jsx
+          src/pages/GamePage.jsx
+          tests/components_ui.spec.js
+      - name: Build frontend
+        working-directory: frontend
+        run: npm run build
+      - name: Install Chromium
+        working-directory: frontend
+        run: npx playwright install --with-deps chromium
+      - name: Gate Components UI at 375 768 and 1440 widths
+        working-directory: frontend
+        run: >-
+          npx playwright test tests/components_ui.spec.js
+          --project=ux-mobile
+          --project=ux-tablet
+          --project=ux-desktop
+      - name: Upload Components UI screenshots and traces
+        if: ${{ success() || failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: components-ui-evidence
+          path: frontend/test-results/**/*
+          if-no-files-found: ignore
+          retention-days: 14
