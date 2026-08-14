@@ -11,42 +11,46 @@ const DataPage = lazy(() => import('./pages/DataPage.jsx'))
 const ListsPage = lazy(() => import('./pages/ListsPage.jsx'))
 
 import { AuthProvider } from './auth/AuthContext.jsx'
-import AuthControlPortal from './components/AuthControlPortal.jsx'
-import GameListSavePortal from './components/GameListSavePortal.jsx'
+import AppShell from './components/AppShell.jsx'
 import LoadingFallback from './components/LoadingFallback.jsx'
 
 const router = createBrowserRouter([
   {
-    path: '/',
-    element: (
-      <Suspense fallback={<LoadingFallback />}>
-        <App />
-      </Suspense>
-    ),
-  },
-  {
-    path: '/games/:slug',
-    element: (
-      <Suspense fallback={<LoadingFallback />}>
-        <GamePage />
-      </Suspense>
-    ),
-  },
-  {
-    path: '/lists',
-    element: (
-      <Suspense fallback={<LoadingFallback />}>
-        <ListsPage />
-      </Suspense>
-    ),
-  },
-  {
-    path: '/data',
-    element: (
-      <Suspense fallback={<LoadingFallback />}>
-        <DataPage />
-      </Suspense>
-    ),
+    element: <AppShell />,
+    children: [
+      {
+        path: '/',
+        element: (
+          <Suspense fallback={<LoadingFallback />}>
+            <App />
+          </Suspense>
+        ),
+      },
+      {
+        path: '/games/:slug',
+        element: (
+          <Suspense fallback={<LoadingFallback />}>
+            <GamePage />
+          </Suspense>
+        ),
+      },
+      {
+        path: '/lists',
+        element: (
+          <Suspense fallback={<LoadingFallback />}>
+            <ListsPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: '/data',
+        element: (
+          <Suspense fallback={<LoadingFallback />}>
+            <DataPage />
+          </Suspense>
+        ),
+      },
+    ],
   },
 ])
 
@@ -55,8 +59,6 @@ createRoot(document.getElementById('root')).render(
     <HelmetProvider>
       <AuthProvider>
         <RouterProvider router={router} />
-        <AuthControlPortal />
-        <GameListSavePortal />
       </AuthProvider>
     </HelmetProvider>
   </StrictMode>

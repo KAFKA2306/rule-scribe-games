@@ -9,14 +9,17 @@ on:
       - "backend/app/services/list_service.py"
       - "backend/app/main.py"
       - "backend/tests/test_lists.py"
+      - "frontend/src/App.jsx"
       - "frontend/src/lib/api.js"
       - "frontend/src/main.jsx"
+      - "frontend/src/components/AppShell.jsx"
       - "frontend/src/components/AuthControlPortal.jsx"
       - "frontend/src/components/GameListSavePortal.jsx"
       - "frontend/src/components/game/AddToListButton.jsx"
       - "frontend/src/components/game/OwnedGameButton.jsx"
       - "frontend/src/pages/ListsPage.jsx"
       - "frontend/tests/lists.spec.js"
+      - "frontend/tests/navigation.spec.js"
       - ".github/workflows/test-lists.yml"
   push:
     branches:
@@ -28,14 +31,17 @@ on:
       - "backend/app/services/list_service.py"
       - "backend/app/main.py"
       - "backend/tests/test_lists.py"
+      - "frontend/src/App.jsx"
       - "frontend/src/lib/api.js"
       - "frontend/src/main.jsx"
+      - "frontend/src/components/AppShell.jsx"
       - "frontend/src/components/AuthControlPortal.jsx"
       - "frontend/src/components/GameListSavePortal.jsx"
       - "frontend/src/components/game/AddToListButton.jsx"
       - "frontend/src/components/game/OwnedGameButton.jsx"
       - "frontend/src/pages/ListsPage.jsx"
       - "frontend/tests/lists.spec.js"
+      - "frontend/tests/navigation.spec.js"
       - ".github/workflows/test-lists.yml"
 
 permissions:
@@ -90,12 +96,12 @@ jobs:
       - name: Build frontend
         working-directory: frontend
         run: npm run build
-      - name: Lint list surface
+      - name: Lint list and navigation surface
         working-directory: frontend
-        run: npx eslint src/main.jsx src/lib/api.js src/components/AuthControlPortal.jsx src/components/GameListSavePortal.jsx src/components/game/AddToListButton.jsx src/components/game/OwnedGameButton.jsx src/pages/ListsPage.jsx tests/lists.spec.js
+        run: npx eslint src/main.jsx src/lib/api.js src/components/AppShell.jsx src/components/AuthControlPortal.jsx src/components/GameListSavePortal.jsx src/components/game/AddToListButton.jsx src/components/game/OwnedGameButton.jsx src/pages/ListsPage.jsx tests/lists.spec.js tests/navigation.spec.js
       - name: Install Chromium
         working-directory: frontend
         run: npx playwright install --with-deps chromium
-      - name: Run list E2E
+      - name: Run list and navigation E2E
         working-directory: frontend
-        run: npx playwright test tests/lists.spec.js --project=chromium
+        run: npx playwright test tests/lists.spec.js tests/navigation.spec.js --project=chromium
