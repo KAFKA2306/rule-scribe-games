@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - "scripts/verify_vercel_git_deployment.py"
+      - "scripts/vercel_deployment_budget.py"
       - "backend/tests/test_vercel_git_deployment.py"
       - ".github/workflows/deploy.yml"
       - ".github/workflows/test-vercel-git-deployment.yml"
@@ -11,6 +12,7 @@ on:
     branches: [main]
     paths:
       - "scripts/verify_vercel_git_deployment.py"
+      - "scripts/vercel_deployment_budget.py"
       - "backend/tests/test_vercel_git_deployment.py"
       - ".github/workflows/deploy.yml"
       - ".github/workflows/test-vercel-git-deployment.yml"
@@ -28,17 +30,21 @@ jobs:
         uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
       - name: Install dependencies
         run: uv sync --frozen --dev
-      - name: Compile verifier
-        run: uv run python -m compileall -q scripts/verify_vercel_git_deployment.py
-      - name: Test exact-SHA production verification
+      - name: Compile deployment controls
+        run: >-
+          uv run python -m compileall -q
+          scripts/verify_vercel_git_deployment.py
+          scripts/vercel_deployment_budget.py
+      - name: Test exact-SHA and budget decisions
         env:
           PYTHONPATH: .
         run: uv run pytest -q backend/tests/test_vercel_git_deployment.py
-      - name: Assert Actions does not create a second production deployment
+      - name: Assert production push never creates a deployment
         shell: bash
         run: |
-          if grep -Eq 'vercel (deploy|--prod)( |$)' .github/workflows/deploy.yml; then
-            echo "deploy.yml must not create a second Vercel production deployment; Git integration is canonical"
-            exit 1
-          fi
-          grep -F 'verify_vercel_git_deployment.py' .github/workflows/deploy.yml
+          test "$(grep -Fc 'vercel deploy --prod --yes' .github/workflows/deploy.yml)" = "1"
+          grep -F "if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'" .github/workflows/deploy.yml
+          grep -F "if: steps.budget.outputs.state == 'deployable'" .github/workflows/deploy.yml
+          grep -F "api-deployments-free-per-day" .github/workflows/deploy.yml
+          grep -F "vercel_deployment_budget.py" .github/workflows/deploy.yml
+          grep -F "verify_vercel_git_deployment.py" .github/workflows/deploy.yml
