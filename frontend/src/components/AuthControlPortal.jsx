@@ -6,9 +6,9 @@ import { useAuth } from '../auth/authContext'
 import LoginButton from './LoginButton'
 
 function findTarget(pathname) {
+  if (pathname === '/lists') return null
   const explicitTarget = document.querySelector('[data-auth-control-target]')
   if (explicitTarget) return explicitTarget
-  if (pathname === '/lists') return null
   return document.querySelector('header') || document.querySelector('.game-page-toolbar')
 }
 
