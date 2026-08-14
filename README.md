@@ -84,6 +84,10 @@ AIエージェントが自律的に実行可能な、4つの高度な自動化�
 - **[`scripts/`](./scripts/README.md)**: 運用を支える自動化の源泉。
 - **[`docs/`](./docs/README.md)**: [`SEO.md`](./docs/SEO.md), [`CONTENT_GUIDELINES.md`](./docs/CONTENT_GUIDELINES.md) 等の戦略ドキュメント。
 
+## 🧭 Issue workflow
+
+新規Issueは、実装だけでなくAcceptance Criteria・Tests・必要なproduction verification・cleanup/rollbackまで完遂できる契約として作成します。Feature、AI/Data Quality、Ops/BugのIssue Formsと運用規約は **[`docs/ISSUE_GUIDE.md`](./docs/ISSUE_GUIDE.md)** を参照してください。
+
 ---
 
 **Built with Precision by RuleScribe Games Team**

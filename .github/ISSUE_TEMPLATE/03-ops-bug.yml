@@ -1,0 +1,79 @@
+name: Ops / bug / production incident
+description: Report a reproducible defect or operational failure with expected behavior, verification, and rollback.
+title: "[Bug/Ops] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Remove secrets, tokens, cookies, credentials, and private user data from logs and screenshots before attaching evidence.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / impact
+      description: What is broken, who or what is affected, and what is the operational impact?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: Give deterministic steps, request shape, environment, route, commit/deployment, or timing needed to reproduce.
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: What happens now? Include status/error text or sanitized logs when useful.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What invariant or user-visible behavior should hold instead?
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence / current production state
+      description: Add production URLs, Actions/Vercel run links, screenshots, sanitized logs, or code locations.
+    validations:
+      required: true
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies / blockers
+      description: List external services, repository-admin settings, permissions, or code dependencies. Separate external blockers from code blockers.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance Criteria
+      description: Define checkable recovery and regression-prevention outcomes.
+      placeholder: "- [ ] Recovery outcome\n- [ ] Regression-prevention outcome"
+    validations:
+      required: true
+  - type: textarea
+    id: tests
+    attributes:
+      label: Tests
+      description: Define reproduction, regression, failure-path, security, and smoke tests needed before close.
+    validations:
+      required: true
+  - type: textarea
+    id: production_verification
+    attributes:
+      label: Production verification
+      description: Define the exact deployment, HTTP/browser/API, data, or observability evidence required after the fix.
+    validations:
+      required: true
+  - type: textarea
+    id: cleanup_rollback
+    attributes:
+      label: Cleanup / rollback condition
+      description: Define temporary branches/artifacts/config to remove and the rollback trigger if production verification fails.
+    validations:
+      required: true

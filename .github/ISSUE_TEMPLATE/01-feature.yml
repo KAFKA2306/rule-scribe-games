@@ -1,0 +1,78 @@
+name: Feature / product change
+description: Define an implementation-ready feature with evidence, tests, production verification, and cleanup.
+title: "[Feature] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Describe an outcome that an agent can implement, test, verify in production when needed, and close. Do not paste secrets, tokens, private credentials, or private user data.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / user value
+      description: What user or product problem must change, and why does it matter?
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence / current behavior
+      description: Add reproducible observations, screenshots, logs with secrets removed, code locations, or primary-source links.
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+      description: What is explicitly included?
+    validations:
+      required: true
+  - type: textarea
+    id: non_scope
+    attributes:
+      label: Non-scope
+      description: What is explicitly not part of this issue?
+    validations:
+      required: true
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies
+      description: Related issues, schemas, services, or contracts that must already exist.
+  - type: textarea
+    id: blockers
+    attributes:
+      label: Blockers
+      description: Separate external/admin/configuration blockers from code blockers. Write "None known" if there are none.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance Criteria
+      description: Use checkable outcomes. Avoid implementation-only statements such as "code is added" when user-visible or production behavior matters.
+      placeholder: "- [ ] Outcome 1\n- [ ] Outcome 2"
+    validations:
+      required: true
+  - type: textarea
+    id: tests
+    attributes:
+      label: Tests
+      description: List unit, integration, E2E, security, data-contract, or regression cases needed to prove the acceptance criteria.
+      placeholder: "- case A\n- case B"
+    validations:
+      required: true
+  - type: textarea
+    id: production_verification
+    attributes:
+      label: Production verification
+      description: State the production or production-equivalent proof required. If not applicable, explain why.
+    validations:
+      required: true
+  - type: textarea
+    id: cleanup_rollback
+    attributes:
+      label: Cleanup / rollback condition
+      description: Define branch/PR/artifact cleanup, obsolete paths to remove, and when to rollback or stop.
+    validations:
+      required: true
