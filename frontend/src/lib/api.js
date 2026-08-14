@@ -1,7 +1,9 @@
 import { supabase } from './supabase'
 
 const DEFAULT_TIMEOUT_MS = 15000
+const GET_CACHE_TTL_MS = 2000
 const inflightGets = new Map()
+const recentGets = new Map()
 
 export class ApiError extends Error {
   constructor(message, { status = 0, code = 'api_error', retryable = false } = {}) {
@@ -55,11 +57,11 @@ const request = async (path, options = {}) => {
       },
     })
     const result = await handleResponse(res)
-    emitTiming({ path, method, durationMs: performance.now() - startedAt, status: res.status, ok: true })
+    emitTiming({ path, method, durationMs: performance.now() - startedAt, status: res.status, ok: true, cached: false })
     return result
   } catch (error) {
     const timedOut = controller.signal.aborted
-    emitTiming({ path, method, durationMs: performance.now() - startedAt, status: error.status || 0, ok: false, timedOut })
+    emitTiming({ path, method, durationMs: performance.now() - startedAt, status: error.status || 0, ok: false, timedOut, cached: false })
     if (timedOut) {
       throw new ApiError('通信がタイムアウトしました。再試行してください。', { code: 'timeout', retryable: true })
     }
@@ -70,33 +72,55 @@ const request = async (path, options = {}) => {
   }
 }
 
+const clearGetCache = () => recentGets.clear()
+
 const get = (path) => {
+  const cached = recentGets.get(path)
+  if (cached && cached.expiresAt > performance.now()) {
+    emitTiming({ path, method: 'GET', durationMs: 0, status: 200, ok: true, cached: true })
+    return Promise.resolve(cached.value)
+  }
+  if (cached) recentGets.delete(path)
+
   const existing = inflightGets.get(path)
   if (existing) return existing
-  const promise = request(path).finally(() => inflightGets.delete(path))
+
+  const promise = request(path)
+    .then((value) => {
+      recentGets.set(path, { value, expiresAt: performance.now() + GET_CACHE_TTL_MS })
+      return value
+    })
+    .finally(() => inflightGets.delete(path))
   inflightGets.set(path, promise)
   return promise
 }
 
+const mutate = async (path, options) => {
+  const result = await request(path, options)
+  clearGetCache()
+  return result
+}
+
 export const api = {
   get,
+  clearGetCache,
   post: async (path, body) =>
-    request(path, {
+    mutate(path, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     }),
   put: async (path, body) =>
-    request(path, {
+    mutate(path, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     }),
   patch: async (path, body) =>
-    request(path, {
+    mutate(path, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     }),
-  delete: async (path) => request(path, { method: 'DELETE' }),
+  delete: async (path) => mutate(path, { method: 'DELETE' }),
 }
