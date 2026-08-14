@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Outlet, useLocation, useNavigationType } from 'react-router-dom'
+import { Outlet, useLocation, useNavigate, useNavigationType } from 'react-router-dom'
 
 import AuthControlPortal from './AuthControlPortal.jsx'
 import GameListSavePortal from './GameListSavePortal.jsx'
@@ -61,9 +61,32 @@ function handleGameTabKeyDown(event) {
 
 export default function AppShell() {
   const location = useLocation()
+  const navigate = useNavigate()
   const navigationType = useNavigationType()
   const scrollPositions = useRef(new Map())
   const [navigating, setNavigating] = useState(false)
+
+  useEffect(() => {
+    if (!location.pathname.startsWith('/games/') || !location.search) return
+
+    const params = new URLSearchParams(location.search)
+    if (!params.has('q')) return
+
+    // `q` belongs to the directory route. A pending directory debounce can race
+    // with SPA navigation and replace the game history entry with `?q=...`.
+    // Strip only that directory-owned parameter while preserving any future
+    // game-detail parameters and the directory entry already in browser history.
+    params.delete('q')
+    const search = params.toString()
+    navigate(
+      {
+        pathname: location.pathname,
+        search: search ? `?${search}` : '',
+        hash: location.hash,
+      },
+      { replace: true },
+    )
+  }, [location.hash, location.pathname, location.search, navigate])
 
   useEffect(() => {
     const previous = window.history.scrollRestoration
