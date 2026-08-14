@@ -6,7 +6,7 @@ from pydantic import ValidationError
 from app.models import GameDetail, GameUpdate
 
 
-MIGRATION = Path("backend/app/db/migrations/007_catalog_acl_trust_and_strict_slug.sql")
+MIGRATION = Path(__file__).resolve().parents[1] / "app/db/migrations/007_catalog_acl_trust_and_strict_slug.sql"
 
 
 def test_game_api_exposes_separate_trust_axes_without_legacy_official_fields():
