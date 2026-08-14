@@ -1,31 +1,30 @@
 BEGIN;
 
--- Global catalog mutation is a privileged server-side operation. RLS is enabled
--- without browser policies so only the service-role backend can inspect/edit ACLs.
 CREATE TABLE IF NOT EXISTS public.catalog_editors (
   user_id uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-  role text NOT NULL CHECK (role IN ('editor', 'admin')),
+  role text NOT NULL CHECK (role IN ('owner', 'editor')),
+  active boolean NOT NULL DEFAULT true,
   created_at timestamptz NOT NULL DEFAULT now()
 );
+ALTER TABLE public.catalog_editors
+  ADD COLUMN IF NOT EXISTS active boolean NOT NULL DEFAULT true;
 ALTER TABLE public.catalog_editors ENABLE ROW LEVEL SECURITY;
 
 CREATE TABLE IF NOT EXISTS public.catalog_mutation_audit (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  editor_user_id uuid REFERENCES auth.users(id) ON DELETE SET NULL,
-  game_id uuid REFERENCES public.games(id) ON DELETE SET NULL,
-  slug text NOT NULL,
+  id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  actor_user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE RESTRICT,
+  game_slug text NOT NULL,
   action text NOT NULL CHECK (action IN ('manual_update', 'regenerate')),
   changed_fields text[] NOT NULL DEFAULT '{}',
+  outcome text NOT NULL CHECK (outcome IN ('allowed', 'denied', 'succeeded', 'not_found', 'failed')),
   created_at timestamptz NOT NULL DEFAULT now()
 );
 ALTER TABLE public.catalog_mutation_audit ENABLE ROW LEVEL SECURITY;
 CREATE INDEX IF NOT EXISTS catalog_mutation_audit_created_at_idx
   ON public.catalog_mutation_audit (created_at DESC);
-CREATE INDEX IF NOT EXISTS catalog_mutation_audit_game_id_idx
-  ON public.catalog_mutation_audit (game_id);
+CREATE INDEX IF NOT EXISTS catalog_mutation_audit_game_slug_idx
+  ON public.catalog_mutation_audit (game_slug);
 
--- Trust is deliberately split into orthogonal axes. Existing is_official values
--- are not evidence: every legacy row starts fail-closed as unknown.
 ALTER TABLE public.games
   ADD COLUMN IF NOT EXISTS source_trust text NOT NULL DEFAULT 'unknown',
   ADD COLUMN IF NOT EXISTS content_review_status text NOT NULL DEFAULT 'unknown';
@@ -57,8 +56,6 @@ $$;
 UPDATE public.games SET source_trust = 'unknown' WHERE source_trust IS DISTINCT FROM 'unknown';
 UPDATE public.games SET content_review_status = 'unknown' WHERE content_review_status IS NULL OR btrim(content_review_status) = '';
 
--- Promote only explicit provenance already recorded in source_documents. A URL
--- or legacy is_official flag alone is never enough to establish source trust.
 UPDATE public.games
 SET source_trust = 'official_publisher'
 WHERE slug IS NOT NULL
@@ -86,10 +83,6 @@ WHERE slug IS NOT NULL
     )
   );
 
--- Preserve legacy links as unclassified sources. The legacy columns remain only
--- during the compatible rollout and are removed by migration 008 after the new
--- application code is live. Skip invalid legacy slug rows so migration 006's
--- NOT VALID constraint does not reject an unrelated compatibility update.
 UPDATE public.games
 SET source_url = official_url
 WHERE slug IS NOT NULL
