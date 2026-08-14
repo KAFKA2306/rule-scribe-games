@@ -107,9 +107,12 @@ jobs:
       - name: Install Chromium
         working-directory: frontend
         run: npx playwright install --with-deps chromium
-      - name: Run existing list and navigation E2E
+      - name: Run existing list E2E
         working-directory: frontend
-        run: npx playwright test tests/lists.spec.js tests/navigation.spec.js --project=chromium
+        run: npx playwright test tests/lists.spec.js --project=chromium
+      - name: Run existing navigation E2E
+        working-directory: frontend
+        run: npx playwright test tests/navigation.spec.js --project=chromium
       - name: Gate duplicate GET and sub-100ms mutation feedback
         working-directory: frontend
         run: npx playwright test tests/performance.spec.js --project=chromium --grep "coalesces duplicate GET"
