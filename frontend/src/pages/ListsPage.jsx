@@ -2,13 +2,28 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 
 import { useAuth } from '../auth/authContext'
+import LoginButton from '../components/LoginButton'
 import { api } from '../lib/api'
 import './ListsPage.css'
 
 const OWNED_SELECTION = '__owned__'
 
+function ListsHeader() {
+  return (
+    <header className="lists-header">
+      <div className="lists-header__identity">
+        <Link to="/" className="back-link">← DIRECTORY</Link>
+        <h1>マイリスト</h1>
+      </div>
+      <div data-auth-control className="auth-control-cluster">
+        <LoginButton />
+      </div>
+    </header>
+  )
+}
+
 export default function ListsPage() {
-  const { user, loading: authLoading, signInWithGoogle } = useAuth()
+  const { user, loading: authLoading } = useAuth()
   const [searchParams, setSearchParams] = useSearchParams()
   const selectedId = searchParams.get('list') || OWNED_SELECTION
   const savedNotice = searchParams.get('notice') === 'saved'
@@ -218,9 +233,21 @@ export default function ListsPage() {
   if (authLoading) {
     return (
       <main className="lists-page" aria-busy="true">
-        <div className="lists-loading-shell">
-          <div className="lists-loading-shell__label">認証状態を確認しています…</div>
-          <div className="pro-card lists-loading-shell__card">マイリストを準備しています。</div>
+        <div className="lists-shell">
+          <ListsHeader />
+          <form className="lists-create" aria-hidden="true">
+            <input className="search-input" disabled aria-label="新しいリスト名" />
+            <button className="filter-btn" type="button" disabled>準備中…</button>
+          </form>
+          <div className="lists-workspace" aria-hidden="true">
+            <aside className="lists-nav">
+              <button type="button" className="filter-btn lists-nav__button active" disabled>所持ゲーム</button>
+            </aside>
+            <section className="lists-detail">
+              <div className="lists-detail__header"><h2>所持ゲーム</h2></div>
+              <div className="pro-card lists-empty">読み込み中…</div>
+            </section>
+          </div>
         </div>
       </main>
     )
@@ -230,17 +257,9 @@ export default function ListsPage() {
     return (
       <main className="lists-page">
         <div className="lists-shell">
-          <header className="lists-header">
-            <div className="lists-header__identity">
-              <Link to="/" className="back-link">← DIRECTORY</Link>
-              <h1>マイリスト</h1>
-            </div>
-          </header>
+          <ListsHeader />
           <div className="pro-card lists-empty">
-            <div>
-              <p>所持ゲームやリストの保存にはログインが必要です。</p>
-              <button type="button" className="filter-btn active" onClick={signInWithGoogle}>Googleでログイン</button>
-            </div>
+            <p>所持ゲームやリストの保存にはログインが必要です。</p>
           </div>
         </div>
       </main>
@@ -250,12 +269,7 @@ export default function ListsPage() {
   return (
     <main className="lists-page" aria-busy={loading || Boolean(busyAction)}>
       <div className="lists-shell">
-        <header className="lists-header" data-auth-control-target>
-          <div className="lists-header__identity">
-            <Link to="/" className="back-link">← DIRECTORY</Link>
-            <h1>マイリスト</h1>
-          </div>
-        </header>
+        <ListsHeader />
 
         <form className="lists-create" onSubmit={createList}>
           <input

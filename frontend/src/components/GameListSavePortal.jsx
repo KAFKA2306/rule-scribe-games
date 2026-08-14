@@ -13,45 +13,62 @@ function gameSlug(pathname) {
 
 export default function GameListSavePortal() {
   const location = useLocation()
-  const [target, setTarget] = useState(null)
-  const [game, setGame] = useState(null)
+  const [host] = useState(() => {
+    if (typeof document === 'undefined') return null
+    const node = document.createElement('span')
+    node.dataset.gameListSavePortal = 'true'
+    node.style.display = 'contents'
+    return node
+  })
+  const [portal, setPortal] = useState(null)
 
   useEffect(() => {
     let active = true
-    const slug = gameSlug(location.pathname)
-    const resolve = async () => {
-      const nextTarget = document.querySelector('.game-page-toolbar .header-actions')
-      setTarget(nextTarget)
-      if (!slug || !nextTarget) {
-        setGame(null)
-        return
-      }
-      try {
-        const data = await api.get(`/api/games/${slug}`)
-        if (!active) return
-        setGame(Array.isArray(data) ? data[0] : data.game || data)
-      } catch {
-        if (active) setGame(null)
-      }
+    let observer = null
+    let game = null
+    const pathname = location.pathname
+    const slug = gameSlug(pathname)
+
+    if (!slug || !host) return () => { active = false }
+
+    const resolveTarget = () => {
+      if (!active || !game) return
+      const target = document.querySelector('.game-page-toolbar .header-actions')
+      if (!target || !target.isConnected) return
+      if (host.parentNode !== target) target.appendChild(host)
+      setPortal((current) => {
+        if (current?.pathname === pathname && current?.game?.id === game.id) return current
+        return { pathname, game }
+      })
     }
 
-    resolve()
     const root = document.getElementById('root')
-    if (!root) return () => { active = false }
-    const observer = new MutationObserver(resolve)
-    observer.observe(root, { childList: true, subtree: true })
+    if (root) {
+      observer = new MutationObserver(resolveTarget)
+      observer.observe(root, { childList: true, subtree: true })
+    }
+
+    api.get(`/api/games/${slug}`)
+      .then((data) => {
+        if (!active) return
+        game = Array.isArray(data) ? data[0] : data.game || data
+        resolveTarget()
+      })
+      .catch(() => {})
+
     return () => {
       active = false
-      observer.disconnect()
+      observer?.disconnect()
+      if (host.parentNode) host.remove()
     }
-  }, [location.pathname])
+  }, [host, location.pathname])
 
-  if (!target || !game) return null
+  if (!host || !portal || portal.pathname !== location.pathname || !portal.game) return null
   return createPortal(
     <>
-      <OwnedGameButton game={game} />
-      <AddToListButton game={game} />
+      <OwnedGameButton game={portal.game} />
+      <AddToListButton game={portal.game} />
     </>,
-    target,
+    host,
   )
 }

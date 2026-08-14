@@ -1,21 +1,29 @@
-name: Frontend layout regression
+name: UI UX regression
 
 on:
   pull_request:
     paths:
       - "frontend/**"
-      - ".github/workflows/frontend-layout.yml"
+      - ".github/workflows/ui-ux-regression.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "frontend/**"
+      - ".github/workflows/ui-ux-regression.yml"
   workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
-  game-layout:
+  canonical-gate:
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     env:
       VITE_SUPABASE_URL: https://example.supabase.co
       VITE_SUPABASE_ANON_KEY: sb_publishable_test
+      VITE_API_TIMEOUT_MS: "800"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -49,29 +57,59 @@ jobs:
           fi
           grep -Fq "AI生成・要約を含む情報は公式資料と区別して確認してください" index.html
 
-      - name: Lint changed frontend surface
+      - name: Diagnose src lint
+        continue-on-error: true
         working-directory: frontend
-        run: npx eslint src/main.jsx src/auth/AuthContext.jsx src/auth/authContext.js src/components/AuthControlPortal.jsx src/components/LoginButton.jsx src/lib/api.js src/lib/supabase.js src/pages/ListsPage.jsx tests/game_layout.spec.js tests/lists_layout.spec.js tests/auth.spec.js playwright.config.js
+        run: npx eslint src
+
+      - name: Diagnose tests lint
+        continue-on-error: true
+        working-directory: frontend
+        run: npx eslint tests
+
+      - name: Diagnose config lint
+        continue-on-error: true
+        working-directory: frontend
+        run: npx eslint playwright.config.js vite.config.js
+
+      - name: Lint frontend and UX contracts
+        working-directory: frontend
+        run: npm run lint
 
       - name: Install Chromium
         working-directory: frontend
         run: npx playwright install --with-deps chromium
 
-      - name: Test game layout and auth mounting
+      - name: Gate existing list navigation loading and auth contracts
         working-directory: frontend
-        run: npx playwright test tests/game_layout.spec.js tests/auth.spec.js --project=chromium
+        run: >-
+          npx playwright test
+          tests/lists.spec.js
+          tests/navigation.spec.js
+          tests/performance.spec.js
+          tests/game_layout.spec.js
+          tests/auth.spec.js
+          --project=chromium
 
-      - name: Test lists geometry and screenshot regression
+      - name: Gate responsive geometry and pixel screenshot baselines
         working-directory: frontend
         run: npx playwright test tests/lists_layout.spec.js --project=chromium
 
-      - name: Upload lists screenshot diagnostics
+      - name: Gate cross-flow UX at 375 768 and 1440 widths
+        working-directory: frontend
+        run: >-
+          npx playwright test tests/ui_ux_regression.spec.js
+          --project=ux-mobile
+          --project=ux-tablet
+          --project=ux-desktop
+
+      - name: Upload reviewable UI UX evidence
         if: ${{ success() || failure() }}
         uses: actions/upload-artifact@v4
         with:
-          name: lists-layout-screenshot-diagnostics
+          name: ui-ux-regression-evidence
           path: |
-            frontend/test-results/**/*.png
-            frontend/test-results/**/*.txt
+            frontend/tests/lists_layout.spec.js-snapshots/*.png
+            frontend/test-results/**/*
           if-no-files-found: ignore
-          retention-days: 7
+          retention-days: 14
