@@ -16,7 +16,8 @@ const bigShot = {
   gameplay_summary: '競りで土地を獲得し、資金配分を管理します。',
   end_game_summary: '全区画の競りが終わったら得点を計算します。',
   source_url: 'https://example.com/big-shot-source',
-  official_url: 'https://example.com/big-shot-official',
+  source_trust: 'third_party',
+  content_review_status: 'review_required',
   rules_content: '# Big Shot Rules\n\n## ゲームの流れ\n\n競りを行い、土地を獲得します。\n\n## 得点\n\nゲーム終了時に得点を計算します。',
   structured_data: {
     mechanics: ['Auction / Bidding', 'Area Majority'],
@@ -96,7 +97,7 @@ test('setup tab shows only game-specific summaries and fails closed when missing
   await expect(page.getByText(bigShot.gameplay_summary)).toBeVisible()
   await expect(page.getByText(bigShot.end_game_summary)).toBeVisible()
   await expect(page.getByText('公式裁定ではありません。')).toBeVisible()
-  await expect(page.getByRole('link', { name: '出典を確認' })).toHaveAttribute('href', bigShot.official_url)
+  await expect(page.getByRole('link', { name: '出典を確認' })).toHaveAttribute('href', bigShot.source_url)
   await expect(page.getByText('初期リソースを配布')).toHaveCount(0)
   await expect(page.getByText('アクションを選択')).toHaveCount(0)
   await expect(page.getByText('リソースを支払う')).toHaveCount(0)

@@ -5,12 +5,32 @@ import ReactMarkdown from 'react-markdown'
 import { api } from '../lib/api'
 import { getCuratedRuleGuide } from '../lib/curatedRuleGuides'
 import { ShareButton, TwitterShareButton } from '../components/game/ShareButtons'
-import { RegenerateButton } from '../components/game/RegenerateButton'
 import { TextToSpeech } from '../components/game/TextToSpeech'
 import { ExternalLinks } from '../components/game/ExternalLinks'
 import { InfographicsGallery } from '../components/game/InfographicsGallery'
 import { QuickRulesPanel } from '../components/game/QuickRulesPanel'
 import { RuleFlowDiagram } from '../components/game/RuleFlowDiagram'
+
+const IDENTITY_LABELS = {
+  verified: 'IDENTITY VERIFIED',
+  needs_review: 'IDENTITY REVIEW REQUIRED',
+  unverified: 'IDENTITY UNVERIFIED',
+}
+
+const SOURCE_TRUST_LABELS = {
+  official_publisher: 'PUBLISHER SOURCE',
+  authorized_partner: 'AUTHORIZED PARTNER SOURCE',
+  third_party: 'THIRD-PARTY SOURCE',
+  unknown: 'SOURCE UNVERIFIED',
+}
+
+const REVIEW_LABELS = {
+  publisher_reviewed: 'PUBLISHER REVIEWED',
+  human_reviewed: 'HUMAN REVIEWED',
+  review_required: 'REVIEW REQUIRED',
+  ai_draft: 'AI DRAFT',
+  unknown: 'REVIEW UNKNOWN',
+}
 
 export default function GamePage({ slug: propSlug, initialGame, allGames: propAllGames }) {
   const { slug: urlSlug } = useParams()
@@ -71,7 +91,10 @@ export default function GamePage({ slug: propSlug, initialGame, allGames: propAl
   const title = game.title_ja || game.title || 'Untitled'
   const rules = game.rules_content || ''
   const sd = game.structured_data || {}
-  const coachSourceUrl = game.official_url || game.source_url || null
+  const coachSourceUrl = game.source_url || null
+  const identityLabel = IDENTITY_LABELS[game.identity_status] || IDENTITY_LABELS.unverified
+  const sourceTrustLabel = SOURCE_TRUST_LABELS[game.source_trust] || SOURCE_TRUST_LABELS.unknown
+  const reviewLabel = REVIEW_LABELS[game.content_review_status] || REVIEW_LABELS.unknown
   const ruleGuide = getCuratedRuleGuide(slug)
   const legacyInfographicsSourceUrl = game.infographics_source_url || coachSourceUrl
   const legacyInfographicsVerified = Boolean(
@@ -102,7 +125,6 @@ export default function GamePage({ slug: propSlug, initialGame, allGames: propAl
           <TextToSpeech text={`${title}. ${ruleGuide?.quick?.turnSteps?.join(' ') || description}`} />
           <TwitterShareButton slug={slug} title={title} />
           <ShareButton slug={slug} />
-          <RegenerateButton title={title} onRegenerate={setGame} />
         </div>
       </div>
 
@@ -134,6 +156,13 @@ export default function GamePage({ slug: propSlug, initialGame, allGames: propAl
           <div className="pro-card pro-card--synopsis">
             <div className="pro-card-title">SYNOPSIS</div>
             <div className="summary-text">{game.summary || game.description}</div>
+          </div>
+
+          <div className="pro-card" aria-label="データ信頼状態">
+            <div className="pro-card-title">TRUST &amp; PROVENANCE</div>
+            <div className="game-empty-note">{identityLabel}</div>
+            <div className="game-empty-note">{sourceTrustLabel}</div>
+            <div className="game-empty-note">{reviewLabel}</div>
           </div>
 
           {sd.pro_tips?.length > 0 && (

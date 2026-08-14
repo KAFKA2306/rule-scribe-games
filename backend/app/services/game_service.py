@@ -28,18 +28,18 @@ _ALLOWED_FIELDS = {
     "rules_content",
     "structured_data",
     "source_url",
+    "source_trust",
+    "content_review_status",
     "affiliate_urls",
     "view_count",
     "search_count",
     "data_version",
-    "is_official",
     "min_players",
     "max_players",
     "play_time",
     "min_age",
     "published_year",
     "image_url",
-    "official_url",
     "bgg_url",
     "bga_url",
     "amazon_url",
@@ -140,6 +140,11 @@ async def generate_metadata(query: str, context: str | None = None, source_bound
         "content_review_status": "ai_draft",
     }
     data["structured_data"] = structured_data
+    # Source-bound only means evidence was supplied; it does not establish that
+    # the evidence is an official publisher source. Trust must be promoted by a
+    # separate verified ingestion/review step.
+    data["source_trust"] = "unknown"
+    data["content_review_status"] = "ai_draft"
     data["updated_at"] = datetime.now(UTC).isoformat()
     data["amazon_url"] = amazon_search_url(str(data.get("title_ja") or query))
 
@@ -204,6 +209,8 @@ class GameService:
         metadata["created_at"] = metadata.get("created_at") or datetime.now(UTC).isoformat()
         metadata["updated_at"] = datetime.now(UTC).isoformat()
         metadata["data_version"] = int(metadata.get("data_version", 0) or 0)
+        metadata["source_trust"] = "unknown"
+        metadata["content_review_status"] = "ai_draft"
         return await supabase.create_unverified_game(metadata)
 
     async def update_game_content(self, slug: str, fill_missing_only: bool = False) -> dict[str, Any]:
@@ -223,6 +230,10 @@ class GameService:
         merged["id"], merged["slug"] = game["id"], slug
         merged["work_id"] = game.get("work_id")
         merged["identity_status"] = game.get("identity_status", "unverified")
+        # Regeneration changes content review state, but never promotes source
+        # authenticity. Preserve any independently verified source trust.
+        merged["source_trust"] = game.get("source_trust", "unknown")
+        merged["content_review_status"] = "ai_draft"
         merged["data_version"] = int(game.get("data_version", 0) or 0) + 1
         out = await supabase.upsert(merged)
         if not out:

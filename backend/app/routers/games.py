@@ -2,7 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from app.core.rate_limiter import RateLimiter
 from app.models import GameDetail, GameListResponse, GameUpdate, SearchRequest
-from app.routers.auth import get_current_user
+from app.routers.auth import require_catalog_editor
+from app.services import catalog_access
 from app.services.game_service import GameService
 
 router = APIRouter()
@@ -71,19 +72,45 @@ async def update_game(
     game_update: GameUpdate | None = None,
     regenerate: bool = False,
     fill_missing_only: bool = False,
-    _user: dict = Depends(get_current_user),
+    editor: dict = Depends(require_catalog_editor),
     service: GameService = Depends(get_game_service),
 ) -> dict[str, object]:
     try:
         if regenerate:
             if not gen_limiter.acquire():
                 raise HTTPException(status_code=429, detail="Generation rate limit exceeded")
-            return await service.update_game_content(slug, fill_missing_only=fill_missing_only)
+            result = await service.update_game_content(slug, fill_missing_only=fill_missing_only)
+            await catalog_access.record_catalog_mutation(
+                editor_user_id=str(editor["id"]),
+                game=result,
+                slug=slug,
+                action="regenerate",
+                changed_fields=[
+                    "rules_content",
+                    "structured_data",
+                    "min_players",
+                    "max_players",
+                    "play_time",
+                    "min_age",
+                    "bga_url",
+                    "content_review_status",
+                    "data_version",
+                ],
+            )
+            return result
 
         if game_update:
             updates = game_update.model_dump(exclude_unset=True)
             if updates:
-                return await service.update_game_manual(slug, updates)
+                result = await service.update_game_manual(slug, updates)
+                await catalog_access.record_catalog_mutation(
+                    editor_user_id=str(editor["id"]),
+                    game=result,
+                    slug=slug,
+                    action="manual_update",
+                    changed_fields=list(updates),
+                )
+                return result
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Game not found") from exc
 
