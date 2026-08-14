@@ -11,6 +11,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 SKULL_KING = REPO_ROOT / "data" / "curated-games" / "skull-king.json"
 GENERATED_GUIDES = REPO_ROOT / "frontend" / "src" / "lib" / "generatedCuratedRuleGuides.js"
 PACKAGE_JSON = REPO_ROOT / "frontend" / "package.json"
+FAST_PATH_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "curated-game-fast-path.yml"
 
 
 def test_single_input_resolves_canonical_spec():
@@ -144,6 +145,18 @@ def test_publish_is_the_only_catalog_write_path(monkeypatch):
     v2.publish_game(spec, [spec], "https://example.invalid")
 
     assert events == ["prepare", "write", "verify"]
+
+
+def test_catalog_publish_job_is_main_only_and_depends_on_validation():
+    workflow = FAST_PATH_WORKFLOW.read_text(encoding="utf-8")
+    validation, publish = workflow.split("  publish-catalog:\n", 1)
+
+    assert "publish --game" not in validation
+    assert "if: github.event_name == 'push' && github.ref == 'refs/heads/main'" in publish
+    assert "needs: curated-game" in publish
+    assert "vercel pull --yes --environment=production" in publish
+    assert "SUPABASE_SERVICE_ROLE_KEY" in publish
+    assert "publish --game \"$slug\"" in publish
 
 
 def test_release_manifest_digest_mismatch_fails():
