@@ -19,7 +19,6 @@ from app.scripts.curated_game_workflow import (
     load_spec,
     materialize_registry,
     preflight_identity,
-    render_generated_registry,
     validate_assertions,
     validate_runtime_guide,
 )
@@ -58,8 +57,6 @@ def verify_source_reachable_streamed(spec: CuratedGameSpec) -> None:
 
 
 def deployment_manifest_payload(specs: list[CuratedGameSpec]) -> dict[str, Any]:
-    registry = render_generated_registry(specs)
-    digest = hashlib.sha256(registry.encode("utf-8")).hexdigest()
     games = {
         spec.slug: {
             "rule_version": spec.source.rule_version,
@@ -67,6 +64,8 @@ def deployment_manifest_payload(specs: list[CuratedGameSpec]) -> dict[str, Any]:
         }
         for spec in sorted(specs, key=lambda item: item.slug)
     }
+    revision_contract = json.dumps(games, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    digest = hashlib.sha256(revision_contract.encode("utf-8")).hexdigest()
     return {
         "schema_version": 1,
         "registry_sha256": digest,
