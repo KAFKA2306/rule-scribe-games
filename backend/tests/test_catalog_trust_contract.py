@@ -8,7 +8,8 @@ from app.models import GameDetail, GameUpdate
 
 MIGRATIONS = Path(__file__).resolve().parents[1] / "app/db/migrations"
 MIGRATION_007 = MIGRATIONS / "007_catalog_acl_trust_and_strict_slug.sql"
-MIGRATION_008 = MIGRATIONS / "008_remove_legacy_trust_and_validate_slug.sql"
+MIGRATION_008 = MIGRATIONS / "008_validate_games_slug.sql"
+MIGRATION_009 = MIGRATIONS / "009_remove_legacy_trust.sql"
 
 
 def test_game_api_exposes_separate_trust_axes_without_legacy_official_fields():
@@ -36,9 +37,10 @@ def test_trust_enums_fail_closed_on_unknown_values():
         GameUpdate(content_review_status="approved")
 
 
-def test_catalog_schema_uses_compatible_trust_migration_then_removes_legacy_fields():
+def test_catalog_schema_separates_compatible_rollout_slug_validation_and_trust_cleanup():
     additive_sql = MIGRATION_007.read_text(encoding="utf-8")
-    cleanup_sql = MIGRATION_008.read_text(encoding="utf-8")
+    slug_sql = MIGRATION_008.read_text(encoding="utf-8")
+    cleanup_sql = MIGRATION_009.read_text(encoding="utf-8")
 
     assert "ADD COLUMN IF NOT EXISTS source_trust" in additive_sql
     assert "ADD COLUMN IF NOT EXISTS content_review_status" in additive_sql
@@ -48,10 +50,12 @@ def test_catalog_schema_uses_compatible_trust_migration_then_removes_legacy_fiel
     assert "DROP COLUMN IF EXISTS is_official" not in additive_sql
     assert "DROP COLUMN IF EXISTS official_url" not in additive_sql
 
+    assert "VALIDATE CONSTRAINT games_slug_required" in slug_sql
+    assert "DROP COLUMN" not in slug_sql
+
     assert "DROP COLUMN IF EXISTS is_official" in cleanup_sql
     assert "DROP COLUMN IF EXISTS official_url" in cleanup_sql
-    assert "CHECK (slug IS NOT NULL AND btrim(slug) <> '')" in cleanup_sql
-    assert "NOT VALID" not in cleanup_sql
+    assert "games_slug_required" not in cleanup_sql
 
 
 def test_catalog_acl_tables_are_rls_protected_and_match_production_contract():
