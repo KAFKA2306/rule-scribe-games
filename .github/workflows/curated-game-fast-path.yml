@@ -64,6 +64,9 @@ jobs:
     needs: curated-game
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    concurrency:
+      group: curated-catalog-publish
+      cancel-in-progress: false
     env:
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
       VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
