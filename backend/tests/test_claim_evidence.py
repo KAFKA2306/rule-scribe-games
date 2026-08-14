@@ -24,6 +24,7 @@ def _claim(claim_id: str = "claim.rule.end", **overrides) -> Claim:
         "claim_type": "rule_statement",
         "normalized_payload": {"statement": "The game ends at round end."},
         "target": ClaimTarget(target_type="rule_node", rule_id="rule.game-end"),
+        "lifecycle_status": "accepted",
     }
     payload.update(overrides)
     return Claim(**payload)
@@ -100,6 +101,15 @@ def test_multiple_sources_can_support_one_claim():
     assert trace.support_status.value == "supported"
     assert trace.projection_eligible is True
     assert {item.source.source_id for item in trace.bindings} == {"source.publisher.rules", "source.platform.rules"}
+
+
+@pytest.mark.parametrize("lifecycle_status", ["unknown", "candidate", "rejected"])
+def test_supported_claim_is_not_projection_eligible_until_accepted(lifecycle_status):
+    claim = _claim(lifecycle_status=lifecycle_status)
+    trace = build_claim_trace(claim, [_binding_detail()])
+
+    assert trace.support_status.value == "supported"
+    assert trace.projection_eligible is False
 
 
 def test_support_and_contradiction_are_preserved_as_contested_not_overwritten():
