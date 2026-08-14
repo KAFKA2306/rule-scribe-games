@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 
 import { useAuth } from '../../auth/authContext'
 import { api } from '../../lib/api'
@@ -41,7 +42,7 @@ export default function AddToListButton({ game }) {
   }
 
   if (lists.length === 0) {
-    return <a className="filter-btn" href="/lists">リストを作成</a>
+    return <Link className="filter-btn" to="/lists">リストを作成</Link>
   }
 
   const add = async () => {
@@ -72,6 +73,11 @@ export default function AddToListButton({ game }) {
         {busy ? '保存中…' : 'リストに保存'}
       </button>
       {status && <span role="status" style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{status}</span>}
+      {status === '保存しました' && listId && (
+        <Link className="filter-btn" to={`/lists?list=${encodeURIComponent(listId)}&notice=saved`}>
+          一覧で確認
+        </Link>
+      )}
     </div>
   )
 }
