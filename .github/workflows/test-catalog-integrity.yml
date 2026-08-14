@@ -110,10 +110,17 @@ jobs:
             slug text,
             source_url text,
             official_url text,
-            is_official boolean DEFAULT false
+            is_official boolean DEFAULT false,
+            structured_data jsonb DEFAULT '{}'::jsonb
           );
           INSERT INTO public.games(slug, official_url, is_official)
           VALUES (NULL, 'https://example.invalid/legacy', true);
+          INSERT INTO public.games(slug, official_url, structured_data)
+          VALUES (
+            'publisher-game',
+            'https://publisher.example/game',
+            '{"source_documents":[{"type":"publisher_official"}]}'::jsonb
+          );
           SQL
 
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/006_catalog_integrity_contract.sql
@@ -123,13 +130,16 @@ jobs:
             exit 1
           fi
 
-          # Additive migration is safe while the old application is still live.
+          # Additive migration must not touch the known invalid legacy row, while
+          # explicit publisher provenance on valid rows may be promoted safely.
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/007_catalog_acl_trust_and_strict_slug.sql
           test "$(psql "$DATABASE_URL" -Atc "select count(*) from information_schema.columns where table_schema='public' and table_name='games' and column_name in ('source_trust','content_review_status');")" = "2"
           test "$(psql "$DATABASE_URL" -Atc "select count(*) from information_schema.columns where table_schema='public' and table_name='games' and column_name in ('is_official','official_url');")" = "2"
-          test "$(psql "$DATABASE_URL" -Atc "select source_url from public.games where slug is null;")" = "https://example.invalid/legacy"
+          test "$(psql "$DATABASE_URL" -Atc "select coalesce(source_url,'') from public.games where slug is null;")" = ""
+          test "$(psql "$DATABASE_URL" -Atc "select source_url from public.games where slug='publisher-game';")" = "https://publisher.example/game"
+          test "$(psql "$DATABASE_URL" -Atc "select source_trust from public.games where slug='publisher-game';")" = "official_publisher"
 
-          # Production reconciliation removes the one audited legacy row before
+          # Production reconciliation removes the audited legacy row before
           # cleanup migration 008 validates the invariant and removes old trust fields.
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c "DELETE FROM public.games WHERE slug IS NULL OR btrim(slug)='';"
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/008_remove_legacy_trust_and_validate_slug.sql
