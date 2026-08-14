@@ -1,0 +1,100 @@
+name: UI UX regression
+
+on:
+  pull_request:
+    paths:
+      - "frontend/**"
+      - ".github/workflows/ui-ux-regression.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "frontend/**"
+      - ".github/workflows/ui-ux-regression.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  canonical-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      VITE_SUPABASE_URL: https://example.supabase.co
+      VITE_SUPABASE_ANON_KEY: sb_publishable_test
+      VITE_API_TIMEOUT_MS: "800"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Build frontend
+        working-directory: frontend
+        run: npm run build
+
+      - name: Verify source-bound public messaging
+        working-directory: frontend
+        shell: bash
+        run: |
+          if grep -Fq "AIでルールを瞬時に要約" index.html; then
+            echo "Unsupported instant-AI claim returned to public metadata"
+            exit 1
+          fi
+          if grep -Fq "世界中のボードゲームのルールを瞬時に要約" index.html; then
+            echo "Unsupported worldwide instant-summary claim returned to public metadata"
+            exit 1
+          fi
+          grep -Fq "AI生成・要約を含む情報は公式資料と区別して確認してください" index.html
+
+      - name: Lint frontend and UX contracts
+        working-directory: frontend
+        run: npm run lint
+
+      - name: Install Chromium
+        working-directory: frontend
+        run: npx playwright install --with-deps chromium
+
+      - name: Gate existing list navigation loading and auth contracts
+        working-directory: frontend
+        run: >-
+          npx playwright test
+          tests/lists.spec.js
+          tests/navigation.spec.js
+          tests/performance.spec.js
+          tests/game_layout.spec.js
+          tests/auth.spec.js
+          --project=chromium
+
+      - name: Gate responsive geometry and pixel screenshot baselines
+        working-directory: frontend
+        run: npx playwright test tests/lists_layout.spec.js --project=chromium
+
+      - name: Gate cross-flow UX at 375 768 and 1440 widths
+        working-directory: frontend
+        run: >-
+          npx playwright test tests/ui_ux_regression.spec.js
+          --project=ux-mobile
+          --project=ux-tablet
+          --project=ux-desktop
+
+      - name: Upload reviewable UI UX evidence
+        if: ${{ success() || failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-ux-regression-evidence
+          path: |
+            frontend/tests/lists_layout.spec.js-snapshots/*.png
+            frontend/test-results/**/*
+          if-no-files-found: ignore
+          retention-days: 14
