@@ -29,7 +29,9 @@ class ProjectionSectionStatus(StrEnum):
 
 class ProjectionEvidence(ProjectionModel):
     claim_id: str
-    source_ids: list[str] = Field(default_factory=list)
+    claim_lifecycle: Literal["accepted"] = "accepted"
+    support_status: Literal["supported"] = "supported"
+    source_ids: list[str] = Field(default_factory=list, min_length=1)
 
 
 class ProjectedRule(ProjectionModel):
@@ -46,7 +48,7 @@ class ProjectedGlossaryEntry(ProjectionModel):
     definition: str | None = None
     aliases: list[str] = Field(default_factory=list)
     related_concept_ids: list[str] = Field(default_factory=list)
-    rule_ids: list[str] = Field(default_factory=list)
+    rule_ids: list[str] = Field(default_factory=list, min_length=1)
 
 
 class RuleProjectionSection(ProjectionModel):
