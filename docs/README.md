@@ -7,6 +7,9 @@
 - **[`PROJECT_MASTER_GUIDE.md`](./PROJECT_MASTER_GUIDE.md)**
     - プロジェクトの「Single Source of Truth（信頼できる唯一の情報源）」です。要件、アーキテクチャ、データモデル、開発フロー、コーディング規約などが網羅されています。開発者が最初に読むべきドキュメントです。
 
+- **[`CURATED_GAME_FAST_PATH.md`](./CURATED_GAME_FAST_PATH.md)**
+    - 一次情報に基づくゲーム追加の最短運用契約です。1ゲーム=1branch/1PR、対象CI優先、無関係なインフラ障害の分離、成功後の短い効率化レビューを定義します。
+
 - **[`RULE_GRAPH_V1.md`](./RULE_GRAPH_V1.md)**
     - Ontology v2 の canonical Rule Graph v1。RuleSet / RuleNode / RuleEdge、provenance境界、API、legacy migration mappingを定義します。
 
