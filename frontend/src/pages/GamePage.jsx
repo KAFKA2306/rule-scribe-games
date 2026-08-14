@@ -19,7 +19,7 @@ export default function GamePage({ slug: propSlug, initialGame, allGames: propAl
   const [error, setError] = useState(null)
   const [activeTab, setActiveTab] = useState('rules')
 
-  const BASE_URL = 'https://rule-scribe-games.vercel.app'
+  const BASE_URL = 'https://bodoge-no-mikata.vercel.app'
 
   useEffect(() => {
     const fetchData = async () => {
@@ -95,15 +95,19 @@ export default function GamePage({ slug: propSlug, initialGame, allGames: propAl
           <div className="pro-stats-grid">
             <div className="pro-stat-card">
               <div className="pro-stat-label">PLAYERS</div>
-              <div className="pro-stat-value">{game.min_players}{game.max_players ? `-${game.max_players}` : ''}</div>
+              <div className="pro-stat-value">
+                {game.min_players != null
+                  ? `${game.min_players}${game.max_players != null && game.max_players !== game.min_players ? `-${game.max_players}` : ''}`
+                  : 'N/A'}
+              </div>
             </div>
             <div className="pro-stat-card">
               <div className="pro-stat-label">TIME</div>
-              <div className="pro-stat-value">{game.play_time}m</div>
+              <div className="pro-stat-value">{game.play_time != null ? `${game.play_time}m` : 'N/A'}</div>
             </div>
             <div className="pro-stat-card">
               <div className="pro-stat-label">AGE</div>
-              <div className="pro-stat-value">{game.min_age}+</div>
+              <div className="pro-stat-value">{game.min_age != null ? `${game.min_age}+` : 'N/A'}</div>
             </div>
             <div className="pro-stat-card">
               <div className="pro-stat-label">YEAR</div>
