@@ -1,0 +1,165 @@
+name: RuleSet identity contract
+
+on:
+  pull_request:
+    paths:
+      - "backend/app/models/ruleset.py"
+      - "backend/app/services/rulesets.py"
+      - "backend/app/services/rule_graph.py"
+      - "backend/app/routers/games.py"
+      - "backend/app/db/migrations/010_rule_graph.sql"
+      - "backend/app/db/migrations/013_ruleset_identity.sql"
+      - "backend/tests/test_ruleset_identity.py"
+      - "backend/tests/test_rule_graph.py"
+      - "docs/RULESET_IDENTITY_V1.md"
+      - "docs/README.md"
+      - ".github/workflows/test-ruleset-identity.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "backend/app/models/ruleset.py"
+      - "backend/app/services/rulesets.py"
+      - "backend/app/services/rule_graph.py"
+      - "backend/app/routers/games.py"
+      - "backend/app/db/migrations/010_rule_graph.sql"
+      - "backend/app/db/migrations/013_ruleset_identity.sql"
+      - "backend/tests/test_ruleset_identity.py"
+      - "backend/tests/test_rule_graph.py"
+      - "docs/RULESET_IDENTITY_V1.md"
+      - "docs/README.md"
+      - ".github/workflows/test-ruleset-identity.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  ruleset-identity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: ruleset_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d ruleset_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/ruleset_test
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+
+      - name: Install Python dependencies
+        run: uv sync --frozen --dev
+
+      - name: Compile RuleSet modules
+        run: >-
+          uv run python -m compileall -q
+          backend/app/models/ruleset.py
+          backend/app/services/rulesets.py
+          backend/app/services/rule_graph.py
+          backend/app/routers/games.py
+
+      - name: Run RuleSet and Rule Graph contract tests
+        env:
+          PYTHONPATH: backend
+        run: >-
+          uv run pytest -q
+          backend/tests/test_ruleset_identity.py
+          backend/tests/test_rule_graph.py
+
+      - name: Verify RuleSet migration supports parallel identities
+        shell: bash
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 <<'SQL'
+          CREATE TABLE public.game_works (
+            id uuid PRIMARY KEY DEFAULT gen_random_uuid()
+          );
+          CREATE TABLE public.games (
+            id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+            slug text NOT NULL UNIQUE,
+            work_id uuid REFERENCES public.game_works(id)
+          );
+          INSERT INTO public.game_works DEFAULT VALUES;
+          INSERT INTO public.games(slug, work_id)
+          SELECT 'example', id FROM public.game_works LIMIT 1;
+          SQL
+
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/010_rule_graph.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/013_ruleset_identity.sql
+
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 <<'SQL'
+          INSERT INTO public.rule_sets (
+            game_id, version, language_code, edition_label, platform,
+            status, verification_status, is_active
+          )
+          SELECT id, 1, 'ja', 'base', 'physical', 'active', 'source_bound', true
+          FROM public.games WHERE slug = 'example';
+
+          INSERT INTO public.rule_sets (
+            game_id, version, language_code, edition_label, platform,
+            status, verification_status, is_active
+          )
+          SELECT id, 1, 'en', 'digital', 'boardgamearena', 'active', 'source_bound', true
+          FROM public.games WHERE slug = 'example';
+
+          INSERT INTO public.rule_sets (
+            game_id, version, language_code, edition_label, platform,
+            status, verification_status, is_active
+          )
+          SELECT id, 1, 'ja', 'revised', 'physical', 'active', 'unknown', true
+          FROM public.games WHERE slug = 'example';
+          SQL
+
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_sets rs join public.games g on g.id=rs.game_id where g.slug='example' and rs.is_active;")" = "3"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_sets rs join public.games g on g.id=rs.game_id where g.slug='example' and rs.revision_label is not null;")" = "0"
+
+          if psql "$DATABASE_URL" -v ON_ERROR_STOP=1 <<'SQL'
+          INSERT INTO public.rule_sets (
+            game_id, version, language_code, edition_label, platform,
+            status, verification_status, is_active
+          )
+          SELECT id, 2, 'ja', 'base', 'physical', 'active', 'unknown', true
+          FROM public.games WHERE slug = 'example';
+          SQL
+          then
+            echo "duplicate active RuleSet identity unexpectedly accepted"
+            exit 1
+          fi
+
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 <<'SQL'
+          INSERT INTO public.rule_sets (
+            game_id, version, language_code, edition_label, platform,
+            status, verification_status, is_active
+          )
+          SELECT id, 2, 'ja', 'base', 'physical', 'superseded', 'source_bound', false
+          FROM public.games WHERE slug = 'example';
+
+          WITH base AS (
+            SELECT rs.id, rs.game_id
+            FROM public.rule_sets rs
+            JOIN public.games g ON g.id = rs.game_id
+            WHERE g.slug = 'example' AND rs.platform = 'physical' AND rs.edition_label = 'base' AND rs.is_active
+            LIMIT 1
+          )
+          INSERT INTO public.rule_sets (
+            game_id, version, language_code, edition_label, platform,
+            status, is_active, base_rule_set_id, relation_type, variant_label
+          )
+          SELECT game_id, 1, 'ja', 'base', 'physical', 'active', true, id, 'variant_of', 'Expert Mode'
+          FROM base;
+          SQL
+
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_sets where relation_type='variant_of' and variant_label='Expert Mode';")" = "1"
