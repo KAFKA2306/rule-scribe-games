@@ -1,10 +1,11 @@
 import anyio
 import logging
+import re
+import unicodedata
 from typing import Any, Dict, List, Optional
 
 from app.core import local_db
 from app.core.settings import settings
-from app.utils.slugify import slugify
 
 logger = logging.getLogger("core.db_provider")
 _TABLE = "games"
@@ -20,6 +21,7 @@ _STORAGE_IMAGE_OVERRIDES = {
 _client = None
 try:
     from supabase import create_client
+
     if settings.supabase_url and settings.supabase_key:
         _client = create_client(settings.supabase_url, settings.supabase_key)
         logger.info("Cloud DB (Supabase) provider initialized.")
@@ -37,6 +39,31 @@ def _get_client():
     if _client is None:
         raise RuntimeError("Supabase not configured. Using Local-First.")
     return _client
+
+
+def _normalize_lookup(value: str | None) -> str:
+    normalized = unicodedata.normalize("NFKC", value or "").casefold().strip()
+    return re.sub(r"[^\w]+", "", normalized, flags=re.UNICODE)
+
+
+def _search_rank(game: Dict[str, Any], query: str) -> tuple[int, str]:
+    q = _normalize_lookup(query)
+    candidates = [
+        game.get("slug"),
+        game.get("title"),
+        game.get("title_ja"),
+        game.get("title_en"),
+    ]
+    normalized = [_normalize_lookup(str(value)) for value in candidates if value]
+    if q and q in normalized:
+        rank = 0
+    elif q and any(value.startswith(q) for value in normalized):
+        rank = 1
+    elif q and any(q in value for value in normalized):
+        rank = 2
+    else:
+        rank = 3
+    return rank, str(game.get("title_ja") or game.get("title") or "")
 
 
 def _with_canonical_storage_image(game: Dict[str, Any]) -> Dict[str, Any]:
@@ -59,28 +86,73 @@ def _with_canonical_storage_image(game: Dict[str, Any]) -> Dict[str, Any]:
 
 
 async def search(query: str) -> List[Dict[str, Any]]:
+    query = query.strip()
+    if not query:
+        return []
+
     if is_local():
         res = local_db.list_recent(limit=10000)
-        q = query.lower()
-        return [
-            g
-            for g in res["data"]
-            if q in (g.get("title") or "").lower()
-            or q in (g.get("title_ja") or "").lower()
-        ]
+        q = _normalize_lookup(query)
+        rows = []
+        for game in res["data"]:
+            haystacks = [
+                game.get("slug"),
+                game.get("title"),
+                game.get("title_ja"),
+                game.get("title_en"),
+                game.get("summary"),
+                game.get("description"),
+            ]
+            if any(q in _normalize_lookup(str(value)) for value in haystacks if value):
+                rows.append(game)
+        return sorted(rows, key=lambda game: _search_rank(game, query))
 
     def _q():
+        client = _get_client()
         safe_query = query.replace('"', '\\"')
         term = f"*{safe_query}*"
-        rows = (
-            _get_client()
-            .table(_TABLE)
+        direct_rows = (
+            client.table(_TABLE)
             .select("*")
-            .or_(f'title.ilike."{term}",description.ilike."{term}"')
+            .or_(
+                ",".join(
+                    [
+                        f'title.ilike."{term}"',
+                        f'title_ja.ilike."{term}"',
+                        f'title_en.ilike."{term}"',
+                        f'description.ilike."{term}"',
+                    ]
+                )
+            )
+            .limit(100)
             .execute()
             .data
         )
-        return [_with_canonical_storage_image(row) for row in rows]
+
+        normalized_query = _normalize_lookup(query)
+        alias_filters = [f'title.ilike."{term}"']
+        if normalized_query:
+            alias_filters.append(f'normalized_title.ilike."*{normalized_query}*"')
+        alias_rows = (
+            client.table("game_title_aliases")
+            .select("game_id")
+            .or_(",".join(alias_filters))
+            .limit(100)
+            .execute()
+            .data
+        )
+        alias_game_ids = list(dict.fromkeys(row["game_id"] for row in alias_rows if row.get("game_id")))
+        alias_games = []
+        if alias_game_ids:
+            alias_games = client.table(_TABLE).select("*").in_("id", alias_game_ids).execute().data
+
+        deduped: dict[str, Dict[str, Any]] = {}
+        for row in [*direct_rows, *alias_games]:
+            row_id = str(row.get("id") or "")
+            if row_id:
+                deduped[row_id] = _with_canonical_storage_image(row)
+
+        return sorted(deduped.values(), key=lambda game: _search_rank(game, query))
 
     return await anyio.to_thread.run_sync(_q)
 
@@ -91,7 +163,8 @@ async def list_recent(limit: int = 100, offset: int = 0) -> Dict[str, Any]:
 
     def _q():
         res = (
-            _get_client().table(_TABLE)
+            _get_client()
+            .table(_TABLE)
             .select("*", count="exact")
             .order("updated_at", desc=True)
             .range(offset, offset + limit - 1)
@@ -143,6 +216,45 @@ async def upsert_game(game_data: Dict[str, Any]) -> Dict[str, Any]:
     return await anyio.to_thread.run_sync(_q)
 
 
+async def create_unverified_game(game_data: Dict[str, Any]) -> Dict[str, Any]:
+    """Create a new unverified work+edition pair for an authenticated generation request."""
+    if is_local():
+        local_db.upsert_game(game_data)
+        return game_data
+
+    def _q():
+        client = _get_client()
+        canonical_title = str(game_data.get("title_ja") or game_data.get("title") or "").strip()
+        if not canonical_title:
+            raise ValueError("Generated game is missing a title")
+
+        work_rows = (
+            client.table("game_works")
+            .insert({"canonical_title": canonical_title, "identity_status": "unverified"})
+            .execute()
+            .data
+        )
+        if not work_rows:
+            raise RuntimeError("Failed to create canonical game work")
+
+        work_id = work_rows[0]["id"]
+        payload = dict(game_data)
+        payload["work_id"] = work_id
+        payload["identity_status"] = "unverified"
+        payload["is_official"] = False
+        try:
+            rows = client.table(_TABLE).insert(payload).execute().data
+            if not rows:
+                raise RuntimeError("Failed to create game edition")
+            return _with_canonical_storage_image(rows[0])
+        except Exception:
+            # Avoid leaving an orphan work when the edition insert fails.
+            client.table("game_works").delete().eq("id", work_id).execute()
+            raise
+
+    return await anyio.to_thread.run_sync(_q)
+
+
 async def increment_view_count(game_id: str) -> None:
     if is_local():
         return
@@ -172,6 +284,7 @@ async def list_for_sitemap() -> list[dict[str, Any]]:
                 "image_url": g.get("image_url"),
             }
             for g in res["data"]
+            if str(g.get("slug") or "").strip()
         ]
 
     def _q():
@@ -182,6 +295,10 @@ async def list_for_sitemap() -> list[dict[str, Any]]:
             .execute()
             .data
         )
-        return [_with_canonical_storage_image(row) for row in rows]
+        return [
+            _with_canonical_storage_image(row)
+            for row in rows
+            if str(row.get("slug") or "").strip()
+        ]
 
     return await anyio.to_thread.run_sync(_q)
