@@ -4,12 +4,16 @@ on:
   pull_request:
     paths:
       - "backend/app/main.py"
+      - "backend/app/routers/auth.py"
       - "backend/app/routers/games.py"
+      - "backend/app/services/catalog_authorization.py"
       - "backend/app/services/game_service.py"
       - "backend/app/services/seo_renderer.py"
       - "backend/app/core/supabase.py"
+      - "backend/tests/test_auth.py"
       - "backend/tests/test_games_router.py"
       - "backend/tests/test_web_not_found.py"
+      - "supabase/migrations/**"
       - ".github/workflows/test-games-router.yml"
       - "vercel.json"
       - "pyproject.toml"
@@ -19,12 +23,16 @@ on:
       - main
     paths:
       - "backend/app/main.py"
+      - "backend/app/routers/auth.py"
       - "backend/app/routers/games.py"
+      - "backend/app/services/catalog_authorization.py"
       - "backend/app/services/game_service.py"
       - "backend/app/services/seo_renderer.py"
       - "backend/app/core/supabase.py"
+      - "backend/tests/test_auth.py"
       - "backend/tests/test_games_router.py"
       - "backend/tests/test_web_not_found.py"
+      - "supabase/migrations/**"
       - ".github/workflows/test-games-router.yml"
       - "vercel.json"
       - "pyproject.toml"
@@ -42,7 +50,7 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
       - run: uv sync --frozen --dev
-      - name: Run game route regression tests
-        run: uv run pytest -q backend/tests/test_games_router.py backend/tests/test_web_not_found.py
+      - name: Run auth and game route regression tests
+        run: uv run pytest -q backend/tests/test_auth.py backend/tests/test_games_router.py backend/tests/test_web_not_found.py
         env:
           PYTHONPATH: backend
