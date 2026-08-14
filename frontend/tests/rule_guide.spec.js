@@ -52,6 +52,19 @@ test('all production curated guides satisfy evidence and semantic contracts', ()
   }
 })
 
+test('Skull King guide locks current bidding, scoring and three-character exception', () => {
+  const skullKing = getCuratedRuleGuide('skull-king')
+  expect(skullKing).not.toBeNull()
+  expect(skullKing.facts.rounds).toBe(10)
+  expect(skullKing.quick.end).toContain('10ラウンド')
+  expect(skullKing.quick.actions).toHaveLength(3)
+  expect(skullKing.quick.actions.join(' ')).toContain('Pirate・Skull King・Mermaid')
+  expect(skullKing.quick.actions.join(' ')).toContain('Mermaidが勝つ')
+  expect(skullKing.scoring.summary).toContain('1トリック20点')
+  expect(skullKing.scoring.summary).toContain('配札枚数×10点')
+  expect(skullKing.source.url).toBe('https://www.grandpabecksgames.com/pages/skull-king')
+})
+
 test('accuracy gate rejects action-count and stale-version mismatches', () => {
   const splendor = getCuratedRuleGuide('splendor')
   expect(splendor).not.toBeNull()
