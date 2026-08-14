@@ -13,35 +13,33 @@ function gameSlug(pathname) {
 
 export default function GameListSavePortal() {
   const location = useLocation()
-  const [target, setTarget] = useState(null)
-  const [game, setGame] = useState(null)
+  const [portal, setPortal] = useState(null)
 
   useEffect(() => {
     let active = true
     let observer = null
     let resolved = false
-    const slug = gameSlug(location.pathname)
+    const pathname = location.pathname
+    const slug = gameSlug(pathname)
 
-    setTarget(null)
-    setGame(null)
     if (!slug) return () => { active = false }
 
     const mount = async () => {
       if (!active || resolved) return
-      const nextTarget = document.querySelector('.game-page-toolbar .header-actions')
-      if (!nextTarget) return
+      const target = document.querySelector('.game-page-toolbar .header-actions')
+      if (!target) return
 
       resolved = true
       observer?.disconnect()
       observer = null
-      setTarget(nextTarget)
 
       try {
         const data = await api.get(`/api/games/${slug}`)
         if (!active) return
-        setGame(Array.isArray(data) ? data[0] : data.game || data)
+        const game = Array.isArray(data) ? data[0] : data.game || data
+        setPortal({ pathname, target, game })
       } catch {
-        if (active) setGame(null)
+        // Keep the portal hidden for this route when the game cannot be loaded.
       }
     }
 
@@ -60,12 +58,12 @@ export default function GameListSavePortal() {
     }
   }, [location.pathname])
 
-  if (!target || !game) return null
+  if (!portal || portal.pathname !== location.pathname || !portal.target || !portal.game) return null
   return createPortal(
     <>
-      <OwnedGameButton game={game} />
-      <AddToListButton game={game} />
+      <OwnedGameButton game={portal.game} />
+      <AddToListButton game={portal.game} />
     </>,
-    target,
+    portal.target,
   )
 }
