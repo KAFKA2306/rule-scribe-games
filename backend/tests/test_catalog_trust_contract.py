@@ -6,7 +6,9 @@ from pydantic import ValidationError
 from app.models import GameDetail, GameUpdate
 
 
-MIGRATION = Path(__file__).resolve().parents[1] / "app/db/migrations/007_catalog_acl_trust_and_strict_slug.sql"
+MIGRATIONS = Path(__file__).resolve().parents[1] / "app/db/migrations"
+MIGRATION_007 = MIGRATIONS / "007_catalog_acl_trust_and_strict_slug.sql"
+MIGRATION_008 = MIGRATIONS / "008_remove_legacy_trust_and_validate_slug.sql"
 
 
 def test_game_api_exposes_separate_trust_axes_without_legacy_official_fields():
@@ -34,20 +36,24 @@ def test_trust_enums_fail_closed_on_unknown_values():
         GameUpdate(content_review_status="approved")
 
 
-def test_catalog_schema_removes_ambiguous_legacy_trust_and_validates_slug():
-    sql = MIGRATION.read_text(encoding="utf-8")
+def test_catalog_schema_uses_compatible_trust_migration_then_removes_legacy_fields():
+    additive_sql = MIGRATION_007.read_text(encoding="utf-8")
+    cleanup_sql = MIGRATION_008.read_text(encoding="utf-8")
 
-    assert "ADD COLUMN IF NOT EXISTS source_trust" in sql
-    assert "ADD COLUMN IF NOT EXISTS content_review_status" in sql
-    assert "SET source_url = official_url" in sql
-    assert "DROP COLUMN IF EXISTS is_official" in sql
-    assert "DROP COLUMN IF EXISTS official_url" in sql
-    assert "CHECK (slug IS NOT NULL AND btrim(slug) <> '')" in sql
-    assert "NOT VALID" not in sql
+    assert "ADD COLUMN IF NOT EXISTS source_trust" in additive_sql
+    assert "ADD COLUMN IF NOT EXISTS content_review_status" in additive_sql
+    assert "SET source_url = official_url" in additive_sql
+    assert "DROP COLUMN IF EXISTS is_official" not in additive_sql
+    assert "DROP COLUMN IF EXISTS official_url" not in additive_sql
+
+    assert "DROP COLUMN IF EXISTS is_official" in cleanup_sql
+    assert "DROP COLUMN IF EXISTS official_url" in cleanup_sql
+    assert "CHECK (slug IS NOT NULL AND btrim(slug) <> '')" in cleanup_sql
+    assert "NOT VALID" not in cleanup_sql
 
 
 def test_catalog_acl_tables_are_rls_protected():
-    sql = MIGRATION.read_text(encoding="utf-8")
+    sql = MIGRATION_007.read_text(encoding="utf-8")
 
     assert "CREATE TABLE IF NOT EXISTS public.catalog_editors" in sql
     assert "ALTER TABLE public.catalog_editors ENABLE ROW LEVEL SECURITY" in sql
