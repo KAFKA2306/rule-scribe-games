@@ -1,0 +1,44 @@
+name: Vercel Git deployment verifier
+
+on:
+  pull_request:
+    paths:
+      - "scripts/verify_vercel_git_deployment.py"
+      - "backend/tests/test_vercel_git_deployment.py"
+      - ".github/workflows/deploy.yml"
+      - ".github/workflows/test-vercel-git-deployment.yml"
+  push:
+    branches: [main]
+    paths:
+      - "scripts/verify_vercel_git_deployment.py"
+      - "backend/tests/test_vercel_git_deployment.py"
+      - ".github/workflows/deploy.yml"
+      - ".github/workflows/test-vercel-git-deployment.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  verifier-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install uv
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+      - name: Install dependencies
+        run: uv sync --frozen --dev
+      - name: Compile verifier
+        run: uv run python -m compileall -q scripts/verify_vercel_git_deployment.py
+      - name: Test exact-SHA production verification
+        env:
+          PYTHONPATH: .
+        run: uv run pytest -q backend/tests/test_vercel_git_deployment.py
+      - name: Assert Actions does not create a second production deployment
+        shell: bash
+        run: |
+          if grep -Eq 'vercel (deploy|--prod)( |$)' .github/workflows/deploy.yml; then
+            echo "deploy.yml must not create a second Vercel production deployment; Git integration is canonical"
+            exit 1
+          fi
+          grep -F 'verify_vercel_git_deployment.py' .github/workflows/deploy.yml
