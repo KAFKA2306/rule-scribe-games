@@ -60,16 +60,39 @@ def test_catalog_patch_requires_authentication_before_mutation():
     assert service.updated is False
 
 
-def test_authenticated_regeneration_uses_existing_slug_update_path():
+def test_authorized_regeneration_uses_existing_slug_update_path():
     service = MutableGameService()
     app = _app_with_service(service)
-    app.dependency_overrides[games.get_current_user] = lambda: {"id": "user-1"}
+    app.dependency_overrides[games.require_catalog_editor] = lambda: {
+        "id": "editor-1",
+        "catalog_role": "editor",
+    }
     client = TestClient(app)
 
     response = client.patch("/api/games/example?regenerate=true&fill_missing_only=true")
 
     assert response.status_code == 200
     assert response.json()["slug"] == "example"
+    assert service.updated is True
+
+
+def test_authorized_manual_update_does_not_accept_identity_fields():
+    service = MutableGameService()
+    app = _app_with_service(service)
+    app.dependency_overrides[games.require_catalog_editor] = lambda: {
+        "id": "editor-1",
+        "catalog_role": "admin",
+    }
+    client = TestClient(app)
+
+    response = client.patch(
+        "/api/games/example",
+        json={"title": "Updated", "slug": "attacker-slug", "work_id": "attacker-work"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["slug"] == "example"
+    assert response.json()["title"] == "Updated"
     assert service.updated is True
 
 
