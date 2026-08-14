@@ -2,9 +2,11 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from app.core.rate_limiter import RateLimiter
 from app.models import GameDetail, GameListResponse, GameUpdate, SearchRequest
+from app.models.rule_graph import RuleGraphReadResponse, RuleNodeType
 from app.routers.auth import require_catalog_editor
 from app.services import catalog_access
 from app.services.game_service import GameService
+from app.services.rule_graph import RuleGraphService
 
 router = APIRouter()
 
@@ -15,6 +17,10 @@ gen_limiter = RateLimiter.get_limiter("generation", max_requests=10, window_seco
 
 def get_game_service():
     return GameService()
+
+
+def get_rule_graph_service():
+    return RuleGraphService()
 
 
 @router.get("/search", response_model=list[GameDetail])
@@ -56,6 +62,18 @@ async def list_recent_games(limit: int = 100, offset: int = 0, service: GameServ
         "limit": limit,
         "offset": offset,
     }
+
+
+@router.get("/games/{slug}/rule-graph", response_model=RuleGraphReadResponse)
+async def get_game_rule_graph(
+    slug: str,
+    types: list[RuleNodeType] | None = Query(default=None),
+    service: RuleGraphService = Depends(get_rule_graph_service),
+):
+    graph = await service.get_by_slug(slug, rule_types=types)
+    if graph is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Game not found")
+    return graph
 
 
 @router.get("/games/{slug}", response_model=GameDetail)
