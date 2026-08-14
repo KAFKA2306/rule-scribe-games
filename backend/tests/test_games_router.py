@@ -12,6 +12,7 @@ class MissingGameService:
 class MutableGameService:
     def __init__(self):
         self.updated = False
+        self.last_updates = None
 
     async def update_game_content(self, slug: str, fill_missing_only: bool = False):
         self.updated = True
@@ -19,7 +20,13 @@ class MutableGameService:
 
     async def update_game_manual(self, slug: str, updates: dict):
         self.updated = True
+        self.last_updates = updates
         return {"id": "game-1", "slug": slug, "title": updates.get("title", "Example")}
+
+
+class NotFoundMutableGameService(MutableGameService):
+    async def update_game_manual(self, slug: str, updates: dict):
+        raise ValueError("missing")
 
 
 class DBFirstService:
@@ -41,6 +48,19 @@ def _app_with_service(service):
     return app
 
 
+def _install_editor_authorization(app, monkeypatch, role="editor"):
+    app.dependency_overrides[games.get_current_user] = lambda: {"id": "user-1"}
+
+    async def get_role(_user_id: str):
+        return role
+
+    async def audit(**_kwargs):
+        return None
+
+    monkeypatch.setattr(games.catalog_authorization, "get_catalog_editor_role", get_role)
+    monkeypatch.setattr(games.catalog_authorization, "record_catalog_mutation_audit", audit)
+
+
 def test_missing_game_slug_returns_404_instead_of_response_validation_500():
     client = TestClient(_app_with_service(MissingGameService()))
     response = client.get("/api/games/ipso")
@@ -60,10 +80,23 @@ def test_catalog_patch_requires_authentication_before_mutation():
     assert service.updated is False
 
 
-def test_authenticated_regeneration_uses_existing_slug_update_path():
+def test_regular_authenticated_user_cannot_mutate_global_catalog(monkeypatch):
     service = MutableGameService()
     app = _app_with_service(service)
-    app.dependency_overrides[games.get_current_user] = lambda: {"id": "user-1"}
+    _install_editor_authorization(app, monkeypatch, role=None)
+    client = TestClient(app)
+
+    response = client.patch("/api/games/example", json={"title": "Should not write"})
+
+    assert response.status_code == 403
+    assert response.json()["detail"] == "Catalog editor permission required"
+    assert service.updated is False
+
+
+def test_authorized_editor_regeneration_uses_existing_slug_update_path(monkeypatch):
+    service = MutableGameService()
+    app = _app_with_service(service)
+    _install_editor_authorization(app, monkeypatch, role="editor")
     client = TestClient(app)
 
     response = client.patch("/api/games/example?regenerate=true&fill_missing_only=true")
@@ -71,6 +104,34 @@ def test_authenticated_regeneration_uses_existing_slug_update_path():
     assert response.status_code == 200
     assert response.json()["slug"] == "example"
     assert service.updated is True
+
+
+def test_identity_fields_are_not_forwarded_to_manual_update(monkeypatch):
+    service = MutableGameService()
+    app = _app_with_service(service)
+    _install_editor_authorization(app, monkeypatch, role="editor")
+    client = TestClient(app)
+
+    response = client.patch(
+        "/api/games/example",
+        json={"slug": "hijacked", "id": "other-id", "work_id": "other-work", "identity_status": "official", "title": "Safe title"},
+    )
+
+    assert response.status_code == 200
+    assert service.updated is True
+    assert service.last_updates == {"title": "Safe title"}
+
+
+def test_authorized_editor_missing_slug_returns_404(monkeypatch):
+    service = NotFoundMutableGameService()
+    app = _app_with_service(service)
+    _install_editor_authorization(app, monkeypatch, role="editor")
+    client = TestClient(app)
+
+    response = client.patch("/api/games/missing", json={"title": "No target"})
+
+    assert response.status_code == 404
+    assert response.json() == {"detail": "Game not found"}
 
 
 def test_post_search_checks_database_before_generation():
