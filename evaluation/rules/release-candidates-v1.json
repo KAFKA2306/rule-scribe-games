@@ -1,0 +1,55 @@
+{
+  "golden_version": "golden-v1",
+  "games": [
+    {
+      "slug": "yro",
+      "first": {
+        "edition": "BGA 260725-1445",
+        "language": "en",
+        "claims": [
+          {"id": "setup-3-money-5-cards", "status": "confirmed", "source_ids": ["yro-bga-260725-1445"]},
+          {"id": "round-six-phases", "status": "confirmed", "source_ids": ["yro-bga-260725-1445"]},
+          {"id": "recruit-zero-one-two", "status": "unknown", "source_ids": []},
+          {"id": "end-nine-or-forty-end-round", "status": "confirmed", "source_ids": ["yro-bga-260725-1445"]},
+          {"id": "money-three-to-one-vp", "status": "confirmed", "source_ids": ["yro-bga-260725-1445"]}
+        ]
+      },
+      "second": {
+        "edition": "BGA 260725-1445",
+        "language": "en",
+        "claims": [
+          {"id": "setup-3-money-5-cards", "status": "confirmed", "source_ids": ["yro-bga-260725-1445"]},
+          {"id": "round-six-phases", "status": "confirmed", "source_ids": ["yro-bga-260725-1445"]},
+          {"id": "recruit-zero-one-two", "status": "confirmed", "source_ids": ["yro-bga-260725-1445"]},
+          {"id": "end-nine-or-forty-end-round", "status": "confirmed", "source_ids": ["yro-bga-260725-1445"]},
+          {"id": "money-three-to-one-vp", "status": "confirmed", "source_ids": ["yro-bga-260725-1445"]}
+        ]
+      }
+    },
+    {
+      "slug": "flip-7-with-a-vengeance",
+      "first": {
+        "edition": "BGA 260716-1823 / The Op 2026",
+        "language": "en",
+        "claims": [
+          {"id": "end-two-hundred-end-round", "status": "confirmed", "source_ids": ["flip7-bga"]},
+          {"id": "hit-stay-targetable", "status": "confirmed", "source_ids": ["flip7-bga"]},
+          {"id": "duplicate-number-bust", "status": "confirmed", "source_ids": ["flip7-bga"]},
+          {"id": "flip-seven-ends-round", "status": "confirmed", "source_ids": ["flip7-bga"]},
+          {"id": "flip-four-stop-order", "status": "unknown", "source_ids": []}
+        ]
+      },
+      "second": {
+        "edition": "BGA 260716-1823 / The Op 2026",
+        "language": "en",
+        "claims": [
+          {"id": "end-two-hundred-end-round", "status": "confirmed", "source_ids": ["flip7-bga"]},
+          {"id": "hit-stay-targetable", "status": "confirmed", "source_ids": ["flip7-bga"]},
+          {"id": "duplicate-number-bust", "status": "confirmed", "source_ids": ["flip7-bga"]},
+          {"id": "flip-seven-ends-round", "status": "confirmed", "source_ids": ["flip7-bga"]},
+          {"id": "flip-four-stop-order", "status": "confirmed", "source_ids": ["flip7-op-faq"]}
+        ]
+      }
+    }
+  ]
+}

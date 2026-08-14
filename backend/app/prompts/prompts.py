@@ -1,61 +1,62 @@
 PROMPTS = {
     "metadata_generator": {
         "generate": """
-You are an expert board game librarian creating content for **first-time players**.
+You are an expert board game librarian creating content for first-time players.
 Generate structured JSON metadata for the board game matching the query: "{query}"
-Context from database:
+
+Evidence context:
 {context}
+
+EVIDENCE CONTRACT:
+1. Treat the context as factual rule evidence ONLY when it explicitly contains `SOURCE_BOUND_CONTEXT=TRUE`.
+2. Never infer this game's rules, setup, player count, play time, age, exceptions, or victory condition from similar games, genre conventions, memory, or a different edition.
+3. When `SOURCE_BOUND_CONTEXT=FALSE`, set rules_content, min_players, max_players, play_time, min_age, and bga_url to null. Keep structured_data rule-derived arrays empty.
+4. When a source-bound context does not support a field, return null for that field. Unknown is correct; guessing is not.
+5. Do not mix editions or languages. Preserve the edition/language stated in source-bound context.
+6. bga_url MUST be null unless the exact game's HTTPS Board Game Arena URL is explicitly present in source-bound context. The URL host must be boardgamearena.com or a boardgamearena.com subdomain. Never infer a slug or fabricate a URL.
+
 Return ONLY valid JSON matching this schema:
 {{
     "title": "Original title",
-    "title_ja": "Japanese title (if available, else same as title)",
-    "summary": "A brief 1-sentence summary in Japanese (Focus on the 'Why it is fun' rather than mechanics)",
-    "description": "A detailed description in Japanese (3-5 sentences). Explain Like I'm 5, but polite.",
-    "min_players": int,
-    "max_players": int,
-    "play_time": int (minutes),
-    "min_age": int (recommended age),
-    "bga_url": "Verified HTTPS Board Game Arena game URL, or null",
-    "rules_content": "See format below",
+    "title_ja": "Japanese title if supported, otherwise same as title",
+    "summary": "Japanese one-sentence summary, or null when unsupported",
+    "description": "Japanese description, or null when unsupported",
+    "min_players": "integer or null",
+    "max_players": "integer or null",
+    "play_time": "integer minutes or null",
+    "min_age": "integer or null",
+    "bga_url": "verified HTTPS Board Game Arena URL from source-bound context, or null",
+    "rules_content": "Japanese Markdown supported by source-bound context, or null",
     "structured_data": {{
-        "keywords": [
-            {{ "term": "用語 (JA)", "description": "簡潔な説明 (JA) - Avoid jargon, explain simply" }}
-        ],
-        "key_elements": [
-            {{ "name": "要素名 (JA)", "type": "component/mechanic/card/token", "reason": "Why this is fun/important" }}
-        ],
-        "mechanics": ["Deck Building", "Worker Placement", ...],
-        "best_player_count": "e.g. 3-4"
+        "keywords": [],
+        "key_elements": [],
+        "mechanics": [],
+        "best_player_count": null
     }}
 }}
-IMPORTANT GUIDELINES:
-1. rules_content format (Japanese, Markdown):
-   [ゲームの概要と魅力 2-3文。専門用語を使わず、どんな体験ができるかを書く]
-   - [内容物リスト]
-   1. [準備手順を番号付きで。具体的かつ丁寧に]
-   [詳細な手順説明。専門用語（ドラフト、トリックなど）は必ず()で平易な言葉で補足する]
-   [明確な終了条件と勝者の決め方]
-   - [戦略アドバイス 3つ。勝ち負けよりも楽しむためのヒントを優先]
-2. keywords: Include 5-8 important game terms. Explanations MUST be non-gamer friendly.
-3. key_elements: Include 4-6 fun elements.
-4. **STYLE: Explain Like I'm 5.** Use polite Japanese (Desu/Masu). Avoid Katakana jargon where possible.
-5. Focus on "How to start" and "What do I do on my turn?".
-6. bga_url MUST be null unless the exact game is confirmed on Board Game Arena. Never infer a slug or fabricate a URL. When present, it MUST use HTTPS and a boardgamearena.com host.
-If the game is not found, do your best to infer from similar games, but keep bga_url null.
+
+When SOURCE_BOUND_CONTEXT=TRUE, rules_content should prioritize:
+- concrete setup
+- turn/round sequence
+- end and victory condition
+- source-supported exceptions and FAQ details
+Use plain polite Japanese, but never trade factual precision for a richer explanation.
 """
     },
     "metadata_critic": {
         "improve": """
-Review the following board game metadata for a **first-time player** (Explain Like I'm 5):
+Review the following board game metadata against its source-bound evidence:
 {content}
-Check:
-1. Is rules_content detailed enough? Does it use plain Japanese?
-2. **Jargon Check**: Are terms like "Drafting", "Trick-taking", "Meeple" explained or avoided?
-3. Are there 5-8 keywords explaining game terms simply?
-4. Are there 4-6 key_elements describing fun components?
-5. Is the flow of play clear step-by-step?
-6. Preserve bga_url only when it is a verified HTTPS URL on boardgamearena.com; otherwise set it to null.
-Return the improved JSON with richer, simpler content.
+
+CONTRACT:
+1. Keep claims that are supported by the same edition/language source evidence.
+2. Delete or null unsupported claims instead of making them more detailed.
+3. Correct contradictions using only supplied source evidence.
+4. Fill a missing field only when the supplied source evidence supports it.
+5. Keep unknown fields unknown.
+6. Never infer rules from a similar game or another edition.
+7. Preserve bga_url only when the exact HTTPS Board Game Arena URL is explicitly verified by the supplied evidence. The URL host must be boardgamearena.com or a boardgamearena.com subdomain. Never infer a slug or fabricate a URL.
+Return only the corrected JSON.
 """
     },
     "persona_review_generator": {
