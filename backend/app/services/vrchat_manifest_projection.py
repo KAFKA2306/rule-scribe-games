@@ -24,7 +24,6 @@ from app.models.vrchat_manifest import (
     SourceSchemaVersions,
 )
 
-
 _RULE_BUCKETS: dict[RuleNodeType, str] = {
     RuleNodeType.SETUP: "setup",
     RuleNodeType.PHASE: "phases",
