@@ -1,23 +1,25 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { useLocation } from 'react-router-dom'
 
 import { api } from '../lib/api'
 import AddToListButton from './game/AddToListButton'
 import OwnedGameButton from './game/OwnedGameButton'
 
-function currentGameSlug() {
-  const match = window.location.pathname.match(/^\/games\/([^/]+)\/?$/)
+function gameSlug(pathname) {
+  const match = pathname.match(/^\/games\/([^/]+)\/?$/)
   return match ? decodeURIComponent(match[1]) : null
 }
 
 export default function GameListSavePortal() {
+  const location = useLocation()
   const [target, setTarget] = useState(null)
   const [game, setGame] = useState(null)
 
   useEffect(() => {
     let active = true
+    const slug = gameSlug(location.pathname)
     const resolve = async () => {
-      const slug = currentGameSlug()
       const nextTarget = document.querySelector('.game-page-toolbar .header-actions')
       setTarget(nextTarget)
       if (!slug || !nextTarget) {
@@ -42,7 +44,7 @@ export default function GameListSavePortal() {
       active = false
       observer.disconnect()
     }
-  }, [])
+  }, [location.pathname])
 
   if (!target || !game) return null
   return createPortal(
