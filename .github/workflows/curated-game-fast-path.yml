@@ -5,24 +5,32 @@ on:
     paths:
       - "data/curated-games/**"
       - "backend/app/scripts/curated_game_workflow.py"
+      - "backend/app/scripts/curated_game_fast_path_v2.py"
       - "backend/tests/test_curated_game_workflow.py"
+      - "backend/tests/test_curated_game_fast_path_v2.py"
       - "frontend/src/lib/curatedRuleGuides.js"
       - "frontend/src/lib/generatedCuratedRuleGuides.js"
+      - "frontend/public/curated-guides-manifest.json"
       - "Taskfile.yml"
       - "docs/CURATED_GAME_FAST_PATH.md"
       - ".github/workflows/curated-game-fast-path.yml"
+      - ".github/workflows/curated-game-release-verification.yml"
   push:
     branches:
       - main
     paths:
       - "data/curated-games/**"
       - "backend/app/scripts/curated_game_workflow.py"
+      - "backend/app/scripts/curated_game_fast_path_v2.py"
       - "backend/tests/test_curated_game_workflow.py"
+      - "backend/tests/test_curated_game_fast_path_v2.py"
       - "frontend/src/lib/curatedRuleGuides.js"
       - "frontend/src/lib/generatedCuratedRuleGuides.js"
+      - "frontend/public/curated-guides-manifest.json"
       - "Taskfile.yml"
       - "docs/CURATED_GAME_FAST_PATH.md"
       - ".github/workflows/curated-game-fast-path.yml"
+      - ".github/workflows/curated-game-release-verification.yml"
 
 permissions:
   contents: read
@@ -40,8 +48,11 @@ jobs:
       - name: Run focused workflow tests
         env:
           PYTHONPATH: backend
-        run: uv run pytest -q backend/tests/test_curated_game_workflow.py
-      - name: Check structured inputs and generated registry
+        run: >-
+          uv run pytest -q
+          backend/tests/test_curated_game_workflow.py
+          backend/tests/test_curated_game_fast_path_v2.py
+      - name: Check all structured inputs and generated release artifacts
         env:
           PYTHONPATH: backend
-        run: uv run python backend/app/scripts/curated_game_workflow.py --all --offline --check-materialization
+        run: uv run python backend/app/scripts/curated_game_fast_path_v2.py check-all
