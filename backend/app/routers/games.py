@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from pydantic import ValidationError
 
 from app.core.rate_limiter import RateLimiter
 from app.models import GameDetail, GameListResponse, GameUpdate, SearchRequest
@@ -9,12 +10,19 @@ from app.models.component_catalog import (
     ComponentSetListResponse,
 )
 from app.models.concept_taxonomy import ConceptDetailResponse, GameConceptsReadResponse, GameGlossaryReadResponse
+from app.models.evidence import (
+    ClaimDetailResponse,
+    ClaimTarget,
+    EvidenceTargetType,
+    EvidenceTraceResponse,
+)
 from app.models.rule_graph import RuleGraphReadResponse, RuleNodeType
 from app.models.ruleset import RuleSetListResponse
 from app.routers.auth import require_catalog_editor
 from app.services import catalog_access
 from app.services.component_catalog import ComponentCatalogService
 from app.services.concept_taxonomy import ConceptTaxonomyService
+from app.services.evidence import EvidenceService
 from app.services.game_service import GameService
 from app.services.rule_graph import RuleGraphService
 from app.services.rulesets import RuleSetService
@@ -40,6 +48,10 @@ def get_ruleset_service():
 
 def get_component_catalog_service():
     return ComponentCatalogService()
+
+
+def get_evidence_service():
+    return EvidenceService()
 
 
 def get_concept_taxonomy_service():
@@ -177,6 +189,51 @@ async def get_game_component(
     result = await service.get_component(slug, rule_set_id, component_id)
     if result is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Component not found")
+    return result
+
+
+@router.get("/games/{slug}/evidence", response_model=EvidenceTraceResponse)
+async def get_game_evidence_trace(
+    slug: str,
+    rule_set_id: str = Query(..., min_length=1),
+    target_type: EvidenceTargetType = Query(...),
+    rule_id: str | None = Query(default=None),
+    component_id: str | None = Query(default=None),
+    property_key: str | None = Query(default=None),
+    ordinal: int | None = Query(default=None, ge=0),
+    ability_id: str | None = Query(default=None),
+    field_path: str | None = Query(default=None),
+    service: EvidenceService = Depends(get_evidence_service),
+):
+    try:
+        target = ClaimTarget(
+            target_type=target_type,
+            rule_id=rule_id,
+            component_id=component_id,
+            property_key=property_key,
+            ordinal=ordinal,
+            ability_id=ability_id,
+            field_path=field_path,
+        )
+    except ValidationError as exc:
+        detail = exc.errors(include_context=False, include_input=False, include_url=False)
+        raise HTTPException(status_code=422, detail=detail) from exc
+    result = await service.get_trace(slug, rule_set_id, target)
+    if result is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Game not found")
+    return result
+
+
+@router.get("/games/{slug}/claims/{claim_id}", response_model=ClaimDetailResponse)
+async def get_game_claim_detail(
+    slug: str,
+    claim_id: str,
+    rule_set_id: str = Query(..., min_length=1),
+    service: EvidenceService = Depends(get_evidence_service),
+):
+    result = await service.get_claim(slug, rule_set_id, claim_id)
+    if result is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Claim not found")
     return result
 
 
