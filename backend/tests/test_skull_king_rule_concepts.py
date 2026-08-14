@@ -8,7 +8,7 @@ MIGRATION = (
     / "app"
     / "db"
     / "migrations"
-    / "015_seed_skull_king_rule_concepts.sql"
+    / "016_seed_skull_king_rule_concepts.sql"
 )
 
 SOURCE_URL = "https://www.grandpabecksgames.com/pages/skull-king"
