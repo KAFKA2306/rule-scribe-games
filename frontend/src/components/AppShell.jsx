@@ -10,9 +10,10 @@ function isPlainPrimaryClick(event) {
 
 function focusRouteContent() {
   const target = document.querySelector('main, .game-detail-content')
-  if (!target) return
+  if (!target) return false
   if (!target.hasAttribute('tabindex')) target.setAttribute('tabindex', '-1')
   target.focus({ preventScroll: true })
+  return true
 }
 
 export default function AppShell() {
@@ -43,19 +44,39 @@ export default function AppShell() {
 
   useEffect(() => {
     const key = location.key
-    const timer = window.setTimeout(() => setNavigating(false), 150)
+    const positions = scrollPositions.current
+    const feedbackTimer = window.setTimeout(() => setNavigating(false), 300)
+    let focusObserver = null
+    let focusTimer = null
+
     window.requestAnimationFrame(() => {
       if (navigationType === 'POP') {
-        const saved = scrollPositions.current.get(key)
+        const saved = positions.get(key)
         if (saved) window.scrollTo({ top: saved.y, left: saved.x, behavior: 'auto' })
-      } else {
-        focusRouteContent()
-        window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+        return
       }
+
+      window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+      if (focusRouteContent()) return
+
+      focusObserver = new MutationObserver(() => {
+        if (!focusRouteContent()) return
+        focusObserver?.disconnect()
+        focusObserver = null
+        if (focusTimer) window.clearTimeout(focusTimer)
+      })
+      focusObserver.observe(document.getElementById('root') || document.body, { childList: true, subtree: true })
+      focusTimer = window.setTimeout(() => {
+        focusObserver?.disconnect()
+        focusObserver = null
+      }, 1000)
     })
+
     return () => {
-      window.clearTimeout(timer)
-      scrollPositions.current.set(key, { x: window.scrollX, y: window.scrollY })
+      window.clearTimeout(feedbackTimer)
+      if (focusTimer) window.clearTimeout(focusTimer)
+      focusObserver?.disconnect()
+      positions.set(key, { x: window.scrollX, y: window.scrollY })
     }
   }, [location.key, navigationType])
 
