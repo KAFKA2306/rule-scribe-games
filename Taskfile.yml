@@ -132,6 +132,43 @@ tasks:
     dir: backend
     cmd: uv run python -m app.scripts.validate_urls --hours 24
 
+  game:add:
+    desc: "一次情報付きゲームを検証→guide生成→DB upsert→本番確認 (SLUG=... SOURCE_URL=... DATA=data/curated-games/xxx.json)"
+    requires:
+      vars: [SLUG, SOURCE_URL, DATA]
+    dir: backend
+    cmd: >-
+      uv run python app/scripts/curated_game_workflow.py
+      --file "../{{.DATA}}"
+      --expected-slug "{{.SLUG}}"
+      --expected-source-url "{{.SOURCE_URL}}"
+      --write
+      --verify-production
+
+  game:check:
+    desc: "curated game入力とgenerated guideをofflineで検証 (DATA=...)"
+    requires:
+      vars: [DATA]
+    dir: backend
+    cmd: >-
+      uv run python app/scripts/curated_game_workflow.py
+      --file "../{{.DATA}}"
+      --offline
+      --check-materialization
+
+  game:verify:
+    desc: "既存curated gameの一次情報・generated guide・本番URLを再検証"
+    requires:
+      vars: [SLUG, SOURCE_URL, DATA]
+    dir: backend
+    cmd: >-
+      uv run python app/scripts/curated_game_workflow.py
+      --file "../{{.DATA}}"
+      --expected-slug "{{.SLUG}}"
+      --expected-source-url "{{.SOURCE_URL}}"
+      --check-materialization
+      --verify-production
+
   gemini:verify:
     desc: "Gemini model existence + generateContent smoke check"
     dir: backend
