@@ -71,6 +71,7 @@ jobs:
         with:
           name: lists-layout-screenshot-diagnostics
           path: |
+            frontend/tests/lists_layout.spec.js-snapshots/**/*.png
             frontend/test-results/**/*.png
             frontend/test-results/**/*.txt
           if-no-files-found: ignore
