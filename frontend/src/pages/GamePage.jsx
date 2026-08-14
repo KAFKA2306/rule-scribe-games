@@ -33,15 +33,17 @@ const REVIEW_LABELS = {
   unknown: 'REVIEW UNKNOWN',
 }
 
-export default function GamePage({ slug: propSlug, initialGame, allGames: propAllGames }) {
+export default function GamePage({ slug: propSlug, initialGame }) {
   const { slug: urlSlug } = useParams()
   const slug = propSlug || urlSlug
 
   const [game, setGame] = useState(initialGame || null)
-  const [allGames, setAllGames] = useState(propAllGames || [])
   const [loading, setLoading] = useState(!initialGame)
   const [error, setError] = useState(null)
   const [activeTab, setActiveTab] = useState('rules')
+  const [connections, setConnections] = useState(null)
+  const [connectionsLoading, setConnectionsLoading] = useState(false)
+  const [connectionsError, setConnectionsError] = useState(false)
 
   const BASE_URL = 'https://bodoge-no-mikata.vercel.app'
 
@@ -61,18 +63,32 @@ export default function GamePage({ slug: propSlug, initialGame, allGames: propAl
           setLoading(false)
         }
       }
-
-      if (allGames.length === 0) {
-        try {
-          const data = await api.get('/api/games?limit=50')
-          setAllGames(data.games || [])
-        } catch (err) {
-          console.error('Failed to fetch connections:', err)
-        }
-      }
     }
     fetchData()
-  }, [slug, initialGame, allGames.length])
+  }, [slug, initialGame])
+
+  useEffect(() => {
+    if (activeTab !== 'graph') return undefined
+
+    let cancelled = false
+    setConnectionsLoading(true)
+    setConnectionsError(false)
+    setConnections(null)
+
+    api.get(`/api/games/${slug}/connections?limit=8`)
+      .then((data) => {
+        if (!cancelled) setConnections(data)
+      })
+      .catch((err) => {
+        console.error('Failed to fetch canonical connections:', err)
+        if (!cancelled) setConnectionsError(true)
+      })
+      .finally(() => {
+        if (!cancelled) setConnectionsLoading(false)
+      })
+
+    return () => { cancelled = true }
+  }, [activeTab, slug])
 
   if (loading) {
     return <div className="page-state page-state--loading" role="status">ARCHIVE LOADING...</div>
@@ -316,34 +332,66 @@ export default function GamePage({ slug: propSlug, initialGame, allGames: propAl
 
             {activeTab === 'graph' && (
               <div className="graph-perspective">
-                <div className="pro-card-title">CONNECTIONS (MECHANICAL DNA)</div>
+                <div className="pro-card-title">CONNECTIONS (MECHANICAL DNA v2)</div>
                 <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
-                  このゲームと同じメカニクスを持つアーカイブ内のゲーム。
+                  正準Concept IDの共有関係から、説明可能な関連ゲームを算出します。
                 </p>
 
-                {sd.mechanics?.map((m, i) => {
-                  const related = allGames.filter(g =>
-                    g.slug !== slug &&
-                    g.structured_data?.mechanics?.includes(m)
-                  ).slice(0, 3)
+                {connectionsLoading && (
+                  <div className="game-empty-state" role="status">関連ゲームを照合しています...</div>
+                )}
 
-                  return (
-                    <div key={i} style={{ marginBottom: '1.5rem' }}>
-                      <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--accent)', marginBottom: '8px' }}>{m.toUpperCase()}</div>
-                      {related.length > 0 ? related.map(rg => (
-                        <Link to={`/games/${rg.slug}`} key={rg.id} className="relation-node">
-                          <img src={rg.image_url || '/assets/no-image.webp'} style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px' }} alt={rg.title_ja || rg.title || ''} />
-                          <div>
-                            <div style={{ fontSize: '0.9rem', fontWeight: 600 }}>{rg.title_ja || rg.title}</div>
-                            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{rg.summary?.slice(0, 40)}...</div>
-                          </div>
-                        </Link>
-                      )) : (
-                        <div className="game-empty-note">関連ゲームはまだ見つかっていません。</div>
+                {!connectionsLoading && connectionsError && (
+                  <div className="game-empty-state" role="status">
+                    関連ゲームの正準データを取得できませんでした。
+                  </div>
+                )}
+
+                {!connectionsLoading && !connectionsError && connections?.status === 'not_available' && (
+                  <div className="game-empty-state" role="status">
+                    関連ゲームの正準データは未整備です。
+                  </div>
+                )}
+
+                {!connectionsLoading && !connectionsError && connections?.status === 'available' && connections.connections?.length === 0 && (
+                  <div className="game-empty-state" role="status">
+                    正準Concept上の関連ゲームはまだ登録されていません。
+                  </div>
+                )}
+
+                {!connectionsLoading && connections?.status === 'available' && connections.connections?.map((connection) => (
+                  <Link to={`/games/${connection.slug}`} key={connection.game_id} className="relation-node" style={{ alignItems: 'flex-start' }}>
+                    <img
+                      src={connection.image_url || '/assets/no-image.webp'}
+                      style={{ width: '48px', height: '48px', objectFit: 'cover', borderRadius: '4px' }}
+                      alt={connection.title || ''}
+                    />
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.75rem', alignItems: 'baseline' }}>
+                        <div style={{ fontSize: '0.9rem', fontWeight: 700 }}>{connection.title || connection.slug}</div>
+                        <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
+                          {Math.round(connection.similarity_score * 100)}% · #{connection.rank}
+                        </div>
+                      </div>
+                      {connection.shared_concepts?.length > 0 && (
+                        <div className="game-empty-note" style={{ marginTop: '5px' }}>
+                          共有DNA: {connection.shared_concepts.map((concept) => concept.label || concept.concept_id).join(' · ')}
+                        </div>
+                      )}
+                      {connection.hierarchy_matches?.length > 0 && (
+                        <div className="game-empty-note" style={{ marginTop: '3px' }}>
+                          階層DNA: {connection.hierarchy_matches.map((match) => `${match.source_concept_id} ${match.relation_type} ${match.candidate_concept_id}`).join(' · ')}
+                        </div>
                       )}
                     </div>
-                  )
-                })}
+                  </Link>
+                ))}
+
+                {connections?.algorithm_version && (
+                  <div className="game-empty-note" style={{ marginTop: '1rem' }}>
+                    Algorithm: {connections.algorithm_version}
+                  </div>
+                )}
               </div>
             )}
 
