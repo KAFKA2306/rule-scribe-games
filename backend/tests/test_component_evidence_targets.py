@@ -1,5 +1,5 @@
 import pytest
-from fastapi import FastAPI
+from fastapi import FastAPI, status
 from fastapi.testclient import TestClient
 from pydantic import ValidationError
 
@@ -68,7 +68,7 @@ class FakeEvidenceTargetService:
 def _app():
     app = FastAPI()
     app.include_router(games.router, prefix="/api")
-    app.dependency_overrides[games.get_evidence_service] = lambda: FakeEvidenceTargetService()
+    app.dependency_overrides[games.get_evidence_service] = FakeEvidenceTargetService
     return app
 
 
@@ -81,7 +81,7 @@ def test_evidence_api_accepts_component_set_target():
             "component_set_id": "adventurers",
         },
     )
-    assert response.status_code == 200
+    assert response.status_code == status.HTTP_200_OK
     assert response.json()["target"]["component_set_id"] == "adventurers"
 
 
@@ -90,4 +90,4 @@ def test_evidence_api_rejects_component_set_target_without_component_set_id():
         "/api/games/yro/evidence",
         params={"rule_set_id": "ruleset-1", "target_type": "component_set"},
     )
-    assert response.status_code == 422
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
