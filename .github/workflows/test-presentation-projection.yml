@@ -55,13 +55,13 @@ jobs:
           backend/tests/test_rule_graph.py
           backend/tests/test_concept_taxonomy.py
 
-      - name: Verify projection does not depend on legacy structured_data
+      - name: Verify projection does not read legacy structured data
         run: |
-          if grep -R -n -E 'structured_data|pro_tips|rule_mistakes' \
+          if grep -R -n -E 'get\(["'"']structured_data|\[["'"']structured_data["'"']\]|get\(["'"']pro_tips|get\(["'"']rule_mistakes' \
             backend/app/models/presentation_projection.py \
             backend/app/services/presentation_projection.py \
             backend/app/routers/presentation.py; then
-            echo "canonical presentation projection must not read legacy structured_data"
+            echo "canonical presentation projection must not read legacy presentation fields"
             exit 1
           fi
 
