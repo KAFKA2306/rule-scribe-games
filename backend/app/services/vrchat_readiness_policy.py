@@ -12,10 +12,9 @@ from app.models.vrchat_readiness import (
     ReadinessStatus,
     RequirementState,
     RuleCoverageAssessment,
-    RuleCoverageDimension,
     RuleCoverageState,
 )
-from app.services.vrchat_readiness_audit import VrchatReadinessAuditService, _COVERAGE_TYPES
+from app.services.vrchat_readiness_audit import _COVERAGE_TYPES, VrchatReadinessAuditService
 
 _RIGHTS_BLOCKER = "SOURCE_ASSET_REUSE_UNVERIFIED"
 
@@ -70,7 +69,7 @@ class StrictVrchatReadinessAuditService(VrchatReadinessAuditService):
         return assessments, data_blockers, evidence_blockers
 
     @staticmethod
-    def _capability_assessments(
+    def _capability_assessments(  # noqa: PLR0912 - explicit fail-closed state table is clearer here
         rule_graph: RuleGraphReadResponse,
         component_sets: list[Any],
         component_kinds: set[ComponentKind],
