@@ -48,7 +48,7 @@ jobs:
         run: uv run python -m compileall -q backend/app/models/vrchat_manifest.py backend/app/services/vrchat_manifest_projection.py
 
       - name: Ruff VRChat manifest modules and tests
-        run: uv run ruff check backend/app/models/vrchat_manifest.py backend/app/services/vrchat_manifest_projection.py backend/tests/test_vrchat_manifest.py
+        run: uv run --with ruff ruff check backend/app/models/vrchat_manifest.py backend/app/services/vrchat_manifest_projection.py backend/tests/test_vrchat_manifest.py
 
       - name: Run VRChat manifest contract tests
         env:
