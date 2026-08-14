@@ -13,6 +13,9 @@
 - **[`RULE_GRAPH_V1.md`](./RULE_GRAPH_V1.md)**
     - Ontology v2 の canonical Rule Graph v1。RuleSet / RuleNode / RuleEdge、provenance境界、API、legacy migration mappingを定義します。
 
+- **[`CONCEPT_TAXONOMY_V1.md`](./CONCEPT_TAXONOMY_V1.md)**
+    - stable concept ID、多言語label、SKOS型relation、Rule Graph backlinks、linked glossary projectionを定義します。
+
 - **[`diagrams.md`](./diagrams.md)**
     - システムアーキテクチャ、シーケンス図、ER図などの視覚的な資料が含まれています。
 
