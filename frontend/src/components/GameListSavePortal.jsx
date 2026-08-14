@@ -18,14 +18,24 @@ export default function GameListSavePortal() {
 
   useEffect(() => {
     let active = true
+    let observer = null
+    let resolved = false
     const slug = gameSlug(location.pathname)
-    const resolve = async () => {
+
+    setTarget(null)
+    setGame(null)
+    if (!slug) return () => { active = false }
+
+    const mount = async () => {
+      if (!active || resolved) return
       const nextTarget = document.querySelector('.game-page-toolbar .header-actions')
+      if (!nextTarget) return
+
+      resolved = true
+      observer?.disconnect()
+      observer = null
       setTarget(nextTarget)
-      if (!slug || !nextTarget) {
-        setGame(null)
-        return
-      }
+
       try {
         const data = await api.get(`/api/games/${slug}`)
         if (!active) return
@@ -35,14 +45,18 @@ export default function GameListSavePortal() {
       }
     }
 
-    resolve()
-    const root = document.getElementById('root')
-    if (!root) return () => { active = false }
-    const observer = new MutationObserver(resolve)
-    observer.observe(root, { childList: true, subtree: true })
+    mount()
+    if (!resolved) {
+      const root = document.getElementById('root')
+      if (root) {
+        observer = new MutationObserver(mount)
+        observer.observe(root, { childList: true, subtree: true })
+      }
+    }
+
     return () => {
       active = false
-      observer.disconnect()
+      observer?.disconnect()
     }
   }, [location.pathname])
 
