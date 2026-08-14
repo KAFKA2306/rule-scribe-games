@@ -1,5 +1,6 @@
 import json
 from datetime import UTC, datetime
+from pathlib import Path
 
 import pytest
 from fastapi import FastAPI
@@ -159,9 +160,8 @@ def _client(service: VrchatManifestCatalogService) -> TestClient:
 
 
 def test_production_registry_is_valid_and_starts_fail_closed():
-    registry = BindingRegistryFile.model_validate_json(
-        (vrchat.Path(__file__).parents[2] / "data" / "vrchat" / "module-bindings-v1.json").read_text(encoding="utf-8")
-    )
+    registry_path = Path(__file__).parents[2] / "data" / "vrchat" / "module-bindings-v1.json"
+    registry = BindingRegistryFile.model_validate_json(registry_path.read_text(encoding="utf-8"))
     assert registry.entries == []
 
 
