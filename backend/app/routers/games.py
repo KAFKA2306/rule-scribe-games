@@ -2,9 +2,11 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from app.core.rate_limiter import RateLimiter
 from app.models import GameDetail, GameListResponse, GameUpdate, SearchRequest
+from app.models.concept_taxonomy import ConceptDetailResponse, GameConceptsReadResponse, GameGlossaryReadResponse
 from app.models.rule_graph import RuleGraphReadResponse, RuleNodeType
 from app.routers.auth import require_catalog_editor
 from app.services import catalog_access
+from app.services.concept_taxonomy import ConceptTaxonomyService
 from app.services.game_service import GameService
 from app.services.rule_graph import RuleGraphService
 
@@ -21,6 +23,10 @@ def get_game_service():
 
 def get_rule_graph_service():
     return RuleGraphService()
+
+
+def get_concept_taxonomy_service():
+    return ConceptTaxonomyService()
 
 
 @router.get("/search", response_model=list[GameDetail])
@@ -62,6 +68,40 @@ async def list_recent_games(limit: int = 100, offset: int = 0, service: GameServ
         "limit": limit,
         "offset": offset,
     }
+
+
+@router.get("/concepts/{concept_id}", response_model=ConceptDetailResponse)
+async def get_concept_detail(
+    concept_id: str,
+    service: ConceptTaxonomyService = Depends(get_concept_taxonomy_service),
+):
+    concept = await service.get_concept(concept_id)
+    if concept is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Concept not found")
+    return concept
+
+
+@router.get("/games/{slug}/concepts", response_model=GameConceptsReadResponse)
+async def get_game_concepts(
+    slug: str,
+    service: ConceptTaxonomyService = Depends(get_concept_taxonomy_service),
+):
+    concepts = await service.get_by_game_slug(slug)
+    if concepts is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Game not found")
+    return concepts
+
+
+@router.get("/games/{slug}/glossary", response_model=GameGlossaryReadResponse)
+async def get_game_glossary(
+    slug: str,
+    language_code: str = Query(default="ja", min_length=2, max_length=35),
+    service: ConceptTaxonomyService = Depends(get_concept_taxonomy_service),
+):
+    glossary = await service.get_glossary_by_game_slug(slug, language_code=language_code)
+    if glossary is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Game not found")
+    return glossary
 
 
 @router.get("/games/{slug}/rule-graph", response_model=RuleGraphReadResponse)

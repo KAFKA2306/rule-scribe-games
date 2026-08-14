@@ -1,0 +1,64 @@
+name: Concept taxonomy contract
+
+on:
+  pull_request:
+    paths:
+      - "backend/app/models/concept_taxonomy.py"
+      - "backend/app/services/concept_taxonomy.py"
+      - "backend/app/routers/games.py"
+      - "backend/app/db/migrations/011_concept_taxonomy.sql"
+      - "backend/app/db/migrations/012_seed_skull_king_glossary_concepts.sql"
+      - "backend/tests/test_concept_taxonomy.py"
+      - "evaluation/taxonomy/concept-taxonomy-v1-fixtures.json"
+      - "docs/CONCEPT_TAXONOMY_V1.md"
+      - "frontend/src/components/game/ConceptGlossary.jsx"
+      - "frontend/src/pages/GamePage.jsx"
+      - ".github/workflows/test-concept-taxonomy.yml"
+  push:
+    branches: [main]
+    paths:
+      - "backend/app/models/concept_taxonomy.py"
+      - "backend/app/services/concept_taxonomy.py"
+      - "backend/app/routers/games.py"
+      - "backend/app/db/migrations/011_concept_taxonomy.sql"
+      - "backend/app/db/migrations/012_seed_skull_king_glossary_concepts.sql"
+      - "backend/tests/test_concept_taxonomy.py"
+      - "evaluation/taxonomy/concept-taxonomy-v1-fixtures.json"
+      - "docs/CONCEPT_TAXONOMY_V1.md"
+      - "frontend/src/components/game/ConceptGlossary.jsx"
+      - "frontend/src/pages/GamePage.jsx"
+      - ".github/workflows/test-concept-taxonomy.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  taxonomy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install uv
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+      - name: Install Python dependencies
+        run: uv sync --frozen --dev
+      - name: Compile taxonomy modules
+        run: uv run python -m compileall -q backend/app/models/concept_taxonomy.py backend/app/services/concept_taxonomy.py backend/app/routers/games.py
+      - name: Run concept taxonomy contract tests
+        env:
+          PYTHONPATH: backend
+        run: uv run pytest -q backend/tests/test_concept_taxonomy.py
+      - name: Gate audit view security context
+        run: |
+          grep -Fq "ALTER VIEW IF EXISTS public.rule_graph_audit_summary SET (security_invoker = true);" backend/app/db/migrations/011_concept_taxonomy.sql
+          grep -Fq "WITH (security_invoker = true) AS" backend/app/db/migrations/011_concept_taxonomy.sql
+      - name: Gate source-bound first linked glossary seed
+        run: |
+          grep -Fq "rule-pattern.trick" backend/app/db/migrations/012_seed_skull_king_glossary_concepts.sql
+          grep -Fq "player-action.bid" backend/app/db/migrations/012_seed_skull_king_glossary_concepts.sql
+          grep -Fq "rule-pattern.trump-suit" backend/app/db/migrations/012_seed_skull_king_glossary_concepts.sql
+          grep -Fq "component.special-card" backend/app/db/migrations/012_seed_skull_king_glossary_concepts.sql
+          grep -Fq "https://www.grandpabecksgames.com/pages/skull-king" backend/app/db/migrations/012_seed_skull_king_glossary_concepts.sql
+          grep -Fq "'source_bound'" backend/app/db/migrations/012_seed_skull_king_glossary_concepts.sql
+      - name: Build frontend linked glossary projection
+        run: npm --prefix frontend ci && npm --prefix frontend run build

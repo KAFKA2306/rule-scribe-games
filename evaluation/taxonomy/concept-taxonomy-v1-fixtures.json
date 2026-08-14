@@ -1,0 +1,23 @@
+{
+  "version": "concept-taxonomy-fixtures-v1",
+  "note": "Synthetic structural fixtures only; do not seed or treat them as verified production board-game taxonomy concepts.",
+  "cases": [
+    {
+      "concept_id": "fixture.mechanic.risk-choice",
+      "concept_type": "mechanic",
+      "labels": [
+        {"language_code": "en", "label_type": "pref", "label": "Risk Choice"},
+        {"language_code": "ja", "label_type": "pref", "label": "リスク選択"},
+        {"language_code": "en", "label_type": "alt", "label": "Press Risk"}
+      ]
+    },
+    {
+      "concept_id": "fixture.action.draw",
+      "concept_type": "player_action",
+      "labels": [
+        {"language_code": "en", "label_type": "pref", "label": "Draw"},
+        {"language_code": "ja", "label_type": "pref", "label": "引く"}
+      ]
+    }
+  ]
+}

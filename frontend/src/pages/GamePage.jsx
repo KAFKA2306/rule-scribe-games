@@ -10,6 +10,7 @@ import { ExternalLinks } from '../components/game/ExternalLinks'
 import { InfographicsGallery } from '../components/game/InfographicsGallery'
 import { QuickRulesPanel } from '../components/game/QuickRulesPanel'
 import { RuleFlowDiagram } from '../components/game/RuleFlowDiagram'
+import { ConceptGlossary } from '../components/game/ConceptGlossary'
 
 const IDENTITY_LABELS = {
   verified: 'IDENTITY VERIFIED',
@@ -186,16 +187,7 @@ export default function GamePage({ slug: propSlug, initialGame, allGames: propAl
             </div>
           )}
 
-          {sd.keywords?.length > 0 && (
-            <div className="pro-card">
-              <div className="pro-card-title">GLOSSARY</div>
-              <div className="tag-list">
-                {sd.keywords.map((kw, i) => (
-                  <div key={i} className="tag-item" title={kw.description}>{kw.term}</div>
-                ))}
-              </div>
-            </div>
-          )}
+          <ConceptGlossary slug={slug} legacyKeywords={sd.keywords || []} />
 
           <div className="pro-card">
             <div className="pro-card-title">LINKS</div>
