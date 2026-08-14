@@ -1,0 +1,116 @@
+name: Test catalog integrity
+
+on:
+  pull_request:
+    paths:
+      - "backend/app/core/supabase.py"
+      - "backend/app/routers/games.py"
+      - "backend/app/services/game_service.py"
+      - "backend/app/services/seo_renderer.py"
+      - "backend/app/services/sitemap.py"
+      - "backend/app/db/migrations/**"
+      - "backend/tests/test_games_router.py"
+      - "backend/tests/test_seo_renderer.py"
+      - "backend/tests/test_sitemap.py"
+      - "frontend/src/components/game/RegenerateButton.jsx"
+      - "frontend/src/components/game/ExternalLinks.jsx"
+      - "vercel.json"
+      - ".github/workflows/test-catalog-integrity.yml"
+      - "pyproject.toml"
+      - "uv.lock"
+      - "frontend/package.json"
+      - "frontend/package-lock.json"
+  push:
+    branches:
+      - main
+    paths:
+      - "backend/app/core/supabase.py"
+      - "backend/app/routers/games.py"
+      - "backend/app/services/game_service.py"
+      - "backend/app/services/seo_renderer.py"
+      - "backend/app/services/sitemap.py"
+      - "backend/app/db/migrations/**"
+      - "backend/tests/test_games_router.py"
+      - "backend/tests/test_seo_renderer.py"
+      - "backend/tests/test_sitemap.py"
+      - "frontend/src/components/game/RegenerateButton.jsx"
+      - "frontend/src/components/game/ExternalLinks.jsx"
+      - "vercel.json"
+      - ".github/workflows/test-catalog-integrity.yml"
+      - "pyproject.toml"
+      - "uv.lock"
+      - "frontend/package.json"
+      - "frontend/package-lock.json"
+
+permissions:
+  contents: read
+
+jobs:
+  catalog-integrity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
+      PGPASSWORD: postgres
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+
+      - name: Install Python dependencies
+        run: uv sync --frozen --dev
+
+      - name: Compile backend
+        run: uv run python -m compileall -q backend/app
+
+      - name: Run catalog regression tests
+        env:
+          PYTHONPATH: backend
+        run: >-
+          uv run pytest -q
+          backend/tests/test_games_router.py
+          backend/tests/test_seo_renderer.py
+          backend/tests/test_sitemap.py
+          backend/tests/test_supabase_images.py
+
+      - name: Verify catalog migration on legacy null slug fixture
+        shell: bash
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 <<'SQL'
+          CREATE TABLE public.games (slug text);
+          INSERT INTO public.games(slug) VALUES (NULL);
+          SQL
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/006_catalog_integrity_contract.sql
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from information_schema.columns where table_schema='public' and table_name='games' and column_name in ('setup_summary','gameplay_summary','end_game_summary');")" = "3"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from pg_constraint where conname='games_slug_required' and convalidated=false;")" = "1"
+          if psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c "INSERT INTO public.games(slug) VALUES (NULL);"; then
+            echo "new null slug unexpectedly accepted"
+            exit 1
+          fi
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Build frontend
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run build

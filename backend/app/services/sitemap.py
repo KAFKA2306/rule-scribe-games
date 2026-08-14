@@ -29,10 +29,15 @@ async def get_sitemap_xml() -> str:
         changefreq.text = page["changefreq"]
         priority = ET.SubElement(url_elem, f"{{{NS_SITEMAP}}}priority")
         priority.text = page["priority"]
+
     for game in games:
+        slug = str(game.get("slug") or "").strip()
+        if not slug:
+            continue
+
         url_elem = ET.SubElement(root, f"{{{NS_SITEMAP}}}url")
         loc = ET.SubElement(url_elem, f"{{{NS_SITEMAP}}}loc")
-        loc.text = f"{base_url}/games/{game['slug']}"
+        loc.text = f"{base_url}/games/{slug}"
         lastmod = ET.SubElement(url_elem, f"{{{NS_SITEMAP}}}lastmod")
         updated = game.get("updated_at")
         if updated:
