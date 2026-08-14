@@ -19,6 +19,7 @@ class RuleGraphService:
         self,
         slug: str,
         rule_types: Iterable[RuleNodeType] | None = None,
+        rule_set_id: str | None = None,
     ) -> RuleGraphReadResponse | None:
         game = await supabase.get_by_slug(slug)
         if not game:
@@ -28,16 +29,13 @@ class RuleGraphService:
             "game_id": str(game["id"]),
             "slug": str(game["slug"]),
             "work_id": str(game["work_id"]) if game.get("work_id") else None,
-            "edition_label": game.get("edition_label"),
-            "language_code": game.get("language_code"),
-            "source_revision": game.get("source_revision"),
         }
 
         if supabase.is_local():
             return RuleGraphReadResponse(status="not_available", **base)
 
         try:
-            graph = await anyio.to_thread.run_sync(self._load_graph, game, base)
+            graph = await anyio.to_thread.run_sync(self._load_graph, game, base, rule_set_id)
         except Exception as exc:
             # Deploying application code before the database migration must fail closed.
             logger.warning("Rule graph unavailable for %s: %s", slug, exc)
@@ -48,18 +46,37 @@ class RuleGraphService:
         return graph
 
     @staticmethod
-    def _load_graph(game: dict, base: dict) -> RuleGraphReadResponse:
+    def _load_graph(game: dict, base: dict, rule_set_id: str | None) -> RuleGraphReadResponse:
         client = supabase._get_client()
-        rule_sets = (
-            client.table("rule_sets")
-            .select("*")
-            .eq("game_id", game["id"])
-            .eq("is_active", True)
-            .order("version", desc=True)
-            .limit(1)
-            .execute()
-            .data
-        )
+
+        if rule_set_id:
+            rule_sets = (
+                client.table("rule_sets")
+                .select("*")
+                .eq("game_id", game["id"])
+                .eq("id", rule_set_id)
+                .limit(1)
+                .execute()
+                .data
+            )
+        else:
+            # Multiple simultaneously active RuleSets are valid after migration 013
+            # (for example physical publisher rules + BGA implementation). Never
+            # guess which truth boundary the caller intended.
+            rule_sets = (
+                client.table("rule_sets")
+                .select("*")
+                .eq("game_id", game["id"])
+                .eq("is_active", True)
+                .order("version", desc=True)
+                .limit(2)
+                .execute()
+                .data
+            )
+            if len(rule_sets) > 1:
+                logger.info("RuleSet selection required for game %s", game.get("slug"))
+                return RuleGraphReadResponse(status="not_available", **base)
+
         if not rule_sets:
             return RuleGraphReadResponse(status="not_available", **base)
 
@@ -111,8 +128,10 @@ class RuleGraphService:
         return RuleGraphReadResponse(
             status="available",
             rule_set_id=str(rule_set["id"]),
-            source_revision=rule_set.get("source_revision") or base.get("source_revision"),
+            edition_label=rule_set.get("edition_label"),
+            language_code=rule_set.get("language_code"),
+            source_revision=rule_set.get("source_revision"),
             nodes=nodes,
             edges=edges,
-            **{key: value for key, value in base.items() if key != "source_revision"},
+            **base,
         )
