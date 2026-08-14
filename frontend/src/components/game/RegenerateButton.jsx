@@ -1,8 +1,15 @@
 import { useState } from 'react'
 import { api } from '../../lib/api'
 
-export const RegenerateButton = ({ slug, onRegenerate }) => {
+const currentGameSlug = () => {
+  if (typeof window === 'undefined') return ''
+  const match = window.location.pathname.match(/^\/games\/([^/]+)/)
+  return match ? decodeURIComponent(match[1]) : ''
+}
+
+export const RegenerateButton = ({ slug: propSlug, onRegenerate }) => {
   const [regenerating, setRegenerating] = useState(false)
+  const slug = propSlug || currentGameSlug()
 
   const handleRegenerate = async () => {
     if (!slug) return
