@@ -3,6 +3,9 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
+
 from app.models import GameDetail
 from app.models.component_catalog import ComponentKind, ComponentSet, ComponentSetListResponse
 from app.models.rule_graph import RuleGraphReadResponse, RuleNode, RuleNodeType
@@ -10,8 +13,6 @@ from app.models.ruleset import RuleSet, RuleSetListResponse
 from app.models.vrchat_catalog import BindingRegistryFile, ManifestReadStatus, PublicationStatus
 from app.routers import vrchat
 from app.services.vrchat_manifest_catalog import VrchatManifestCatalogService
-from fastapi import FastAPI
-from fastapi.testclient import TestClient
 
 HTTP_OK = 200
 HTTP_NOT_MODIFIED = 304
