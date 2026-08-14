@@ -25,14 +25,17 @@ jobs:
           node-version: 22
           cache: npm
           cache-dependency-path: frontend/package-lock.json
-      - name: Apply non-breaking npm audit fixes to lockfile
+      - name: Refresh lockfile and apply non-breaking audit fixes
         working-directory: frontend
-        run: npm audit fix --package-lock-only
-      - name: Verify install and production audit
+        run: |
+          npm install --package-lock-only
+          npm audit fix --package-lock-only || true
+      - name: Verify install and high-severity audits
         working-directory: frontend
         run: |
           npm ci
           npm audit --omit=dev --audit-level=high
+          npm audit --audit-level=high
       - name: Commit repaired lockfile when changed
         shell: bash
         run: |
