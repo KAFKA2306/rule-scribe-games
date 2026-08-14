@@ -68,7 +68,7 @@ def deployment_manifest_payload(specs: list[CuratedGameSpec]) -> dict[str, Any]:
     digest = hashlib.sha256(revision_contract.encode("utf-8")).hexdigest()
     return {
         "schema_version": 1,
-        "registry_sha256": digest,
+        "revision_contract_sha256": digest,
         "games": games,
     }
 
@@ -174,8 +174,8 @@ def validate_release_manifest(
 ) -> None:
     if deployed.get("schema_version") != expected.get("schema_version"):
         raise WorkflowError("deployed curated manifest schema version mismatch")
-    if deployed.get("registry_sha256") != expected.get("registry_sha256"):
-        raise WorkflowError("deployed curated registry digest does not match main")
+    if deployed.get("revision_contract_sha256") != expected.get("revision_contract_sha256"):
+        raise WorkflowError("deployed curated revision contract does not match main")
     if game is not None:
         expected_game = (expected.get("games") or {}).get(game)
         deployed_game = (deployed.get("games") or {}).get(game)
