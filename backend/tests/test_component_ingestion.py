@@ -5,11 +5,14 @@ import pytest
 import yaml
 from pydantic import ValidationError
 
-from app.models.component_ingestion import ComponentSourceManifest, CompletenessState
+from app.models.component_ingestion import CompletenessState, ComponentSourceManifest
 from app.services.component_ingestion import ComponentIngestionDryRun, ExistingComponentSnapshot
 
 YRO_MANIFEST = Path("backend/data/component_ingestion/yro-bga-260725-1445.v1.yaml")
 RULESET_ID = "00000000-0000-0000-0000-000000000178"
+YRO_EVIDENCE_FIELDS = 6
+FIXTURE_EVIDENCE_FIELDS = 4
+FIXTURE_SUPPORTED_WITH_ONE_MISSING = 3
 
 
 def _payload() -> dict:
@@ -115,8 +118,8 @@ def test_yro_manifest_is_source_bound_unknown_and_does_not_fabricate_cards():
     assert manifest.components == []
     assert {item.component_set_id for item in manifest.component_sets} == {"adventurers", "quests"}
     assert report.blockers == []
-    assert report.evidence_coverage.required_fields == 6
-    assert report.evidence_coverage.supported_fields == 6
+    assert report.evidence_coverage.required_fields == YRO_EVIDENCE_FIELDS
+    assert report.evidence_coverage.supported_fields == YRO_EVIDENCE_FIELDS
     assert report.evidence_coverage.ratio == 1.0
 
 
@@ -149,8 +152,8 @@ def test_field_level_evidence_must_cover_source_bound_property():
     ]
     report = ComponentIngestionDryRun().run(_manifest(payload), resolved_ruleset_id=RULESET_ID)
     assert "FIELD_EVIDENCE_COVERAGE_INCOMPLETE" in report.blockers
-    assert report.evidence_coverage.required_fields == 4
-    assert report.evidence_coverage.supported_fields == 3
+    assert report.evidence_coverage.required_fields == FIXTURE_EVIDENCE_FIELDS
+    assert report.evidence_coverage.supported_fields == FIXTURE_SUPPORTED_WITH_ONE_MISSING
 
 
 def test_source_url_does_not_implicitly_verify_a_field():
