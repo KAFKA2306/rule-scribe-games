@@ -155,12 +155,12 @@ test('directory empty state and comparison tray use the same light palette', asy
   await page.goto('/')
   await expect(page.getByText('配色監査', { exact: true })).toBeVisible()
 
-  await page.getByRole('button', { name: 'COMPARE' }).first().click()
-  await page.getByRole('button', { name: 'COMPARE' }).first().click()
+  await page.getByRole('button', { name: '配色監査を比較に追加' }).click()
+  await page.getByRole('button', { name: '配色監査2を比較に追加' }).click()
   await expect(page.getByRole('button', { name: 'BATTLE START' })).toBeVisible()
   await expectLightSurface(page.locator('.comparison-tray'), 'comparison tray')
 
-  const search = page.getByPlaceholder('ゲームを検索、または未登録ゲームをAI生成...')
+  const search = page.getByLabel('ゲームを検索')
   await search.fill('no-match-palette-audit')
   await expect(page.getByText('条件に一致するゲームが見つかりません。')).toBeVisible()
   await expectLightSurface(page.locator('.app-empty-state'), 'directory empty state')

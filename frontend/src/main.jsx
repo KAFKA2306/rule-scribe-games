@@ -7,6 +7,7 @@ import './index.css'
 import './layout.css'
 import './game-detail-palette.css'
 import './ui-palette.css'
+import './uiux-accessibility.css'
 
 const GamePage = lazy(() => import('./pages/GamePage.jsx'))
 const DataPage = lazy(() => import('./pages/DataPage.jsx'))
