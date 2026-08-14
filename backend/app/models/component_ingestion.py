@@ -6,12 +6,12 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, HttpUrl, model_validator
 
 from app.models.component_catalog import (
+    STABLE_ID_PATTERN,
     Ability,
     ComponentKind,
     ComponentProperty,
     ComponentVerificationStatus,
     PropertyDefinition,
-    STABLE_ID_PATTERN,
 )
 
 COMPONENT_SOURCE_MANIFEST_SCHEMA_VERSION = "1.0"
