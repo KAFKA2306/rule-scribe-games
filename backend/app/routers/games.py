@@ -1,11 +1,15 @@
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from app.core.rate_limiter import RateLimiter
 from app.models import GameDetail, GameListResponse, GameUpdate, SearchRequest
 from app.routers.auth import get_current_user
+from app.services import catalog_authorization
 from app.services.game_service import GameService
 
 router = APIRouter()
+logger = logging.getLogger("security.catalog")
 
 # Shared limiters
 search_limiter = RateLimiter.get_limiter("search", max_requests=100, window_seconds=60)
@@ -14,6 +18,40 @@ gen_limiter = RateLimiter.get_limiter("generation", max_requests=10, window_seco
 
 def get_game_service():
     return GameService()
+
+
+async def require_catalog_editor(
+    slug: str,
+    regenerate: bool = False,
+    user: dict = Depends(get_current_user),
+) -> dict:
+    """Authorize global catalog mutation from a verified Auth identity."""
+    actor_user_id = str(user.get("id") or "")
+    action = "regenerate" if regenerate else "manual_update"
+    role = await catalog_authorization.get_catalog_editor_role(actor_user_id)
+
+    if role not in {"owner", "editor"}:
+        await catalog_authorization.record_catalog_mutation_audit(
+            actor_user_id=actor_user_id,
+            game_slug=slug,
+            action=action,
+            changed_fields=[],
+            outcome="denied",
+        )
+        logger.warning(
+            "catalog_authorization_denied",
+            extra={"actor_user_id": actor_user_id, "game_slug": slug, "action": action},
+        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Catalog editor permission required")
+
+    await catalog_authorization.record_catalog_mutation_audit(
+        actor_user_id=actor_user_id,
+        game_slug=slug,
+        action=action,
+        changed_fields=[],
+        outcome="allowed",
+    )
+    return {**user, "catalog_role": role}
 
 
 @router.get("/search", response_model=list[GameDetail])
@@ -71,20 +109,49 @@ async def update_game(
     game_update: GameUpdate | None = None,
     regenerate: bool = False,
     fill_missing_only: bool = False,
-    _user: dict = Depends(get_current_user),
+    editor: dict = Depends(require_catalog_editor),
     service: GameService = Depends(get_game_service),
 ) -> dict[str, object]:
+    actor_user_id = str(editor["id"])
+    action = "regenerate" if regenerate else "manual_update"
+    changed_fields: list[str] = []
+
     try:
         if regenerate:
             if not gen_limiter.acquire():
                 raise HTTPException(status_code=429, detail="Generation rate limit exceeded")
-            return await service.update_game_content(slug, fill_missing_only=fill_missing_only)
+            changed_fields = ["regenerated_content"]
+            result = await service.update_game_content(slug, fill_missing_only=fill_missing_only)
+            await catalog_authorization.record_catalog_mutation_audit(
+                actor_user_id=actor_user_id,
+                game_slug=slug,
+                action=action,
+                changed_fields=changed_fields,
+                outcome="succeeded",
+            )
+            return result
 
         if game_update:
             updates = game_update.model_dump(exclude_unset=True)
             if updates:
-                return await service.update_game_manual(slug, updates)
+                changed_fields = sorted(updates)
+                result = await service.update_game_manual(slug, updates)
+                await catalog_authorization.record_catalog_mutation_audit(
+                    actor_user_id=actor_user_id,
+                    game_slug=slug,
+                    action=action,
+                    changed_fields=changed_fields,
+                    outcome="succeeded",
+                )
+                return result
     except ValueError as exc:
+        await catalog_authorization.record_catalog_mutation_audit(
+            actor_user_id=actor_user_id,
+            game_slug=slug,
+            action=action,
+            changed_fields=changed_fields,
+            outcome="not_found",
+        )
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Game not found") from exc
 
     return {"status": "ok", "message": "No action taken (regenerate=False, no body)"}
