@@ -94,14 +94,18 @@ def test_rule_type_projection_returns_only_requested_canonical_nodes():
 
 
 class FakeRuleGraphService:
-    async def get_by_slug(self, slug: str, rule_types=None):
+    def __init__(self):
+        self.last_rule_set_id = None
+
+    async def get_by_slug(self, slug: str, rule_types=None, rule_set_id=None):
+        self.last_rule_set_id = rule_set_id
         if slug == "missing":
             return None
         graph = RuleGraphReadResponse(
             status="available",
             game_id="game-1",
             slug=slug,
-            rule_set_id="set-1",
+            rule_set_id=rule_set_id or "set-1",
             nodes=[
                 _node("score.points", RuleNodeType.SCORING, "Score points."),
                 _node("end.game", RuleNodeType.GAME_END, "End the game."),
@@ -111,10 +115,10 @@ class FakeRuleGraphService:
         return graph.select_types(set(rule_types or []))
 
 
-def _app():
+def _app(service=None):
     app = FastAPI()
     app.include_router(games.router, prefix="/api")
-    app.dependency_overrides[games.get_rule_graph_service] = lambda: FakeRuleGraphService()
+    app.dependency_overrides[games.get_rule_graph_service] = lambda: service or FakeRuleGraphService()
     return app
 
 
@@ -135,6 +139,17 @@ def test_rule_graph_api_can_query_end_scoring_and_exception_types():
         "scoring",
         "exception",
     }
+
+
+def test_rule_graph_api_accepts_explicit_ruleset_identity():
+    service = FakeRuleGraphService()
+    client = TestClient(_app(service))
+
+    response = client.get("/api/games/example/rule-graph", params={"rule_set_id": "bga-ja-v1"})
+
+    assert response.status_code == 200
+    assert response.json()["rule_set_id"] == "bga-ja-v1"
+    assert service.last_rule_set_id == "bga-ja-v1"
 
 
 def test_rule_graph_api_returns_404_for_unknown_game():
