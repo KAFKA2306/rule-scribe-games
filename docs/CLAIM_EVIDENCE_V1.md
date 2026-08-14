@@ -75,7 +75,7 @@ Relations:
 
 ## Target contract
 
-Claimは必ず1つの具体targetを持ちます。
+Claimは必ず1つの具体targetを持ちます。Component Catalogに対する根拠も`game_metadata`へ代用せず、catalog entityそのものをtargetにします。
 
 ### RuleNode
 
@@ -85,6 +85,39 @@ rule_id = ...
 ```
 
 Composite FK `(rule_set_id, rule_id)` により別RuleSetのRuleNodeへ接続できません。
+
+### Component
+
+Component identity / canonical name / quantity等、component entity自体についてのclaimです。
+
+```text
+target_type = component
+component_id = ...
+```
+
+Composite FK `(rule_set_id, component_id)` により別RuleSetのComponentへ接続できません。
+
+### ComponentSet
+
+ComponentSetの存在・identity・分類についてのclaimです。
+
+```text
+target_type = component_set
+component_set_id = ...
+```
+
+Composite FK `(rule_set_id, component_set_id)` により別RuleSetのComponentSetへ接続できません。
+
+### PropertyDefinition
+
+Property key / value type / cardinality等、PropertyDefinition自体についてのclaimです。
+
+```text
+target_type = property_definition
+property_key = ...
+```
+
+Composite FK `(rule_set_id, property_key)` により別RuleSetのPropertyDefinitionへ接続できません。
 
 ### ComponentProperty
 
@@ -148,6 +181,9 @@ Targetごとのtrace:
 
 ```http
 GET /api/games/{slug}/evidence?rule_set_id=...&target_type=rule_node&rule_id=...
+GET /api/games/{slug}/evidence?rule_set_id=...&target_type=component&component_id=...
+GET /api/games/{slug}/evidence?rule_set_id=...&target_type=component_set&component_set_id=...
+GET /api/games/{slug}/evidence?rule_set_id=...&target_type=property_definition&property_key=...
 GET /api/games/{slug}/evidence?rule_set_id=...&target_type=component_property&component_id=...&property_key=...&ordinal=0
 GET /api/games/{slug}/evidence?rule_set_id=...&target_type=ability_printed_text&ability_id=...
 GET /api/games/{slug}/evidence?rule_set_id=...&target_type=game_metadata&field_path=min_age
@@ -173,7 +209,9 @@ canonical evidence backendのread自体に失敗した場合は、`not_available
 
 ## Database
 
-Migration: `backend/app/db/migrations/015_claim_evidence.sql`
+Base migration: `backend/app/db/migrations/015_claim_evidence.sql`
+
+Additive Component Catalog target migration: `backend/app/db/migrations/018_component_evidence_targets.sql`
 
 Tables:
 
@@ -183,6 +221,8 @@ Tables:
 - `evidence_bindings`
 
 TargetはRule Graph / Component Catalogの既存composite identityへFKで接続します。EvidenceSourceは複数RuleSetで再利用できますが、EvidenceBindingは必ず特定RuleSetのClaimを介して明示的に作成します。
+
+`018_component_evidence_targets.sql`は既存の5 target typeを削除せず、`component / component_set / property_definition`をadditiveに追加します。既存Claimを保持した状態で適用できることをPostgreSQL contract testで固定します。
 
 EvidenceBindingの一意性はlocator有無を分けたpartial unique indexで保証し、`locator_id=NULL`でも重複relationを作れないようにします。
 
@@ -217,3 +257,4 @@ EvidenceBindingの一意性はlocator有無を分けたpartial unique indexで�
 - #173 Component Catalog
 - #174 RuleSet identity
 - #175 Claim/Evidence Binding
+- #178 Component ingestion
