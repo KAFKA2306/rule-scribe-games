@@ -1,0 +1,80 @@
+name: Test Supabase RLS
+
+on:
+  pull_request:
+    paths:
+      - 'backend/app/core/settings.py'
+      - 'backend/app/db/migrations/**'
+      - 'backend/app/db/tests/**'
+      - '.github/workflows/test-rls.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'backend/app/core/settings.py'
+      - 'backend/app/db/migrations/**'
+      - 'backend/app/db/tests/**'
+      - '.github/workflows/test-rls.yml'
+
+jobs:
+  rls-integration:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
+      PGPASSWORD: postgres
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify backend rejects public Supabase keys for server DB access
+        shell: bash
+        run: |
+          python -m pip install --quiet pyyaml python-dotenv
+          env -u SUPABASE_SERVICE_ROLE_KEY \
+            SUPABASE_URL=https://example.supabase.co \
+            SUPABASE_ANON_KEY=anon-test-key \
+            NEXT_PUBLIC_SUPABASE_ANON_KEY=anon-test-key \
+            PYTHONPATH=backend \
+            python - <<'PY'
+          from app.core.settings import Settings
+          settings = Settings()
+          assert settings.supabase_url == 'https://example.supabase.co'
+          assert settings.supabase_key is None, 'backend must not fall back to a public/anon key'
+          PY
+          SUPABASE_URL=https://example.supabase.co \
+            SUPABASE_SERVICE_ROLE_KEY=service-role-test-key \
+            PYTHONPATH=backend \
+            python - <<'PY'
+          from app.core.settings import Settings
+          settings = Settings()
+          assert settings.supabase_key == 'service-role-test-key'
+          PY
+      - name: Apply migration and verify owner-only RLS
+        run: psql "$DATABASE_URL" -f backend/app/db/tests/rls_integration.sql
+      - name: Verify anonymous private reads fail closed
+        shell: bash
+        run: |
+          if psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c "SET ROLE anon; SELECT * FROM public.user_games;"; then
+            echo 'anonymous user unexpectedly read private user_games'
+            exit 1
+          fi
+      - name: Verify cross-user forged insert fails closed
+        shell: bash
+        run: |
+          if psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c "SET ROLE authenticated; SET request.jwt.claim.sub = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'; INSERT INTO public.user_games (id,user_id,game_id,status) VALUES ('bbbbbbbb-0000-4000-8000-000000000003','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','22222222-2222-4222-8222-222222222222','owned');"; then
+            echo 'user B unexpectedly inserted a row owned by user A'
+            exit 1
+          fi
+      - name: Verify test fixture remains untampered
+        run: |
+          test "$(psql "$DATABASE_URL" -Atc "SELECT count(*) FROM public.user_games WHERE id='aaaaaaaa-0000-4000-8000-000000000001' AND comment='updated-by-a';")" = "1"
