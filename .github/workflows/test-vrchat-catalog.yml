@@ -12,7 +12,11 @@ on:
       - "backend/tests/test_vrchat_catalog.py"
       - "backend/tests/test_vrchat_manifest.py"
       - "data/vrchat/module-bindings-v1.json"
+      - "evaluation/vrchat/manifest-v1-fixtures.json"
       - "schemas/vrchat/board-game-module-manifest-v1.schema.json"
+      - "schemas/vrchat/manifest-catalog-v1.schema.json"
+      - "schemas/vrchat/manifest-read-response-v1.schema.json"
+      - "scripts/validate_vrchat_catalog_schemas.py"
       - "docs/VRCHAT_MANIFEST_CATALOG_V1.md"
       - ".github/workflows/test-vrchat-catalog.yml"
   push:
@@ -28,7 +32,11 @@ on:
       - "backend/tests/test_vrchat_catalog.py"
       - "backend/tests/test_vrchat_manifest.py"
       - "data/vrchat/module-bindings-v1.json"
+      - "evaluation/vrchat/manifest-v1-fixtures.json"
       - "schemas/vrchat/board-game-module-manifest-v1.schema.json"
+      - "schemas/vrchat/manifest-catalog-v1.schema.json"
+      - "schemas/vrchat/manifest-read-response-v1.schema.json"
+      - "scripts/validate_vrchat_catalog_schemas.py"
       - "docs/VRCHAT_MANIFEST_CATALOG_V1.md"
       - ".github/workflows/test-vrchat-catalog.yml"
 
@@ -54,6 +62,7 @@ jobs:
           backend/app/models/vrchat_catalog.py
           backend/app/routers/vrchat.py
           backend/app/services/vrchat_manifest_catalog.py
+          scripts/validate_vrchat_catalog_schemas.py
 
       - name: Ruff VRChat catalog modules and tests
         run: >-
@@ -62,6 +71,12 @@ jobs:
           backend/app/routers/vrchat.py
           backend/app/services/vrchat_manifest_catalog.py
           backend/tests/test_vrchat_catalog.py
+          scripts/validate_vrchat_catalog_schemas.py
+
+      - name: Validate external JSON Schema contracts
+        run: >-
+          uv run --with jsonschema
+          python scripts/validate_vrchat_catalog_schemas.py
 
       - name: Run manifest and catalog contract tests
         env:
