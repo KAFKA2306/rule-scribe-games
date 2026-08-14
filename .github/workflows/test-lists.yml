@@ -111,17 +111,22 @@ jobs:
         working-directory: frontend
         run: npx playwright test tests/lists.spec.js --project=chromium
       - name: Run existing navigation E2E
+        if: ${{ success() || failure() }}
         working-directory: frontend
         run: npx playwright test tests/navigation.spec.js --project=chromium
       - name: Gate duplicate GET and sub-100ms mutation feedback
+        if: ${{ success() || failure() }}
         working-directory: frontend
         run: npx playwright test tests/performance.spec.js --project=chromium --grep "coalesces duplicate GET"
       - name: Gate parallel list waterfall and retained index
+        if: ${{ success() || failure() }}
         working-directory: frontend
         run: npx playwright test tests/performance.spec.js --project=chromium --grep "bootstrap index/detail"
       - name: Gate timeout and retry UI
+        if: ${{ success() || failure() }}
         working-directory: frontend
         run: npx playwright test tests/performance.spec.js --project=chromium --grep "times out and exposes"
       - name: Gate auth bootstrap CLS
+        if: ${{ success() || failure() }}
         working-directory: frontend
         run: npx playwright test tests/performance.spec.js --project=chromium --grep "layout shift"
