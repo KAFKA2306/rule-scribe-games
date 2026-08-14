@@ -37,11 +37,10 @@ class Settings:
             os.getenv("SUPABASE_URL") or
             os.getenv("NEXT_PUBLIC_SUPABASE_URL")
         )
-        self.supabase_key = (
-            os.getenv("SUPABASE_SERVICE_ROLE_KEY") or
-            os.getenv("SUPABASE_ANON_KEY") or
-            os.getenv("NEXT_PUBLIC_SUPABASE_ANON_KEY")
-        )
+        # Backend database access is trusted/server-side only. Never fall back to a
+        # browser-safe anon/publishable key: missing service-role configuration
+        # must fail closed instead of silently widening the backend trust model.
+        self.supabase_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
 
 
 settings = Settings()
