@@ -1,6 +1,88 @@
-import { useEffect, useState, useMemo } from 'react'
-import { useSearchParams, Link, useNavigate } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { api } from './lib/api'
+
+const PLAYER_FILTERS = ['1', '2', '3', '4', '5+']
+const TIME_FILTERS = [
+  { id: '30-', label: '30分以内' },
+  { id: '30-60', label: '30-60分' },
+  { id: '60-120', label: '60-120分' },
+  { id: '120+', label: '120分以上' },
+]
+
+function Filters({
+  activePlayers,
+  activeTime,
+  activeTier,
+  availableTiers,
+  setActivePlayers,
+  setActiveTime,
+  setActiveTier,
+  clearFilters,
+}) {
+  return (
+    <>
+      <div className="filter-section">
+        <h3>プレイ人数</h3>
+        <div className="filter-grid">
+          {PLAYER_FILTERS.map((player) => (
+            <button
+              key={player}
+              type="button"
+              className={`filter-btn ${activePlayers === player ? 'active' : ''}`}
+              aria-pressed={activePlayers === player}
+              onClick={() => setActivePlayers(activePlayers === player ? null : player)}
+            >
+              {player}人
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="filter-section">
+        <h3>プレイ時間</h3>
+        <div className="filter-grid filter-grid--single">
+          {TIME_FILTERS.map((time) => (
+            <button
+              key={time.id}
+              type="button"
+              className={`filter-btn ${activeTime === time.id ? 'active' : ''}`}
+              aria-pressed={activeTime === time.id}
+              onClick={() => setActiveTime(activeTime === time.id ? null : time.id)}
+            >
+              {time.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {availableTiers.length > 0 && (
+        <div className="filter-section">
+          <h3>戦略ティア</h3>
+          <div className="filter-grid">
+            {availableTiers.map((tier) => (
+              <button
+                key={tier}
+                type="button"
+                className={`filter-btn ${activeTier === tier ? 'active' : ''}`}
+                aria-pressed={activeTier === tier}
+                onClick={() => setActiveTier(activeTier === tier ? null : tier)}
+              >
+                Tier {tier}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="filter-section">
+        <button type="button" className="filter-btn filter-reset-button" onClick={clearFilters}>
+          フィルターをリセット
+        </button>
+      </div>
+    </>
+  )
+}
 
 function App() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -17,20 +99,19 @@ function App() {
   const [activeTime, setActiveTime] = useState(null)
   const [activeTier, setActiveTier] = useState(null)
   const [sortOption, setSortOption] = useState('recent')
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
 
   const [compareList, setCompareList] = useState([])
+  const [compareNotice, setCompareNotice] = useState('')
   const [isBattleMode, setIsBattleMode] = useState(false)
 
   const loadAllGames = async () => {
     setError(null)
     setLoading(true)
     try {
-      const data = await api.get(`/api/games?limit=20000&offset=0`)
-      const list = data.games || []
-      const total = data.total || 0
-
-      setInitialGames(list)
-      setTotalGamesCount(total)
+      const data = await api.get('/api/games?limit=20000&offset=0')
+      setInitialGames(data.games || [])
+      setTotalGamesCount(data.total || 0)
     } catch (err) {
       console.error('Failed to load games:', err)
       setError('ゲームの読み込みに失敗しました。')
@@ -45,9 +126,10 @@ function App() {
     try {
       const data = await api.get(`/api/games?limit=1000&offset=${initialGames.length}`)
       const newGames = data.games || []
-      setInitialGames([...initialGames, ...newGames])
+      setInitialGames((current) => [...current, ...newGames])
     } catch (err) {
       console.error('Failed to load more games:', err)
+      setError('追加ゲームの読み込みに失敗しました。')
     } finally {
       setLoading(false)
     }
@@ -57,8 +139,17 @@ function App() {
     loadAllGames()
   }, [])
 
+  useEffect(() => {
+    if (!mobileFiltersOpen) return undefined
+    const onKeyDown = (event) => {
+      if (event.key === 'Escape') setMobileFiltersOpen(false)
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [mobileFiltersOpen])
+
   const availableTiers = useMemo(() => {
-    const tiers = new Set(initialGames.map(g => g.strategy_tier).filter(Boolean))
+    const tiers = new Set(initialGames.map((game) => game.strategy_tier).filter(Boolean))
     return Array.from(tiers).sort()
   }, [initialGames])
 
@@ -66,62 +157,46 @@ function App() {
     let result = [...initialGames]
 
     if (query) {
-      const q = query.trim().normalize('NFKC').toLowerCase()
+      const normalized = query.trim().normalize('NFKC').toLowerCase()
       result = result.filter((game) => {
         const title = (game.title || '').normalize('NFKC').toLowerCase()
         const titleJa = (game.title_ja || '').normalize('NFKC').toLowerCase()
         const titleEn = (game.title_en || '').normalize('NFKC').toLowerCase()
         const summary = (game.summary || '').normalize('NFKC').toLowerCase()
-        return title.includes(q) || titleJa.includes(q) || titleEn.includes(q) || summary.includes(q)
+        return title.includes(normalized) || titleJa.includes(normalized) || titleEn.includes(normalized) || summary.includes(normalized)
       })
     }
 
     if (activePlayers) {
-      const p = parseInt(activePlayers)
-      result = result.filter(g => {
-        const min = g.min_players || 1
-        const max = g.max_players || 99
+      const playerCount = Number.parseInt(activePlayers, 10)
+      result = result.filter((game) => {
+        const min = game.min_players || 1
+        const max = game.max_players || 99
         if (activePlayers === '5+') return max >= 5
-        return p >= min && p <= max
+        return playerCount >= min && playerCount <= max
       })
     }
 
     if (activeTime) {
-      result = result.filter(g => {
-        const t = g.play_time || 0
-        if (activeTime === '30-') return t > 0 && t <= 30
-        if (activeTime === '30-60') return t > 30 && t <= 60
-        if (activeTime === '60-120') return t > 60 && t <= 120
-        if (activeTime === '120+') return t > 120
+      result = result.filter((game) => {
+        const time = game.play_time || 0
+        if (activeTime === '30-') return time > 0 && time <= 30
+        if (activeTime === '30-60') return time > 30 && time <= 60
+        if (activeTime === '60-120') return time > 60 && time <= 120
+        if (activeTime === '120+') return time > 120
         return true
       })
     }
 
-    if (activeTier) {
-      result = result.filter(g => g.strategy_tier === activeTier)
-    }
+    if (activeTier) result = result.filter((game) => game.strategy_tier === activeTier)
 
     result.sort((a, b) => {
       if (sortOption === 'recent') {
-        const dateA = a.created_at ? new Date(a.created_at).getTime() : 0
-        const dateB = b.created_at ? new Date(b.created_at).getTime() : 0
-        return dateB - dateA
+        return (b.created_at ? new Date(b.created_at).getTime() : 0) - (a.created_at ? new Date(a.created_at).getTime() : 0)
       }
-      if (sortOption === 'title') {
-        const ta = a.title_ja || a.title || ''
-        const tb = b.title_ja || b.title || ''
-        return ta.localeCompare(tb)
-      }
-      if (sortOption === 'year') {
-        const ya = a.published_year || 0
-        const yb = b.published_year || 0
-        return yb - ya
-      }
-      if (sortOption === 'play_time') {
-        const ta = a.play_time || 0
-        const tb = b.play_time || 0
-        return ta - tb
-      }
+      if (sortOption === 'title') return (a.title_ja || a.title || '').localeCompare(b.title_ja || b.title || '')
+      if (sortOption === 'year') return (b.published_year || 0) - (a.published_year || 0)
+      if (sortOption === 'play_time') return (a.play_time || 0) - (b.play_time || 0)
       return 0
     })
 
@@ -129,35 +204,37 @@ function App() {
   }, [initialGames, query, activePlayers, activeTime, activeTier, sortOption])
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      if (query) {
-        setSearchParams({ q: query }, { replace: true })
-      } else {
-        setSearchParams({}, { replace: true })
-      }
+    const timer = window.setTimeout(() => {
+      if (query) setSearchParams({ q: query }, { replace: true })
+      else setSearchParams({}, { replace: true })
     }, 300)
-    return () => clearTimeout(timer)
+    return () => window.clearTimeout(timer)
   }, [query, setSearchParams])
 
-  const handleSearchSubmit = async (e) => {
-    e.preventDefault()
-    if (!query.trim()) return
+  const handleDirectorySearch = (event) => {
+    event.preventDefault()
+    // Filtering is intentionally local. AI generation is a separate explicit action.
+  }
+
+  const handleGenerateGame = async () => {
+    const normalized = query.trim()
+    if (!normalized || generating) return
 
     setGenerating(true)
     setError(null)
     try {
-      const data = await api.post('/api/search', { query, generate: true })
+      const data = await api.post('/api/search', { query: normalized, generate: true })
       const list = Array.isArray(data) ? data : data.games || []
-      if (list.length > 0) {
-        const newGame = list[0]
-        const exists = initialGames.find((g) => g.slug === newGame.slug)
-        if (!exists) {
-          setInitialGames([newGame, ...initialGames])
-        }
-        navigate(`/games/${newGame.slug}`)
+      if (list.length === 0) {
+        setError('未登録ゲームを生成できませんでした。名称を確認してください。')
+        return
       }
-    } catch (e) {
-      console.error(e)
+
+      const newGame = list[0]
+      setInitialGames((current) => current.some((game) => game.slug === newGame.slug) ? current : [newGame, ...current])
+      navigate(`/games/${newGame.slug}`)
+    } catch (err) {
+      console.error(err)
       setError('AI生成リクエストに失敗しました。')
     } finally {
       setGenerating(false)
@@ -172,41 +249,49 @@ function App() {
   }
 
   const toggleCompare = (game) => {
-    if (compareList.find(g => g.id === game.id)) {
-      setCompareList(compareList.filter(g => g.id !== game.id))
-    } else {
-      if (compareList.length >= 3) return
-      setCompareList([...compareList, game])
+    const selected = compareList.some((candidate) => candidate.id === game.id)
+    if (selected) {
+      setCompareList((current) => current.filter((candidate) => candidate.id !== game.id))
+      setCompareNotice('')
+      return
     }
+
+    if (compareList.length >= 3) {
+      setCompareNotice('比較できるゲームは3件までです。1件外してから追加してください。')
+      return
+    }
+
+    setCompareList((current) => [...current, game])
+    setCompareNotice('')
   }
 
   if (isBattleMode) {
     return (
-      <div className="game-detail-content" style={{ overflowY: 'auto', height: '100dvh', padding: '2rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+      <div className="game-detail-content comparison-page">
+        <div className="comparison-page__header">
           <h1 className="game-title">COMPARISON BATTLE</h1>
-          <button className="filter-btn" onClick={() => setIsBattleMode(false)}>CLOSE BATTLE</button>
+          <button type="button" className="filter-btn" onClick={() => setIsBattleMode(false)}>CLOSE BATTLE</button>
         </div>
 
         <div className="battle-grid">
-          {compareList.map(game => (
+          {compareList.map((game) => (
             <div key={game.id} className="battle-col">
-              <div className="pro-card" style={{ textAlign: 'center' }}>
-                <img src={game.image_url || '/assets/no-image.webp'} style={{ width: '100%', borderRadius: '8px', marginBottom: '1rem' }} alt={game.title_ja} />
+              <div className="pro-card comparison-game-card">
+                <img src={game.image_url || '/assets/no-image.webp'} className="comparison-game-image" alt={game.title_ja || game.title || ''} />
                 <div className="pro-stat-value">{game.title_ja || game.title}</div>
-                {game.strategy_tier && <div className="tier-badge" style={{ position: 'static', marginTop: '8px' }}>TIER {game.strategy_tier}</div>}
+                {game.strategy_tier && <div className="tier-badge comparison-tier">TIER {game.strategy_tier}</div>}
               </div>
 
               <div className="battle-attr">
                 <div className="battle-attr-label">Synopsis</div>
-                <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{game.summary || 'No summary available.'}</div>
+                <div className="comparison-summary">{game.summary || 'No summary available.'}</div>
               </div>
 
               <div className="battle-attr">
                 <div className="battle-attr-label">Specs</div>
-                <div className="pro-stats-grid" style={{ marginBottom: 0 }}>
-                  <div className="pro-stat-card"><div className="pro-stat-label">P</div><div className="pro-stat-value" style={{ fontSize: '0.9rem' }}>{game.min_players}-{game.max_players}</div></div>
-                  <div className="pro-stat-card"><div className="pro-stat-label">T</div><div className="pro-stat-value" style={{ fontSize: '0.9rem' }}>{game.play_time}m</div></div>
+                <div className="pro-stats-grid comparison-specs">
+                  <div className="pro-stat-card"><div className="pro-stat-label">P</div><div className="pro-stat-value comparison-stat">{game.min_players}-{game.max_players}</div></div>
+                  <div className="pro-stat-card"><div className="pro-stat-label">T</div><div className="pro-stat-value comparison-stat">{game.play_time}m</div></div>
                 </div>
               </div>
 
@@ -214,19 +299,28 @@ function App() {
                 <div className="battle-attr">
                   <div className="battle-attr-label">Mechanics</div>
                   <div className="tag-list">
-                    {game.structured_data.mechanics.slice(0, 5).map(m => <span key={m} className="tag-item">{m}</span>)}
+                    {game.structured_data.mechanics.slice(0, 5).map((mechanic) => <span key={mechanic} className="tag-item">{mechanic}</span>)}
                   </div>
                 </div>
               )}
 
-              <div style={{ marginTop: '2rem' }}>
-                <Link to={`/games/${game.slug}`} className="filter-btn" style={{ width: '100%', display: 'block', textDecoration: 'none' }}>VIEW FULL ANALYSIS</Link>
-              </div>
+              <Link to={`/games/${game.slug}`} className="filter-btn comparison-detail-link">VIEW FULL ANALYSIS</Link>
             </div>
           ))}
         </div>
       </div>
     )
+  }
+
+  const filterProps = {
+    activePlayers,
+    activeTime,
+    activeTier,
+    availableTiers,
+    setActivePlayers,
+    setActiveTime,
+    setActiveTier,
+    clearFilters,
   }
 
   return (
@@ -236,102 +330,68 @@ function App() {
           <div className="logo-text">ボドゲのミカタ</div>
         </Link>
 
-        <form className="search-container" onSubmit={handleSearchSubmit}>
+        <form className="search-container directory-search" role="search" onSubmit={handleDirectorySearch}>
+          <label htmlFor="game-directory-search" className="sr-only">ゲームを検索</label>
           <input
-            type="text"
+            id="game-directory-search"
+            type="search"
             className="search-input"
-            placeholder="ゲームを検索、または未登録ゲームをAI生成..."
+            placeholder="ゲーム名・概要で検索"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(event) => setQuery(event.target.value)}
           />
+          <button
+            type="button"
+            className="filter-btn generate-game-button"
+            disabled={!query.trim() || generating}
+            onClick={handleGenerateGame}
+          >
+            {generating ? '生成中…' : '未登録ゲームをAIで追加'}
+          </button>
         </form>
 
-        <div className="db-status">
+        <div className="db-status" aria-label={loading ? 'ゲーム一覧を同期中' : `${totalGamesCount}件のゲーム`}>
           <div className="status-dot connected"></div>
           {loading ? 'SYNCING...' : `${totalGamesCount} GAMES`}
         </div>
       </header>
 
-      <aside>
-        <div className="filter-section">
-          <h3>プレイ人数</h3>
-          <div className="filter-grid">
-            {['1', '2', '3', '4', '5+'].map(p => (
-              <button
-                key={p}
-                className={`filter-btn ${activePlayers === p ? 'active' : ''}`}
-                onClick={() => setActivePlayers(activePlayers === p ? null : p)}
-              >
-                {p}人
-              </button>
-            ))}
-          </div>
-        </div>
+      {mobileFiltersOpen && (
+        <button
+          type="button"
+          className="mobile-filter-backdrop"
+          aria-label="フィルターを閉じる"
+          onClick={() => setMobileFiltersOpen(false)}
+        />
+      )}
 
-        <div className="filter-section">
-          <h3>プレイ時間</h3>
-          <div className="filter-grid" style={{ gridTemplateColumns: '1fr' }}>
-            {[
-              { id: '30-', label: '30分以内' },
-              { id: '30-60', label: '30-60分' },
-              { id: '60-120', label: '60-120分' },
-              { id: '120+', label: '120分以上' }
-            ].map(t => (
-              <button
-                key={t.id}
-                className={`filter-btn ${activeTime === t.id ? 'active' : ''}`}
-                onClick={() => setActiveTime(activeTime === t.id ? null : t.id)}
-              >
-                {t.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {availableTiers.length > 0 && (
-          <div className="filter-section">
-            <h3>戦略ティア</h3>
-            <div className="filter-grid">
-              {availableTiers.map(t => (
-                <button
-                  key={t}
-                  className={`filter-btn ${activeTier === t ? 'active' : ''}`}
-                  onClick={() => setActiveTier(activeTier === t ? null : t)}
-                >
-                  Tier {t}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        <div className="filter-section">
-          <button
-            className="filter-btn"
-            style={{ width: '100%', borderColor: 'var(--accent-secondary)' }}
-            onClick={clearFilters}
-          >
-            フィルターをリセット
-          </button>
-        </div>
+      <aside id="directory-filters" className={`filter-sidebar-shell ${mobileFiltersOpen ? 'mobile-open' : ''}`} aria-label="ゲーム絞り込み">
+        <button type="button" className="filter-btn mobile-filter-close" onClick={() => setMobileFiltersOpen(false)}>
+          フィルターを閉じる
+        </button>
+        <Filters {...filterProps} />
       </aside>
 
       <main>
         <div className="control-panel">
-          <div className="active-filters" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: '700' }}>
-              {filteredGames.length} RESULTS
-            </span>
-            {activePlayers && <div className="filter-chip">人数: {activePlayers} <button onClick={() => setActivePlayers(null)}>×</button></div>}
-            {activeTime && <div className="filter-chip">時間: {activeTime} <button onClick={() => setActiveTime(null)}>×</button></div>}
-            {activeTier && <div className="filter-chip">Tier: {activeTier} <button onClick={() => setActiveTier(null)}>×</button></div>}
+          <div className="active-filters">
+            <button
+              type="button"
+              className="filter-btn mobile-filter-toggle"
+              aria-expanded={mobileFiltersOpen}
+              aria-controls="directory-filters"
+              onClick={() => setMobileFiltersOpen(true)}
+            >
+              フィルター
+            </button>
+            <span className="results-count">{filteredGames.length} RESULTS</span>
+            {activePlayers && <div className="filter-chip">人数: {activePlayers} <button type="button" aria-label="人数フィルターを解除" onClick={() => setActivePlayers(null)}>×</button></div>}
+            {activeTime && <div className="filter-chip">時間: {activeTime} <button type="button" aria-label="時間フィルターを解除" onClick={() => setActiveTime(null)}>×</button></div>}
+            {activeTier && <div className="filter-chip">Tier: {activeTier} <button type="button" aria-label="戦略Tierフィルターを解除" onClick={() => setActiveTier(null)}>×</button></div>}
           </div>
 
-          <select
-            className="sort-select"
-            value={sortOption}
-            onChange={(e) => setSortOption(e.target.value)}
-          >
+          <label htmlFor="game-sort" className="sr-only">ゲームの並び順</label>
+          <select id="game-sort" className="sort-select" value={sortOption} onChange={(event) => setSortOption(event.target.value)}>
             <option value="recent">最近追加</option>
             <option value="title">タイトル順</option>
             <option value="year">発売年順</option>
@@ -340,58 +400,55 @@ function App() {
         </div>
 
         {error && <div className="app-feedback app-feedback--error" role="alert">{error}</div>}
-        {generating && <div className="app-feedback app-feedback--progress" role="status">AIが新しいゲーム情報を生成しています...</div>}
+        {generating && <div className="app-feedback app-feedback--progress" role="status">未登録ゲームの情報を生成しています…</div>}
+        {compareNotice && <div className="app-feedback compare-feedback" role="status">{compareNotice}</div>}
 
         {loading ? (
           <div className="app-loading-state" role="status">ARCHIVE INITIALIZING...</div>
         ) : (
           <div className="asset-grid">
-            {filteredGames.map(game => (
-              <div key={game.id} style={{ position: 'relative' }}>
-                <Link to={`/games/${game.slug}`} className="asset-card" style={{ height: '100%' }}>
-                  <div className="asset-thumb-container">
-                    {game.strategy_tier && <div className="tier-badge">Tier {game.strategy_tier}</div>}
-                    <img
-                      src={game.image_url || '/assets/no-image.webp'}
-                      alt={game.title_ja || game.title}
-                      className="asset-thumb"
-                      loading="lazy"
-                    />
-                  </div>
-                  <div className="asset-info">
-                    <div className="asset-title">{game.title_ja || game.title}</div>
-                    <div className="asset-meta">
-                      {game.min_players && <span className="meta-item">👥 {game.min_players}{game.max_players && game.max_players !== game.min_players ? `-${game.max_players}` : ''}</span>}
-                      {game.play_time && <span className="meta-item">⏳ {game.play_time}m</span>}
-                      {game.published_year && <span className="meta-item">📅 {game.published_year}</span>}
+            {filteredGames.map((game) => {
+              const selected = compareList.some((candidate) => candidate.id === game.id)
+              const limitReached = compareList.length >= 3 && !selected
+              const title = game.title_ja || game.title || 'このゲーム'
+              return (
+                <div key={game.id} className="asset-card-shell">
+                  <Link to={`/games/${game.slug}`} className="asset-card asset-card-link">
+                    <div className="asset-thumb-container">
+                      {game.strategy_tier && <div className="tier-badge">Tier {game.strategy_tier}</div>}
+                      <img src={game.image_url || '/assets/no-image.webp'} alt={title} className="asset-thumb" loading="lazy" />
                     </div>
-                    <div className="asset-summary">{game.summary || game.description}</div>
-                  </div>
-                </Link>
-                <button
-                  onClick={(e) => { e.preventDefault(); toggleCompare(game); }}
-                  className={`filter-btn ${compareList.find(g => g.id === game.id) ? 'active' : ''}`}
-                  style={{ position: 'absolute', top: '8px', right: '8px', zIndex: 10, padding: '4px 8px', fontSize: '0.65rem' }}
-                >
-                  {compareList.find(g => g.id === game.id) ? 'READY' : 'COMPARE'}
-                </button>
-              </div>
-            ))}
-            {filteredGames.length === 0 && !loading && (
-              <div className="app-empty-state">
-                条件に一致するゲームが見つかりません。
-              </div>
-            )}
+                    <div className="asset-info">
+                      <div className="asset-title">{title}</div>
+                      <div className="asset-meta">
+                        {game.min_players && <span className="meta-item">👥 {game.min_players}{game.max_players && game.max_players !== game.min_players ? `-${game.max_players}` : ''}</span>}
+                        {game.play_time && <span className="meta-item">⏳ {game.play_time}m</span>}
+                        {game.published_year && <span className="meta-item">📅 {game.published_year}</span>}
+                      </div>
+                      <div className="asset-summary">{game.summary || game.description}</div>
+                    </div>
+                  </Link>
+                  <button
+                    type="button"
+                    className={`filter-btn compare-toggle ${selected ? 'active' : ''}`}
+                    aria-pressed={selected}
+                    aria-label={selected ? `${title}を比較から外す` : `${title}を比較に追加`}
+                    disabled={limitReached}
+                    title={limitReached ? '比較は3件までです' : undefined}
+                    onClick={() => toggleCompare(game)}
+                  >
+                    {selected ? 'READY' : limitReached ? 'MAX 3' : 'COMPARE'}
+                  </button>
+                </div>
+              )
+            })}
+            {filteredGames.length === 0 && !loading && <div className="app-empty-state">条件に一致するゲームが見つかりません。</div>}
           </div>
         )}
 
         {!loading && initialGames.length < totalGamesCount && (
-          <div style={{ textAlign: 'center', padding: '2rem' }}>
-            <button
-              className="filter-btn"
-              style={{ padding: '10px 24px', fontSize: '0.9rem', borderColor: 'var(--accent)' }}
-              onClick={handleLoadMore}
-            >
+          <div className="load-more-wrap">
+            <button type="button" className="filter-btn load-more-button" onClick={handleLoadMore}>
               さらに読み込む ({initialGames.length} / {totalGamesCount})
             </button>
           </div>
@@ -399,20 +456,19 @@ function App() {
       </main>
 
       {compareList.length > 0 && (
-        <div className="comparison-tray">
-          <div className="comparison-tray__label" style={{ fontSize: '0.75rem', fontWeight: 700 }}>BATTLE TRAY</div>
-          {compareList.map(g => (
-            <div key={g.id} className="compare-item">
-              <img src={g.image_url || '/assets/no-image.webp'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Compare Item" />
-              <button onClick={() => toggleCompare(g)}>×</button>
-            </div>
-          ))}
+        <div className="comparison-tray" role="region" aria-label={`比較トレイ ${compareList.length}/3`}>
+          <div className="comparison-tray__label">BATTLE TRAY · {compareList.length}/3</div>
+          {compareList.map((game) => {
+            const title = game.title_ja || game.title || 'ゲーム'
+            return (
+              <div key={game.id} className="compare-item">
+                <img src={game.image_url || '/assets/no-image.webp'} alt={title} />
+                <button type="button" aria-label={`${title}を比較から外す`} onClick={() => toggleCompare(game)}>×</button>
+              </div>
+            )
+          })}
           {compareList.length >= 2 && (
-            <button
-              className="filter-btn active"
-              style={{ padding: '6px 16px', borderRadius: '20px' }}
-              onClick={() => setIsBattleMode(true)}
-            >
+            <button type="button" className="filter-btn active battle-start-button" onClick={() => setIsBattleMode(true)}>
               BATTLE START
             </button>
           )}
