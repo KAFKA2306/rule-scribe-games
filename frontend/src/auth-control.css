@@ -1,0 +1,53 @@
+.auth-control-cluster {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  flex: 0 1 auto;
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.auth-control-cluster > [data-auth-state] {
+  min-width: 0;
+}
+
+.auth-control-cluster .user-menu {
+  display: flex !important;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.auth-control-cluster .user-avatar {
+  flex: 0 0 32px;
+  border-radius: 50%;
+}
+
+.auth-control-cluster .user-menu > span {
+  min-width: 0;
+  max-width: 10rem !important;
+}
+
+.auth-control-cluster .button-secondary,
+.auth-control-cluster__lists {
+  flex: 0 0 auto;
+}
+
+@media (max-width: 900px) {
+  .auth-control-cluster {
+    order: 2;
+    margin-left: auto;
+    max-width: 100%;
+  }
+
+  .auth-control-cluster .user-menu > span {
+    max-width: 7rem !important;
+  }
+}
+
+@media (max-width: 560px) {
+  .auth-control-cluster .user-menu > span {
+    display: none;
+  }
+}
