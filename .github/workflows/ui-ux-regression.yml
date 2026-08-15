@@ -1,13 +1,13 @@
 name: UI UX regression
 
 on:
-  pull_request:
-    paths:
-      - "frontend/**"
-      - ".github/workflows/ui-ux-regression.yml"
   push:
     branches:
       - main
+    paths:
+      - "frontend/**"
+      - ".github/workflows/ui-ux-regression.yml"
+  pull_request:
     paths:
       - "frontend/**"
       - ".github/workflows/ui-ux-regression.yml"
@@ -93,7 +93,7 @@ jobs:
         working-directory: frontend
         run: npx playwright install --with-deps chromium
 
-      - name: Gate existing list navigation loading and auth contracts
+      - name: Gate existing list navigation loading auth and image contracts
         working-directory: frontend
         run: >-
           npx playwright test
@@ -102,6 +102,7 @@ jobs:
           tests/performance.spec.js
           tests/game_layout.spec.js
           tests/auth.spec.js
+          tests/generated-game-images.spec.js
           --project=chromium
 
       - name: Gate responsive geometry and pixel screenshot baselines
