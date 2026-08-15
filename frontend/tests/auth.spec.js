@@ -17,6 +17,12 @@ test('configured Google auth control mounts inside existing layout without becom
   await expect(loginButton).toBeVisible()
   await expect(loginButton).toBeEnabled()
 
+  const authLayout = await authControl.evaluate((node) => {
+    const style = window.getComputedStyle(node)
+    return { display: style.display, alignItems: style.alignItems, whiteSpace: style.whiteSpace }
+  })
+  expect(authLayout).toEqual({ display: 'flex', alignItems: 'center', whiteSpace: 'nowrap' })
+
   const directChildren = await page.locator('#root > *').evaluateAll((nodes) => nodes.map((node) => node.tagName))
   expect(directChildren).toEqual(['HEADER', 'ASIDE', 'MAIN'])
 })

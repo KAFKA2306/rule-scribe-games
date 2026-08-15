@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "curated:generate": "node scripts/generate-curated-game-artifacts.mjs",
+    "postcurated:generate": "node scripts/generate-missing-game-images.mjs",
     "predev": "npm run curated:generate",
     "dev": "vite",
     "prebuild": "npm run curated:generate",
