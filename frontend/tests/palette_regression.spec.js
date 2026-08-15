@@ -59,6 +59,23 @@ async function mockApi(page) {
       return
     }
 
+    const connectionsMatch = path.match(/^\/api\/games\/([^/]+)\/connections$/)
+    if (connectionsMatch && request.method() === 'GET') {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          schema_version: '1.0',
+          algorithm_version: 'mechanical-dna-concept-v1',
+          status: 'available',
+          game_id: games[0].id,
+          slug: decodeURIComponent(connectionsMatch[1]),
+          connections: [],
+        }),
+      })
+      return
+    }
+
     const match = path.match(/^\/api\/games\/([^/]+)$/)
     if (match && request.method() === 'GET') {
       const game = games.find((candidate) => candidate.slug === decodeURIComponent(match[1]))
@@ -131,7 +148,7 @@ test('every game-detail tab avoids legacy dark surfaces', async ({ page }, testI
   await page.screenshot({ path: testInfo.outputPath('review-light-state.png'), fullPage: true, animations: 'disabled' })
 
   await page.getByRole('tab', { name: /関連ゲーム/ }).click()
-  await expect(page.getByText('関連ゲームはまだ見つかっていません。').first()).toBeVisible()
+  await expectLightSurface(page.locator('.graph-perspective .game-empty-state'), 'related games empty state')
 
   const legacyDark = await page.locator('.game-detail-content').evaluate((root) => {
     const visible = [...root.querySelectorAll('*')].filter((element) => {
