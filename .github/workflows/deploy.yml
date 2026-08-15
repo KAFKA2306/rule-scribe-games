@@ -14,7 +14,9 @@ permissions:
 
 concurrency:
   group: vercel-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  # Never let an hourly catch-up cancel a main-push production verification.
+  # A queued catch-up re-checks the exact SHA and becomes a no-op when production is current.
+  cancel-in-progress: false
 
 jobs:
   Build-Preview:
@@ -181,9 +183,6 @@ jobs:
       - name: Verify Google OAuth provider redirect
         if: steps.budget.outputs.state == 'deployable'
         run: python scripts/check_google_oauth.py .vercel/.env.production.local
-      - name: Build latest main for catch-up
-        if: steps.budget.outputs.state == 'deployable'
-        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
       - name: Deploy latest main once
         if: steps.budget.outputs.state == 'deployable'
         id: catchup

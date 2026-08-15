@@ -39,14 +39,19 @@ jobs:
         env:
           PYTHONPATH: .
         run: uv run pytest -q backend/tests/test_vercel_git_deployment.py
-      - name: Assert production deploys at most once after exact-SHA verification misses
+      - name: Assert production deploy and catch-up coordination contract
         shell: bash
         run: |
           test "$(grep -Fc 'vercel deploy --prod --yes' .github/workflows/deploy.yml)" = "2"
+          grep -F "cancel-in-progress: false" .github/workflows/deploy.yml
           grep -F "id: git_verification" .github/workflows/deploy.yml
           grep -F "steps.budget.outputs.state == 'deployable' && steps.git_verification.outcome == 'failure'" .github/workflows/deploy.yml
           grep -F "steps.push_fallback.outputs.deployed == 'true'" .github/workflows/deploy.yml
           grep -F "if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'" .github/workflows/deploy.yml
+          if grep -Fq "Build latest main for catch-up" .github/workflows/deploy.yml; then
+            echo "Catch-up must not perform a redundant local Vercel build before source deployment."
+            exit 1
+          fi
           grep -F "api-deployments-free-per-day" .github/workflows/deploy.yml
           grep -F "vercel_deployment_budget.py" .github/workflows/deploy.yml
           grep -F "verify_vercel_git_deployment.py" .github/workflows/deploy.yml
