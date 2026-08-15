@@ -5,9 +5,10 @@
   "type": "module",
   "scripts": {
     "curated:generate": "node scripts/generate-curated-game-artifacts.mjs",
-    "predev": "npm run curated:generate",
+    "images:generate": "node scripts/generate-missing-game-images.mjs",
+    "predev": "npm run curated:generate && npm run images:generate",
     "dev": "vite",
-    "prebuild": "npm run curated:generate",
+    "prebuild": "npm run curated:generate && npm run images:generate",
     "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint .",
