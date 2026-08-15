@@ -77,15 +77,25 @@ def main() -> int:
         print(f"Google OAuth provider redirect check failed: network={type(exc.reason).__name__}")
         return 1
 
-    host = urllib.parse.urlparse(location).hostname
-    if status in (301, 302, 303, 307, 308) and host == "accounts.google.com":
+    parsed = urllib.parse.urlparse(location)
+    params = urllib.parse.parse_qs(parsed.query)
+    redirect_uri = params.get("redirect_uri", [""])[0].rstrip("/")
+    expected_callback = f"{base}/auth/v1/callback"
+    is_google_authorize = (
+        status in (301, 302, 303, 307, 308)
+        and parsed.scheme == "https"
+        and parsed.hostname == "accounts.google.com"
+        and parsed.path.startswith("/o/oauth2/")
+    )
+    if is_google_authorize and redirect_uri == expected_callback and params.get("state", [""])[0]:
         print("Google OAuth provider redirect contract: OK")
         return 0
 
     code, message = safe_error_detail(payload)
     print(
         "Google OAuth provider redirect check failed: "
-        f"status={status}, host={host or 'none'}, error_code={code}, message={message}"
+        f"status={status}, host={parsed.hostname or 'none'}, callback_match={redirect_uri == expected_callback}, "
+        f"state_present={bool(params.get('state', [''])[0])}, error_code={code}, message={message}"
     )
     return 1
 

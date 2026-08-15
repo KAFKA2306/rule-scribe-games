@@ -96,11 +96,22 @@ def test_authorized_manual_update_does_not_accept_identity_fields():
     assert service.updated is True
 
 
-def test_post_search_checks_database_before_generation():
+def test_post_search_rejects_legacy_generation_request_before_any_write():
     service = DBFirstService()
     client = TestClient(_app_with_service(service))
 
     response = client.post("/api/search", json={"query": "レラティブ・スペース", "generate": True})
+
+    assert response.status_code == 403
+    assert response.json()["detail"] == "Catalog generation is not available from public search"
+    assert service.created is False
+
+
+def test_post_search_remains_read_only_for_legacy_clients():
+    service = DBFirstService()
+    client = TestClient(_app_with_service(service))
+
+    response = client.post("/api/search", json={"query": "レラティブ・スペース", "generate": False})
 
     assert response.status_code == 200
     assert response.json()[0]["slug"] == "existing"

@@ -1,0 +1,305 @@
+name: Component ingestion RPC
+
+on:
+  pull_request:
+    paths:
+      - "backend/app/models/component_ingestion.py"
+      - "backend/app/services/component_ingestion.py"
+      - "backend/app/services/component_ingestion_repository.py"
+      - "backend/scripts/component_ingest.py"
+      - "backend/data/component_ingestion/**"
+      - "backend/app/db/migrations/019_component_ingestion_rpc.sql"
+      - "backend/tests/test_component_ingestion.py"
+      - "backend/tests/test_component_ingestion_repository.py"
+      - ".github/workflows/test-component-ingestion-rpc.yml"
+  push:
+    branches: [main]
+    paths:
+      - "backend/app/models/component_ingestion.py"
+      - "backend/app/services/component_ingestion.py"
+      - "backend/app/services/component_ingestion_repository.py"
+      - "backend/scripts/component_ingest.py"
+      - "backend/data/component_ingestion/**"
+      - "backend/app/db/migrations/019_component_ingestion_rpc.sql"
+      - "backend/tests/test_component_ingestion.py"
+      - "backend/tests/test_component_ingestion_repository.py"
+      - ".github/workflows/test-component-ingestion-rpc.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  component-ingestion-rpc:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: component_ingestion_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d component_ingestion_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/component_ingestion_test
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+
+      - name: Install Python dependencies
+        run: uv sync --frozen --dev
+
+      - name: Compile and lint ingestion apply slice
+        shell: bash
+        run: |
+          uv run python -m compileall -q \
+            backend/app/models/component_ingestion.py \
+            backend/app/services/component_ingestion.py \
+            backend/app/services/component_ingestion_repository.py \
+            backend/scripts/component_ingest.py \
+            backend/tests/test_component_ingestion.py \
+            backend/tests/test_component_ingestion_repository.py
+          uv run --with ruff ruff check \
+            backend/app/models/component_ingestion.py \
+            backend/app/services/component_ingestion.py \
+            backend/app/services/component_ingestion_repository.py \
+            backend/scripts/component_ingest.py \
+            backend/tests/test_component_ingestion.py \
+            backend/tests/test_component_ingestion_repository.py
+
+      - name: Run manifest and plan regression tests
+        env:
+          PYTHONPATH: backend
+        run: >-
+          uv run pytest -q
+          backend/tests/test_component_ingestion.py
+          backend/tests/test_component_ingestion_repository.py
+          backend/tests/test_component_evidence_targets.py
+          backend/tests/test_component_catalog.py
+
+      - name: Build canonical schema through migration 019
+        shell: bash
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 <<'SQL'
+          CREATE ROLE anon NOLOGIN;
+          CREATE ROLE authenticated NOLOGIN;
+          CREATE ROLE service_role NOLOGIN;
+          CREATE TABLE public.game_works (
+            id uuid PRIMARY KEY DEFAULT gen_random_uuid()
+          );
+          CREATE TABLE public.games (
+            id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+            slug text NOT NULL UNIQUE,
+            title text,
+            work_id uuid REFERENCES public.game_works(id),
+            identity_status text NOT NULL DEFAULT 'unverified'
+          );
+          INSERT INTO public.game_works(id) VALUES ('00000000-0000-0000-0000-000000000010');
+          INSERT INTO public.games(id, slug, title, work_id, identity_status)
+          VALUES (
+            '00000000-0000-0000-0000-000000000001',
+            'fixture-game',
+            'Fixture Game',
+            '00000000-0000-0000-0000-000000000010',
+            'verified'
+          );
+          SQL
+
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/010_rule_graph.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/011_concept_taxonomy.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/013_ruleset_identity.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/014_component_catalog.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/015_claim_evidence.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/018_component_evidence_targets.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/019_component_ingestion_rpc.sql
+
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 <<'SQL'
+          INSERT INTO public.rule_sets(
+            id, game_id, work_id, version, language_code, edition_label,
+            platform, revision_label, status, verification_status, is_active
+          ) VALUES (
+            '00000000-0000-0000-0000-000000000178',
+            '00000000-0000-0000-0000-000000000001',
+            '00000000-0000-0000-0000-000000000010',
+            1, 'en', 'Fixture Edition', 'Fixture Platform', 'r1', 'active', 'source_bound', true
+          );
+          SQL
+
+      - name: Apply the same atomic payload twice
+        shell: bash
+        run: |
+          cat > /tmp/apply_fixture.sql <<'SQL'
+          SELECT public.apply_component_ingestion_v1($payload$
+          {
+            "schema_version": "1.0",
+            "game_slug": "fixture-game",
+            "game_id": "00000000-0000-0000-0000-000000000001",
+            "ruleset_id": "00000000-0000-0000-0000-000000000178",
+            "completeness": "complete",
+            "expected_count": 1,
+            "unresolved_count": 0,
+            "catalog_metadata": {"component_ingestion": {"schema_version": "1.0", "completeness": "complete"}},
+            "sources": [
+              {
+                "source_id": "source:fixture:rpc",
+                "url": "https://example.com/components",
+                "source_type": "publisher_component_list",
+                "revision_label": "r1",
+                "trust_metadata": {"authority": "publisher", "extraction_method": "fixture"}
+              }
+            ],
+            "source_locators": [
+              {
+                "locator_id": "locator:fixture:rpc",
+                "source_id": "source:fixture:rpc",
+                "section_heading": "Components"
+              }
+            ],
+            "component_sets": [
+              {
+                "component_set_id": "cards",
+                "canonical_name": "Cards",
+                "kind": "card",
+                "verification_status": "source_bound",
+                "source_ids": ["source:fixture:rpc"],
+                "metadata": {}
+              }
+            ],
+            "property_definitions": [
+              {
+                "property_key": "rank",
+                "labels": {"en": "Rank"},
+                "value_type": "integer",
+                "cardinality": "one",
+                "enum_values": [],
+                "filterable": true,
+                "sortable": true,
+                "verification_status": "source_bound",
+                "source_ids": ["source:fixture:rpc"],
+                "metadata": {}
+              }
+            ],
+            "components": [
+              {
+                "component_id": "card.alpha",
+                "component_set_id": "cards",
+                "canonical_name": "Alpha",
+                "kind": "card",
+                "quantity": 1,
+                "verification_status": "source_bound",
+                "source_ids": ["source:fixture:rpc"],
+                "metadata": {}
+              }
+            ],
+            "component_properties": [
+              {
+                "component_id": "card.alpha",
+                "property_key": "rank",
+                "value_type": "integer",
+                "cardinality": "one",
+                "ordinal": 0,
+                "integer_value": 1,
+                "verification_status": "source_bound",
+                "source_ids": ["source:fixture:rpc"],
+                "metadata": {}
+              }
+            ],
+            "component_abilities": [
+              {
+                "component_id": "card.alpha",
+                "ability_id": "ability.alpha",
+                "printed_text": "Printed text",
+                "normalized_label": "Normalized effect",
+                "verification_status": "source_bound",
+                "source_ids": ["source:fixture:rpc"],
+                "metadata": {}
+              }
+            ],
+            "component_concepts": [],
+            "component_rule_nodes": [],
+            "ability_concepts": [],
+            "ability_rule_nodes": [],
+            "claims": [
+              {"claim_id":"ci:fixture:claim:set","claim_type":"component_ingestion_component_set","normalized_payload":{"canonical_name":"Cards"},"target_type":"component_set","component_set_id":"cards","lifecycle_status":"accepted","generator_provenance":{}},
+              {"claim_id":"ci:fixture:claim:def","claim_type":"component_ingestion_property_definition","normalized_payload":{"value_type":"integer"},"target_type":"property_definition","property_key":"rank","lifecycle_status":"accepted","generator_provenance":{}},
+              {"claim_id":"ci:fixture:claim:component","claim_type":"component_ingestion_component","normalized_payload":{"canonical_name":"Alpha"},"target_type":"component","component_id":"card.alpha","lifecycle_status":"accepted","generator_provenance":{}},
+              {"claim_id":"ci:fixture:claim:property","claim_type":"component_ingestion_component_property","normalized_payload":{"value":1},"target_type":"component_property","component_id":"card.alpha","property_key":"rank","ordinal":0,"lifecycle_status":"accepted","generator_provenance":{}},
+              {"claim_id":"ci:fixture:claim:printed","claim_type":"component_ingestion_ability_printed_text","normalized_payload":{"value":"Printed text"},"target_type":"ability_printed_text","ability_id":"ability.alpha","lifecycle_status":"accepted","generator_provenance":{}},
+              {"claim_id":"ci:fixture:claim:normalized","claim_type":"component_ingestion_ability_normalized","normalized_payload":{"value":"Normalized effect"},"target_type":"ability_normalized","ability_id":"ability.alpha","lifecycle_status":"accepted","generator_provenance":{}}
+            ],
+            "evidence_bindings": [
+              {"binding_id":"ci:fixture:binding:set","claim_id":"ci:fixture:claim:set","source_id":"source:fixture:rpc","locator_id":"locator:fixture:rpc","relation":"supports","reviewer_provenance":{},"generator_provenance":{}},
+              {"binding_id":"ci:fixture:binding:def","claim_id":"ci:fixture:claim:def","source_id":"source:fixture:rpc","locator_id":"locator:fixture:rpc","relation":"supports","reviewer_provenance":{},"generator_provenance":{}},
+              {"binding_id":"ci:fixture:binding:component","claim_id":"ci:fixture:claim:component","source_id":"source:fixture:rpc","locator_id":"locator:fixture:rpc","relation":"supports","reviewer_provenance":{},"generator_provenance":{}},
+              {"binding_id":"ci:fixture:binding:property","claim_id":"ci:fixture:claim:property","source_id":"source:fixture:rpc","locator_id":"locator:fixture:rpc","relation":"supports","reviewer_provenance":{},"generator_provenance":{}},
+              {"binding_id":"ci:fixture:binding:printed","claim_id":"ci:fixture:claim:printed","source_id":"source:fixture:rpc","locator_id":"locator:fixture:rpc","relation":"supports","reviewer_provenance":{},"generator_provenance":{}},
+              {"binding_id":"ci:fixture:binding:normalized","claim_id":"ci:fixture:claim:normalized","source_id":"source:fixture:rpc","locator_id":"locator:fixture:rpc","relation":"supports","reviewer_provenance":{},"generator_provenance":{}}
+            ]
+          }
+          $payload$::jsonb);
+          SQL
+
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f /tmp/apply_fixture.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f /tmp/apply_fixture.sql
+
+      - name: Verify idempotent cardinalities and function permissions
+        shell: bash
+        run: |
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.component_catalogs;")" = "1"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.component_sets;")" = "1"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.component_property_definitions;")" = "1"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.components;")" = "1"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.component_properties;")" = "1"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.component_abilities;")" = "1"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.claims;")" = "6"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.evidence_bindings;")" = "6"
+          test "$(psql "$DATABASE_URL" -Atc "select has_function_privilege('anon','public.apply_component_ingestion_v1(jsonb)','EXECUTE');")" = "f"
+          test "$(psql "$DATABASE_URL" -Atc "select has_function_privilege('authenticated','public.apply_component_ingestion_v1(jsonb)','EXECUTE');")" = "f"
+          test "$(psql "$DATABASE_URL" -Atc "select has_function_privilege('service_role','public.apply_component_ingestion_v1(jsonb)','EXECUTE');")" = "t"
+
+      - name: Verify atomic rollback on invalid evidence target
+        shell: bash
+        run: |
+          cat > /tmp/invalid_apply.sql <<'SQL'
+          SELECT public.apply_component_ingestion_v1($payload$
+          {
+            "schema_version":"1.0",
+            "game_slug":"fixture-game",
+            "game_id":"00000000-0000-0000-0000-000000000001",
+            "ruleset_id":"00000000-0000-0000-0000-000000000178",
+            "completeness":"partial",
+            "catalog_metadata":{},
+            "sources":[{"source_id":"source:fixture:rollback","url":"https://example.com/rollback","source_type":"fixture","trust_metadata":{}}],
+            "source_locators":[{"locator_id":"locator:fixture:rollback","source_id":"source:fixture:rollback","section_heading":"Rollback"}],
+            "component_sets":[{"component_set_id":"rollback-cards","canonical_name":"Rollback Cards","kind":"card","verification_status":"source_bound","source_ids":["source:fixture:rollback"],"metadata":{}}],
+            "property_definitions":[],
+            "components":[{"component_id":"card.rollback","component_set_id":"rollback-cards","canonical_name":"Rollback","kind":"card","verification_status":"source_bound","source_ids":["source:fixture:rollback"],"metadata":{}}],
+            "component_properties":[],
+            "component_abilities":[],
+            "component_concepts":[],
+            "component_rule_nodes":[],
+            "ability_concepts":[],
+            "ability_rule_nodes":[],
+            "claims":[{"claim_id":"ci:fixture:claim:rollback-invalid","claim_type":"component_ingestion_component","normalized_payload":{},"target_type":"component","component_id":"card.does-not-exist","lifecycle_status":"accepted","generator_provenance":{}}],
+            "evidence_bindings":[]
+          }
+          $payload$::jsonb);
+          SQL
+
+          if psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f /tmp/invalid_apply.sql; then
+            echo "invalid ingestion unexpectedly succeeded"
+            exit 1
+          fi
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.components where component_id='card.rollback';")" = "0"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.component_sets where component_set_id='rollback-cards';")" = "0"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.evidence_sources where source_id='source:fixture:rollback';")" = "0"

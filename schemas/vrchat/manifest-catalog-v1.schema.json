@@ -1,0 +1,119 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/KAFKA2306/rule-scribe-games/schemas/vrchat/manifest-catalog-v1.schema.json",
+  "title": "VRChat Manifest Catalog v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "catalogRevision",
+    "manifestSchemaVersion",
+    "entries"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0"
+    },
+    "catalogRevision": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "manifestSchemaVersion": {
+      "const": "1.0"
+    },
+    "entries": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/ManifestCatalogEntry"
+      }
+    }
+  },
+  "$defs": {
+    "ManifestCatalogEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "slug",
+        "rulesetId",
+        "moduleId",
+        "moduleVersionRange",
+        "status",
+        "reasonCode",
+        "manifestPath",
+        "manifestSchemaVersion"
+      ],
+      "properties": {
+        "slug": {
+          "type": "string",
+          "minLength": 1
+        },
+        "rulesetId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "moduleId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "moduleVersionRange": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "enum": [
+            "playable",
+            "unavailable",
+            "unsupported",
+            "retired",
+            "invalid"
+          ]
+        },
+        "reasonCode": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "manifestPath": {
+          "type": "string",
+          "pattern": "^/api/vrchat/v1/manifests/[^/]+/[^/]+$"
+        },
+        "manifestSchemaVersion": {
+          "const": "1.0"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "playable"
+              }
+            },
+            "required": ["status"]
+          },
+          "then": {
+            "properties": {
+              "reasonCode": {
+                "type": "null"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "reasonCode": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

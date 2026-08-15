@@ -1,9 +1,6 @@
 name: Cleanup merged branches
 
 on:
-  pull_request:
-    paths:
-      - ".github/workflows/cleanup-merged-branches.yml"
   push:
     branches:
       - main
@@ -53,7 +50,6 @@ jobs:
         id: candidates
 
       - name: Delete merged branches after main update
-        if: github.event_name != 'pull_request'
         shell: bash
         run: |
           set -euo pipefail
@@ -76,9 +72,5 @@ jobs:
             echo "## Merged branch cleanup"
             echo
             echo "Candidates: ${{ steps.candidates.outputs.candidate_count }}"
-            if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-              echo "PR runs are dry-run only; deletion occurs after the workflow lands on main."
-            else
-              echo "Only same-repository merged PR branches whose current SHA exactly matches the merged PR head SHA are eligible. Open PR branches are excluded."
-            fi
+            echo "Only same-repository merged PR branches whose current SHA exactly matches the merged PR head SHA are eligible. Open PR branches are excluded."
           } >> "$GITHUB_STEP_SUMMARY"
