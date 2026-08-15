@@ -4,7 +4,7 @@ from fastapi.responses import HTMLResponse
 
 from app.core.logger import setup_logging
 from app.middleware.validation import ValidationMiddleware
-from app.routers import auth, games, lists, presentation, vrchat
+from app.routers import auth, games, lists, mechanical_dna, presentation, vrchat
 from app.services.seo_renderer import generate_seo_html
 from app.services.sitemap import get_sitemap_xml
 
@@ -27,6 +27,7 @@ app.add_middleware(
 )
 
 app.include_router(games.router, prefix="/api", tags=["games"])
+app.include_router(mechanical_dna.router, prefix="/api", tags=["connections"])
 app.include_router(presentation.router, prefix="/api", tags=["presentation"])
 app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
 app.include_router(lists.router, prefix="/api", tags=["lists"])
