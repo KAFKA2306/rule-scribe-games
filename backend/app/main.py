@@ -4,25 +4,31 @@ from fastapi.responses import HTMLResponse
 
 from app.core.logger import setup_logging
 from app.middleware.validation import ValidationMiddleware
-from app.routers import auth, games, lists, mechanical_dna, vrchat
+from app.routers import auth, games, lists, mechanical_dna, presentation, vrchat
 from app.services.seo_renderer import generate_seo_html
 from app.services.sitemap import get_sitemap_xml
 
 setup_logging()
 app = FastAPI(title="RuleScribe Minimal", version="1.0.0")
 
-# Order matters: Validation before CORS so CORS is added "on top" and handles its own errors
+# Browser API access is same-origin in production. Explicit localhost origins are
+# retained for Vite development; arbitrary third-party origins are denied.
 app.add_middleware(ValidationMiddleware)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "https://bodoge-no-mikata.vercel.app",
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    ],
     allow_credentials=False,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type"],
 )
 
 app.include_router(games.router, prefix="/api", tags=["games"])
 app.include_router(mechanical_dna.router, prefix="/api", tags=["connections"])
+app.include_router(presentation.router, prefix="/api", tags=["presentation"])
 app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
 app.include_router(lists.router, prefix="/api", tags=["lists"])
 app.include_router(vrchat.router, prefix="/api/vrchat/v1", tags=["vrchat"])
