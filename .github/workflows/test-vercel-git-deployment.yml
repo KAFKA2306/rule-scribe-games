@@ -39,12 +39,15 @@ jobs:
         env:
           PYTHONPATH: .
         run: uv run pytest -q backend/tests/test_vercel_git_deployment.py
-      - name: Assert production push never creates a deployment
+      - name: Assert production deploys at most once after exact-SHA verification misses
         shell: bash
         run: |
           test "$(grep -Fc 'vercel deploy --prod --yes' .github/workflows/deploy.yml)" = "1"
+          test "$(grep -Fc 'vercel deploy --prebuilt --prod --yes' .github/workflows/deploy.yml)" = "1"
+          grep -F "id: git_verification" .github/workflows/deploy.yml
+          grep -F "steps.budget.outputs.state == 'deployable' && steps.git_verification.outcome == 'failure'" .github/workflows/deploy.yml
+          grep -F "steps.push_fallback.outputs.deployed == 'true'" .github/workflows/deploy.yml
           grep -F "if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'" .github/workflows/deploy.yml
-          grep -F "if: steps.budget.outputs.state == 'deployable'" .github/workflows/deploy.yml
           grep -F "api-deployments-free-per-day" .github/workflows/deploy.yml
           grep -F "vercel_deployment_budget.py" .github/workflows/deploy.yml
           grep -F "verify_vercel_git_deployment.py" .github/workflows/deploy.yml
