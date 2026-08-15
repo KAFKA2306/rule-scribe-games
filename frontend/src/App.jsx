@@ -9,6 +9,17 @@ const TIME_FILTERS = [
   { id: '60-120', label: '60-120分' },
   { id: '120+', label: '120分以上' },
 ]
+const NO_IMAGE_URL = '/assets/no-image.webp'
+
+function gameImageUrl(game) {
+  const configured = game.image_url?.trim()
+  if (configured && !configured.includes('placeholder') && !configured.endsWith(NO_IMAGE_URL)) return configured
+  return game.slug ? `/images/games/generated/${game.slug}.webp` : NO_IMAGE_URL
+}
+
+function handleGameImageError(event) {
+  if (!event.currentTarget.src.endsWith(NO_IMAGE_URL)) event.currentTarget.src = NO_IMAGE_URL
+}
 
 function Filters({
   activePlayers,
@@ -277,7 +288,7 @@ function App() {
           {compareList.map((game) => (
             <div key={game.id} className="battle-col">
               <div className="pro-card comparison-game-card">
-                <img src={game.image_url || '/assets/no-image.webp'} className="comparison-game-image" alt={game.title_ja || game.title || ''} />
+                <img src={gameImageUrl(game)} onError={handleGameImageError} className="comparison-game-image" alt={game.title_ja || game.title || ''} />
                 <div className="pro-stat-value">{game.title_ja || game.title}</div>
                 {game.strategy_tier && <div className="tier-badge comparison-tier">TIER {game.strategy_tier}</div>}
               </div>
@@ -416,7 +427,7 @@ function App() {
                   <Link to={`/games/${game.slug}`} className="asset-card asset-card-link">
                     <div className="asset-thumb-container">
                       {game.strategy_tier && <div className="tier-badge">Tier {game.strategy_tier}</div>}
-                      <img src={game.image_url || '/assets/no-image.webp'} alt={title} className="asset-thumb" loading="lazy" />
+                      <img src={gameImageUrl(game)} onError={handleGameImageError} alt={title} className="asset-thumb" loading="lazy" />
                     </div>
                     <div className="asset-info">
                       <div className="asset-title">{title}</div>
@@ -462,7 +473,7 @@ function App() {
             const title = game.title_ja || game.title || 'ゲーム'
             return (
               <div key={game.id} className="compare-item">
-                <img src={game.image_url || '/assets/no-image.webp'} alt={title} />
+                <img src={gameImageUrl(game)} onError={handleGameImageError} alt={title} />
                 <button type="button" aria-label={`${title}を比較から外す`} onClick={() => toggleCompare(game)}>×</button>
               </div>
             )
