@@ -90,9 +90,11 @@ jobs:
       - name: Record quota-deferred production state
         if: steps.budget.outputs.state == 'quota_saturated'
         run: |
-          echo "Production build passed; deployment verification is deferred because the Vercel team is at the observed 24h deployment limit." >> "$GITHUB_STEP_SUMMARY"
+          echo "Production build passed; deployment is deferred because the Vercel team is at the observed 24h deployment limit." >> "$GITHUB_STEP_SUMMARY"
           echo "No deployment creation was attempted by GitHub Actions." >> "$GITHUB_STEP_SUMMARY"
       - name: Verify canonical Vercel Git production deployment
+        id: git_verification
+        continue-on-error: true
         if: steps.budget.outputs.state == 'deployable' || steps.budget.outputs.state == 'unknown'
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
@@ -103,6 +105,46 @@ jobs:
           --team-id "${VERCEL_ORG_ID}"
           --timeout-seconds 180
           --poll-seconds 5
+      - name: Deploy production once when Git integration missed exact SHA
+        if: steps.budget.outputs.state == 'deployable' && steps.git_verification.outcome == 'failure'
+        id: push_fallback
+        shell: bash
+        run: |
+          set +e
+          output="$(vercel deploy --prebuilt --prod --yes --token=${{ secrets.VERCEL_TOKEN }} 2>&1)"
+          code=$?
+          set -e
+          printf '%s\n' "$output"
+          if [ "$code" -eq 0 ]; then
+            echo "deployed=true" >> "$GITHUB_OUTPUT"
+            echo "Vercel Git integration missed the exact main SHA, so GitHub Actions performed one production fallback deployment." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          if printf '%s\n' "$output" | grep -Fq 'api-deployments-free-per-day'; then
+            echo "deployed=false" >> "$GITHUB_OUTPUT"
+            echo "Fallback reached the Vercel deployment quota after preflight; no retry was attempted." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          exit "$code"
+      - name: Verify fallback production deployment
+        if: steps.push_fallback.outputs.deployed == 'true'
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: >-
+          python scripts/verify_vercel_git_deployment.py
+          --sha "${GITHUB_SHA}"
+          --project-id "${VERCEL_PROJECT_ID}"
+          --team-id "${VERCEL_ORG_ID}"
+          --timeout-seconds 180
+          --poll-seconds 5
+      - name: Fail closed when production is still not current
+        if: >-
+          steps.git_verification.outcome == 'failure' &&
+          steps.push_fallback.outputs.deployed != 'true' &&
+          steps.budget.outputs.state != 'quota_saturated'
+        run: |
+          echo "Production still does not match the exact main SHA after verification/fallback." >> "$GITHUB_STEP_SUMMARY"
+          exit 1
 
   Production-Catch-Up:
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
