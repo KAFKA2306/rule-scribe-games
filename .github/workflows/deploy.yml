@@ -111,7 +111,7 @@ jobs:
         shell: bash
         run: |
           set +e
-          output="$(vercel deploy --prebuilt --prod --yes --token=${{ secrets.VERCEL_TOKEN }} 2>&1)"
+          output="$(vercel deploy --prod --yes --token=${{ secrets.VERCEL_TOKEN }} 2>&1)"
           code=$?
           set -e
           printf '%s\n' "$output"

@@ -42,8 +42,7 @@ jobs:
       - name: Assert production deploys at most once after exact-SHA verification misses
         shell: bash
         run: |
-          test "$(grep -Fc 'vercel deploy --prod --yes' .github/workflows/deploy.yml)" = "1"
-          test "$(grep -Fc 'vercel deploy --prebuilt --prod --yes' .github/workflows/deploy.yml)" = "1"
+          test "$(grep -Fc 'vercel deploy --prod --yes' .github/workflows/deploy.yml)" = "2"
           grep -F "id: git_verification" .github/workflows/deploy.yml
           grep -F "steps.budget.outputs.state == 'deployable' && steps.git_verification.outcome == 'failure'" .github/workflows/deploy.yml
           grep -F "steps.push_fallback.outputs.deployed == 'true'" .github/workflows/deploy.yml
