@@ -8,6 +8,7 @@ import './layout.css'
 import './game-detail-palette.css'
 import './ui-palette.css'
 import './uiux-accessibility.css'
+import './auth-control.css'
 
 const GamePage = lazy(() => import('./pages/GamePage.jsx'))
 const DataPage = lazy(() => import('./pages/DataPage.jsx'))
@@ -64,5 +65,5 @@ createRoot(document.getElementById('root')).render(
         <RouterProvider router={router} />
       </AuthProvider>
     </HelmetProvider>
-  </StrictMode>
+  </StrictMode>,
 )
