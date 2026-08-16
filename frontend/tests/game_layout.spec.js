@@ -66,7 +66,7 @@ test('game detail keeps a readable desktop main and puts quick rules before meta
   await page.goto('/games/big-shot')
 
   await expect(page.getByRole('heading', { name: 'ビッグショット' })).toBeVisible()
-  await expect(page.getByRole('tab', { name: /詳しいルール/ })).toBeVisible()
+  await expect(page.getByRole('button', { name: '詳しいルール', exact: true })).toBeVisible()
 
   const desktop = await readLayout(page)
   expect(desktop.scrollWidth).toBe(desktop.clientWidth)
@@ -88,10 +88,10 @@ test('game detail keeps a readable desktop main and puts quick rules before meta
   await expect(page.getByText('検証済みの要約はまだありません')).toBeVisible()
 })
 
-test('setup tab shows only game-specific summaries and fails closed when missing', async ({ page }) => {
+test('setup control shows only game-specific summaries and fails closed when missing', async ({ page }) => {
   await mockGameApi(page)
   await page.goto('/games/big-shot')
-  await page.getByRole('tab', { name: /セットアップ/ }).click()
+  await page.getByRole('button', { name: /セットアップ/ }).click()
 
   await expect(page.getByText(bigShot.setup_summary)).toBeVisible()
   await expect(page.getByText(bigShot.gameplay_summary)).toBeVisible()
@@ -111,7 +111,7 @@ test('setup tab shows only game-specific summaries and fails closed when missing
   await page.unrouteAll({ behavior: 'wait' })
   await mockGameApi(page, missing)
   await page.reload()
-  await page.getByRole('tab', { name: /セットアップ/ }).click()
+  await page.getByRole('button', { name: /セットアップ/ }).click()
 
   await expect(page.getByText('このゲーム固有のセットアップ要約は未確認です。')).toBeVisible()
   await expect(page.getByText('このゲーム固有のゲーム進行要約は未確認です。')).toBeVisible()

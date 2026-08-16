@@ -128,26 +128,26 @@ async function expectLightSurface(locator, label) {
   expect(contrast, `${label} contrast ${contrast.toFixed(2)} must remain readable`).toBeGreaterThanOrEqual(4.5)
 }
 
-test('every game-detail tab avoids legacy dark surfaces', async ({ page }, testInfo) => {
+test('every game-detail secondary view avoids legacy dark surfaces', async ({ page }, testInfo) => {
   await mockApi(page)
   await page.goto('/games/palette-audit')
   await expect(page.getByRole('heading', { name: '配色監査' })).toBeVisible()
 
-  await page.getByRole('tab', { name: /セットアップ/ }).click()
+  await page.getByRole('button', { name: 'セットアップ', exact: true }).click()
   const coachSteps = page.locator('.coach-step')
   await expect(coachSteps).toHaveCount(3)
   for (let index = 0; index < 3; index += 1) {
     await expectLightSurface(coachSteps.nth(index), `coach step ${index + 1}`)
   }
 
-  await page.getByRole('tab', { name: /戦略/ }).click()
+  await page.getByRole('button', { name: '戦略', exact: true }).click()
   await expectLightSurface(page.locator('.game-empty-state'), 'strategy empty state')
 
-  await page.getByRole('tab', { name: /レビュー/ }).click()
+  await page.getByRole('button', { name: 'レビュー', exact: true }).click()
   await expectLightSurface(page.locator('.game-empty-state'), 'review empty state')
   await page.screenshot({ path: testInfo.outputPath('review-light-state.png'), fullPage: true, animations: 'disabled' })
 
-  await page.getByRole('tab', { name: /関連ゲーム/ }).click()
+  await page.getByRole('button', { name: '関連ゲーム', exact: true }).click()
   await expectLightSurface(page.locator('.graph-perspective .game-empty-state'), 'related games empty state')
 
   const legacyDark = await page.locator('.game-detail-content').evaluate((root) => {

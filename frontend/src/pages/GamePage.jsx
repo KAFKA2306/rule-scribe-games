@@ -40,7 +40,7 @@ export default function GamePage({ slug: propSlug, initialGame }) {
   const [game, setGame] = useState(initialGame || null)
   const [loading, setLoading] = useState(!initialGame)
   const [error, setError] = useState(null)
-  const [activeTab, setActiveTab] = useState('rules')
+  const [activeTab, setActiveTab] = useState(null)
   const [connections, setConnections] = useState(null)
   const [connectionsLoading, setConnectionsLoading] = useState(false)
   const [connectionsError, setConnectionsError] = useState(false)
@@ -107,6 +107,7 @@ export default function GamePage({ slug: propSlug, initialGame }) {
 
   const title = game.title_ja || game.title || 'Untitled'
   const rules = game.rules_content || ''
+  const detailedRules = rules.replace(/^#\s+.+\r?\n+/, '')
   const sd = game.structured_data || {}
   const coachSourceUrl = game.source_url || null
   const identityLabel = IDENTITY_LABELS[game.identity_status] || IDENTITY_LABELS.unverified
@@ -174,41 +175,6 @@ export default function GamePage({ slug: propSlug, initialGame }) {
             <div className="pro-card-title">30秒でわかる「{title}」</div>
             <div className="summary-text">{game.summary || game.description}</div>
           </div>
-
-          <div className="pro-card" aria-label="データ信頼状態">
-            <div className="pro-card-title">TRUST &amp; PROVENANCE</div>
-            <div className="game-empty-note">{identityLabel}</div>
-            <div className="game-empty-note">{sourceTrustLabel}</div>
-            <div className="game-empty-note">{reviewLabel}</div>
-          </div>
-
-          {sd.pro_tips?.length > 0 && (
-            <div className="pro-card">
-              <div className="pro-card-title">💡 PRO TIPS</div>
-              {sd.pro_tips.map((tip, i) => (
-                <div key={i} className="tip-item">
-                  <span className="tip-bullet">»</span>
-                  <span>{tip}</span>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {sd.rule_mistakes?.length > 0 && (
-            <div className="pro-card">
-              <div className="pro-card-title">⚠️ COMMON ERRORS</div>
-              {sd.rule_mistakes.map((err, i) => (
-                <div key={i} className="mistake-item">{err}</div>
-              ))}
-            </div>
-          )}
-
-          <ConceptGlossary slug={slug} legacyKeywords={sd.keywords || []} />
-
-          <div className="pro-card">
-            <div className="pro-card-title">LINKS</div>
-            <ExternalLinks game={game} />
-          </div>
         </div>
 
         <div className="game-main">
@@ -227,33 +193,36 @@ export default function GamePage({ slug: propSlug, initialGame }) {
             onShowRules={() => setActiveTab('rules')}
           />
 
-          <div className="rules-tabs" role="tablist" aria-label="ゲーム詳細表示">
-            <button role="tab" aria-selected={activeTab === 'rules'} className={activeTab === 'rules' ? 'active' : ''} onClick={() => setActiveTab('rules')}>
-              詳しいルール <span className="sr-only">ANALYSIS & RULES</span>
+          <div className="rules-tabs" aria-label="必要な追加情報を開く">
+            <button type="button" aria-pressed={activeTab === 'rules'} className={activeTab === 'rules' ? 'active' : ''} onClick={() => setActiveTab('rules')}>
+              詳しいルール
             </button>
-            <button role="tab" aria-selected={activeTab === 'coach'} className={activeTab === 'coach' ? 'active' : ''} onClick={() => setActiveTab('coach')}>
-              セットアップ <span className="sr-only">INST COACH</span>
+            <button type="button" aria-pressed={activeTab === 'coach'} className={activeTab === 'coach' ? 'active' : ''} onClick={() => setActiveTab('coach')}>
+              セットアップ
             </button>
-            <button role="tab" aria-selected={activeTab === 'strategy'} className={activeTab === 'strategy' ? 'active' : ''} onClick={() => setActiveTab('strategy')}>
-              戦略 <span className="sr-only">STRATEGY GUIDE</span>
+            <button type="button" aria-pressed={activeTab === 'strategy'} className={activeTab === 'strategy' ? 'active' : ''} onClick={() => setActiveTab('strategy')}>
+              戦略
             </button>
-            <button role="tab" aria-selected={activeTab === 'reviews'} className={activeTab === 'reviews' ? 'active' : ''} onClick={() => setActiveTab('reviews')}>
-              レビュー <span className="sr-only">SUBAGENT REVIEWS</span>
+            <button type="button" aria-pressed={activeTab === 'reviews'} className={activeTab === 'reviews' ? 'active' : ''} onClick={() => setActiveTab('reviews')}>
+              レビュー
             </button>
-            <button role="tab" aria-selected={activeTab === 'graph'} className={activeTab === 'graph' ? 'active' : ''} onClick={() => setActiveTab('graph')}>
-              関連ゲーム <span className="sr-only">CONNECTIONS</span>
+            <button type="button" aria-pressed={activeTab === 'graph'} className={activeTab === 'graph' ? 'active' : ''} onClick={() => setActiveTab('graph')}>
+              関連ゲーム
             </button>
             {hasInfographics && (
-              <button role="tab" aria-selected={activeTab === 'infographics'} className={activeTab === 'infographics' ? 'active' : ''} onClick={() => setActiveTab('infographics')}>
-                図で見る <span className="sr-only">INFOGRAPHICS</span>
+              <button type="button" aria-pressed={activeTab === 'infographics'} className={activeTab === 'infographics' ? 'active' : ''} onClick={() => setActiveTab('infographics')}>
+                図で見る
               </button>
             )}
+            <button type="button" aria-pressed={activeTab === 'reference'} className={activeTab === 'reference' ? 'active' : ''} onClick={() => setActiveTab('reference')}>
+              用語・出典
+            </button>
           </div>
 
           <div className="pro-main-col">
             {activeTab === 'rules' && (
               <div className="markdown-content">
-                <ReactMarkdown>{rules}</ReactMarkdown>
+                <ReactMarkdown>{detailedRules}</ReactMarkdown>
               </div>
             )}
 
@@ -405,6 +374,45 @@ export default function GamePage({ slug: propSlug, initialGame }) {
                     sourceUrl={legacyInfographicsSourceUrl}
                   />
                 )}
+              </div>
+            )}
+
+            {activeTab === 'reference' && (
+              <div style={{ display: 'grid', gap: '1rem' }}>
+                {sd.rule_mistakes?.length > 0 && (
+                  <div className="pro-card">
+                    <div className="pro-card-title">⚠️ COMMON ERRORS</div>
+                    {sd.rule_mistakes.map((err, i) => (
+                      <div key={i} className="mistake-item">{err}</div>
+                    ))}
+                  </div>
+                )}
+
+                {sd.pro_tips?.length > 0 && (
+                  <div className="pro-card">
+                    <div className="pro-card-title">💡 PRO TIPS</div>
+                    {sd.pro_tips.map((tip, i) => (
+                      <div key={i} className="tip-item">
+                        <span className="tip-bullet">»</span>
+                        <span>{tip}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <ConceptGlossary slug={slug} legacyKeywords={sd.keywords || []} />
+
+                <div className="pro-card" aria-label="データ信頼状態">
+                  <div className="pro-card-title">TRUST &amp; PROVENANCE</div>
+                  <div className="game-empty-note">{identityLabel}</div>
+                  <div className="game-empty-note">{sourceTrustLabel}</div>
+                  <div className="game-empty-note">{reviewLabel}</div>
+                </div>
+
+                <div className="pro-card">
+                  <div className="pro-card-title">LINKS</div>
+                  <ExternalLinks game={game} />
+                </div>
               </div>
             )}
 
