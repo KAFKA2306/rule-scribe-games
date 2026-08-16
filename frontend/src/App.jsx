@@ -79,7 +79,7 @@ function Filters({
                 aria-pressed={activeTier === tier}
                 onClick={() => setActiveTier(activeTier === tier ? null : tier)}
               >
-                Tier {tier}
+                戦略ティア {tier}
               </button>
             ))}
           </div>
@@ -280,8 +280,8 @@ function App() {
     return (
       <div className="game-detail-content comparison-page">
         <div className="comparison-page__header">
-          <h1 className="game-title">COMPARISON BATTLE</h1>
-          <button type="button" className="filter-btn" onClick={() => setIsBattleMode(false)}>CLOSE BATTLE</button>
+          <h1 className="game-title">ゲーム比較</h1>
+          <button type="button" className="filter-btn" onClick={() => setIsBattleMode(false)}>比較を閉じる</button>
         </div>
 
         <div className="battle-grid">
@@ -290,32 +290,32 @@ function App() {
               <div className="pro-card comparison-game-card">
                 <img src={gameImageUrl(game)} onError={handleGameImageError} className="comparison-game-image" alt={game.title_ja || game.title || ''} />
                 <div className="pro-stat-value">{game.title_ja || game.title}</div>
-                {game.strategy_tier && <div className="tier-badge comparison-tier">TIER {game.strategy_tier}</div>}
+                {game.strategy_tier && <div className="tier-badge comparison-tier">戦略ティア {game.strategy_tier}</div>}
               </div>
 
               <div className="battle-attr">
-                <div className="battle-attr-label">Synopsis</div>
-                <div className="comparison-summary">{game.summary || 'No summary available.'}</div>
+                <div className="battle-attr-label">概要</div>
+                <div className="comparison-summary">{game.summary || '概要はまだありません。'}</div>
               </div>
 
               <div className="battle-attr">
-                <div className="battle-attr-label">Specs</div>
+                <div className="battle-attr-label">基本情報</div>
                 <div className="pro-stats-grid comparison-specs">
-                  <div className="pro-stat-card"><div className="pro-stat-label">P</div><div className="pro-stat-value comparison-stat">{game.min_players}-{game.max_players}</div></div>
-                  <div className="pro-stat-card"><div className="pro-stat-label">T</div><div className="pro-stat-value comparison-stat">{game.play_time}m</div></div>
+                  <div className="pro-stat-card"><div className="pro-stat-label">人数</div><div className="pro-stat-value comparison-stat">{game.min_players}-{game.max_players}</div></div>
+                  <div className="pro-stat-card"><div className="pro-stat-label">時間</div><div className="pro-stat-value comparison-stat">{game.play_time}分</div></div>
                 </div>
               </div>
 
               {game.structured_data?.mechanics && (
                 <div className="battle-attr">
-                  <div className="battle-attr-label">Mechanics</div>
+                  <div className="battle-attr-label">メカニクス</div>
                   <div className="tag-list">
                     {game.structured_data.mechanics.slice(0, 5).map((mechanic) => <span key={mechanic} className="tag-item">{mechanic}</span>)}
                   </div>
                 </div>
               )}
 
-              <Link to={`/games/${game.slug}`} className="filter-btn comparison-detail-link">VIEW FULL ANALYSIS</Link>
+              <Link to={`/games/${game.slug}`} className="filter-btn comparison-detail-link">詳しい情報を見る</Link>
             </div>
           ))}
         </div>
@@ -363,7 +363,7 @@ function App() {
 
         <div className="db-status" aria-label={loading ? 'ゲーム一覧を同期中' : `${totalGamesCount}件のゲーム`}>
           <div className="status-dot connected"></div>
-          {loading ? 'SYNCING...' : `${totalGamesCount} GAMES`}
+          {loading ? '同期中…' : `${totalGamesCount}件のゲーム`}
         </div>
       </header>
 
@@ -395,10 +395,10 @@ function App() {
             >
               フィルター
             </button>
-            <span className="results-count">{filteredGames.length} RESULTS</span>
+            <span className="results-count">{filteredGames.length}件</span>
             {activePlayers && <div className="filter-chip">人数: {activePlayers} <button type="button" aria-label="人数フィルターを解除" onClick={() => setActivePlayers(null)}>×</button></div>}
             {activeTime && <div className="filter-chip">時間: {activeTime} <button type="button" aria-label="時間フィルターを解除" onClick={() => setActiveTime(null)}>×</button></div>}
-            {activeTier && <div className="filter-chip">Tier: {activeTier} <button type="button" aria-label="戦略Tierフィルターを解除" onClick={() => setActiveTier(null)}>×</button></div>}
+            {activeTier && <div className="filter-chip">戦略ティア: {activeTier} <button type="button" aria-label="戦略ティアフィルターを解除" onClick={() => setActiveTier(null)}>×</button></div>}
           </div>
 
           <label htmlFor="game-sort" className="sr-only">ゲームの並び順</label>
@@ -415,7 +415,7 @@ function App() {
         {compareNotice && <div className="app-feedback compare-feedback" role="status">{compareNotice}</div>}
 
         {loading ? (
-          <div className="app-loading-state" role="status">ARCHIVE INITIALIZING...</div>
+          <div className="app-loading-state" role="status">ゲーム一覧を読み込み中…</div>
         ) : (
           <div className="asset-grid">
             {filteredGames.map((game) => {
@@ -426,14 +426,14 @@ function App() {
                 <div key={game.id} className="asset-card-shell">
                   <Link to={`/games/${game.slug}`} className="asset-card asset-card-link">
                     <div className="asset-thumb-container">
-                      {game.strategy_tier && <div className="tier-badge">Tier {game.strategy_tier}</div>}
+                      {game.strategy_tier && <div className="tier-badge">戦略ティア {game.strategy_tier}</div>}
                       <img src={gameImageUrl(game)} onError={handleGameImageError} alt={title} className="asset-thumb" loading="lazy" />
                     </div>
                     <div className="asset-info">
                       <div className="asset-title">{title}</div>
                       <div className="asset-meta">
                         {game.min_players && <span className="meta-item">👥 {game.min_players}{game.max_players && game.max_players !== game.min_players ? `-${game.max_players}` : ''}</span>}
-                        {game.play_time && <span className="meta-item">⏳ {game.play_time}m</span>}
+                        {game.play_time && <span className="meta-item">⏳ {game.play_time}分</span>}
                         {game.published_year && <span className="meta-item">📅 {game.published_year}</span>}
                       </div>
                       <div className="asset-summary">{game.summary || game.description}</div>
@@ -448,7 +448,7 @@ function App() {
                     title={limitReached ? '比較は3件までです' : undefined}
                     onClick={() => toggleCompare(game)}
                   >
-                    {selected ? 'READY' : limitReached ? 'MAX 3' : 'COMPARE'}
+                    {selected ? '追加済み' : limitReached ? '上限3件' : '比較に追加'}
                   </button>
                 </div>
               )
@@ -468,7 +468,7 @@ function App() {
 
       {compareList.length > 0 && (
         <div className="comparison-tray" role="region" aria-label={`比較トレイ ${compareList.length}/3`}>
-          <div className="comparison-tray__label">BATTLE TRAY · {compareList.length}/3</div>
+          <div className="comparison-tray__label">比較トレイ · {compareList.length}/3</div>
           {compareList.map((game) => {
             const title = game.title_ja || game.title || 'ゲーム'
             return (
@@ -480,7 +480,7 @@ function App() {
           })}
           {compareList.length >= 2 && (
             <button type="button" className="filter-btn active battle-start-button" onClick={() => setIsBattleMode(true)}>
-              BATTLE START
+              比較する
             </button>
           )}
         </div>
