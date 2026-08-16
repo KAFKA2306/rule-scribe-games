@@ -1,0 +1,11 @@
+{
+  "id": "/",
+  "name": "ボドゲのミカタ",
+  "short_name": "ボドゲのミカタ",
+  "lang": "ja",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "theme_color": "#FBFAF7",
+  "background_color": "#FBFAF7"
+}
