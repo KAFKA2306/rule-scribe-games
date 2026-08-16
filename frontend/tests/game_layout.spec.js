@@ -32,7 +32,7 @@ const bigShot = {
 async function mockGameApi(page, game = bigShot) {
   await page.route('**/api/games**', async route => {
     const url = new URL(route.request().url())
-    if (url.pathname === '/api/games/big-shot') {
+    if (url.pathname === `/api/games/${game.slug}`) {
       await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ game }) })
       return
     }
@@ -86,6 +86,35 @@ test('game detail keeps a readable desktop main and puts quick rules before meta
   expect(Math.abs(compact.sidebar.width - compact.main.width)).toBeLessThan(2)
   expect(compact.sidebar.y).toBeGreaterThan(compact.main.y + compact.main.height - 2)
   await expect(page.getByText('検証済みの要約はまだありません')).toBeVisible()
+})
+
+test('quick rules flatten from two rows to one on desktop without flattening the page columns', async ({ page }) => {
+  const skullKing = {
+    ...bigShot,
+    id: 269,
+    slug: 'skull-king',
+    title: 'Skull King',
+    title_ja: 'スカルキング',
+  }
+
+  await mockGameApi(page, skullKing)
+  await page.setViewportSize({ width: 1280, height: 900 })
+  await page.goto('/games/skull-king')
+
+  const cards = page.locator('.quick-rule-card')
+  await expect(cards).toHaveCount(4)
+
+  const boxes = await cards.evaluateAll(nodes => nodes.map(node => {
+    const rect = node.getBoundingClientRect()
+    return { x: rect.x, y: rect.y, width: rect.width }
+  }))
+
+  const ys = boxes.map(box => box.y)
+  expect(Math.max(...ys) - Math.min(...ys)).toBeLessThan(2)
+  expect(boxes.every(box => box.width > 0)).toBe(true)
+
+  const desktop = await readLayout(page)
+  expect(desktop.main.x).toBeGreaterThan(desktop.sidebar.x + desktop.sidebar.width)
 })
 
 test('setup tab shows only game-specific summaries and fails closed when missing', async ({ page }) => {
