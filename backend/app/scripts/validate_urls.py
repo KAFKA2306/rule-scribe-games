@@ -10,6 +10,7 @@ load_dotenv()
 _VALIDATE_FIELDS = [
     "bgg_url",
     "bga_url",
+    "source_url",
     "official_url",
     "image_url",
     "amazon_url",
