@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Verify that Vercel Git integration deployed the expected GitHub SHA.
+"""Verify that Vercel has a READY production deployment for the expected GitHub SHA.
 
 This script is read-only: it never creates or retries a Vercel deployment.
 """
@@ -92,7 +92,7 @@ def verify(*, token: str, team_id: str, project_id: str, expected_sha: str, time
                     return match
                 if match.state in TERMINAL_FAILURE_STATES:
                     raise RuntimeError(
-                        f"Vercel Git deployment {match.deployment_id} for {expected_sha} ended in {match.state}"
+                        f"Vercel production deployment {match.deployment_id} for {expected_sha} ended in {match.state}"
                     )
         except RuntimeError:
             raise
@@ -103,7 +103,7 @@ def verify(*, token: str, team_id: str, project_id: str, expected_sha: str, time
         if time.monotonic() >= deadline:
             detail = f"; last API error: {last_error}" if last_error else ""
             raise TimeoutError(
-                f"Vercel Git production deployment for {expected_sha} was not READY within "
+                f"Vercel production deployment for {expected_sha} was not READY within "
                 f"{timeout_seconds}s (last state: {last_state}){detail}"
             )
         time.sleep(poll_seconds)
@@ -148,7 +148,7 @@ def main() -> int:
         f"- GitHub SHA: `{match.commit_sha}`\n"
         f"- Deployment: `{match.deployment_id}`\n"
         f"- URL: {deployment_url}\n"
-        "- Deployment source: Vercel Git integration (GitHub Actions did not create a second deployment)"
+        "- Deployment source: not asserted by this verifier"
     )
     append_summary(message)
     print(message)
