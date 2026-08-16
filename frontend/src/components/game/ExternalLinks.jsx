@@ -20,17 +20,18 @@ const sourceLabel = (sourceTrust) => {
 
 export const ExternalLinks = ({ game }) => {
   const { affiliate_urls, source_url, source_trust, bgg_url, amazon_url } = game
-  const amazon = affiliate_urls?.amazon || amazon_url
+  const affiliateAmazon = affiliate_urls?.amazon
+  const amazon = affiliateAmazon || amazon_url
   const rakuten = affiliate_urls?.rakuten
   const yahoo = affiliate_urls?.yahoo
 
   const links = [
-    { url: amazon, label: 'Amazon', class: 'amazon' },
-    { url: rakuten, label: '楽天で見る', class: 'rakuten' },
-    { url: yahoo, label: 'Yahoo!で見る', class: 'yahoo' },
-    { url: source_url, label: sourceLabel(source_trust), class: 'source' },
-    { url: bgg_url, label: 'BoardGameGeek', class: 'bgg' },
-    { url: game.bga_url, label: 'Board Game Arena', class: 'bga' },
+    { url: amazon, label: 'Amazon', class: 'amazon', sponsored: Boolean(affiliateAmazon) },
+    { url: rakuten, label: '楽天で見る', class: 'rakuten', sponsored: true },
+    { url: yahoo, label: 'Yahoo!で見る', class: 'yahoo', sponsored: true },
+    { url: source_url, label: sourceLabel(source_trust), class: 'source', sponsored: false },
+    { url: bgg_url, label: 'BoardGameGeek', class: 'bgg', sponsored: false },
+    { url: game.bga_url, label: 'Board Game Arena', class: 'bga', sponsored: false },
   ].filter((link) => isValidUrl(link.url))
 
   if (links.length === 0) return null
@@ -44,7 +45,7 @@ export const ExternalLinks = ({ game }) => {
             key={`${link.class}:${link.url}`}
             href={link.url}
             target="_blank"
-            rel="noopener noreferrer sponsored"
+            rel={link.sponsored ? 'noopener noreferrer sponsored' : 'noopener noreferrer'}
             className={`link-button ${link.class}`}
           >
             {link.label}
