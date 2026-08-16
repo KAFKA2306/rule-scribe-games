@@ -1,25 +1,40 @@
 import { useState } from 'react'
 
 export const ShareButton = ({ slug }) => {
-  const [copied, setCopied] = useState(false)
+  const [status, setStatus] = useState('idle')
 
   const handleShare = async () => {
     const url = `https://bodoge-no-mikata.vercel.app/games/${slug}`
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      await navigator.clipboard.writeText(url)
+
+    if (!navigator.clipboard?.writeText) {
+      setStatus('error')
+      return
     }
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
+
+    try {
+      await navigator.clipboard.writeText(url)
+      setStatus('copied')
+      setTimeout(() => setStatus('idle'), 2000)
+    } catch (error) {
+      console.error('Failed to copy game URL:', error)
+      setStatus('error')
+    }
   }
+
+  const label = status === 'copied'
+    ? 'コピーしました'
+    : status === 'error'
+      ? 'コピーできませんでした'
+      : 'リンクをコピー'
 
   return (
     <button
       onClick={handleShare}
-      className={`share-btn ${copied ? 'copied' : ''}`}
-      title={copied ? 'コピーしました' : 'リンクをコピー'}
-      aria-label="Share this game"
+      className={`share-btn ${status === 'copied' ? 'copied' : ''}`}
+      title={label}
+      aria-label={label}
     >
-      {copied ? '✓ 完了' : '🔗 コピー'}
+      {status === 'copied' ? '✓ 完了' : status === 'error' ? 'コピー失敗' : '🔗 コピー'}
     </button>
   )
 }
