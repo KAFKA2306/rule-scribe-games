@@ -130,3 +130,28 @@ test('selected list is encoded in history so back and forward restore list conte
   await expect(page).toHaveURL(/\/lists$/)
   await expect(page.getByRole('heading', { name: '所持ゲーム' })).toBeVisible()
 })
+
+test('mobile filter drawer moves, contains, and restores keyboard focus', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 812 })
+  await mockNavigationApis(page)
+  await page.goto('/')
+
+  const toggle = page.getByRole('button', { name: 'フィルター', exact: true })
+  await toggle.click()
+
+  const dialog = page.getByRole('dialog', { name: 'ゲーム絞り込み' })
+  const close = dialog.getByRole('button', { name: 'フィルターを閉じる' })
+  const reset = dialog.getByRole('button', { name: 'フィルターをリセット' })
+
+  await expect(dialog).toBeVisible()
+  await expect(close).toBeFocused()
+
+  await page.keyboard.press('Shift+Tab')
+  await expect(reset).toBeFocused()
+  await page.keyboard.press('Tab')
+  await expect(close).toBeFocused()
+
+  await page.keyboard.press('Escape')
+  await expect(toggle).toBeFocused()
+  await expect(page.locator('#directory-filters')).not.toHaveClass(/mobile-open/)
+})

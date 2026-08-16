@@ -74,7 +74,7 @@ test('directory keeps search local, labels controls, exposes mobile filters, and
     const filterToggle = page.getByRole('button', { name: 'フィルター', exact: true })
     await expect(filterToggle).toBeVisible()
     await filterToggle.click()
-    const filterPanel = page.getByRole('complementary', { name: 'ゲーム絞り込み' })
+    const filterPanel = page.getByRole('dialog', { name: 'ゲーム絞り込み' })
     await expect(filterPanel).toBeVisible()
     await filterPanel.getByRole('button', { name: '2人' }).click()
     await filterPanel.getByRole('button', { name: 'フィルターを閉じる' }).click()
