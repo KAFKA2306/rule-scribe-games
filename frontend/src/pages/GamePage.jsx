@@ -146,71 +146,6 @@ export default function GamePage({ slug: propSlug, initialGame }) {
       </div>
 
       <div className="game-layout">
-        <div className="game-sidebar" aria-label="ゲーム基本情報">
-          <div className="pro-stats-grid">
-            <div className="pro-stat-card">
-              <div className="pro-stat-label">PLAYERS</div>
-              <div className="pro-stat-value">
-                {game.min_players != null
-                  ? `${game.min_players}${game.max_players != null && game.max_players !== game.min_players ? `-${game.max_players}` : ''}`
-                  : 'N/A'}
-              </div>
-            </div>
-            <div className="pro-stat-card">
-              <div className="pro-stat-label">TIME</div>
-              <div className="pro-stat-value">{game.play_time != null ? `${game.play_time}m` : 'N/A'}</div>
-            </div>
-            <div className="pro-stat-card">
-              <div className="pro-stat-label">AGE</div>
-              <div className="pro-stat-value">{game.min_age != null ? `${game.min_age}+` : 'N/A'}</div>
-            </div>
-            <div className="pro-stat-card">
-              <div className="pro-stat-label">YEAR</div>
-              <div className="pro-stat-value">{game.published_year || 'N/A'}</div>
-            </div>
-          </div>
-
-          <div className="pro-card pro-card--synopsis">
-            <div className="pro-card-title">30秒でわかる「{title}」</div>
-            <div className="summary-text">{game.summary || game.description}</div>
-          </div>
-
-          <div className="pro-card" aria-label="データ信頼状態">
-            <div className="pro-card-title">TRUST &amp; PROVENANCE</div>
-            <div className="game-empty-note">{identityLabel}</div>
-            <div className="game-empty-note">{sourceTrustLabel}</div>
-            <div className="game-empty-note">{reviewLabel}</div>
-          </div>
-
-          {sd.pro_tips?.length > 0 && (
-            <div className="pro-card">
-              <div className="pro-card-title">💡 PRO TIPS</div>
-              {sd.pro_tips.map((tip, i) => (
-                <div key={i} className="tip-item">
-                  <span className="tip-bullet">»</span>
-                  <span>{tip}</span>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {sd.rule_mistakes?.length > 0 && (
-            <div className="pro-card">
-              <div className="pro-card-title">⚠️ COMMON ERRORS</div>
-              {sd.rule_mistakes.map((err, i) => (
-                <div key={i} className="mistake-item">{err}</div>
-              ))}
-            </div>
-          )}
-
-          <ConceptGlossary slug={slug} legacyKeywords={sd.keywords || []} />
-
-          <div className="pro-card">
-            <div className="pro-card-title">LINKS</div>
-            <ExternalLinks game={game} />
-          </div>
-        </div>
-
         <div className="game-main">
           <div className="game-content">
             <h1 className="game-title">{title}</h1>
@@ -409,6 +344,71 @@ export default function GamePage({ slug: propSlug, initialGame }) {
             )}
 
             {activeTab === 'data' && <pre className="game-data-dump">{JSON.stringify(game, null, 2)}</pre>}
+          </div>
+        </div>
+
+        <div className="game-sidebar" aria-label="ゲーム基本情報">
+          <div className="pro-stats-grid">
+            <div className="pro-stat-card">
+              <div className="pro-stat-label">PLAYERS</div>
+              <div className="pro-stat-value">
+                {game.min_players != null
+                  ? `${game.min_players}${game.max_players != null && game.max_players !== game.min_players ? `-${game.max_players}` : ''}`
+                  : 'N/A'}
+              </div>
+            </div>
+            <div className="pro-stat-card">
+              <div className="pro-stat-label">TIME</div>
+              <div className="pro-stat-value">{game.play_time != null ? `${game.play_time}m` : 'N/A'}</div>
+            </div>
+            <div className="pro-stat-card">
+              <div className="pro-stat-label">AGE</div>
+              <div className="pro-stat-value">{game.min_age != null ? `${game.min_age}+` : 'N/A'}</div>
+            </div>
+            <div className="pro-stat-card">
+              <div className="pro-stat-label">YEAR</div>
+              <div className="pro-stat-value">{game.published_year || 'N/A'}</div>
+            </div>
+          </div>
+
+          <div className="pro-card pro-card--synopsis">
+            <div className="pro-card-title">30秒でわかる「{title}」</div>
+            <div className="summary-text">{game.summary || game.description}</div>
+          </div>
+
+          <div className="pro-card" aria-label="データ信頼状態">
+            <div className="pro-card-title">TRUST &amp; PROVENANCE</div>
+            <div className="game-empty-note">{identityLabel}</div>
+            <div className="game-empty-note">{sourceTrustLabel}</div>
+            <div className="game-empty-note">{reviewLabel}</div>
+          </div>
+
+          {sd.pro_tips?.length > 0 && (
+            <div className="pro-card">
+              <div className="pro-card-title">💡 PRO TIPS</div>
+              {sd.pro_tips.map((tip, i) => (
+                <div key={i} className="tip-item">
+                  <span className="tip-bullet">»</span>
+                  <span>{tip}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {sd.rule_mistakes?.length > 0 && (
+            <div className="pro-card">
+              <div className="pro-card-title">⚠️ COMMON ERRORS</div>
+              {sd.rule_mistakes.map((err, i) => (
+                <div key={i} className="mistake-item">{err}</div>
+              ))}
+            </div>
+          )}
+
+          <ConceptGlossary slug={slug} legacyKeywords={sd.keywords || []} />
+
+          <div className="pro-card">
+            <div className="pro-card-title">LINKS</div>
+            <ExternalLinks game={game} />
           </div>
         </div>
       </div>

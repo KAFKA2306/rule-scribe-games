@@ -84,7 +84,6 @@ body {
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
-  order: 0;
 }
 
 .game-sidebar .pro-stats-grid,
@@ -96,15 +95,26 @@ body {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.game-sidebar .summary-text,
+.game-sidebar .tip-item,
+.game-sidebar .mistake-item {
+  max-width: 72ch;
+}
+
 .game-main {
   width: 100%;
   max-width: none;
-  order: -1;
 }
 
-/* Keep quick-rule cards flat on wide screens while the page itself stays single-column. */
+/* Wide, scan-heavy cards can use the canvas; long-form copy keeps a readable measure. */
 .game-main .quick-rules-grid {
   grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.game-main .markdown-content > :where(h1, h2, h3, h4, h5, h6, p, ul, ol, blockquote),
+.game-main .coach-mode,
+.game-main .persona-reviews {
+  max-width: 72ch;
 }
 
 .game-main .game-content {
