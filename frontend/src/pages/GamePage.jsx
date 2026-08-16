@@ -156,6 +156,34 @@ export default function GamePage({ slug: propSlug, initialGame }) {
             )}
           </div>
 
+          <div className="pro-stats-grid" aria-label="ゲーム基本情報">
+            <div className="pro-stat-card">
+              <div className="pro-stat-label">PLAYERS</div>
+              <div className="pro-stat-value">
+                {game.min_players != null
+                  ? `${game.min_players}${game.max_players != null && game.max_players !== game.min_players ? `-${game.max_players}` : ''}`
+                  : 'N/A'}
+              </div>
+            </div>
+            <div className="pro-stat-card">
+              <div className="pro-stat-label">TIME</div>
+              <div className="pro-stat-value">{game.play_time != null ? `${game.play_time}m` : 'N/A'}</div>
+            </div>
+            <div className="pro-stat-card">
+              <div className="pro-stat-label">AGE</div>
+              <div className="pro-stat-value">{game.min_age != null ? `${game.min_age}+` : 'N/A'}</div>
+            </div>
+            <div className="pro-stat-card">
+              <div className="pro-stat-label">YEAR</div>
+              <div className="pro-stat-value">{game.published_year || 'N/A'}</div>
+            </div>
+          </div>
+
+          <div className="pro-card pro-card--synopsis">
+            <div className="pro-card-title">30秒でわかる「{title}」</div>
+            <div className="summary-text">{game.summary || game.description}</div>
+          </div>
+
           <QuickRulesPanel
             guide={ruleGuide}
             onShowFlow={hasInfographics ? () => setActiveTab('infographics') : null}
@@ -347,35 +375,7 @@ export default function GamePage({ slug: propSlug, initialGame }) {
           </div>
         </div>
 
-        <div className="game-sidebar" aria-label="ゲーム基本情報">
-          <div className="pro-stats-grid">
-            <div className="pro-stat-card">
-              <div className="pro-stat-label">PLAYERS</div>
-              <div className="pro-stat-value">
-                {game.min_players != null
-                  ? `${game.min_players}${game.max_players != null && game.max_players !== game.min_players ? `-${game.max_players}` : ''}`
-                  : 'N/A'}
-              </div>
-            </div>
-            <div className="pro-stat-card">
-              <div className="pro-stat-label">TIME</div>
-              <div className="pro-stat-value">{game.play_time != null ? `${game.play_time}m` : 'N/A'}</div>
-            </div>
-            <div className="pro-stat-card">
-              <div className="pro-stat-label">AGE</div>
-              <div className="pro-stat-value">{game.min_age != null ? `${game.min_age}+` : 'N/A'}</div>
-            </div>
-            <div className="pro-stat-card">
-              <div className="pro-stat-label">YEAR</div>
-              <div className="pro-stat-value">{game.published_year || 'N/A'}</div>
-            </div>
-          </div>
-
-          <div className="pro-card pro-card--synopsis">
-            <div className="pro-card-title">30秒でわかる「{title}」</div>
-            <div className="summary-text">{game.summary || game.description}</div>
-          </div>
-
+        <div className="game-sidebar" aria-label="補足情報">
           <div className="pro-card" aria-label="データ信頼状態">
             <div className="pro-card-title">TRUST &amp; PROVENANCE</div>
             <div className="game-empty-note">{identityLabel}</div>
