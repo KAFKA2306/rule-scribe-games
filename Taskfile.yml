@@ -46,17 +46,12 @@ tasks:
   lint:
     desc: Lint / format (backend Ruff, frontend Prettier+ESLint)
     cmds:
-      - task: lint:backend
-      - task: lint:frontend
-      - cmd: |
+      - defer: |
           cache_dir="/tmp/claude-statusline-$(whoami)"
           mkdir -p "$cache_dir"
-          ruff_out=$(cd backend && uv run ruff check app api scripts tests --quiet 2>/dev/null)
-          if [ $? -eq 0 ]; then
-            echo "ok" > "$cache_dir/lint"
-          else
-            echo "$ruff_out" | grep -c "^" > "$cache_dir/lint" 2>/dev/null || echo "?" > "$cache_dir/lint"
-          fi
+          echo '{{if .EXIT_CODE}}fail{{else}}ok{{end}}' > "$cache_dir/lint"
+      - task: lint:backend
+      - task: lint:frontend
 
   format:
     desc: "Format and check Python code (app, api, scripts, tests)"
@@ -113,14 +108,11 @@ tasks:
     desc: Run backend tests and cache result for status line
     dir: backend
     cmds:
-      - cmd: |
+      - defer: |
           cache_dir="/tmp/claude-statusline-$(whoami)"
           mkdir -p "$cache_dir"
-          if uv run pytest tests/ -q 2>&1; then
-            echo "pass" > "$cache_dir/test"
-          else
-            echo "fail" > "$cache_dir/test"
-          fi
+          echo '{{if .EXIT_CODE}}fail{{else}}pass{{end}}' > "$cache_dir/test"
+      - uv run pytest tests/ -q
 
   validate-urls:
     desc: DBの全ゲームURLをread-only監査（DB更新なし）
