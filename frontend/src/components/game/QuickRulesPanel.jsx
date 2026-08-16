@@ -1,7 +1,7 @@
 import { ScoringBreakdown } from './ScoringBreakdown'
 import './rule-guide.css'
 
-export function QuickRulesPanel({ guide, onShowFlow, onShowRules }) {
+export function QuickRulesPanel({ guide }) {
   if (!guide) {
     return (
       <section className="quick-rules-panel quick-rules-unavailable" aria-label="すぐ遊ぶ">
@@ -10,11 +10,6 @@ export function QuickRulesPanel({ guide, onShowFlow, onShowRules }) {
         <p style={{ marginTop: '0.55rem', lineHeight: 1.6 }}>
           未確認内容は推測表示しません。詳しいルールと出典を確認してください。
         </p>
-        {onShowRules && (
-          <div className="quick-rules-actions">
-            <button type="button" className="quick-rule-action" onClick={onShowRules}>詳しいルールを見る</button>
-          </div>
-        )}
       </section>
     )
   }
@@ -62,14 +57,9 @@ export function QuickRulesPanel({ guide, onShowFlow, onShowRules }) {
 
       <ScoringBreakdown scoring={guide.scoring} />
 
-      <div className="quick-rules-actions">
-        {onShowFlow && <button type="button" className="quick-rule-action" onClick={onShowFlow}>図で見る</button>}
-        {onShowRules && <button type="button" className="quick-rule-action" onClick={onShowRules}>詳しいルール</button>}
-        <a className="quick-rule-action" href={guide.source.url} target="_blank" rel="noreferrer">公式出典</a>
-      </div>
-
       <div className="quick-rules-source">
-        {guide.source.label} / rule version: {guide.ruleVersion}。要約は公式裁定そのものではありません。
+        <a href={guide.source.url} target="_blank" rel="noreferrer">公式出典: {guide.source.label}</a>
+        {' / '}rule version: {guide.ruleVersion}。要約は公式裁定そのものではありません。
       </div>
     </section>
   )

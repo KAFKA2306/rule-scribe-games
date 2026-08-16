@@ -117,6 +117,26 @@ test('quick rules flatten from two rows to one on desktop without flattening the
   expect(desktop.main.x).toBeGreaterThan(desktop.sidebar.x + desktop.sidebar.width)
 })
 
+test('game detail uses one navigation row after quick rules', async ({ page }) => {
+  const skullKing = {
+    ...bigShot,
+    id: 269,
+    slug: 'skull-king',
+    title: 'Skull King',
+    title_ja: 'スカルキング',
+  }
+
+  await mockGameApi(page, skullKing)
+  await page.setViewportSize({ width: 1280, height: 900 })
+  await page.goto('/games/skull-king')
+
+  await expect(page.locator('.quick-rules-actions')).toHaveCount(0)
+  await expect(page.getByRole('tablist', { name: 'ゲーム詳細表示' })).toHaveCount(1)
+  await expect(page.getByRole('tab', { name: /詳しいルール/ })).toHaveCount(1)
+  await expect(page.getByRole('tab', { name: /図で見る/ })).toHaveCount(1)
+  await expect(page.getByRole('link', { name: /公式出典:/ })).toHaveCount(1)
+})
+
 test('setup tab shows only game-specific summaries and fails closed when missing', async ({ page }) => {
   await mockGameApi(page)
   await page.goto('/games/big-shot')
