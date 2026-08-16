@@ -60,38 +60,39 @@ async function readLayout(page) {
   })
 }
 
-test('game detail keeps a readable desktop main and puts quick rules before metadata at 800px', async ({ page }) => {
+function expectSingleColumn(layout) {
+  expect(layout.scrollWidth).toBe(layout.clientWidth)
+  expect(Math.abs(layout.sidebar.x - layout.main.x)).toBeLessThan(2)
+  expect(Math.abs(layout.sidebar.width - layout.main.width)).toBeLessThan(2)
+  expect(layout.sidebar.y).toBeGreaterThan(layout.main.y + layout.main.height - 2)
+  expect(layout.titleX).toBeGreaterThanOrEqual(layout.main.x)
+  expect(layout.tabsX).toBeGreaterThanOrEqual(layout.main.x)
+}
+
+test('game detail stays single-column at desktop and compact widths', async ({ page }) => {
   await mockGameApi(page)
   await page.setViewportSize({ width: 1280, height: 900 })
   await page.goto('/games/big-shot')
 
   await expect(page.getByRole('heading', { name: 'ビッグショット' })).toBeVisible()
-  await expect(page.getByRole('button', { name: '詳しいルール', exact: true })).toBeVisible()
+  await expect(page.getByRole('tab', { name: /詳しいルール/ })).toBeVisible()
 
   const desktop = await readLayout(page)
-  expect(desktop.scrollWidth).toBe(desktop.clientWidth)
-  expect(desktop.sidebar.width).toBeGreaterThanOrEqual(280)
-  expect(desktop.sidebar.width).toBeLessThanOrEqual(340)
-  expect(desktop.main.width).toBeGreaterThan(600)
-  expect(desktop.main.x).toBeGreaterThan(desktop.sidebar.x + desktop.sidebar.width)
-  expect(desktop.titleX).toBeGreaterThanOrEqual(desktop.main.x)
-  expect(desktop.tabsX).toBeGreaterThanOrEqual(desktop.main.x)
+  expectSingleColumn(desktop)
+  expect(desktop.main.width).toBeGreaterThan(1000)
 
   await page.setViewportSize({ width: 800, height: 900 })
   await expect(page.locator('.game-layout')).toHaveCSS('grid-template-columns', /\d+(?:\.\d+)?px/)
 
   const compact = await readLayout(page)
-  expect(compact.scrollWidth).toBe(compact.clientWidth)
-  expect(Math.abs(compact.sidebar.x - compact.main.x)).toBeLessThan(2)
-  expect(Math.abs(compact.sidebar.width - compact.main.width)).toBeLessThan(2)
-  expect(compact.sidebar.y).toBeGreaterThan(compact.main.y + compact.main.height - 2)
+  expectSingleColumn(compact)
   await expect(page.getByText('検証済みの要約はまだありません')).toBeVisible()
 })
 
-test('setup control shows only game-specific summaries and fails closed when missing', async ({ page }) => {
+test('setup tab shows only game-specific summaries and fails closed when missing', async ({ page }) => {
   await mockGameApi(page)
   await page.goto('/games/big-shot')
-  await page.getByRole('button', { name: /セットアップ/ }).click()
+  await page.getByRole('tab', { name: /セットアップ/ }).click()
 
   await expect(page.getByText(bigShot.setup_summary)).toBeVisible()
   await expect(page.getByText(bigShot.gameplay_summary)).toBeVisible()
@@ -111,7 +112,7 @@ test('setup control shows only game-specific summaries and fails closed when mis
   await page.unrouteAll({ behavior: 'wait' })
   await mockGameApi(page, missing)
   await page.reload()
-  await page.getByRole('button', { name: /セットアップ/ }).click()
+  await page.getByRole('tab', { name: /セットアップ/ }).click()
 
   await expect(page.getByText('このゲーム固有のセットアップ要約は未確認です。')).toBeVisible()
   await expect(page.getByText('このゲーム固有のゲーム進行要約は未確認です。')).toBeVisible()
