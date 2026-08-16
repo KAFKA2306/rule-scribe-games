@@ -2,17 +2,7 @@ import { ScoringBreakdown } from './ScoringBreakdown'
 import './rule-guide.css'
 
 export function QuickRulesPanel({ guide }) {
-  if (!guide) {
-    return (
-      <section className="quick-rules-panel quick-rules-unavailable" aria-label="すぐ遊ぶ">
-        <div className="quick-rules-kicker">QUICK RULES</div>
-        <div className="quick-rules-title">検証済みの要約はまだありません</div>
-        <p style={{ marginTop: '0.55rem', lineHeight: 1.6 }}>
-          未確認内容は推測表示しません。詳しいルールと出典を確認してください。
-        </p>
-      </section>
-    )
-  }
+  if (!guide) return null
 
   return (
     <section className="quick-rules-panel" aria-label="すぐ遊ぶ" data-testid="quick-rules-panel">
