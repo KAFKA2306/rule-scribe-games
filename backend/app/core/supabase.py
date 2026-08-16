@@ -120,6 +120,7 @@ async def search(query: str) -> List[Dict[str, Any]]:
                         f'title.ilike."{term}"',
                         f'title_ja.ilike."{term}"',
                         f'title_en.ilike."{term}"',
+                        f'summary.ilike."{term}"',
                         f'description.ilike."{term}"',
                     ]
                 )
