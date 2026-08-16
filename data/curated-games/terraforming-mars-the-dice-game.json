@@ -1,0 +1,158 @@
+{
+  "schema_version": "1",
+  "slug": "terraforming-mars-the-dice-game",
+  "work": {
+    "canonical_title": "Terraforming Mars: The Dice Game",
+    "identity_status": "verified"
+  },
+  "source": {
+    "url": "https://arclightgames.jp/wp-content/uploads/2024/04/TM_DICEGAME_RULES-JPN-fix-2023Dec-for-Web-2.pdf",
+    "rule_version": "arclight-revised-2nd-printing-2024-05-30",
+    "revision": "arclight-revised-2nd-printing-updated-2024-05-30-accessed-2026-08-16"
+  },
+  "game": {
+    "slug": "terraforming-mars-the-dice-game",
+    "title": "Terraforming Mars: The Dice Game",
+    "title_ja": "テラフォーミング・マーズ ダイスゲーム",
+    "title_en": "Terraforming Mars: The Dice Game",
+    "description": "専用ダイスを資源として使い、企業を発展させながら火星の酸素濃度・気温・海洋面積率を高めるカード駆動のダイスゲーム。各手番では、資源を作る産出ターンか、カードのプレイや各種アクションを行うアクションターンのどちらかを選びます。",
+    "summary": "専用ダイスで資源を作り、カードとアクションで火星を開発する軽量版。手番は「産出ターン」か「アクションターン」の二択で、海洋・気温・酸素濃度の3条件のうち2つが完成すると終了タイミングになり、全員が最後の1手番を行います。",
+    "rules_content": "# テラフォーミング・マーズ ダイスゲーム\n\n## 目的\n火星をテラフォーミングしながらVP（勝利点）を獲得し、ゲーム終了後の最終得点が最も高いプレイヤーを目指します。酸素濃度または気温を1段階上げる、もしくは海洋タイルを1枚配置するたびに2VPを獲得します。\n\n## 手番\n手番では「産出ターン」か「アクションターン」のどちらか1つを選びます。\n\n### 産出ターン\n1. 保有する資源ダイスを最大3個まで維持し、それ以外をダイス置き場へ戻します。\n2. 手札から任意の枚数を捨ててもかまいません。\n3. 手札が5枚未満なら5枚になるまでプロジェクト・カードを引きます。\n4. 企業カードと自分の緑色カードに示された生産ダイスを取り、まとめて振ります。\n5. 使用済みの青色カードをすべて未使用状態に戻します。\n\n### アクションターン\n補助アクションを1回行い、その後メインアクションを1回行います。補助アクションではダイス獲得、資源変換、カード2枚ドロー、青色カードの補助アクションなどを選べます。メインアクションではカードのプレイ、2回目の補助アクション、資源を支払って気温・海洋・緑地・都市を進めること、またはメガクレジット資源3個で2VPを得ることなどを選べます。\n\n## ゲーム終了\n海洋面積率・気温・酸素濃度の3種類のグローバル・パラメータのうち2つが達成された時点で終了タイミングになります。その手番の後、2つ目を完成させたプレイヤーを含む全員が、それぞれ最後の手番を1回行います。\n\n## 最終得点\n最後の手番後、褒賞・称号・プレイ済みカードなどのVPを加算します。最終的にVPが最も高いプレイヤーが勝者です。同点の場合は、生産可能な資源ダイスの合計数が最も多いプレイヤーが勝者です。",
+    "setup_summary": "火星ボードを中央に置き、海洋タイル7枚を海洋アイコンに重ね、酸素濃度を0%、気温を-32°Cにします。プロジェクト・カード、ボーナス・カード、褒賞、称号を準備し、各プレイヤーへプロジェクト・カード5枚と企業カード2枚を配って企業1枚を選び、企業に示された開始時ボーナスと資源を受け取ります。",
+    "gameplay_summary": "時計回りに手番を行い、各手番で産出ターンまたはアクションターンを選択します。産出では資源の整理・手札補充・生産ダイスのロール・青色カードの再使用化を行い、アクションでは補助アクション1回の後にメインアクション1回を行います。",
+    "end_game_summary": "海洋面積率・気温・酸素濃度のうち2つが達成されると終了タイミング。トリガーしたプレイヤーを含む全員が最後の手番を1回ずつ行い、その後に褒賞・称号・カード等のVPを加算して最多VPを決めます。",
+    "min_players": 1,
+    "max_players": 4,
+    "play_time": 45,
+    "min_age": 14,
+    "published_year": 2023,
+    "edition_label": "アークライト日本語版 改訂版 第2刷",
+    "language_code": "ja",
+    "official_url": "https://arclightgames.jp/product/826ter/",
+    "source_url": "https://arclightgames.jp/wp-content/uploads/2024/04/TM_DICEGAME_RULES-JPN-fix-2023Dec-for-Web-2.pdf",
+    "source_revision": "arclight-revised-2nd-printing-updated-2024-05-30-accessed-2026-08-16",
+    "generated_from_source_revision": "arclight-revised-2nd-printing-updated-2024-05-30-accessed-2026-08-16",
+    "source_trust": "official_publisher",
+    "identity_status": "verified",
+    "content_review_status": "ai_draft"
+  },
+  "guide": {
+    "reviewed": true,
+    "ruleVersion": "arclight-revised-2nd-printing-2024-05-30",
+    "source": {
+      "label": "アークライト公式 改訂版ルール説明書（第2刷）",
+      "url": "https://arclightgames.jp/wp-content/uploads/2024/04/TM_DICEGAME_RULES-JPN-fix-2023Dec-for-Web-2.pdf",
+      "ruleVersion": "arclight-revised-2nd-printing-2024-05-30"
+    },
+    "facts": {
+      "globalParameters": 3,
+      "endThreshold": 2,
+      "terraformVp": 2,
+      "productionKeepDiceMax": 3,
+      "handRefillTarget": 5
+    },
+    "quick": {
+      "win": "テラフォーミングやカード、タイル、称号、褒賞でVPを集め、最終得点を最も高くする。酸素濃度・気温の上昇または海洋タイル配置によるテラフォーミングは1回につき2VP。",
+      "actions": [
+        "産出ターンでは資源ダイスを最大3個まで維持し、手札を5枚まで補充してから生産ダイスを振る。",
+        "アクションターンは補助アクション1回→メインアクション1回の順。メインアクションの代わりに2回目の補助アクションも選べる。",
+        "青色カードのフリーアクションは、自分の手番中に補助・メインアクションや産出ターンの前後で実行できる。"
+      ],
+      "turnSteps": [
+        "手番開始時に「産出ターン」か「アクションターン」のどちらかを選ぶ。",
+        "産出ターンなら、資源を最大3個維持→任意の手札を捨てる→手札を5枚まで補充→生産ダイスを振る→使用済み青色カードを戻す。",
+        "アクションターンなら、補助アクションを1回行った後、メインアクションを1回行う。"
+      ],
+      "turnEndChecks": [
+        "海洋面積率・気温・酸素濃度のうち、2つ目のグローバル・パラメータが達成されたか確認する。",
+        "2つ目が達成された場合、その手番の後から全員が最後の手番を1回ずつ行う。"
+      ],
+      "end": "3つのグローバル・パラメータのうち2つが達成されたら終了タイミング。トリガーしたプレイヤーを含む全員が最後1回の手番を行い、その後に最終得点を計算する。"
+    },
+    "scoring": {
+      "summary": "テラフォーミングは1回につき2VP。最後の手番後に褒賞・称号・カードなどのVPを加算し、最多VPが勝利する。",
+      "rules": [
+        {
+          "label": "テラフォーミング",
+          "detail": "酸素濃度または気温を1段階上昇させる、または海洋タイルを1枚配置するたびに2VPを得る。"
+        },
+        {
+          "label": "褒賞",
+          "detail": "火星ボードに設定された3種類の資源アイコンごとに、対応するカードコストのアイコンが最多のプレイヤーは5VP、2番目は3VPを得る。"
+        },
+        {
+          "label": "称号",
+          "detail": "獲得済みの称号タイルは、ゲーム終了時に1枚につき4VPを得る。"
+        },
+        {
+          "label": "カード",
+          "detail": "自分がプレイしたカード右下のVPを最終得点に加える。"
+        },
+        {
+          "label": "同点",
+          "detail": "最終VPが同点なら、生産可能な資源ダイスの合計数が最も多いプレイヤーが勝つ。それも同数なら再戦する。"
+        }
+      ]
+    },
+    "flow": [
+      {
+        "id": "choose-turn",
+        "kind": "decision",
+        "label": "産出ターンかアクションターンを選ぶ",
+        "branches": [
+          {
+            "label": "産出",
+            "detail": "資源整理→手札補充→生産ダイス→青色カードを未使用へ"
+          },
+          {
+            "label": "アクション",
+            "detail": "補助アクション1回→メインアクション1回"
+          }
+        ]
+      },
+      {
+        "id": "resolve-turn",
+        "kind": "step",
+        "label": "選んだターンの処理を完了する"
+      },
+      {
+        "id": "check-parameters",
+        "kind": "check",
+        "label": "3つのグローバル・パラメータのうち2つが達成されたか確認する"
+      },
+      {
+        "id": "final-turns",
+        "kind": "step",
+        "label": "終了条件成立後、全員が最後の手番を1回ずつ行う",
+        "note": "2つ目を完成させたプレイヤーも最後の手番を行う"
+      },
+      {
+        "id": "final-scoring",
+        "kind": "end",
+        "label": "褒賞・称号・カード等を加算して最終VPを確定する"
+      }
+    ]
+  },
+  "assertions": [
+    {
+      "path": "facts.globalParameters",
+      "equals": 3
+    },
+    {
+      "path": "facts.endThreshold",
+      "equals": 2
+    },
+    {
+      "path": "quick.turnSteps",
+      "contains": "産出ターン"
+    },
+    {
+      "path": "quick.end",
+      "contains": "最後1回"
+    },
+    {
+      "path": "quick.win",
+      "contains": "2VP"
+    }
+  ]
+}
