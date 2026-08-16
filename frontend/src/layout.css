@@ -65,8 +65,8 @@ body {
 
 .game-layout {
   display: grid;
-  grid-template-columns: minmax(280px, 340px) minmax(0, 1fr);
-  gap: clamp(2rem, 4vw, 3rem);
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.5rem;
   align-items: start;
   width: min(1440px, 100%);
   margin: 0 auto;
@@ -84,6 +84,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
+  order: 0;
 }
 
 .game-sidebar .pro-stats-grid,
@@ -97,10 +98,11 @@ body {
 
 .game-main {
   width: 100%;
-  max-width: 900px;
+  max-width: none;
+  order: -1;
 }
 
-/* Keep the page's two-column structure; only flatten the four quick-rule cards from two rows to one on wide screens. */
+/* Keep quick-rule cards flat on wide screens while the page itself stays single-column. */
 .game-main .quick-rules-grid {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
@@ -171,20 +173,6 @@ body {
 
   #root > aside {
     display: none;
-  }
-
-  .game-layout {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 1.5rem;
-  }
-
-  .game-main {
-    max-width: none;
-    order: -1;
-  }
-
-  .game-sidebar {
-    order: 0;
   }
 }
 
