@@ -171,7 +171,7 @@ export default function GamePage({ slug: propSlug, initialGame }) {
           </div>
 
           <div className="pro-card pro-card--synopsis">
-            <div className="pro-card-title">SYNOPSIS</div>
+            <div className="pro-card-title">30秒でわかる「{title}」</div>
             <div className="summary-text">{game.summary || game.description}</div>
           </div>
 
