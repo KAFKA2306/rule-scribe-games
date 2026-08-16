@@ -5,6 +5,18 @@ import pytest
 from app.services import seo_renderer
 
 
+def test_page_title_omits_strategy_when_unavailable() -> None:
+    game = {"structured_data": {"strategy_analysis": None}}
+
+    assert seo_renderer._page_title(game, "スカルキング") == "「スカルキング」のルール・インスト要約 | ボドゲのミカタ"
+
+
+def test_page_title_includes_strategy_when_available() -> None:
+    game = {"structured_data": {"strategy_analysis": "終盤では得点状況を見てビッドを調整する。"}}
+
+    assert seo_renderer._page_title(game, "Example") == "「Example」のルール・戦略・インスト要約 | ボドゲのミカタ"
+
+
 @pytest.mark.asyncio
 async def test_missing_game_returns_none(monkeypatch: pytest.MonkeyPatch) -> None:
     async def missing(_slug: str):

@@ -31,6 +31,13 @@ def _safe_json_script(data: dict) -> str:
     return payload.replace("&", "\\u0026").replace("<", "\\u003c").replace(">", "\\u003e")
 
 
+def _page_title(game: dict, title: str) -> str:
+    structured_data = game.get("structured_data")
+    has_strategy = isinstance(structured_data, dict) and bool(structured_data.get("strategy_analysis"))
+    strategy_label = "・戦略" if has_strategy else ""
+    return f"「{title}」のルール{strategy_label}・インスト要約 | ボドゲのミカタ"
+
+
 async def generate_seo_html(slug: str) -> str | None:
     game = await get_by_slug(slug)
     if not game:
@@ -43,7 +50,7 @@ async def generate_seo_html(slug: str) -> str | None:
         image_url = f"{BASE_URL}{image_url}"
 
     game_url = f"{BASE_URL}/games/{slug}"
-    page_title = f"「{title}」のルール・戦略・インスト要約 | ボドゲのミカタ"
+    page_title = _page_title(game, title)
     seo_description = description or f"「{title}」の登録済みルール要約と出典情報を確認できます。"
 
     structured_data: dict[str, object] = {
