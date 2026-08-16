@@ -147,6 +147,14 @@ jobs:
         run: |
           echo "Production still does not match the exact main SHA after verification/fallback." >> "$GITHUB_STEP_SUMMARY"
           exit 1
+      - name: Verify Mechanical DNA production contract
+        if: >-
+          steps.budget.outputs.state == 'current' ||
+          steps.git_verification.outcome == 'success' ||
+          steps.push_fallback.outputs.deployed == 'true'
+        run: >-
+          python backend/app/scripts/verify_production_contract.py
+          --base-url https://bodoge-no-mikata.vercel.app
 
   Production-Catch-Up:
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
@@ -214,3 +222,8 @@ jobs:
           --team-id "${VERCEL_ORG_ID}"
           --timeout-seconds 180
           --poll-seconds 5
+      - name: Verify Mechanical DNA production contract
+        if: steps.budget.outputs.state == 'current' || steps.catchup.outputs.deployed == 'true'
+        run: >-
+          python backend/app/scripts/verify_production_contract.py
+          --base-url https://bodoge-no-mikata.vercel.app
