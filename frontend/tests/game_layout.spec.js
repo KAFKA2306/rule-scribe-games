@@ -66,7 +66,7 @@ test('game detail keeps a readable desktop main and puts quick rules before meta
   await page.goto('/games/big-shot')
 
   await expect(page.getByRole('heading', { name: 'ビッグショット' })).toBeVisible()
-  await expect(page.getByRole('button', { name: /詳しいルール/ })).toBeVisible()
+  await expect(page.getByRole('button', { name: '詳しいルール', exact: true })).toBeVisible()
 
   const desktop = await readLayout(page)
   expect(desktop.scrollWidth).toBe(desktop.clientWidth)
