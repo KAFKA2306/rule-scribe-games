@@ -174,7 +174,7 @@ test('directory empty state and comparison tray use the same light palette', asy
 
   await page.getByRole('button', { name: '配色監査を比較に追加' }).click()
   await page.getByRole('button', { name: '配色監査2を比較に追加' }).click()
-  await expect(page.getByRole('button', { name: 'BATTLE START' })).toBeVisible()
+  await expect(page.getByRole('button', { name: '比較する' })).toBeVisible()
   await expectLightSurface(page.locator('.comparison-tray'), 'comparison tray')
 
   const search = page.getByLabel('ゲームを検索')
