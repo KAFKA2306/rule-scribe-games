@@ -96,7 +96,7 @@ test('game detail keeps one primary flow and readable long-form measure', async 
   const compact = await readLayout(page)
   expectSinglePrimaryFlow(compact)
   expect(compact.readingLine.width).toBeLessThanOrEqual(compact.main.width)
-  await expect(page.getByText('検証済みの要約はまだありません')).toBeVisible()
+  await expect(page.locator('.quick-rules-panel')).toHaveCount(0)
 })
 
 test('quick rules flatten to one row on wide desktop inside the single-column page', async ({ page }) => {
