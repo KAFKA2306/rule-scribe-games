@@ -103,7 +103,7 @@ test('new user can search IPSO and reach quick rules, scoring, diagram and sourc
   await page.goto('/')
   await expect(page.getByText('イプソ (IPSO)', { exact: true }).first()).toBeVisible()
   await page.getByLabel('ゲームを検索').fill('IPSO')
-  await expect(page.getByText('1 RESULTS')).toBeVisible()
+  await expect(page.getByText('1件', { exact: true })).toBeVisible()
   await page.screenshot({ path: testInfo.outputPath(`new-user-home-${testInfo.project.name}.png`), animations: 'disabled' })
 
   await page.getByRole('link', { name: /イプソ \(IPSO\)/ }).first().click()
