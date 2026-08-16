@@ -147,6 +147,10 @@
       "contains": "産出ターン"
     },
     {
+      "path": "quick.turnEndChecks",
+      "contains": "2つ目"
+    },
+    {
       "path": "quick.end",
       "contains": "最後1回"
     },

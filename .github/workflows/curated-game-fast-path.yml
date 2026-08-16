@@ -72,34 +72,41 @@ jobs:
       VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
     steps:
       - uses: actions/checkout@v5
-      - name: Resolve changed curated specs from push event
+      - name: Resolve changed curated specs from main diff
         id: changed
         shell: bash
+        env:
+          BEFORE_SHA: ${{ github.event.before }}
         run: |
-          python - "$GITHUB_EVENT_PATH" /tmp/curated-games.txt "$GITHUB_OUTPUT" <<'PY'
-          import json
-          import sys
-          from pathlib import Path
+          set -euo pipefail
 
-          payload = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
-          changed = set()
-          removed = set()
-          prefix = "data/curated-games/"
-          for commit in payload.get("commits", []):
-              for path in [*commit.get("added", []), *commit.get("modified", [])]:
-                  if path.startswith(prefix) and path.endswith(".json") and not Path(path).name.startswith("schema-"):
-                      changed.add(Path(path).stem)
-              for path in commit.get("removed", []):
-                  if path.startswith(prefix) and path.endswith(".json") and not Path(path).name.startswith("schema-"):
-                      removed.add(path)
-          if removed:
-              raise SystemExit("Curated game deletion requires an explicit deprecation workflow: " + ", ".join(sorted(removed)))
-          slugs = sorted(changed)
-          Path(sys.argv[2]).write_text("".join(f"{slug}\n" for slug in slugs), encoding="utf-8")
-          with Path(sys.argv[3]).open("a", encoding="utf-8") as output:
-              output.write(f"count={len(slugs)}\n")
-          print(f"Changed curated games: {len(slugs)}")
-          PY
+          if ! git cat-file -e "${BEFORE_SHA}^{commit}" 2>/dev/null; then
+            git fetch --no-tags --depth=1 origin "$BEFORE_SHA"
+          fi
+
+          mapfile -t removed < <(
+            git diff --name-only --diff-filter=DR "$BEFORE_SHA" "$GITHUB_SHA" -- data/curated-games/ \
+              | grep -E '^data/curated-games/[^/]+\.json$' \
+              | grep -v '/schema-' \
+              || true
+          )
+          if ((${#removed[@]} > 0)); then
+            printf 'Curated game deletion requires an explicit deprecation workflow: %s\n' "${removed[*]}" >&2
+            exit 1
+          fi
+
+          mapfile -t changed < <(
+            git diff --name-only --diff-filter=AM "$BEFORE_SHA" "$GITHUB_SHA" -- data/curated-games/ \
+              | grep -E '^data/curated-games/[^/]+\.json$' \
+              | grep -v '/schema-' \
+              | sed -E 's#^data/curated-games/##; s#\.json$##' \
+              | sort -u \
+              || true
+          )
+
+          printf '%s\n' "${changed[@]}" | sed '/^$/d' > /tmp/curated-games.txt
+          echo "count=${#changed[@]}" >> "$GITHUB_OUTPUT"
+          echo "Changed curated games: ${#changed[@]}"
       - name: Install uv
         if: steps.changed.outputs.count != '0'
         uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9
