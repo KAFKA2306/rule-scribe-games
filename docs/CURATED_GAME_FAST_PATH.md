@@ -1,14 +1,10 @@
-# Curated Game Fast Path
+# Adding a Curated Game
 
-Status: canonical operator workflow for source-grounded game additions.
+This document describes the supported procedure for adding a source-backed game to ボドゲのミカタ.
 
-## Goal
+## Source file
 
-Add one verified game to ボドゲのミカタ with one canonical source file, fail-closed evidence/identity checks, and production writes only after reviewed source reaches `main`.
-
-## Routine operator path
-
-Create or update exactly one Git-tracked source file:
+Create or update one Git-tracked source file:
 
 `data/curated-games/<slug>.json`
 
@@ -18,169 +14,163 @@ Then run:
 task game:add GAME=<slug>
 ```
 
-`GAME` is the only routine operator input. `game:add` is prepare-only: it validates the source contract, reaches the official source, performs a read-only live identity preflight, regenerates local runtime artifacts, and validates the runtime guide. It never writes the production catalog.
+`GAME` is the routine input. `game:add` validates the structured source, checks the official source, performs a read-only production identity check, regenerates local generated files, and validates the runtime guide. It does not write the production catalog.
 
-Filename, `GAME`, and `spec.slug` must match exactly.
+The filename, `GAME`, and `spec.slug` must match.
 
-## Final lifecycle
+## Pull request and publication
 
-1. create/update `data/curated-games/<slug>.json`;
-2. run `task game:add GAME=<slug>`;
-3. open one JSON-only PR;
-4. `Curated game fast path` validates the PR without production-write credentials;
-5. merge to `main`;
-6. the same focused workflow completes its validation on the `main` push;
-7. `publish-catalog` derives only added/modified curated JSON files from the push event;
-8. only when such files exist, it pulls the production environment from Vercel, exports the trusted Supabase server variables, and invokes the internal `publish` mode for those slugs;
-9. `publish` rechecks the primary source and live identity, performs one idempotent catalog write, then verifies the production API/page fixed point once;
-10. Vercel deployment remains independent; after a successful production deploy, `Curated game release verification` checks the deployed revision manifest.
+1. Create or update `data/curated-games/<slug>.json`.
+2. Run `task game:add GAME=<slug>`.
+3. Open one pull request containing the source JSON.
+4. GitHub Actions validates the pull request without production-write credentials.
+5. Merge to `main`.
+6. The same validation runs on the `main` push.
+7. `publish-catalog` identifies added or modified curated JSON files from the push.
+8. When a curated source changed, it obtains the production environment from Vercel and runs the internal publish command for those slugs.
+9. The publish command rechecks the primary source and live identity, performs an idempotent catalog write, and verifies the production API and page.
+10. After a successful Vercel deployment, release verification checks the deployed revision manifest.
 
-Production therefore cannot get ahead of canonical Git source through the normal game-add path.
+Production catalog data therefore cannot be published through this procedure before its source reaches `main`.
 
-## Prepare gate order
+## Validation order
 
-`task game:add GAME=<slug>` executes:
+`task game:add GAME=<slug>`:
 
-1. load the one canonical structured spec;
-2. validate schema/cross-field invariants and focused assertions;
-3. verify the primary source HTTP status with a streamed request without consuming the full body;
-4. preflight production `slug -> work -> edition/language` identity read-only;
-5. only after preflight succeeds, run the single Node artifact generator;
-6. verify the Node-generated deployment manifest against the Python revision contract;
-7. validate the runtime guide returned by `getCuratedRuleGuide(slug)`;
-8. report the one-file routine PR set and stop without a DB write.
+1. loads the structured source;
+2. validates schema, cross-field requirements, and assertions;
+3. verifies primary-source reachability;
+4. checks production `slug -> work -> edition/language` identity without writing;
+5. regenerates generated files;
+6. checks the generated deployment manifest against the source revision;
+7. validates the runtime guide returned by `getCuratedRuleGuide(slug)`;
+8. reports the expected pull-request files and stops without a database write.
 
-## Main-only publish gate
+## Publishing from `main`
 
-The internal CLI mode is:
+The internal command is:
 
 `curated_game_fast_path_v2.py publish --game <slug>`
 
-It is not exposed as the routine Taskfile command. The main workflow is its canonical caller.
+The GitHub Actions workflow is the supported caller. It is intentionally not exposed as the normal Taskfile command.
 
-Before every write it repeats source reachability, live identity preflight, artifact/runtime validation, then uses the resolved identity plan for the idempotent catalog write. A changed production identity between PR preparation and merge therefore fails closed instead of writing to another work/edition.
+Before writing, it repeats source reachability, production identity, generated-file validation, and runtime validation. If production identity changed between pull-request preparation and merge, publication stops rather than writing to a different work or edition.
 
-The publish job:
+`publish-catalog`:
 
-- runs only for a `push` to `refs/heads/main`;
-- requires the focused validation job to succeed first;
-- derives changed curated games from the GitHub push event rather than rewriting every curated game;
+- runs only on pushes to `main`;
+- waits for curated-game validation;
+- publishes only changed curated source files;
 - ignores schema-only changes;
-- refuses curated-game source deletion; deletion requires an explicit deprecation workflow;
-- skips uv/Vercel/environment setup entirely when no game spec changed;
-- uses `vercel pull --environment=production` only as the established credential retrieval route;
-- never invokes a Vercel deploy request.
+- refuses source deletion because removal requires an explicit deprecation change;
+- skips environment setup when no game source changed;
+- uses `vercel pull --environment=production` for the established production environment;
+- does not request a Vercel deployment.
 
-## Credential boundary
+## Credentials
 
-Pull-request validation has no production DB write step. Trusted server credentials are consumed only by the main-only `publish-catalog` job after focused validation.
+Pull-request validation has no production database write step.
 
-The required server variables are:
+The main-only publication job uses:
 
 - `SUPABASE_URL`
 - `SUPABASE_SERVICE_ROLE_KEY`
 
-They are loaded from Vercel's production environment and are never replaced by browser-safe anon/publishable keys.
+They are loaded from Vercel's production environment. Browser-safe anonymous or publishable keys are not substitutes for server credentials.
 
-## Routine PR shape
+## Pull request contents
 
 A normal game addition changes exactly one source file:
 
 `data/curated-games/<slug>.json`
 
-Do not commit game-specific generated JavaScript, deployment manifests, importer scripts, or test files. Game-specific regression facts belong in the structured `assertions` array; generic CI evaluates those assertions for every curated game.
+Do not commit game-specific generated JavaScript, deployment manifests, importer scripts, or separate test files. Put game-specific regression facts in the structured `assertions` array so generic tests can evaluate them.
 
-## Structured input contract
+## Structured input
 
-`data/curated-games/schema-v1.json` defines the external contract. Each file contains:
+`data/curated-games/schema-v1.json` defines the file format. Each game source contains:
 
-- `work`: canonical work title and identity status;
-- `source`: explicit HTTPS primary source, rule version, and source revision;
-- `game`: production catalog payload including source provenance;
-- `guide`: reviewed Quick Rules/scoring/flow object;
-- `assertions`: game-specific facts that must remain true.
+- `work`: work title and identity status;
+- `source`: HTTPS primary source, rule version, and source revision;
+- `game`: catalog fields including provenance;
+- `guide`: reviewed quick rules, scoring, and flow;
+- `assertions`: facts that generic validation must preserve.
 
-The workflow additionally enforces cross-field invariants such as slug equality, source URL equality, source revision equality, and guide/source rule-version equality.
+Validation also checks slug, source URL, source revision, and guide rule-version consistency.
 
-## Single generated-artifact boundary
+## Generated files
 
-`frontend/scripts/generate-curated-game-artifacts.mjs` is the only artifact generator. It derives both runtime artifacts from structured source:
+`frontend/scripts/generate-curated-game-artifacts.mjs` generates:
 
 - `frontend/src/lib/generatedCuratedRuleGuides.js`
 - `frontend/public/curated-guides-manifest.json`
 
-Both outputs are gitignored and must never be committed or hand-edited.
+Both outputs are gitignored. Do not commit or hand-edit them.
 
-Generation happens automatically through:
+Generation runs through:
 
 - `npm run dev` via `predev`;
 - `npm run build` via `prebuild`;
-- Vercel production/preview builds;
-- prepare/publish/check/release verification through the same Node generator.
+- Vercel production and preview builds;
+- curated-game prepare, publish, check, and release verification.
 
-The Python fast path does not implement a second guide generator. It invokes Node and checks that the resulting deployment manifest exactly matches the Python revision-contract calculation.
+The Python command calls the Node generator rather than maintaining a second generator.
 
-## Two production fixed points
+## Production verification
 
-### Catalog fixed point
+After catalog publication, verify the production API and `/games/<slug>`.
 
-The main-only publish job verifies the production API and `/games/<slug>` immediately after the idempotent DB write. Database-backed content can become live independently of a frontend deployment.
+After Vercel deployment, verify `curated-guides-manifest.json` against the deployed commit and expected source revision.
 
-### Frontend release fixed point
-
-After a successful Vercel production deployment, `Curated game release verification` checks the deployed `curated-guides-manifest.json` against the deployed commit.
-
-Manual diagnostics remain available:
+Manual diagnostics:
 
 ```bash
 task game:verify GAME=<slug>
 task game:release-check
 ```
 
-A generic deployment failure is a separate infrastructure blocker; it does not roll back an already-verified catalog publication or trigger deployment repair inside the game-add branch.
+A generic deployment failure does not undo a verified catalog publication and should not be repaired inside an unrelated game-content pull request.
 
 ## CI
 
-`Curated game fast path` is path-scoped and browser-free. From a clean checkout it:
+The curated-game GitHub Actions workflow is path-scoped and does not require a browser for source-only changes. From a clean checkout it:
 
-- runs generic workflow tests;
-- validates every structured assertion;
-- regenerates JS + manifest from source;
-- verifies Node/Python revision-contract agreement;
+- runs generic curated-game tests;
+- validates structured assertions;
+- regenerates generated files from source;
+- checks revision consistency;
 - validates runtime guide integration.
 
-On pull requests it stops there. On `main`, and only after that validation succeeds, the separate `publish-catalog` job may obtain production credentials and publish changed game specs.
+On pull requests it stops after validation. On `main`, `publish-catalog` may obtain production credentials and publish changed game sources after validation succeeds.
 
-Do not make the full UI suite or generic Vercel deploy request a prerequisite for catalog publication.
+Do not make the full UI suite or an unrelated deployment request a prerequisite for a source-only catalog publication.
 
-## Minimal completion evidence
+## Completion
 
-A curated game is fully released when:
+A curated game is released when:
 
-- exactly one canonical JSON source is merged to `main`;
-- source/identity/runtime focused CI passes;
-- main-only publish rechecks live source and identity;
-- production contains exactly one intended canonical work/edition identity;
-- catalog API/page fixed point is verified;
-- generated artifacts are reproducible from source;
-- post-deploy manifest verification confirms the frontend release fixed point.
+- its structured source is merged to `main`;
+- focused source, identity, and runtime checks pass;
+- publication rechecks the live source and identity;
+- production contains the intended work and edition;
+- the production API and page are verified;
+- generated files are reproducible from source;
+- after deployment, the revision manifest matches the expected source revision.
 
-## Scope guard
+## Scope
 
-During a game-add task, do not:
+During a game-addition task, do not:
 
-- write the production DB before merge;
-- repeat source research after the primary source/revision is locked unless contradictory evidence appears;
-- repeat repository-wide searches once canonical paths are known;
-- provide `SLUG`, `SOURCE_URL`, or `DATA` separately when they are already in the spec;
-- commit or hand-edit generated artifacts;
-- create a game-specific regression test when structured assertions can express the contract;
-- publish unchanged games on every main push;
+- write production data before merge;
+- repeat source research after a primary source and revision are established unless contradictory evidence appears;
+- repeat repository-wide searches after the relevant paths are known;
+- provide `SLUG`, `SOURCE_URL`, or `DATA` separately when they are already in the source file;
+- commit or hand-edit generated files;
+- create a game-specific regression test when structured assertions can express the requirement;
+- publish unchanged games on every `main` push;
 - silently delete a production game because its source JSON disappeared;
-- repair unrelated Vercel/CI infrastructure inside the game-add branch;
-- create replacement branches/PRs for the same task;
+- repair unrelated Vercel or CI infrastructure in the game-content branch;
+- create replacement branches or pull requests for the same task;
 - retry a failed job more than once without new evidence.
 
-## Success retrospective
-
-After a successful addition, review only the steps that affected the outcome. Remove repeated deterministic work from the next run, but keep source, identity, semantic, merge, catalog, and release fixed-point gates fail-closed. Stop once there is no reusable reduction left.
+After completion, remove repeatable deterministic work when doing so does not weaken source, identity, semantic, CI, merge, production, or cleanup checks.
