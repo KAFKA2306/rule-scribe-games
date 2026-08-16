@@ -151,6 +151,13 @@
   object-fit: cover;
 }
 
+.compare-item button {
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  min-height: 24px;
+}
+
 .battle-start-button {
   padding: 6px 16px;
   border-radius: var(--ks-radius-pill);
