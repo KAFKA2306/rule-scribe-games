@@ -88,7 +88,7 @@ test('directory keeps search local, labels controls, exposes mobile filters, and
   }
   await expect(page.getByRole('region', { name: '比較トレイ 3/3' })).toBeVisible()
   await expect(page.getByRole('button', { name: 'ゲーム4を比較に追加' })).toBeDisabled()
-  await expect(page.getByText('BATTLE TRAY · 3/3')).toBeVisible()
+  await expect(page.getByText('比較トレイ · 3/3')).toBeVisible()
 })
 
 test('AI generation only runs from its explicit CTA', async ({ page }) => {
