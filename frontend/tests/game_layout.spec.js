@@ -42,12 +42,17 @@ async function mockGameApi(page, game = bigShot) {
 
 async function readLayout(page) {
   return page.evaluate(() => {
-    const sidebar = document.querySelector('.game-sidebar')?.getBoundingClientRect()
-    const main = document.querySelector('.game-main')?.getBoundingClientRect()
+    const sidebarEl = document.querySelector('.game-sidebar')
+    const mainEl = document.querySelector('.game-main')
+    const sidebar = sidebarEl?.getBoundingClientRect()
+    const main = mainEl?.getBoundingClientRect()
     const title = document.querySelector('.game-title')?.getBoundingClientRect()
     const tabs = document.querySelector('.rules-tabs')?.getBoundingClientRect()
+    const readingLine = document.querySelector('.markdown-content p')?.getBoundingClientRect()
 
-    if (!sidebar || !main || !title || !tabs) throw new Error('game detail layout nodes are missing')
+    if (!sidebarEl || !mainEl || !sidebar || !main || !title || !tabs || !readingLine) {
+      throw new Error('game detail layout nodes are missing')
+    }
 
     return {
       clientWidth: document.documentElement.clientWidth,
@@ -56,20 +61,24 @@ async function readLayout(page) {
       main: { x: main.x, y: main.y, width: main.width, height: main.height },
       titleX: title.x,
       tabsX: tabs.x,
+      readingLine: { x: readingLine.x, width: readingLine.width },
+      mainBeforeSidebar: Boolean(mainEl.compareDocumentPosition(sidebarEl) & Node.DOCUMENT_POSITION_FOLLOWING),
     }
   })
 }
 
-function expectSingleColumn(layout) {
+function expectSinglePrimaryFlow(layout) {
   expect(layout.scrollWidth).toBe(layout.clientWidth)
+  expect(layout.mainBeforeSidebar).toBe(true)
   expect(Math.abs(layout.sidebar.x - layout.main.x)).toBeLessThan(2)
   expect(Math.abs(layout.sidebar.width - layout.main.width)).toBeLessThan(2)
   expect(layout.sidebar.y).toBeGreaterThan(layout.main.y + layout.main.height - 2)
   expect(Math.abs(layout.titleX - layout.main.x)).toBeLessThan(2)
   expect(Math.abs(layout.tabsX - layout.main.x)).toBeLessThan(2)
+  expect(Math.abs(layout.readingLine.x - layout.main.x)).toBeLessThan(2)
 }
 
-test('game detail stays single-column at desktop and compact widths', async ({ page }) => {
+test('game detail keeps one primary flow and readable long-form measure', async ({ page }) => {
   await mockGameApi(page)
   await page.setViewportSize({ width: 1280, height: 900 })
   await page.goto('/games/big-shot')
@@ -78,12 +87,15 @@ test('game detail stays single-column at desktop and compact widths', async ({ p
   await expect(page.getByRole('tab', { name: /詳しいルール/ })).toBeVisible()
 
   const desktop = await readLayout(page)
-  expectSingleColumn(desktop)
+  expectSinglePrimaryFlow(desktop)
   expect(desktop.main.width).toBeGreaterThan(1000)
+  expect(desktop.readingLine.width).toBeLessThan(900)
+  expect(desktop.readingLine.width).toBeLessThan(desktop.main.width)
 
   await page.setViewportSize({ width: 800, height: 900 })
   const compact = await readLayout(page)
-  expectSingleColumn(compact)
+  expectSinglePrimaryFlow(compact)
+  expect(compact.readingLine.width).toBeLessThanOrEqual(compact.main.width)
   await expect(page.getByText('検証済みの要約はまだありません')).toBeVisible()
 })
 
@@ -111,7 +123,7 @@ test('quick rules flatten to one row on wide desktop inside the single-column pa
   const ys = boxes.map(box => box.y)
   expect(Math.max(...ys) - Math.min(...ys)).toBeLessThan(2)
   expect(boxes.every(box => box.width > 0)).toBe(true)
-  expectSingleColumn(await readLayout(page))
+  expectSinglePrimaryFlow(await readLayout(page))
 })
 
 test('game detail uses one navigation row after quick rules', async ({ page }) => {
