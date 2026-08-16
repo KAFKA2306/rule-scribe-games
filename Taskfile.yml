@@ -43,44 +43,36 @@ tasks:
     dir: frontend
     cmd: npm run preview
 
+  check:
+    desc: Lint と test を並列実行
+    deps: [lint, test]
+
   lint:
-    desc: Lint / format (backend Ruff, frontend Prettier+ESLint)
-    cmds:
-      - task: lint:backend
-      - task: lint:frontend
-      - cmd: |
-          cache_dir="/tmp/claude-statusline-$(whoami)"
-          mkdir -p "$cache_dir"
-          ruff_out=$(cd backend && uv run ruff check app api scripts tests --quiet 2>/dev/null)
-          if [ $? -eq 0 ]; then
-            echo "ok" > "$cache_dir/lint"
-          else
-            echo "$ruff_out" | grep -c "^" > "$cache_dir/lint" 2>/dev/null || echo "?" > "$cache_dir/lint"
-          fi
+    desc: Lint / format check (backend Ruff, frontend ESLint+Prettier)
+    deps: [lint:backend, lint:frontend]
 
   format:
-    desc: "Format and check Python code (app, api, scripts, tests)"
-    dir: backend
+    desc: Backend と frontend を自動整形
     cmds:
-      - uv run ruff format app api scripts tests
-      - uv run ruff check --fix app api scripts tests
+      - uv run ruff check --fix backend/app api backend/scripts backend/tests
+      - uv run ruff format backend/app api backend/scripts backend/tests
+      - cd frontend && npm run format
+      - cd frontend && npm run lint:fix
 
   lint:backend:
-    dir: backend
     cmds:
-      - uv run ruff check --fix app api scripts tests
-      - uv run ruff format app api scripts tests
+      - uv run ruff check backend/app api backend/scripts backend/tests
+      - uv run ruff format --check backend/app api backend/scripts backend/tests
 
   tycheck:backend:
     desc: Pythonの静的型チェック (Pyright)
-    dir: backend
-    cmd: uv run --with pyright pyright app api scripts tests
+    cmd: uv run --with pyright pyright backend/app api backend/scripts backend/tests
 
   lint:frontend:
     dir: frontend
     cmds:
-      - npm run format
-      - npm run lint:fix
+      - npm run lint
+      - npx prettier --check .
 
   db:init:
     desc: DB初期化用SQLを表示
@@ -110,17 +102,9 @@ tasks:
     cmd: gh issue list --label "critical" --limit 10 || gh issue list --limit 5
 
   test:
-    desc: Run backend tests and cache result for status line
+    desc: Backend tests
     dir: backend
-    cmds:
-      - cmd: |
-          cache_dir="/tmp/claude-statusline-$(whoami)"
-          mkdir -p "$cache_dir"
-          if uv run pytest tests/ -q 2>&1; then
-            echo "pass" > "$cache_dir/test"
-          else
-            echo "fail" > "$cache_dir/test"
-          fi
+    cmd: uv run pytest tests/ -q
 
   validate-urls:
     desc: DBの全ゲームURLをread-only監査（DB更新なし）
