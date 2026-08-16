@@ -7,7 +7,9 @@ on:
       - "backend/app/models/mechanical_dna.py"
       - "backend/app/routers/mechanical_dna.py"
       - "backend/app/services/mechanical_dna.py"
+      - "backend/app/scripts/verify_production_contract.py"
       - "backend/tests/test_mechanical_dna.py"
+      - "backend/tests/test_production_contract.py"
       - "frontend/src/pages/GamePage.jsx"
       - ".github/workflows/test-mechanical-dna.yml"
   push:
@@ -17,7 +19,9 @@ on:
       - "backend/app/models/mechanical_dna.py"
       - "backend/app/routers/mechanical_dna.py"
       - "backend/app/services/mechanical_dna.py"
+      - "backend/app/scripts/verify_production_contract.py"
       - "backend/tests/test_mechanical_dna.py"
+      - "backend/tests/test_production_contract.py"
       - "frontend/src/pages/GamePage.jsx"
       - ".github/workflows/test-mechanical-dna.yml"
 
@@ -43,12 +47,16 @@ jobs:
           backend/app/models/mechanical_dna.py
           backend/app/services/mechanical_dna.py
           backend/app/routers/mechanical_dna.py
+          backend/app/scripts/verify_production_contract.py
           backend/app/main.py
 
       - name: Run Mechanical DNA contract tests
         env:
           PYTHONPATH: backend
-        run: uv run pytest -q backend/tests/test_mechanical_dna.py
+        run: >-
+          uv run pytest -q
+          backend/tests/test_mechanical_dna.py
+          backend/tests/test_production_contract.py
 
       - name: Gate canonical connection source path
         run: |
