@@ -269,7 +269,7 @@ test('anonymous directory -> game detail stays error-free and SPA-local', async 
   const finishAudit = await installRuntimeAudit(page)
 
   await page.goto('/')
-  await expect(page.getByText('ARCHIVE INITIALIZING...')).toBeVisible()
+  await expect(page.getByText('ゲーム一覧を読み込み中…')).toBeVisible()
   await expect(page.getByText('ゲーム1', { exact: true }).first()).toBeVisible()
   await assertViewportSafe(page)
 
