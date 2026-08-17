@@ -16,49 +16,6 @@ function focusRouteContent() {
   return true
 }
 
-function syncGameTabs() {
-  const tablist = document.querySelector('.rules-tabs[role="tablist"]')
-  const panel = document.querySelector('.game-main .pro-main-col')
-  if (!tablist || !panel) return
-
-  const tabs = [...tablist.querySelectorAll('[role="tab"]')]
-  if (tabs.length === 0) return
-
-  const activeTab = tabs.find((tab) => tab.getAttribute('aria-selected') === 'true') || tabs[0]
-  tabs.forEach((tab, index) => {
-    tab.id = `game-detail-tab-${index}`
-    tab.tabIndex = tab === activeTab ? 0 : -1
-    tab.setAttribute('aria-controls', 'game-detail-tabpanel')
-  })
-
-  panel.id = 'game-detail-tabpanel'
-  panel.setAttribute('role', 'tabpanel')
-  panel.setAttribute('aria-labelledby', activeTab.id)
-  panel.tabIndex = 0
-}
-
-function handleGameTabKeyDown(event) {
-  const current = event.target.closest?.('.rules-tabs [role="tab"]')
-  if (!current) return
-
-  const tabs = [...current.closest('[role="tablist"]').querySelectorAll('[role="tab"]')]
-  const index = tabs.indexOf(current)
-  if (index < 0) return
-
-  let nextIndex = null
-  if (event.key === 'ArrowRight') nextIndex = (index + 1) % tabs.length
-  if (event.key === 'ArrowLeft') nextIndex = (index - 1 + tabs.length) % tabs.length
-  if (event.key === 'Home') nextIndex = 0
-  if (event.key === 'End') nextIndex = tabs.length - 1
-  if (nextIndex === null) return
-
-  event.preventDefault()
-  const next = tabs[nextIndex]
-  next.focus()
-  next.click()
-  window.requestAnimationFrame(syncGameTabs)
-}
-
 export default function AppShell() {
   const location = useLocation()
   const navigate = useNavigate()
@@ -145,28 +102,6 @@ export default function AppShell() {
       positions.set(key, { x: window.scrollX, y: window.scrollY })
     }
   }, [location.key, navigationType])
-
-  useEffect(() => {
-    if (!location.pathname.startsWith('/games/')) return undefined
-
-    const root = document.getElementById('root') || document.body
-    const scheduleSync = () => window.requestAnimationFrame(syncGameTabs)
-    const onClick = (event) => {
-      if (event.target.closest?.('.rules-tabs [role="tab"]')) scheduleSync()
-    }
-
-    scheduleSync()
-    document.addEventListener('keydown', handleGameTabKeyDown)
-    document.addEventListener('click', onClick)
-    const observer = new MutationObserver(scheduleSync)
-    observer.observe(root, { childList: true, subtree: true })
-
-    return () => {
-      document.removeEventListener('keydown', handleGameTabKeyDown)
-      document.removeEventListener('click', onClick)
-      observer.disconnect()
-    }
-  }, [location.pathname])
 
   return (
     <>
