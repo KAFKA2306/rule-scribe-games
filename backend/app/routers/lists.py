@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Literal
 from uuid import UUID
 
+import httpx
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -76,12 +77,22 @@ def _system_list_conflict() -> HTTPException:
     return HTTPException(status_code=status.HTTP_409_CONFLICT, detail="System lists cannot be renamed or deleted")
 
 
+def _list_storage_unavailable() -> HTTPException:
+    return HTTPException(
+        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+        detail="リストを一時的に取得できません。時間をおいて再試行してください。",
+    )
+
+
 @router.get("/lists")
 async def list_user_lists(
     user: dict = Depends(get_current_user),
     service: ListService = Depends(get_list_service),
 ):
-    return {"lists": await service.list_lists(_owner_id(user))}
+    try:
+        return {"lists": await service.list_lists(_owner_id(user))}
+    except httpx.TransportError as exc:
+        raise _list_storage_unavailable() from exc
 
 
 @router.post("/lists", status_code=status.HTTP_201_CREATED)
