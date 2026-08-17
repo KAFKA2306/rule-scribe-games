@@ -141,7 +141,7 @@ def test_public_game_reads_revalidate_in_browser_and_cache_at_vercel_cdn():
         for response in (detail, listing):
             assert response.status_code == 200
             assert response.headers["cache-control"] == "public, max-age=0, must-revalidate"
-            assert response.headers["vercel-cdn-cache-control"] == "public, max-age=60"
+            assert response.headers["vercel-cdn-cache-control"] == "public, s-maxage=60"
     finally:
         production_app.dependency_overrides.clear()
 
