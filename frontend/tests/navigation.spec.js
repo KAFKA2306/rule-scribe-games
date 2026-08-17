@@ -197,6 +197,26 @@ test('play-time sorting keeps unknown durations after known games', async ({ pag
   await expect(page.locator('.asset-title')).toHaveText(['30分ゲーム', '45分ゲーム', '時間未確認ゲーム'])
 })
 
+test('player filters exclude games with unknown player bounds', async ({ page }) => {
+  const games = [
+    { id: '1', slug: 'known', title_ja: '2人対応ゲーム', min_players: 2, max_players: 4, play_time: 30 },
+    { id: '2', slug: 'unknown', title_ja: '人数未確認ゲーム', min_players: null, max_players: null, play_time: null },
+  ]
+  await page.route('**/api/games?limit=20000&offset=0', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ games, total: games.length }),
+    })
+  })
+
+  await page.goto('/')
+  await page.getByRole('button', { name: '2人', exact: true }).click()
+
+  await expect(page.locator('.asset-title')).toHaveText(['2人対応ゲーム'])
+  await expect(page.getByText('人数未確認ゲーム', { exact: true })).toHaveCount(0)
+})
+
 test('comparison renders missing player count and duration as unknown', async ({ page }) => {
   const games = [
     { id: '1', slug: 'known', title_ja: '既知ゲーム', min_players: 2, max_players: 4, play_time: 30 },
