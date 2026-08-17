@@ -184,6 +184,25 @@ body {
   #root > aside {
     display: none;
   }
+
+  /* Game detail pages should use the browser's document scroll on touch-sized viewports. */
+  body:has(.game-detail-content) {
+    height: auto;
+    min-height: 100dvh;
+    overflow-y: auto;
+  }
+
+  body:has(.game-detail-content) #root {
+    display: block;
+    height: auto;
+    min-height: 100dvh;
+  }
+
+  body:has(.game-detail-content) .game-detail-content {
+    height: auto;
+    min-height: 100dvh;
+    overflow-y: visible;
+  }
 }
 
 @media (max-width: 700px) {

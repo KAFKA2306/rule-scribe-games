@@ -101,6 +101,7 @@ jobs:
           tests/navigation.spec.js
           tests/performance.spec.js
           tests/game_layout.spec.js
+          tests/mobile_game_scroll.spec.js
           tests/auth.spec.js
           tests/generated-game-images.spec.js
           --project=chromium
