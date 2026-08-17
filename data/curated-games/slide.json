@@ -35,7 +35,7 @@
     "generated_from_source_revision": "gigamic-slide-rulebook-01-2024-attachment-548-accessed-2026-08-17",
     "source_trust": "official_publisher",
     "identity_status": "verified",
-    "content_review_status": "ai_draft"
+    "content_review_status": "review_required"
   },
   "guide": {
     "reviewed": true,
@@ -83,7 +83,7 @@
         },
         {
           "label": "トーナメント",
-          "detail": "累計得点が100点以上になったプレイヤーが出たら終了し、累計得点が最も少ないプレイヤーが勝つ。"
+          "detail": "累計得点が100点以上になったプレイヤーが出たら終了し、累計得点が最も少ないプレイヤーが勝つ。各ゲームの開始前にファーストプレイヤーを変更する。"
         }
       ]
     },
@@ -125,6 +125,10 @@
       "equals": 16
     },
     {
+      "path": "facts.tournamentEndScore",
+      "equals": 100
+    },
+    {
       "path": "quick.turnSteps",
       "contains": "ファーストプレイヤー"
     },
@@ -139,6 +143,14 @@
     {
       "path": "scoring.rules",
       "contains": "同点"
+    },
+    {
+      "path": "scoring.rules",
+      "contains": "100点以上"
+    },
+    {
+      "path": "scoring.rules",
+      "contains": "ファーストプレイヤーを変更"
     }
   ]
 }
