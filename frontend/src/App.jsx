@@ -189,8 +189,9 @@ function App() {
     if (activePlayers) {
       const playerCount = Number.parseInt(activePlayers, 10)
       result = result.filter((game) => {
-        const min = game.min_players || 1
-        const max = game.max_players || 99
+        const min = game.min_players
+        const max = game.max_players
+        if (!Number.isFinite(min) || min <= 0 || !Number.isFinite(max) || max <= 0) return false
         if (activePlayers === '5+') return max >= 5
         return playerCount >= min && playerCount <= max
       })
