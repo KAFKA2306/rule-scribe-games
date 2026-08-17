@@ -130,7 +130,7 @@ def test_post_search_remains_read_only_for_legacy_clients():
     assert service.created is False
 
 
-def test_public_game_reads_revalidate_in_browser_and_cache_at_vercel_cdn():
+def test_public_game_reads_use_standard_shared_cache_control():
     production_app.dependency_overrides[games.get_game_service] = lambda: PublicReadService()
     try:
         client = TestClient(production_app)
@@ -140,8 +140,8 @@ def test_public_game_reads_revalidate_in_browser_and_cache_at_vercel_cdn():
 
         for response in (detail, listing):
             assert response.status_code == 200
-            assert response.headers["cache-control"] == "public, max-age=0, must-revalidate"
-            assert response.headers["vercel-cdn-cache-control"] == "public, max-age=60"
+            assert response.headers["cache-control"] == "public, max-age=0, s-maxage=60, must-revalidate"
+            assert "vercel-cdn-cache-control" not in response.headers
     finally:
         production_app.dependency_overrides.clear()
 
@@ -154,7 +154,7 @@ def test_cache_headers_do_not_apply_to_health_or_mutation_requests():
         health = client.get("/api/health")
         patch = client.patch("/api/games/example?regenerate=true")
 
-        assert "vercel-cdn-cache-control" not in health.headers
-        assert "vercel-cdn-cache-control" not in patch.headers
+        assert "s-maxage" not in health.headers.get("cache-control", "")
+        assert "s-maxage" not in patch.headers.get("cache-control", "")
     finally:
         production_app.dependency_overrides.clear()
