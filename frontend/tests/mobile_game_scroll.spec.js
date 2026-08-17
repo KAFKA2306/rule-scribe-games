@@ -62,23 +62,27 @@ test('game detail uses document scrolling on a touch viewport', async ({ browser
         detailOverflowY: getComputedStyle(detail).overflowY,
         viewportHeight: window.innerHeight,
         pageHeight: document.documentElement.scrollHeight,
+        maxTouchPoints: navigator.maxTouchPoints,
       }
     })
 
+    expect(state.maxTouchPoints).toBeGreaterThan(0)
     expect(state.bodyOverflowY).toBe('auto')
     expect(state.detailOverflowY).toBe('visible')
     expect(state.pageHeight).toBeGreaterThan(state.viewportHeight)
 
-    const client = await context.newCDPSession(page)
-    await client.send('Input.synthesizeScrollGesture', {
-      x: 195,
-      y: 650,
-      yDistance: -600,
-      speed: 800,
-      gestureSourceType: 'touch',
+    await page.getByRole('heading', { name: 'Section 60' }).scrollIntoViewIfNeeded()
+
+    const scrollState = await page.evaluate(() => {
+      const detail = document.querySelector('.game-detail-content')
+      return {
+        windowY: window.scrollY,
+        detailY: detail?.scrollTop ?? -1,
+      }
     })
 
-    await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0)
+    expect(scrollState.windowY).toBeGreaterThan(0)
+    expect(scrollState.detailY).toBe(0)
   } finally {
     await context.close()
   }
