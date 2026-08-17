@@ -1,3 +1,4 @@
+import httpx
 import pytest
 from pydantic import ValidationError
 
@@ -77,6 +78,20 @@ def test_list_payloads_forbid_user_supplied_owner_id():
 def test_item_payloads_forbid_user_supplied_owner_id():
     with pytest.raises(ValidationError):
         lists.UserListItemAdd(game_id=GAME_ID, owner_id=USER_A["id"])
+
+
+@pytest.mark.asyncio
+async def test_list_index_returns_503_for_transport_failure():
+    class FailingListService:
+        async def list_lists(self, owner_id):
+            assert owner_id == USER_A["id"]
+            raise httpx.RemoteProtocolError("Server disconnected")
+
+    with pytest.raises(lists.HTTPException) as exc:
+        await lists.list_user_lists(user=USER_A, service=FailingListService())
+
+    assert exc.value.status_code == 503
+    assert exc.value.detail == "リストを一時的に取得できません。時間をおいて再試行してください。"
 
 
 @pytest.mark.asyncio
