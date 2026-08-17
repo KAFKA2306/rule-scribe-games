@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Response
+from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 
@@ -10,6 +10,29 @@ from app.services.sitemap import get_sitemap_xml
 
 setup_logging()
 app = FastAPI(title="RuleScribe Minimal", version="1.0.0")
+
+BROWSER_REVALIDATE = "public, max-age=0, must-revalidate"
+VERCEL_PUBLIC_READ_CACHE = "public, max-age=60"
+
+
+def is_public_game_read_path(path: str) -> bool:
+    if path == "/api/games":
+        return True
+
+    segments = [segment for segment in path.split("/") if segment]
+    return len(segments) == 3 and segments[0] == "api" and segments[1] == "games" or (
+        len(segments) == 2 and segments[0] == "games"
+    )
+
+
+@app.middleware("http")
+async def cache_public_game_reads(request: Request, call_next):
+    response = await call_next(request)
+    if request.method == "GET" and response.status_code == 200 and is_public_game_read_path(request.url.path):
+        response.headers["Cache-Control"] = BROWSER_REVALIDATE
+        response.headers["Vercel-CDN-Cache-Control"] = VERCEL_PUBLIC_READ_CACHE
+    return response
+
 
 # Browser API access is same-origin in production. Explicit localhost origins are
 # retained for Vite development; arbitrary third-party origins are denied.
