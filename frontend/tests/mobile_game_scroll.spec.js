@@ -42,7 +42,10 @@ async function mockGameApi(page) {
 test('game detail uses document scrolling on a touch viewport', async ({ browser }, testInfo) => {
   test.skip(testInfo.project.name !== 'chromium', 'Run once with an explicit mobile touch context.')
 
-  const context = await browser.newContext({ ...devices['Pixel 5'] })
+  const context = await browser.newContext({
+    ...devices['Pixel 5'],
+    baseURL: testInfo.project.use.baseURL,
+  })
   const page = await context.newPage()
 
   try {
