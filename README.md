@@ -1,5 +1,9 @@
 # RuleScribe Games
 
+[![Vercel Deployment](https://github.com/KAFKA2306/rule-scribe-games/actions/workflows/deploy.yml/badge.svg)](https://github.com/KAFKA2306/rule-scribe-games/actions/workflows/deploy.yml)
+[![Rule quality gate](https://github.com/KAFKA2306/rule-scribe-games/actions/workflows/rule-quality.yml/badge.svg)](https://github.com/KAFKA2306/rule-scribe-games/actions/workflows/rule-quality.yml)
+[![Curated game release verification](https://github.com/KAFKA2306/rule-scribe-games/actions/workflows/curated-game-release-verification.yml/badge.svg)](https://github.com/KAFKA2306/rule-scribe-games/actions/workflows/curated-game-release-verification.yml)
+
 <div align="center">
   <img src="assets/02_ボドゲのミカタ.jpg" alt="RuleScribe Games Header" width="100%" style="border-radius: 12px; border: 1px solid rgba(0, 92, 185, 0.3);">
 
