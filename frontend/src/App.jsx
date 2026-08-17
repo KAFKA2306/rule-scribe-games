@@ -401,7 +401,7 @@ function App() {
                         alt={title}
                         className="asset-thumb"
                         loading={firstVisibleGame ? 'eager' : 'lazy'}
-                        fetchPriority={firstVisibleGame ? 'high' : 'auto'}
+                        fetchpriority={firstVisibleGame ? 'high' : 'auto'}
                       />
                     </div>
                     <div className="asset-info">
