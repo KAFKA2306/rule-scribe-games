@@ -197,6 +197,33 @@ test('play-time sorting keeps unknown durations after known games', async ({ pag
   await expect(page.locator('.asset-title')).toHaveText(['30分ゲーム', '45分ゲーム', '時間未確認ゲーム'])
 })
 
+test('comparison renders missing player count and duration as unknown', async ({ page }) => {
+  const games = [
+    { id: '1', slug: 'known', title_ja: '既知ゲーム', min_players: 2, max_players: 4, play_time: 30 },
+    { id: '2', slug: 'unknown', title_ja: '未確認ゲーム', min_players: null, max_players: null, play_time: null },
+  ]
+  await page.route('**/api/games?limit=20000&offset=0', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ games, total: games.length }),
+    })
+  })
+
+  await page.goto('/')
+  await page.getByRole('button', { name: '既知ゲームを比較に追加' }).click()
+  await page.getByRole('button', { name: '未確認ゲームを比較に追加' }).click()
+  await page.getByRole('button', { name: '比較する' }).click()
+
+  const known = page.locator('.battle-col').filter({ hasText: '既知ゲーム' })
+  const unknown = page.locator('.battle-col').filter({ hasText: '未確認ゲーム' })
+  await expect(known.getByText('2-4人', { exact: true })).toBeVisible()
+  await expect(known.getByText('30分', { exact: true })).toBeVisible()
+  await expect(unknown.getByText('不明', { exact: true })).toHaveCount(2)
+  await expect(page.getByText('null分', { exact: true })).toHaveCount(0)
+  await expect(page.getByText('null-null', { exact: true })).toHaveCount(0)
+})
+
 test('directory prioritizes only the first visible game image', async ({ page }) => {
   const games = [
     { id: '1', slug: 'first', title_ja: '最初のゲーム', image_url: '/first.webp' },
