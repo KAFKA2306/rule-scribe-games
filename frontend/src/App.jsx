@@ -389,12 +389,20 @@ function App() {
               const selected = compareList.some((candidate) => candidate.id === game.id)
               const limitReached = compareList.length >= 3 && !selected
               const title = game.title_ja || game.title || 'このゲーム'
+              const firstVisibleGame = game === filteredGames[0]
               return (
                 <div key={game.id} className="asset-card-shell">
                   <Link to={`/games/${game.slug}`} className="asset-card asset-card-link">
                     <div className="asset-thumb-container">
                       {game.strategy_tier && <div className="tier-badge">戦略ティア {game.strategy_tier}</div>}
-                      <img src={gameImageUrl(game)} onError={handleGameImageError} alt={title} className="asset-thumb" loading="lazy" />
+                      <img
+                        src={gameImageUrl(game)}
+                        onError={handleGameImageError}
+                        alt={title}
+                        className="asset-thumb"
+                        loading={firstVisibleGame ? 'eager' : 'lazy'}
+                        {...{ fetchpriority: firstVisibleGame ? 'high' : 'auto' }}
+                      />
                     </div>
                     <div className="asset-info">
                       <div className="asset-title">{title}</div>
