@@ -9,14 +9,6 @@ from app.core.settings import settings
 
 logger = logging.getLogger("core.db_provider")
 _TABLE = "games"
-_IMAGE_BUCKET = "game-images"
-
-# Storage objects verified against the production Supabase project on 2026-08-14.
-# Keep this explicit: a missing image must not be inferred from a slug.
-_STORAGE_IMAGE_OVERRIDES = {
-    "splendor": "splendor.png",
-    "yokohama-duel": "yokohama-duel.png",
-}
 
 _client = None
 try:
@@ -64,25 +56,6 @@ def _search_rank(game: Dict[str, Any], query: str) -> tuple[int, str]:
     else:
         rank = 3
     return rank, str(game.get("title_ja") or game.get("title") or "")
-
-
-def _with_canonical_storage_image(game: Dict[str, Any]) -> Dict[str, Any]:
-    """Replace audited stale image references with their public Storage URL."""
-    slug = str(game.get("slug") or "").strip()
-    storage_name = _STORAGE_IMAGE_OVERRIDES.get(slug)
-    if not storage_name or not settings.supabase_url:
-        return game
-
-    current = str(game.get("image_url") or "").strip()
-    if current and "via.placeholder.com" not in current and not current.startswith("/assets/games/"):
-        return game
-
-    normalized = dict(game)
-    normalized["image_url"] = (
-        f"{settings.supabase_url.rstrip('/')}/storage/v1/object/public/"
-        f"{_IMAGE_BUCKET}/{storage_name}"
-    )
-    return normalized
 
 
 async def search(query: str) -> List[Dict[str, Any]]:
@@ -151,7 +124,7 @@ async def search(query: str) -> List[Dict[str, Any]]:
         for row in [*direct_rows, *alias_games]:
             row_id = str(row.get("id") or "")
             if row_id:
-                deduped[row_id] = _with_canonical_storage_image(row)
+                deduped[row_id] = row
 
         return sorted(deduped.values(), key=lambda game: _search_rank(game, query))
 
@@ -172,7 +145,7 @@ async def list_recent(limit: int = 100, offset: int = 0) -> Dict[str, Any]:
             .execute()
         )
         return {
-            "data": [_with_canonical_storage_image(row) for row in res.data],
+            "data": res.data,
             "total": res.count,
         }
 
@@ -186,7 +159,7 @@ async def get_by_slug(slug: str) -> Optional[Dict[str, Any]]:
     def _q():
         rows = _get_client().table(_TABLE).select("*").eq("slug", slug).execute().data
         if rows:
-            return _with_canonical_storage_image(rows[0])
+            return rows[0]
 
         aliases = (
             _get_client()
@@ -201,7 +174,7 @@ async def get_by_slug(slug: str) -> Optional[Dict[str, Any]]:
             return None
 
         rows = _get_client().table(_TABLE).select("*").eq("id", aliases[0]["game_id"]).execute().data
-        return _with_canonical_storage_image(rows[0]) if rows else None
+        return rows[0] if rows else None
 
     return await anyio.to_thread.run_sync(_q)
 
@@ -248,7 +221,7 @@ async def create_unverified_game(game_data: Dict[str, Any]) -> Dict[str, Any]:
             rows = client.table(_TABLE).insert(payload).execute().data
             if not rows:
                 raise RuntimeError("Failed to create game edition")
-            return _with_canonical_storage_image(rows[0])
+            return rows[0]
         except Exception:
             # Avoid leaving an orphan work when the edition insert fails.
             client.table("game_works").delete().eq("id", work_id).execute()
@@ -297,10 +270,6 @@ async def list_for_sitemap() -> list[dict[str, Any]]:
             .execute()
             .data
         )
-        return [
-            _with_canonical_storage_image(row)
-            for row in rows
-            if str(row.get("slug") or "").strip()
-        ]
+        return [row for row in rows if str(row.get("slug") or "").strip()]
 
     return await anyio.to_thread.run_sync(_q)
