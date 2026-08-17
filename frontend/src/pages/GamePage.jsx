@@ -195,7 +195,7 @@ export default function GamePage({ slug: propSlug, initialGame }) {
               詳しいルール
             </button>
             <button type="button" aria-pressed={activeTab === 'coach'} className={activeTab === 'coach' ? 'active' : ''} onClick={() => setActiveTab('coach')}>
-              セットアップ
+              準備・流れ・終了
             </button>
             <button type="button" aria-pressed={activeTab === 'strategy'} className={activeTab === 'strategy' ? 'active' : ''} onClick={() => setActiveTab('strategy')}>
               戦略
