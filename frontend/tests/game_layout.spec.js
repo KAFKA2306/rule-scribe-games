@@ -222,3 +222,17 @@ test('game share copies canonical URL when Web Share is unavailable', async ({ p
   )
   await expect(page.getByRole('button', { name: 'コピーしました' })).toBeVisible()
 })
+
+test('text-to-speech control identifies that it reads page highlights', async ({ page }) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(window, 'speechSynthesis', {
+      configurable: true,
+      value: { cancel() {}, speak() {} },
+    })
+  })
+  await mockGameApi(page)
+  await page.goto('/games/big-shot')
+
+  await expect(page.getByRole('button', { name: 'ページの要点を読み上げ' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Text to speech' })).toHaveCount(0)
+})

@@ -38,11 +38,11 @@ export const TextToSpeech = ({ text }) => {
     <button
       onClick={handleSpeak}
       className={`share-btn ${speaking ? 'speaking' : ''}`}
-      title={speaking ? '読み上げ停止' : '読み上げ開始'}
-      aria-label="Text to speech"
+      title={speaking ? '要点の読み上げを停止' : 'ページの要点を読み上げ'}
+      aria-label={speaking ? '要点の読み上げを停止' : 'ページの要点を読み上げ'}
       aria-pressed={speaking}
     >
-      {speaking ? '⏹️ 停止' : '🔊 読上'}
+      {speaking ? '⏹️ 停止' : '🔊 要点'}
     </button>
   )
 }
