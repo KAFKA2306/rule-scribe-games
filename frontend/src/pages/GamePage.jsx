@@ -190,25 +190,25 @@ export default function GamePage({ slug: propSlug, initialGame }) {
             onShowRules={() => setActiveTab('rules')}
           />
 
-          <div className="rules-tabs" role="tablist" aria-label="ゲーム詳細表示">
-            <button role="tab" aria-selected={activeTab === 'rules'} className={activeTab === 'rules' ? 'active' : ''} onClick={() => setActiveTab('rules')}>
-              詳しいルール <span className="sr-only">ANALYSIS & RULES</span>
+          <div className="rules-tabs" role="group" aria-label="ゲーム詳細表示">
+            <button type="button" aria-pressed={activeTab === 'rules'} className={activeTab === 'rules' ? 'active' : ''} onClick={() => setActiveTab('rules')}>
+              詳しいルール
             </button>
-            <button role="tab" aria-selected={activeTab === 'coach'} className={activeTab === 'coach' ? 'active' : ''} onClick={() => setActiveTab('coach')}>
-              セットアップ <span className="sr-only">INST COACH</span>
+            <button type="button" aria-pressed={activeTab === 'coach'} className={activeTab === 'coach' ? 'active' : ''} onClick={() => setActiveTab('coach')}>
+              セットアップ
             </button>
-            <button role="tab" aria-selected={activeTab === 'strategy'} className={activeTab === 'strategy' ? 'active' : ''} onClick={() => setActiveTab('strategy')}>
-              戦略 <span className="sr-only">STRATEGY GUIDE</span>
+            <button type="button" aria-pressed={activeTab === 'strategy'} className={activeTab === 'strategy' ? 'active' : ''} onClick={() => setActiveTab('strategy')}>
+              戦略
             </button>
-            <button role="tab" aria-selected={activeTab === 'reviews'} className={activeTab === 'reviews' ? 'active' : ''} onClick={() => setActiveTab('reviews')}>
-              レビュー <span className="sr-only">SUBAGENT REVIEWS</span>
+            <button type="button" aria-pressed={activeTab === 'reviews'} className={activeTab === 'reviews' ? 'active' : ''} onClick={() => setActiveTab('reviews')}>
+              レビュー
             </button>
-            <button role="tab" aria-selected={activeTab === 'graph'} className={activeTab === 'graph' ? 'active' : ''} onClick={() => setActiveTab('graph')}>
-              関連ゲーム <span className="sr-only">CONNECTIONS</span>
+            <button type="button" aria-pressed={activeTab === 'graph'} className={activeTab === 'graph' ? 'active' : ''} onClick={() => setActiveTab('graph')}>
+              関連ゲーム
             </button>
             {hasInfographics && (
-              <button role="tab" aria-selected={activeTab === 'infographics'} className={activeTab === 'infographics' ? 'active' : ''} onClick={() => setActiveTab('infographics')}>
-                図で見る <span className="sr-only">INFOGRAPHICS</span>
+              <button type="button" aria-pressed={activeTab === 'infographics'} className={activeTab === 'infographics' ? 'active' : ''} onClick={() => setActiveTab('infographics')}>
+                図で見る
               </button>
             )}
           </div>

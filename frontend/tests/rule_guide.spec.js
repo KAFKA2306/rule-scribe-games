@@ -125,7 +125,7 @@ test('new user can search IPSO and reach quick rules, scoring, diagram and sourc
   await scoring.scrollIntoViewIfNeeded()
   await page.screenshot({ path: testInfo.outputPath(`ipso-scoring-${testInfo.project.name}.png`), animations: 'disabled' })
 
-  await page.getByRole('tab', { name: /図で見る/ }).click()
+  await page.getByRole('button', { name: '図で見る', exact: true }).click()
   const flow = page.getByTestId('rule-flow-diagram')
   await expect(flow).toBeVisible()
   await expect(flow.getByText('全員の14枚がすべて表向き？')).toBeVisible()
