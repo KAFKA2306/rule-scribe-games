@@ -150,8 +150,8 @@ async def test_owned_game_put_is_idempotent_contract_with_canonical_game_id():
     assert first == {"owned": True, "created": True}
     assert second == {"owned": True, "created": False}
     assert service.calls == [
-        ("set-owned", USER_A["id"]),
-        ("set-owned", USER_A["id"]),
+        ("set-owned", USER_A["id"], GAME_ID),
+        ("set-owned", USER_A["id"], GAME_ID),
     ]
 
 
