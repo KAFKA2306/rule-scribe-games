@@ -84,7 +84,7 @@ test('game detail keeps one primary flow and readable long-form measure', async 
   await page.goto('/games/big-shot')
 
   await expect(page.getByRole('heading', { name: 'ビッグショット' })).toBeVisible()
-  await expect(page.getByRole('tab', { name: /詳しいルール/ })).toBeVisible()
+  await expect(page.getByRole('button', { name: '詳しいルール', exact: true })).toBeVisible()
 
   const desktop = await readLayout(page)
   expectSinglePrimaryFlow(desktop)
@@ -126,7 +126,7 @@ test('quick rules flatten to one row on wide desktop inside the single-column pa
   expectSinglePrimaryFlow(await readLayout(page))
 })
 
-test('game detail uses one navigation row after quick rules', async ({ page }) => {
+test('game detail uses one native button group after quick rules', async ({ page }) => {
   const skullKing = {
     ...bigShot,
     id: 269,
@@ -140,16 +140,26 @@ test('game detail uses one navigation row after quick rules', async ({ page }) =
   await page.goto('/games/skull-king')
 
   await expect(page.locator('.quick-rules-actions')).toHaveCount(0)
-  await expect(page.getByRole('tablist', { name: 'ゲーム詳細表示' })).toHaveCount(1)
-  await expect(page.getByRole('tab', { name: /詳しいルール/ })).toHaveCount(1)
-  await expect(page.getByRole('tab', { name: /図で見る/ })).toHaveCount(1)
+  await expect(page.getByRole('tablist')).toHaveCount(0)
+  await expect(page.getByRole('tab')).toHaveCount(0)
+  await expect(page.getByRole('group', { name: 'ゲーム詳細表示' })).toHaveCount(1)
+
+  const rulesButton = page.getByRole('button', { name: '詳しいルール', exact: true })
+  const setupButton = page.getByRole('button', { name: 'セットアップ', exact: true })
+  await expect(rulesButton).toHaveAttribute('aria-pressed', 'true')
+  await expect(setupButton).toHaveAttribute('aria-pressed', 'false')
+  await expect(page.getByRole('button', { name: '図で見る', exact: true })).toHaveCount(1)
+
+  await setupButton.click()
+  await expect(rulesButton).toHaveAttribute('aria-pressed', 'false')
+  await expect(setupButton).toHaveAttribute('aria-pressed', 'true')
   await expect(page.getByRole('link', { name: /公式出典:/ })).toHaveCount(1)
 })
 
-test('setup tab shows only game-specific summaries and fails closed when missing', async ({ page }) => {
+test('setup view shows only game-specific summaries and fails closed when missing', async ({ page }) => {
   await mockGameApi(page)
   await page.goto('/games/big-shot')
-  await page.getByRole('tab', { name: /セットアップ/ }).click()
+  await page.getByRole('button', { name: 'セットアップ', exact: true }).click()
 
   await expect(page.getByText(bigShot.setup_summary)).toBeVisible()
   await expect(page.getByText(bigShot.gameplay_summary)).toBeVisible()
@@ -169,7 +179,7 @@ test('setup tab shows only game-specific summaries and fails closed when missing
   await page.unrouteAll({ behavior: 'wait' })
   await mockGameApi(page, missing)
   await page.reload()
-  await page.getByRole('tab', { name: /セットアップ/ }).click()
+  await page.getByRole('button', { name: 'セットアップ', exact: true }).click()
 
   await expect(page.getByText('このゲーム固有のセットアップ要約は未確認です。')).toBeVisible()
   await expect(page.getByText('このゲーム固有のゲーム進行要約は未確認です。')).toBeVisible()
