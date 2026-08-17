@@ -196,3 +196,26 @@ test('play-time sorting keeps unknown durations after known games', async ({ pag
 
   await expect(page.locator('.asset-title')).toHaveText(['30分ゲーム', '45分ゲーム', '時間未確認ゲーム'])
 })
+
+test('directory prioritizes only the first visible game image', async ({ page }) => {
+  const games = [
+    { id: '1', slug: 'first', title_ja: '最初のゲーム', image_url: '/first.webp' },
+    { id: '2', slug: 'second', title_ja: '次のゲーム', image_url: '/second.webp' },
+  ]
+  await page.route('**/api/games?limit=20000&offset=0', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ games, total: games.length }),
+    })
+  })
+
+  await page.goto('/')
+
+  const images = page.locator('.asset-thumb')
+  await expect(images).toHaveCount(2)
+  await expect(images.nth(0)).toHaveAttribute('loading', 'eager')
+  await expect(images.nth(0)).toHaveAttribute('fetchpriority', 'high')
+  await expect(images.nth(1)).toHaveAttribute('loading', 'lazy')
+  await expect(images.nth(1)).toHaveAttribute('fetchpriority', 'auto')
+})
