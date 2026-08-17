@@ -136,6 +136,9 @@ async def generate_seo_html(slug: str) -> str | None:
 
     ssr_content = f"""<div id="root">
   <article itemscope itemtype="https://schema.org/Game" data-ssr-game="true">
+    <nav aria-label="ゲーム一覧へのナビゲーション">
+      <a href="/">ゲーム一覧</a>
+    </nav>
     <h1 itemprop="name">{safe_title}</h1>
     <section>
       <h2>要約</h2>
