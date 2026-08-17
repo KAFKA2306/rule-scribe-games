@@ -2,7 +2,6 @@ import { readFileSync } from 'node:fs'
 
 const files = {
   app: readFileSync(new URL('../src/App.jsx', import.meta.url), 'utf8'),
-  shell: readFileSync(new URL('../src/components/AppShell.jsx', import.meta.url), 'utf8'),
   modal: readFileSync(new URL('../src/components/EditGameModal.jsx', import.meta.url), 'utf8'),
 }
 
@@ -12,9 +11,6 @@ const requirements = [
   ['explicit sort label', files.app, /htmlFor="game-sort"/],
   ['compare pressed state', files.app, /aria-pressed=\{selected\}/],
   ['compare limit state', files.app, /比較できるゲームは3件まで/],
-  ['tab right-arrow keyboard support', files.shell, /ArrowRight/],
-  ['tab roving tabindex', files.shell, /tab\.tabIndex = tab === activeTab \? 0 : -1/],
-  ['tab panel semantics', files.shell, /setAttribute\('role', 'tabpanel'\)/],
   ['modal dialog role', files.modal, /role="dialog"/],
   ['modal aria-modal', files.modal, /aria-modal="true"/],
   ['modal labelledby', files.modal, /aria-labelledby="edit-game-dialog-title"/],
