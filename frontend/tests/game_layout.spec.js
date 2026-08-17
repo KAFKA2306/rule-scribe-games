@@ -145,21 +145,21 @@ test('game detail uses one native button group after quick rules', async ({ page
   await expect(page.getByRole('group', { name: 'ゲーム詳細表示' })).toHaveCount(1)
 
   const rulesButton = page.getByRole('button', { name: '詳しいルール', exact: true })
-  const setupButton = page.getByRole('button', { name: 'セットアップ', exact: true })
+  const flowButton = page.getByRole('button', { name: '準備・流れ・終了', exact: true })
   await expect(rulesButton).toHaveAttribute('aria-pressed', 'true')
-  await expect(setupButton).toHaveAttribute('aria-pressed', 'false')
+  await expect(flowButton).toHaveAttribute('aria-pressed', 'false')
   await expect(page.getByRole('button', { name: '図で見る', exact: true })).toHaveCount(1)
 
-  await setupButton.click()
+  await flowButton.click()
   await expect(rulesButton).toHaveAttribute('aria-pressed', 'false')
-  await expect(setupButton).toHaveAttribute('aria-pressed', 'true')
+  await expect(flowButton).toHaveAttribute('aria-pressed', 'true')
   await expect(page.getByRole('link', { name: /公式出典:/ })).toHaveCount(1)
 })
 
-test('setup view shows only game-specific summaries and fails closed when missing', async ({ page }) => {
+test('preparation flow and end view shows only game-specific summaries and fails closed when missing', async ({ page }) => {
   await mockGameApi(page)
   await page.goto('/games/big-shot')
-  await page.getByRole('button', { name: 'セットアップ', exact: true }).click()
+  await page.getByRole('button', { name: '準備・流れ・終了', exact: true }).click()
 
   await expect(page.getByText(bigShot.setup_summary)).toBeVisible()
   await expect(page.getByText(bigShot.gameplay_summary)).toBeVisible()
@@ -179,7 +179,7 @@ test('setup view shows only game-specific summaries and fails closed when missin
   await page.unrouteAll({ behavior: 'wait' })
   await mockGameApi(page, missing)
   await page.reload()
-  await page.getByRole('button', { name: 'セットアップ', exact: true }).click()
+  await page.getByRole('button', { name: '準備・流れ・終了', exact: true }).click()
 
   await expect(page.getByText('このゲーム固有のセットアップ要約は未確認です。')).toBeVisible()
   await expect(page.getByText('このゲーム固有のゲーム進行要約は未確認です。')).toBeVisible()
