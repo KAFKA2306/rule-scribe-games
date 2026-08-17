@@ -176,7 +176,7 @@ test('setup tab shows only game-specific summaries and fails closed when missing
   await expect(page.getByText('このゲーム固有の終了条件要約は未確認です。')).toBeVisible()
 })
 
-test('game share uses Web Share when available and clipboard otherwise', async ({ page }) => {
+test('game share uses Web Share when available', async ({ page }) => {
   await page.addInitScript(() => {
     window.__shared = null
     Object.defineProperty(navigator, 'share', {
@@ -192,9 +192,10 @@ test('game share uses Web Share when available and clipboard otherwise', async (
     url: 'https://bodoge-no-mikata.vercel.app/games/big-shot',
   })
   await expect(page.getByRole('button', { name: '共有しました' })).toBeVisible()
+})
 
-  await page.reload()
-  await page.evaluate(() => {
+test('game share copies canonical URL when Web Share is unavailable', async ({ page }) => {
+  await page.addInitScript(() => {
     window.__copied = null
     Object.defineProperty(navigator, 'share', { configurable: true, value: undefined })
     Object.defineProperty(navigator, 'clipboard', {
@@ -202,9 +203,12 @@ test('game share uses Web Share when available and clipboard otherwise', async (
       value: { writeText: async text => { window.__copied = text } },
     })
   })
-  await page.reload()
+  await mockGameApi(page)
+  await page.goto('/games/big-shot')
+
   await page.getByRole('button', { name: 'リンクをコピー' }).click()
   expect(await page.evaluate(() => window.__copied)).toBe(
     'https://bodoge-no-mikata.vercel.app/games/big-shot',
   )
+  await expect(page.getByRole('button', { name: 'コピーしました' })).toBeVisible()
 })
