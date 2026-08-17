@@ -2,10 +2,9 @@ import { useState } from 'react'
 
 export const ShareButton = ({ slug }) => {
   const [status, setStatus] = useState('idle')
+  const canNativeShare = typeof navigator !== 'undefined' && typeof navigator.share === 'function'
 
-  const handleShare = async () => {
-    const url = `https://bodoge-no-mikata.vercel.app/games/${slug}`
-
+  const copyUrl = async (url) => {
     if (!navigator.clipboard?.writeText) {
       setStatus('error')
       return
@@ -21,20 +20,44 @@ export const ShareButton = ({ slug }) => {
     }
   }
 
-  const label = status === 'copied'
-    ? 'コピーしました'
-    : status === 'error'
-      ? 'コピーできませんでした'
-      : 'リンクをコピー'
+  const handleShare = async () => {
+    const url = `https://bodoge-no-mikata.vercel.app/games/${slug}`
+
+    if (canNativeShare) {
+      try {
+        await navigator.share({ url })
+        setStatus('shared')
+        setTimeout(() => setStatus('idle'), 2000)
+        return
+      } catch (error) {
+        if (error?.name === 'AbortError') {
+          setStatus('idle')
+          return
+        }
+      }
+    }
+
+    await copyUrl(url)
+  }
+
+  const label = status === 'shared'
+    ? '共有しました'
+    : status === 'copied'
+      ? 'コピーしました'
+      : status === 'error'
+        ? '共有できませんでした'
+        : canNativeShare
+          ? '共有'
+          : 'リンクをコピー'
 
   return (
     <button
       onClick={handleShare}
-      className={`share-btn ${status === 'copied' ? 'copied' : ''}`}
+      className={`share-btn ${status === 'shared' || status === 'copied' ? 'copied' : ''}`}
       title={label}
       aria-label={label}
     >
-      {status === 'copied' ? '✓ 完了' : status === 'error' ? 'コピー失敗' : '🔗 コピー'}
+      {status === 'shared' ? '✓ 共有' : status === 'copied' ? '✓ 完了' : status === 'error' ? '共有失敗' : canNativeShare ? '共有' : '🔗 コピー'}
     </button>
   )
 }
