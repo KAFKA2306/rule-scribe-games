@@ -205,7 +205,11 @@ function App() {
       }
       if (sortOption === 'title') return (a.title_ja || a.title || '').localeCompare(b.title_ja || b.title || '')
       if (sortOption === 'year') return (b.published_year || 0) - (a.published_year || 0)
-      if (sortOption === 'play_time') return (a.play_time || 0) - (b.play_time || 0)
+      if (sortOption === 'play_time') {
+        const aTime = Number.isFinite(a.play_time) && a.play_time > 0 ? a.play_time : Number.POSITIVE_INFINITY
+        const bTime = Number.isFinite(b.play_time) && b.play_time > 0 ? b.play_time : Number.POSITIVE_INFINITY
+        return aTime - bTime
+      }
       return 0
     })
 
