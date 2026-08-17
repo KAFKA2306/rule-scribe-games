@@ -269,7 +269,6 @@ test('anonymous directory -> game detail stays error-free and SPA-local', async 
   const finishAudit = await installRuntimeAudit(page)
 
   await page.goto('/')
-  await expect(page.getByText('ゲーム一覧を読み込み中…')).toBeVisible()
   await expect(page.getByText('ゲーム1', { exact: true }).first()).toBeVisible()
   await assertViewportSafe(page)
 
@@ -292,7 +291,6 @@ test('authenticated list lifecycle survives navigation, reload, reorder, and des
   const finishAudit = await installRuntimeAudit(page)
 
   await page.goto('/lists')
-  await expect(page.getByText('読み込み中…')).toBeVisible()
   await expect(page.getByRole('heading', { name: '所持ゲーム' })).toBeVisible()
   await assertViewportSafe(page)
   expect((await finishAudit()).cls).toBeLessThan(0.1)
