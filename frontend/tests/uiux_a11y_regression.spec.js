@@ -17,7 +17,7 @@ async function mockDirectory(page, counters = { generated: 0 }) {
     }
     if (url.pathname === '/api/search' && request.method() === 'POST') {
       counters.generated += 1
-      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ games: [games[0]] }) })
+      await route.fulfill({ status: 403, contentType: 'application/json', body: JSON.stringify({ detail: 'Catalog generation is not available from public search' }) })
       return
     }
     await route.fulfill({ status: 404, contentType: 'application/json', body: JSON.stringify({ detail: 'not mocked' }) })
@@ -91,17 +91,17 @@ test('directory keeps search local, labels controls, exposes mobile filters, and
   await expect(page.getByText('比較トレイ · 3/3')).toBeVisible()
 })
 
-test('AI generation only runs from its explicit CTA', async ({ page }) => {
+test('public directory search never exposes or sends catalog generation', async ({ page }) => {
   const counters = { generated: 0 }
   await mockDirectory(page, counters)
   await page.goto('/')
   const search = page.getByLabel('ゲームを検索')
   await search.fill('未登録タイトル')
   await search.press('Enter')
-  expect(counters.generated).toBe(0)
 
-  await page.getByRole('button', { name: '未登録ゲームをAIで追加' }).click()
-  await expect.poll(() => counters.generated).toBe(1)
+  await expect(page.getByText('条件に一致するゲームが見つかりません。')).toBeVisible()
+  await expect(page.getByRole('button', { name: '未登録ゲームをAIで追加' })).toHaveCount(0)
+  expect(counters.generated).toBe(0)
 })
 
 test('game detail tabs implement the APG keyboard and tabpanel relationship', async ({ page }) => {

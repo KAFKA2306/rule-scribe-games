@@ -44,6 +44,7 @@ test('directory and comparison use Japanese action, status, and section labels',
   await expect(page.locator('html')).toHaveAttribute('lang', 'ja')
   await expect(page.getByText('2件のゲーム', { exact: true })).toBeVisible()
   await expect(page.getByText('2件', { exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: '未登録ゲームをAIで追加' })).toHaveCount(0)
 
   await page.getByRole('button', { name: 'ゲーム1を比較に追加' }).click()
   await page.getByRole('button', { name: 'ゲーム2を比較に追加' }).click()
