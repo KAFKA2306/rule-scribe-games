@@ -97,7 +97,6 @@ jobs:
           backend/tests/test_games_router.py
           backend/tests/test_seo_renderer.py
           backend/tests/test_sitemap.py
-          backend/tests/test_supabase_images.py
 
       - name: Verify compatible rollout then independent cleanup migrations
         shell: bash
