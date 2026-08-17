@@ -10,7 +10,6 @@ const requirements = [
   ['mobile filter toggle', files.app, /aria-controls="directory-filters"/],
   ['explicit directory search label', files.app, /htmlFor="game-directory-search"/],
   ['explicit sort label', files.app, /htmlFor="game-sort"/],
-  ['explicit AI generation CTA', files.app, /未登録ゲームをAIで追加/],
   ['compare pressed state', files.app, /aria-pressed=\{selected\}/],
   ['compare limit state', files.app, /比較できるゲームは3件まで/],
   ['tab right-arrow keyboard support', files.shell, /ArrowRight/],
@@ -25,10 +24,19 @@ const requirements = [
   ['explicit modal field labels', files.modal, /htmlFor="edit-game-title"/],
 ]
 
-const failures = requirements.filter(([, source, pattern]) => !pattern.test(source)).map(([name]) => name)
+const prohibited = [
+  ['public AI generation CTA', files.app, /未登録ゲームをAIで追加/],
+  ['public generate=true search mutation', files.app, /generate:\s*true/],
+]
+
+const failures = [
+  ...requirements.filter(([, source, pattern]) => !pattern.test(source)).map(([name]) => name),
+  ...prohibited.filter(([, source, pattern]) => pattern.test(source)).map(([name]) => name),
+]
+
 if (failures.length > 0) {
   console.error(`UI/UX accessibility contract failures:\n- ${failures.join('\n- ')}`)
   process.exit(1)
 }
 
-console.log(`UI/UX accessibility contracts: ${requirements.length} checks passed`)
+console.log(`UI/UX accessibility contracts: ${requirements.length + prohibited.length} checks passed`)
