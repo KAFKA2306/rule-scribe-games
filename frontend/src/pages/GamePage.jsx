@@ -122,7 +122,7 @@ export default function GamePage({ slug: propSlug, initialGame }) {
   const hasRuleFlow = Boolean(ruleGuide?.flow?.length)
   const hasInfographics = hasRuleFlow || legacyInfographicsVerified
 
-  const pageTitle = `「${title}」のルール・戦略・インスト要約 | ボドゲのミカタ`
+  const pageTitle = `「${title}」のルール${sd.strategy_analysis ? '・戦略' : ''}・インスト要約 | ボドゲのミカタ`
   const description = game.summary || `「${title}」の登録済みルール要約と出典情報を確認できます。`
   const gameUrl = `${BASE_URL}/games/${slug}`
   const imageUrl = game.image_url || `${BASE_URL}/assets/no-image.webp`

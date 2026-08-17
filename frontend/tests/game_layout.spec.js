@@ -99,6 +99,27 @@ test('game detail keeps one primary flow and readable long-form measure', async 
   await expect(page.locator('.quick-rules-panel')).toHaveCount(0)
 })
 
+test('game page title only advertises strategy when strategy content exists', async ({ page }) => {
+  await mockGameApi(page)
+  await page.goto('/games/big-shot')
+  await expect(page).toHaveTitle('「ビッグショット」のルール・戦略・インスト要約 | ボドゲのミカタ')
+
+  const withoutStrategy = {
+    ...bigShot,
+    slug: 'no-strategy',
+    title_ja: '戦略なしゲーム',
+    structured_data: {
+      ...bigShot.structured_data,
+      strategy_analysis: null,
+    },
+  }
+
+  await page.unrouteAll({ behavior: 'wait' })
+  await mockGameApi(page, withoutStrategy)
+  await page.goto('/games/no-strategy')
+  await expect(page).toHaveTitle('「戦略なしゲーム」のルール・インスト要約 | ボドゲのミカタ')
+})
+
 test('quick rules flatten to one row on wide desktop inside the single-column page', async ({ page }) => {
   const skullKing = {
     ...bigShot,
