@@ -133,7 +133,7 @@ test('every game-detail view avoids legacy dark surfaces', async ({ page }, test
   await page.goto('/games/palette-audit')
   await expect(page.getByRole('heading', { name: '配色監査' })).toBeVisible()
 
-  await page.getByRole('button', { name: 'セットアップ', exact: true }).click()
+  await page.getByRole('button', { name: '準備・流れ・終了', exact: true }).click()
   const coachSteps = page.locator('.coach-step')
   await expect(coachSteps).toHaveCount(3)
   for (let index = 0; index < 3; index += 1) {
