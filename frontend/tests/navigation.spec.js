@@ -176,3 +176,23 @@ test('homepage links to a JSON Web App Manifest', async ({ page, request }) => {
     display: 'standalone',
   })
 })
+
+test('play-time sorting keeps unknown durations after known games', async ({ page }) => {
+  const games = [
+    { id: '1', slug: 'short', title_ja: '30分ゲーム', min_players: 2, max_players: 4, play_time: 30 },
+    { id: '2', slug: 'medium', title_ja: '45分ゲーム', min_players: 2, max_players: 4, play_time: 45 },
+    { id: '3', slug: 'unknown', title_ja: '時間未確認ゲーム', min_players: 2, max_players: 4, play_time: null },
+  ]
+  await page.route('**/api/games?limit=20000&offset=0', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ games, total: games.length }),
+    })
+  })
+
+  await page.goto('/')
+  await page.getByLabel('ゲームの並び順').selectOption('play_time')
+
+  await expect(page.locator('.asset-title')).toHaveText(['30分ゲーム', '45分ゲーム', '時間未確認ゲーム'])
+})
