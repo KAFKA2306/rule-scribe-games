@@ -12,7 +12,7 @@ setup_logging()
 app = FastAPI(title="RuleScribe Minimal", version="1.0.0")
 
 BROWSER_REVALIDATE = "public, max-age=0, must-revalidate"
-VERCEL_PUBLIC_READ_CACHE = "public, s-maxage=60"
+VERCEL_PUBLIC_READ_CACHE = "public, max-age=60"
 
 
 def is_public_game_read_path(path: str) -> bool:
