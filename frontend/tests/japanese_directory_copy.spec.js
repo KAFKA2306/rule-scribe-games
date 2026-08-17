@@ -25,6 +25,18 @@ const GAMES = [
     strategy_tier: 'B',
     structured_data: { mechanics: ['Drafting'] },
   },
+  {
+    id: '33333333-3333-4333-8333-333333333333',
+    slug: 'game-unknown-time',
+    title: 'Unknown Time Game',
+    title_ja: '時間未確認ゲーム',
+    summary: 'プレイ時間は未確認',
+    min_players: 2,
+    max_players: 4,
+    play_time: null,
+    strategy_tier: null,
+    structured_data: { mechanics: [] },
+  },
 ]
 
 async function mockDirectory(page) {
@@ -42,8 +54,8 @@ test('directory and comparison use Japanese action, status, and section labels',
   await page.goto('/')
 
   await expect(page.locator('html')).toHaveAttribute('lang', 'ja')
-  await expect(page.getByText('2件のゲーム', { exact: true })).toBeVisible()
-  await expect(page.getByText('2件', { exact: true })).toBeVisible()
+  await expect(page.getByText('3件のゲーム', { exact: true })).toBeVisible()
+  await expect(page.getByText('3件', { exact: true })).toBeVisible()
   await expect(page.getByRole('button', { name: '未登録ゲームをAIで追加' })).toHaveCount(0)
 
   await page.getByRole('button', { name: 'ゲーム1を比較に追加' }).click()
@@ -73,4 +85,14 @@ test('directory and comparison use Japanese action, status, and section labels',
   ]) {
     await expect(page.getByText(legacyText, { exact: true })).toHaveCount(0)
   }
+})
+
+test('play-time sorting keeps unknown durations after known games', async ({ page }) => {
+  await mockDirectory(page)
+  await page.goto('/')
+
+  await page.getByLabel('ゲームの並び順').selectOption('play_time')
+
+  const titles = await page.locator('.asset-title').allTextContents()
+  expect(titles).toEqual(['ゲーム1', 'ゲーム2', '時間未確認ゲーム'])
 })
