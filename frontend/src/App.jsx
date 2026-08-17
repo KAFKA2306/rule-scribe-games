@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { api } from './lib/api'
 
 const PLAYER_FILTERS = ['1', '2', '3', '4', '5+']
@@ -97,13 +97,11 @@ function Filters({
 
 function App() {
   const [searchParams, setSearchParams] = useSearchParams()
-  const navigate = useNavigate()
 
   const [initialGames, setInitialGames] = useState([])
   const [totalGamesCount, setTotalGamesCount] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [generating, setGenerating] = useState(false)
 
   const [query, setQuery] = useState(searchParams.get('q') || '')
   const [activePlayers, setActivePlayers] = useState(null)
@@ -224,32 +222,6 @@ function App() {
 
   const handleDirectorySearch = (event) => {
     event.preventDefault()
-    // Filtering is intentionally local. AI generation is a separate explicit action.
-  }
-
-  const handleGenerateGame = async () => {
-    const normalized = query.trim()
-    if (!normalized || generating) return
-
-    setGenerating(true)
-    setError(null)
-    try {
-      const data = await api.post('/api/search', { query: normalized, generate: true })
-      const list = Array.isArray(data) ? data : data.games || []
-      if (list.length === 0) {
-        setError('未登録ゲームを生成できませんでした。名称を確認してください。')
-        return
-      }
-
-      const newGame = list[0]
-      setInitialGames((current) => current.some((game) => game.slug === newGame.slug) ? current : [newGame, ...current])
-      navigate(`/games/${newGame.slug}`)
-    } catch (err) {
-      console.error(err)
-      setError('AI生成リクエストに失敗しました。')
-    } finally {
-      setGenerating(false)
-    }
   }
 
   const clearFilters = () => {
@@ -351,14 +323,6 @@ function App() {
             value={query}
             onChange={(event) => setQuery(event.target.value)}
           />
-          <button
-            type="button"
-            className="filter-btn generate-game-button"
-            disabled={!query.trim() || generating}
-            onClick={handleGenerateGame}
-          >
-            {generating ? '生成中…' : '未登録ゲームをAIで追加'}
-          </button>
         </form>
 
         <div className="db-status" aria-label={loading ? 'ゲーム一覧を同期中' : `${totalGamesCount}件のゲーム`}>
@@ -411,7 +375,6 @@ function App() {
         </div>
 
         {error && <div className="app-feedback app-feedback--error" role="alert">{error}</div>}
-        {generating && <div className="app-feedback app-feedback--progress" role="status">未登録ゲームの情報を生成しています…</div>}
         {compareNotice && <div className="app-feedback compare-feedback" role="status">{compareNotice}</div>}
 
         {loading ? (
