@@ -77,6 +77,7 @@ async def test_game_ssr_replaces_metadata_and_escapes_db_content(
     assert 'property="og:url" content="https://bodoge-no-mikata.vercel.app/games/safe-game"' in rendered
     assert 'data-game-seo="true"' in rendered
     assert 'data-ssr-game="true"' in rendered
+    assert '<a href="/">ゲーム一覧</a>' in rendered
     assert '<script>alert("title")</script>' not in rendered
     assert '<script>alert("rules")</script>' not in rendered
     assert '<img src=x onerror=alert("summary")>' not in rendered
