@@ -114,7 +114,7 @@ test('game detail secondary views use native buttons with pressed state', async 
   await expect(page.getByRole('group', { name: 'ゲーム詳細表示' })).toHaveCount(1)
 
   const rulesButton = page.getByRole('button', { name: '詳しいルール', exact: true })
-  const setupButton = page.getByRole('button', { name: 'セットアップ', exact: true })
+  const setupButton = page.getByRole('button', { name: '準備・流れ・終了', exact: true })
   const relatedButton = page.getByRole('button', { name: '関連ゲーム', exact: true })
   await expect(rulesButton).toHaveAttribute('aria-pressed', 'true')
   await expect(setupButton).toHaveAttribute('aria-pressed', 'false')
