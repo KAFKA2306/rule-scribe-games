@@ -21,6 +21,16 @@ function handleGameImageError(event) {
   if (!event.currentTarget.src.endsWith(NO_IMAGE_URL)) event.currentTarget.src = NO_IMAGE_URL
 }
 
+function comparisonPlayers(game) {
+  if (!Number.isFinite(game.min_players) || game.min_players <= 0) return '不明'
+  if (!Number.isFinite(game.max_players) || game.max_players <= 0) return `${game.min_players}人以上`
+  return game.min_players === game.max_players ? `${game.min_players}人` : `${game.min_players}-${game.max_players}人`
+}
+
+function comparisonPlayTime(game) {
+  return Number.isFinite(game.play_time) && game.play_time > 0 ? `${game.play_time}分` : '不明'
+}
+
 function Filters({
   activePlayers,
   activeTime,
@@ -277,8 +287,8 @@ function App() {
               <div className="battle-attr">
                 <div className="battle-attr-label">基本情報</div>
                 <div className="pro-stats-grid comparison-specs">
-                  <div className="pro-stat-card"><div className="pro-stat-label">人数</div><div className="pro-stat-value comparison-stat">{game.min_players}-{game.max_players}</div></div>
-                  <div className="pro-stat-card"><div className="pro-stat-label">時間</div><div className="pro-stat-value comparison-stat">{game.play_time}分</div></div>
+                  <div className="pro-stat-card"><div className="pro-stat-label">人数</div><div className="pro-stat-value comparison-stat">{comparisonPlayers(game)}</div></div>
+                  <div className="pro-stat-card"><div className="pro-stat-label">時間</div><div className="pro-stat-value comparison-stat">{comparisonPlayTime(game)}</div></div>
                 </div>
               </div>
 
