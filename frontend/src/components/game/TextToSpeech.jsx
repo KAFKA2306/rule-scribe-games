@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
 
 export const TextToSpeech = ({ text }) => {
-  const [speaking, setSpeaking] = useState(false)
+  const [speechState, setSpeechState] = useState('idle')
   const [supported] = useState(() => typeof window !== 'undefined' && 'speechSynthesis' in window)
+  const active = speechState !== 'idle'
 
   useEffect(() => {
     return () => {
@@ -15,9 +16,9 @@ export const TextToSpeech = ({ text }) => {
   const handleSpeak = () => {
     if (!supported) return
 
-    if (speaking) {
+    if (active) {
       window.speechSynthesis.cancel()
-      setSpeaking(false)
+      setSpeechState('idle')
       return
     }
 
@@ -25,11 +26,12 @@ export const TextToSpeech = ({ text }) => {
     utterance.lang = 'ja-JP'
     utterance.rate = 0.9
     utterance.pitch = 1.0
-    utterance.onend = () => setSpeaking(false)
-    utterance.onerror = () => setSpeaking(false)
+    utterance.onstart = () => setSpeechState('speaking')
+    utterance.onend = () => setSpeechState('idle')
+    utterance.onerror = () => setSpeechState('idle')
 
     window.speechSynthesis.speak(utterance)
-    setSpeaking(true)
+    setSpeechState('queued')
   }
 
   if (!supported) return null
@@ -37,12 +39,12 @@ export const TextToSpeech = ({ text }) => {
   return (
     <button
       onClick={handleSpeak}
-      className={`share-btn ${speaking ? 'speaking' : ''}`}
-      title={speaking ? '要点の読み上げを停止' : 'ページの要点を読み上げ'}
-      aria-label={speaking ? '要点の読み上げを停止' : 'ページの要点を読み上げ'}
-      aria-pressed={speaking}
+      className={`share-btn ${speechState === 'speaking' ? 'speaking' : ''}`}
+      title={active ? '要点の読み上げを停止' : 'ページの要点を読み上げ'}
+      aria-label={active ? '要点の読み上げを停止' : 'ページの要点を読み上げ'}
+      aria-pressed={active}
     >
-      {speaking ? '⏹️ 停止' : '🔊 要点'}
+      {active ? '⏹️ 停止' : '🔊 要点'}
     </button>
   )
 }

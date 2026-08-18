@@ -104,6 +104,7 @@ jobs:
           tests/mobile_game_scroll.spec.js
           tests/auth.spec.js
           tests/generated-game-images.spec.js
+          tests/text_to_speech.spec.js
           --project=chromium
 
       - name: Gate responsive geometry and pixel screenshot baselines
