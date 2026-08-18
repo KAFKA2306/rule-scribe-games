@@ -247,6 +247,25 @@ test('game share copies canonical URL when Web Share is unavailable', async ({ p
   await expect(page.getByRole('button', { name: 'コピーしました' })).toBeVisible()
 })
 
+test('X share copy stays factual and uses the canonical game URL', async ({ page }) => {
+  await page.addInitScript(() => {
+    window.__openedShareUrl = null
+    window.open = (url) => {
+      window.__openedShareUrl = url
+      return null
+    }
+  })
+  await mockGameApi(page)
+  await page.goto('/games/big-shot')
+
+  await page.getByRole('button', { name: 'Xで共有' }).click()
+  const shareUrl = await page.evaluate(() => window.__openedShareUrl)
+  const parsed = new URL(shareUrl)
+  expect(parsed.searchParams.get('text')).toBe('ボードゲーム「ビッグショット」のルールを見る')
+  expect(parsed.searchParams.get('url')).toBe('https://bodoge-no-mikata.vercel.app/games/big-shot')
+  expect(parsed.searchParams.get('text')).not.toContain('3分')
+})
+
 test('text-to-speech control identifies that it reads page highlights', async ({ page }) => {
   await page.addInitScript(() => {
     Object.defineProperty(window, 'speechSynthesis', {
