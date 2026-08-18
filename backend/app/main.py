@@ -79,7 +79,6 @@ def game_not_found_html() -> str:
   </head>
   <body>
     <main style="max-width:42rem;margin:10vh auto;padding:2rem;font-family:system-ui,sans-serif;line-height:1.7">
-      <p style="font-weight:700;letter-spacing:.08em">404 · GAME NOT FOUND</p>
       <h1>ゲームが見つかりません</h1>
       <p>指定されたゲームは登録されていないか、URLが変更されています。</p>
       <p><a href="/">ゲーム一覧へ戻る</a></p>
