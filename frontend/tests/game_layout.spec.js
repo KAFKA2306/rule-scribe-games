@@ -84,6 +84,8 @@ test('game detail keeps one primary flow and readable long-form measure', async 
   await page.goto('/games/big-shot')
 
   await expect(page.getByRole('heading', { name: 'ビッグショット' })).toBeVisible()
+  await expect(page.getByText('「ビッグショット」のゲーム概要', { exact: true })).toBeVisible()
+  await expect(page.getByText('30秒でわかる「ビッグショット」', { exact: true })).toHaveCount(0)
   await expect(page.getByRole('button', { name: '詳しいルール', exact: true })).toBeVisible()
 
   const desktop = await readLayout(page)
@@ -133,6 +135,7 @@ test('quick rules flatten to one row on wide desktop inside the single-column pa
   await page.setViewportSize({ width: 1280, height: 900 })
   await page.goto('/games/skull-king')
 
+  await expect(page.getByText('30秒でわかる「スカルキング」', { exact: true })).toBeVisible()
   const cards = page.locator('.quick-rule-card')
   await expect(cards).toHaveCount(4)
 
