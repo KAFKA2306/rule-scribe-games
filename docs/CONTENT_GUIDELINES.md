@@ -31,3 +31,9 @@ If the answer is No, rewrite it.
 - **Setup**: Be extremely specific. "Place the board in the center" is better than "Set up the board".
 - **Turn Structure**: "On your turn, do A, then B." Clear chronological order.
 - **Beginner Tips**: Don't give "Winning Strategies" that require deep knowledge. Give "Survival Tips" to help them not feel lost.
+
+## Public provenance
+
+- Do not publish identifiers from user-supplied game sessions or replay logs, including table IDs, player IDs, replay URLs, or the date a user supplied the replay.
+- A replay may be used privately to investigate behavior, but a public rule explanation must be rewritten as a general rule and supported by an official or otherwise publicly verifiable rule source before publication.
+- Do not store user-supplied replay logs as public source documents for a game page.
