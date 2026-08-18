@@ -304,3 +304,29 @@ test('directory labels unverified and review-required games without warning revi
   await expect(comparedReviewed.getByText('未検証', { exact: true })).toHaveCount(0)
   await expect(comparedReviewed.getByText('内容要確認', { exact: true })).toHaveCount(0)
 })
+
+test('directory load failure stays distinct from empty results and can be retried', async ({ page }) => {
+  let requests = 0
+  await page.route('**/api/games?limit=20000&offset=0', async (route) => {
+    requests += 1
+    if (requests === 1) {
+      await route.fulfill({ status: 503, contentType: 'application/json', body: JSON.stringify({ detail: 'unavailable' }) })
+      return
+    }
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ games: [{ id: '1', slug: 'retry-game', title_ja: '再読込ゲーム' }], total: 1 }),
+    })
+  })
+
+  await page.goto('/')
+
+  await expect(page.getByRole('alert')).toContainText('ゲームの読み込みに失敗しました。')
+  await expect(page.getByText('条件に一致するゲームが見つかりません。', { exact: true })).toHaveCount(0)
+  await page.getByRole('button', { name: '再読み込み' }).click()
+
+  await expect(page.getByRole('alert')).toHaveCount(0)
+  await expect(page.getByText('再読込ゲーム', { exact: true })).toBeVisible()
+  expect(requests).toBe(2)
+})
