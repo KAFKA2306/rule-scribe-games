@@ -266,7 +266,7 @@ export default function GamePage({ slug: propSlug, initialGame }) {
                   <ReactMarkdown>{sd.strategy_analysis}</ReactMarkdown>
                 ) : (
                   <div className="game-empty-state" role="status">
-                    戦略解説はまだ登録されていません。必要に応じて再生成してください。
+                    戦略解説はまだ登録されていません。
                   </div>
                 )}
               </div>
@@ -289,7 +289,7 @@ export default function GamePage({ slug: propSlug, initialGame }) {
                   </div>
                 )) : (
                   <div className="game-empty-state" role="status">
-                    レビューはまだ登録されていません。必要に応じて再生成してください。
+                    レビューはまだ登録されていません。
                   </div>
                 )}
               </div>
