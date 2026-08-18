@@ -31,6 +31,12 @@ function comparisonPlayTime(game) {
   return Number.isFinite(game.play_time) && game.play_time > 0 ? `${game.play_time}分` : '不明'
 }
 
+function directoryTrustLabel(game) {
+  if (game.identity_status !== 'verified') return '未検証'
+  if (['review_required', 'ai_draft', 'unknown'].includes(game.content_review_status)) return '内容要確認'
+  return null
+}
+
 function Filters({
   activePlayers,
   activeTime,
@@ -400,6 +406,7 @@ function App() {
               const selected = compareList.some((candidate) => candidate.id === game.id)
               const limitReached = compareList.length >= 3 && !selected
               const title = game.title_ja || game.title || 'このゲーム'
+              const trustLabel = directoryTrustLabel(game)
               const firstVisibleGame = game === filteredGames[0]
               return (
                 <div key={game.id} className="asset-card-shell">
@@ -418,6 +425,7 @@ function App() {
                     <div className="asset-info">
                       <div className="asset-title">{title}</div>
                       <div className="asset-meta">
+                        {trustLabel && <span className="meta-item">{trustLabel}</span>}
                         {game.min_players && <span className="meta-item">👥 {game.min_players}{game.max_players && game.max_players !== game.min_players ? `-${game.max_players}` : ''}</span>}
                         {game.play_time && <span className="meta-item">⏳ {game.play_time}分</span>}
                         {game.published_year && <span className="meta-item">📅 {game.published_year}</span>}
