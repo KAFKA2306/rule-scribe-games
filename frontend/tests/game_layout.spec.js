@@ -210,6 +210,29 @@ test('preparation flow and end view shows only game-specific summaries and fails
   await expect(page.getByText('このゲーム固有の終了条件要約は未確認です。')).toBeVisible()
 })
 
+test('empty strategy and review states do not suggest unavailable regeneration actions', async ({ page }) => {
+  const withoutOptionalContent = {
+    ...bigShot,
+    slug: 'empty-optional-content',
+    structured_data: {
+      ...bigShot.structured_data,
+      strategy_analysis: null,
+      persona_reviews: [],
+    },
+  }
+
+  await mockGameApi(page, withoutOptionalContent)
+  await page.goto('/games/empty-optional-content')
+
+  await page.getByRole('button', { name: '戦略', exact: true }).click()
+  await expect(page.getByText('戦略解説はまだ登録されていません。', { exact: true })).toBeVisible()
+  await expect(page.getByText(/再生成してください/)).toHaveCount(0)
+
+  await page.getByRole('button', { name: 'レビュー', exact: true }).click()
+  await expect(page.getByText('レビューはまだ登録されていません。', { exact: true })).toBeVisible()
+  await expect(page.getByText(/再生成してください/)).toHaveCount(0)
+})
+
 test('game share uses Web Share when available', async ({ page }) => {
   await page.addInitScript(() => {
     window.__shared = null
