@@ -38,7 +38,6 @@ export const ExternalLinks = ({ game }) => {
 
   return (
     <div className="info-section">
-      <h3>Links</h3>
       <div className="external-links-grid">
         {links.map((link) => (
           <a
