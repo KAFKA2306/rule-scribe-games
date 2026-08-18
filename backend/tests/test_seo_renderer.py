@@ -76,8 +76,14 @@ async def test_game_ssr_replaces_metadata_and_escapes_db_content(
     assert 'href="https://bodoge-no-mikata.vercel.app/games/safe-game"' in rendered
     assert 'property="og:url" content="https://bodoge-no-mikata.vercel.app/games/safe-game"' in rendered
     assert 'data-game-seo="true"' in rendered
+    assert 'data-breadcrumb-seo="true"' in rendered
+    assert '"@type":"BreadcrumbList"' in rendered
+    assert '"name":"ゲーム一覧","item":"https://bodoge-no-mikata.vercel.app/"' in rendered
+    assert '"item":"https://bodoge-no-mikata.vercel.app/games/safe-game"' in rendered
     assert 'data-ssr-game="true"' in rendered
+    assert '<nav aria-label="パンくずリスト">' in rendered
     assert '<a href="/">ゲーム一覧</a>' in rendered
+    assert 'aria-current="page"' in rendered
     assert '<script>alert("title")</script>' not in rendered
     assert '<script>alert("rules")</script>' not in rendered
     assert '<img src=x onerror=alert("summary")>' not in rendered
