@@ -43,7 +43,8 @@ test('GamePage speech state follows utterance lifecycle', async ({ page }) => {
 
   await page.goto('/games/game-one')
 
-  const button = page.getByRole('button', { name: 'ページの要点を読み上げ' })
+  const button = page.locator('.header-actions button[aria-pressed]')
+  await expect(button).toHaveAccessibleName('ページの要点を読み上げ')
   await button.click()
 
   await expect(button).toHaveAccessibleName('要点の読み上げを停止')
