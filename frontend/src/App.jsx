@@ -283,6 +283,7 @@ function App() {
               <div className="pro-card comparison-game-card">
                 <img src={gameImageUrl(game)} onError={handleGameImageError} className="comparison-game-image" alt={game.title_ja || game.title || ''} />
                 <div className="pro-stat-value">{game.title_ja || game.title}</div>
+                {directoryTrustLabel(game) && <div className="meta-item">{directoryTrustLabel(game)}</div>}
                 {game.strategy_tier && <div className="tier-badge comparison-tier">戦略ティア {game.strategy_tier}</div>}
               </div>
 
