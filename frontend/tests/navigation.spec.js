@@ -290,4 +290,17 @@ test('directory labels unverified and review-required games without warning revi
   await expect(review.getByText('内容要確認', { exact: true })).toBeVisible()
   await expect(reviewed.getByText('未検証', { exact: true })).toHaveCount(0)
   await expect(reviewed.getByText('内容要確認', { exact: true })).toHaveCount(0)
+
+  await page.getByRole('button', { name: '未検証ゲームを比較に追加' }).click()
+  await page.getByRole('button', { name: '要確認ゲームを比較に追加' }).click()
+  await page.getByRole('button', { name: '確認済みゲームを比較に追加' }).click()
+  await page.getByRole('button', { name: '比較する' }).click()
+
+  const comparedUnverified = page.locator('.battle-col').filter({ hasText: '未検証ゲーム' })
+  const comparedReview = page.locator('.battle-col').filter({ hasText: '要確認ゲーム' })
+  const comparedReviewed = page.locator('.battle-col').filter({ hasText: '確認済みゲーム' })
+  await expect(comparedUnverified.getByText('未検証', { exact: true })).toBeVisible()
+  await expect(comparedReview.getByText('内容要確認', { exact: true })).toBeVisible()
+  await expect(comparedReviewed.getByText('未検証', { exact: true })).toHaveCount(0)
+  await expect(comparedReviewed.getByText('内容要確認', { exact: true })).toHaveCount(0)
 })
