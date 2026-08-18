@@ -246,6 +246,7 @@ test('game share uses Web Share when available', async ({ page }) => {
 
   await page.getByRole('button', { name: '共有', exact: true }).click()
   expect(await page.evaluate(() => window.__shared)).toEqual({
+    title: '「ビッグショット」のルール・戦略・インスト要約 | ボドゲのミカタ',
     url: 'https://bodoge-no-mikata.vercel.app/games/big-shot',
   })
   await expect(page.getByRole('button', { name: '共有しました' })).toBeVisible()
