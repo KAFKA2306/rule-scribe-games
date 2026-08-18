@@ -75,6 +75,25 @@ async def generate_seo_html(slug: str) -> str | None:
     if game.get("play_time"):
         structured_data["timeRequired"] = f"PT{game.get('play_time')}M"
 
+    breadcrumb_data = {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "ゲーム一覧",
+                "item": f"{BASE_URL}/",
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": title,
+                "item": game_url,
+            },
+        ],
+    }
+
     root = Path(os.getenv("LAMBDA_TASK_ROOT", Path(__file__).resolve().parent.parent.parent.parent))
     possible_paths = [
         root / "frontend" / "dist" / "index.html",
@@ -118,7 +137,15 @@ async def generate_seo_html(slug: str) -> str | None:
 
     json_ld = _safe_json_script(structured_data)
     script_tag = f'<script type="application/ld+json" data-game-seo="true">{json_ld}</script>'
-    html_content = html_content.replace("</head>", f"  {script_tag}\n</head>", 1)
+    breadcrumb_json_ld = _safe_json_script(breadcrumb_data)
+    breadcrumb_script_tag = (
+        f'<script type="application/ld+json" data-breadcrumb-seo="true">{breadcrumb_json_ld}</script>'
+    )
+    html_content = html_content.replace(
+        "</head>",
+        f"  {script_tag}\n  {breadcrumb_script_tag}\n</head>",
+        1,
+    )
 
     safe_title = html.escape(title)
     safe_summary = html.escape(str(game.get("summary") or ""))
@@ -136,8 +163,11 @@ async def generate_seo_html(slug: str) -> str | None:
 
     ssr_content = f"""<div id="root">
   <article itemscope itemtype="https://schema.org/Game" data-ssr-game="true">
-    <nav aria-label="ゲーム一覧へのナビゲーション">
-      <a href="/">ゲーム一覧</a>
+    <nav aria-label="パンくずリスト">
+      <ol>
+        <li><a href="/">ゲーム一覧</a></li>
+        <li aria-current="page">{safe_title}</li>
+      </ol>
     </nav>
     <h1 itemprop="name">{safe_title}</h1>
     <section>
