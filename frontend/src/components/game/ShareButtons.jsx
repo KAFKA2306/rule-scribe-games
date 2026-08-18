@@ -64,7 +64,7 @@ export const ShareButton = ({ slug }) => {
 
 export const TwitterShareButton = ({ slug, title }) => {
   const handleTwitterShare = () => {
-    const text = `ボードゲーム「${title}」が気になる！ルールや魅力を3分でチェック！`
+    const text = `ボードゲーム「${title}」のルールを見る`
     const url = `https://bodoge-no-mikata.vercel.app/games/${slug}`
     const hashtags = 'ボドゲのミカタ,ボードゲーム'
     const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}&hashtags=${hashtags}`
@@ -75,8 +75,8 @@ export const TwitterShareButton = ({ slug, title }) => {
     <button
       onClick={handleTwitterShare}
       className="share-btn twitter"
-      title="X(Twitter)でシェア"
-      aria-label="Share on X"
+      title="Xで共有"
+      aria-label="Xで共有"
     >
       𝕏 共有
     </button>
