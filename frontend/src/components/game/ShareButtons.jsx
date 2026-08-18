@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-export const ShareButton = ({ slug }) => {
+export const ShareButton = ({ slug, title }) => {
   const [status, setStatus] = useState('idle')
   const canNativeShare = typeof navigator !== 'undefined' && typeof navigator.share === 'function'
 
@@ -22,10 +22,11 @@ export const ShareButton = ({ slug }) => {
 
   const handleShare = async () => {
     const url = `https://bodoge-no-mikata.vercel.app/games/${slug}`
+    const text = `ボードゲーム「${title}」のルールを見る`
 
     if (canNativeShare) {
       try {
-        await navigator.share({ url })
+        await navigator.share({ title, text, url })
         setStatus('shared')
         setTimeout(() => setStatus('idle'), 2000)
         return
