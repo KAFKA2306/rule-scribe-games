@@ -396,7 +396,16 @@ function App() {
           </select>
         </div>
 
-        {error && <div className="app-feedback app-feedback--error" role="alert">{error}</div>}
+        {error && (
+          <div className="app-feedback app-feedback--error" role="alert">
+            <span>{error}</span>
+            {initialGames.length === 0 && (
+              <button type="button" className="filter-btn" onClick={loadAllGames}>
+                再読み込み
+              </button>
+            )}
+          </div>
+        )}
         {compareNotice && <div className="app-feedback compare-feedback" role="status">{compareNotice}</div>}
 
         {loading ? (
@@ -448,7 +457,7 @@ function App() {
                 </div>
               )
             })}
-            {filteredGames.length === 0 && !loading && <div className="app-empty-state">条件に一致するゲームが見つかりません。</div>}
+            {filteredGames.length === 0 && !loading && !error && <div className="app-empty-state">条件に一致するゲームが見つかりません。</div>}
           </div>
         )}
 
