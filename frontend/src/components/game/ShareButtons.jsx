@@ -22,10 +22,11 @@ export const ShareButton = ({ slug }) => {
 
   const handleShare = async () => {
     const url = `https://bodoge-no-mikata.vercel.app/games/${slug}`
+    const title = typeof document !== 'undefined' ? document.title : ''
 
     if (canNativeShare) {
       try {
-        await navigator.share({ url })
+        await navigator.share({ title, url })
         setStatus('shared')
         setTimeout(() => setStatus('idle'), 2000)
         return
