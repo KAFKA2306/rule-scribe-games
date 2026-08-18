@@ -266,3 +266,28 @@ test('directory prioritizes only the first visible game image', async ({ page })
   await expect(images.nth(1)).toHaveAttribute('loading', 'lazy')
   await expect(images.nth(1)).toHaveAttribute('fetchpriority', 'auto')
 })
+
+test('directory labels unverified and review-required games without warning reviewed games', async ({ page }) => {
+  const games = [
+    { id: '1', slug: 'unverified', title_ja: '未検証ゲーム', identity_status: 'unverified', content_review_status: 'unknown' },
+    { id: '2', slug: 'review', title_ja: '要確認ゲーム', identity_status: 'verified', content_review_status: 'review_required' },
+    { id: '3', slug: 'reviewed', title_ja: '確認済みゲーム', identity_status: 'verified', content_review_status: 'human_reviewed' },
+  ]
+  await page.route('**/api/games?limit=20000&offset=0', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ games, total: games.length }),
+    })
+  })
+
+  await page.goto('/')
+
+  const unverified = page.locator('.asset-card-shell').filter({ hasText: '未検証ゲーム' })
+  const review = page.locator('.asset-card-shell').filter({ hasText: '要確認ゲーム' })
+  const reviewed = page.locator('.asset-card-shell').filter({ hasText: '確認済みゲーム' })
+  await expect(unverified.getByText('未検証', { exact: true })).toBeVisible()
+  await expect(review.getByText('内容要確認', { exact: true })).toBeVisible()
+  await expect(reviewed.getByText('未検証', { exact: true })).toHaveCount(0)
+  await expect(reviewed.getByText('内容要確認', { exact: true })).toHaveCount(0)
+})
