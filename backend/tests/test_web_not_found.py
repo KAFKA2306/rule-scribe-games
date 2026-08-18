@@ -16,6 +16,7 @@ def test_missing_web_game_returns_user_facing_html_404(monkeypatch):
     assert response.headers["content-type"].startswith("text/html")
     assert "ゲームが見つかりません" in response.text
     assert "ゲーム一覧へ戻る" in response.text
+    assert "GAME NOT FOUND" not in response.text
     assert 'name="robots" content="noindex, nofollow"' in response.text
     assert 'rel="canonical"' not in response.text
     assert 'application/json' not in response.headers["content-type"]
