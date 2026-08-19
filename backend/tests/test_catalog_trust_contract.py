@@ -30,6 +30,21 @@ def test_game_api_exposes_separate_trust_axes_without_legacy_official_fields():
     assert "official_url" not in GameDetail.model_fields
 
 
+def test_game_api_does_not_fabricate_legacy_confidence_scores():
+    game = GameDetail(id="game-1", slug="example", title="Example")
+    payload = game.model_dump()
+    legacy_confidence_fields = {
+        "rules_confidence",
+        "setup_confidence",
+        "gameplay_confidence",
+        "end_game_confidence",
+    }
+
+    assert legacy_confidence_fields.isdisjoint(payload)
+    assert legacy_confidence_fields.isdisjoint(GameDetail.model_fields)
+    assert legacy_confidence_fields.isdisjoint(GameUpdate.model_fields)
+
+
 def test_trust_enums_fail_closed_on_unknown_values():
     with pytest.raises(ValidationError):
         GameDetail(id="game-1", title="Example", source_trust="official")
