@@ -217,6 +217,26 @@ test('player filters exclude games with unknown player bounds', async ({ page })
   await expect(page.getByText('人数未確認ゲーム', { exact: true })).toHaveCount(0)
 })
 
+test('play-time filter chip uses the visible label instead of the internal filter id', async ({ page }) => {
+  const games = [
+    { id: '1', slug: 'short', title_ja: '30分ゲーム', min_players: 2, max_players: 4, play_time: 30 },
+    { id: '2', slug: 'medium', title_ja: '45分ゲーム', min_players: 2, max_players: 4, play_time: 45 },
+  ]
+  await page.route('**/api/games?limit=20000&offset=0', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ games, total: games.length }),
+    })
+  })
+
+  await page.goto('/')
+  await page.getByRole('button', { name: '30分以内', exact: true }).click()
+
+  await expect(page.locator('.filter-chip').filter({ hasText: '時間:' })).toContainText('時間: 30分以内')
+  await expect(page.getByText('時間: 30-', { exact: true })).toHaveCount(0)
+})
+
 test('comparison renders missing player count and duration as unknown', async ({ page }) => {
   const games = [
     { id: '1', slug: 'known', title_ja: '既知ゲーム', min_players: 2, max_players: 4, play_time: 30 },
