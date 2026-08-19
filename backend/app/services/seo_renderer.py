@@ -6,6 +6,7 @@ import re
 from pathlib import Path
 
 from app.core.supabase import get_by_slug
+from app.services.search_visibility import should_hide_game_from_search
 
 logger = logging.getLogger(__name__)
 BASE_URL = "https://bodoge-no-mikata.vercel.app"
@@ -52,7 +53,7 @@ async def generate_seo_html(slug: str) -> str | None:
     game_url = f"{BASE_URL}/games/{slug}"
     page_title = _page_title(game, title)
     seo_description = description or f"「{title}」の登録済みルール要約と出典情報を確認できます。"
-    hide_from_search = slug == "game" and game.get("identity_status") != "verified"
+    hide_from_search = should_hide_game_from_search(slug)
 
     structured_data: dict[str, object] = {
         "@context": "https://schema.org",
