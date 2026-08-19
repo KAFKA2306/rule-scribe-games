@@ -23,7 +23,7 @@ from app.services import catalog_access
 from app.services.component_catalog import ComponentCatalogService
 from app.services.concept_taxonomy import ConceptTaxonomyService
 from app.services.evidence import EvidenceService
-from app.services.game_service import GameService
+from app.services.game_service import GameService, UnverifiedGameIdentityError
 from app.services.rule_graph import RuleGraphService
 from app.services.rulesets import RuleSetService
 
@@ -304,6 +304,8 @@ async def update_game(
                     changed_fields=list(updates),
                 )
                 return result
+    except UnverifiedGameIdentityError as exc:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Game not found") from exc
 
