@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Any, Literal
 from urllib.parse import urlparse
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, field_validator
 
 IdentityStatus = Literal["unverified", "verified", "needs_review"]
 SourceTrust = Literal["unknown", "official_publisher", "authorized_partner", "third_party"]
@@ -79,13 +79,9 @@ class GameDetail(BaseSchema):
     description: str | None = None
     rules_content: str | None = None
     rules_summary: str | None = None
-    rules_confidence: float = 0.5
     setup_summary: str | None = None
-    setup_confidence: float = 0.5
     gameplay_summary: str | None = None
-    gameplay_confidence: float = 0.5
     end_game_summary: str | None = None
-    end_game_confidence: float = 0.5
     image_url: str | None = None
     summary: str | None = None
     structured_data: StructuredData | None = None
@@ -122,13 +118,9 @@ class GameUpdate(BaseSchema):
     description: str | None = None
     summary: str | None = None
     rules_summary: str | None = None
-    rules_confidence: float | None = Field(None, ge=0, le=1)
     setup_summary: str | None = None
-    setup_confidence: float | None = Field(None, ge=0, le=1)
     gameplay_summary: str | None = None
-    gameplay_confidence: float | None = Field(None, ge=0, le=1)
     end_game_summary: str | None = None
-    end_game_confidence: float | None = Field(None, ge=0, le=1)
     min_players: int | None = None
     max_players: int | None = None
     play_time: int | None = None
