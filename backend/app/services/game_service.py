@@ -50,6 +50,10 @@ _ALLOWED_FIELDS = {
 _RULE_DERIVED_FIELDS = ("rules_content", "min_players", "max_players", "play_time", "min_age", "bga_url")
 
 
+class UnverifiedGameIdentityError(ValueError):
+    """Raised when generation would use an unverified game identity as input."""
+
+
 def _load_prompt(key: str) -> str:
     data = PROMPTS
     for part in key.split("."):
@@ -217,6 +221,8 @@ class GameService:
         game = await supabase.get_by_slug(slug)
         if not game:
             raise ValueError(f"Game not found for slug: {slug}")
+        if game.get("identity_status") != "verified":
+            raise UnverifiedGameIdentityError("Game identity must be verified before content regeneration")
 
         title = game.get("title")
         summary = game.get("summary")

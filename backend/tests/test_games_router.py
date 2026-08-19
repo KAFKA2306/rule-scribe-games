@@ -1,8 +1,10 @@
+import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from app.main import app as production_app
 from app.routers import games
+from app.services.game_service import GameService, UnverifiedGameIdentityError
 
 
 class MissingGameService:
@@ -21,6 +23,11 @@ class MutableGameService:
     async def update_game_manual(self, slug: str, updates: dict):
         self.updated = True
         return {"id": "game-1", "slug": slug, "title": updates.get("title", "Example")}
+
+
+class UnverifiedRegenerationService:
+    async def update_game_content(self, slug: str, fill_missing_only: bool = False):
+        raise UnverifiedGameIdentityError("Game identity must be verified before content regeneration")
 
 
 class DBFirstService:
@@ -86,6 +93,43 @@ def test_authorized_regeneration_uses_existing_slug_update_path():
     assert response.status_code == 200
     assert response.json()["slug"] == "example"
     assert service.updated is True
+
+
+def test_authorized_regeneration_reports_unverified_identity_conflict():
+    app = _app_with_service(UnverifiedRegenerationService())
+    app.dependency_overrides[games.require_catalog_editor] = lambda: {
+        "id": "editor-1",
+        "catalog_role": "editor",
+    }
+    client = TestClient(app)
+
+    response = client.patch("/api/games/game?regenerate=true")
+
+    assert response.status_code == 409
+    assert response.json() == {"detail": "Game identity must be verified before content regeneration"}
+
+
+@pytest.mark.asyncio
+async def test_regeneration_rejects_unverified_identity_before_generation(monkeypatch):
+    async def get_unverified_game(slug: str):
+        return {
+            "id": "mixed-game",
+            "slug": slug,
+            "title": "ワインと毒とゴブレット",
+            "title_ja": "みんなでぽんこつペイント",
+            "summary": "mixed identity fixture",
+            "identity_status": "unverified",
+        }
+
+    async def unexpected_generation(*args, **kwargs):
+        raise AssertionError("generation must not run for an unverified identity")
+
+    monkeypatch.setattr("app.services.game_service.supabase.get_by_slug", get_unverified_game)
+    monkeypatch.setattr("app.services.game_service.generate_metadata", unexpected_generation)
+    service = object.__new__(GameService)
+
+    with pytest.raises(UnverifiedGameIdentityError, match="identity must be verified"):
+        await service.update_game_content("game")
 
 
 def test_authorized_manual_update_does_not_accept_identity_fields():
