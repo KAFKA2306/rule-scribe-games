@@ -89,3 +89,35 @@ async def test_game_ssr_replaces_metadata_and_escapes_db_content(
     assert '<img src=x onerror=alert("summary")>' not in rendered
     assert '&lt;script&gt;alert(&quot;rules&quot;)&lt;/script&gt;' in rendered
     assert "\\u003cscript" in rendered
+
+
+@pytest.mark.asyncio
+async def test_known_mixed_game_record_is_noindex(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    async def game(_slug: str):
+        return {
+            "slug": "game",
+            "title": "ワインと毒とゴブレット",
+            "title_ja": "みんなでぽんこつペイント",
+            "identity_status": "unverified",
+            "summary": "mixed identity fixture",
+        }
+
+    template_dir = tmp_path / "frontend" / "dist"
+    template_dir.mkdir(parents=True)
+    (template_dir / "index.html").write_text(
+        '<html lang="ja"><head><meta name="robots" content="index, follow" /></head>'
+        '<body><div id="root"></div></body></html>',
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(seo_renderer, "get_by_slug", game)
+    monkeypatch.setenv("LAMBDA_TASK_ROOT", str(tmp_path))
+
+    rendered = await seo_renderer.generate_seo_html("game")
+
+    assert rendered is not None
+    assert '<meta name="robots" content="noindex, follow" />' in rendered
+    assert 'content="index, follow"' not in rendered
