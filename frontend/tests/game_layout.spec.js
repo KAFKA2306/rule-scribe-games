@@ -180,7 +180,7 @@ test('game detail uses one native button group after quick rules', async ({ page
   await expect(page.getByRole('link', { name: /公式出典:/ })).toHaveCount(1)
 })
 
-test('preparation flow and end view shows only game-specific summaries and fails closed when missing', async ({ page }) => {
+test('preparation flow only appears when at least one game-specific summary exists', async ({ page }) => {
   await mockGameApi(page)
   await page.goto('/games/big-shot')
   await page.getByRole('button', { name: '準備・流れ・終了', exact: true }).click()
@@ -203,11 +203,25 @@ test('preparation flow and end view shows only game-specific summaries and fails
   await page.unrouteAll({ behavior: 'wait' })
   await mockGameApi(page, missing)
   await page.reload()
+
+  await expect(page.getByRole('button', { name: '準備・流れ・終了', exact: true })).toHaveCount(0)
+  await expect(page.getByText('このゲーム固有のセットアップ要約は未確認です。')).toHaveCount(0)
+  await expect(page.getByText('このゲーム固有のゲーム進行要約は未確認です。')).toHaveCount(0)
+  await expect(page.getByText('このゲーム固有の終了条件要約は未確認です。')).toHaveCount(0)
+
+  const partial = {
+    ...bigShot,
+    setup_summary: null,
+    gameplay_summary: null,
+  }
+  await page.unrouteAll({ behavior: 'wait' })
+  await mockGameApi(page, partial)
+  await page.reload()
   await page.getByRole('button', { name: '準備・流れ・終了', exact: true }).click()
 
   await expect(page.getByText('このゲーム固有のセットアップ要約は未確認です。')).toBeVisible()
   await expect(page.getByText('このゲーム固有のゲーム進行要約は未確認です。')).toBeVisible()
-  await expect(page.getByText('このゲーム固有の終了条件要約は未確認です。')).toBeVisible()
+  await expect(page.getByText(bigShot.end_game_summary)).toBeVisible()
 })
 
 test('empty strategy and review states do not suggest unavailable regeneration actions', async ({ page }) => {
