@@ -109,7 +109,10 @@ async def get_owned_games(
     user: dict = Depends(get_current_user),
     service: ListService = Depends(get_list_service),
 ):
-    return await service.get_owned_collection(_owner_id(user))
+    try:
+        return await service.get_owned_collection(_owner_id(user))
+    except httpx.TransportError as exc:
+        raise _list_storage_unavailable() from exc
 
 
 @router.get("/owned-games/{game_id}")
@@ -118,7 +121,10 @@ async def get_owned_game_status(
     user: dict = Depends(get_current_user),
     service: ListService = Depends(get_list_service),
 ):
-    return await service.owned_status(_owner_id(user), str(game_id))
+    try:
+        return await service.owned_status(_owner_id(user), str(game_id))
+    except httpx.TransportError as exc:
+        raise _list_storage_unavailable() from exc
 
 
 @router.put("/owned-games/{game_id}")
@@ -152,6 +158,8 @@ async def get_user_list(
         return await service.get_list(_owner_id(user), str(list_id))
     except ListNotFoundError as exc:
         raise _not_found() from exc
+    except httpx.TransportError as exc:
+        raise _list_storage_unavailable() from exc
 
 
 @router.patch("/lists/{list_id}")
