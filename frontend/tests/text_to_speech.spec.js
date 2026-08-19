@@ -42,6 +42,10 @@ async function stubSpeech(page) {
   })
 }
 
+async function speechCancelCount(page) {
+  return page.evaluate(() => window.__speechCancelCount || 0)
+}
+
 test('GamePage speech state follows utterance lifecycle', async ({ page }) => {
   await stubSpeech(page)
   await page.goto('/games/game-one')
@@ -83,13 +87,14 @@ test('user stop cancels queued speech and returns the control to idle', async ({
   await page.goto('/games/game-one')
 
   const button = page.locator('.header-actions button[aria-pressed]')
+  const cancelCountBeforeSpeech = await speechCancelCount(page)
   await button.click()
   await expect(button).toHaveAccessibleName('要点の読み上げを停止')
 
   await button.click()
   await expect(button).toHaveAccessibleName('ページの要点を読み上げ')
   await expect(button).toHaveAttribute('aria-pressed', 'false')
-  await expect.poll(() => page.evaluate(() => window.__speechCancelCount || 0)).toBe(1)
+  await expect.poll(() => speechCancelCount(page)).toBe(cancelCountBeforeSpeech + 1)
 })
 
 test('leaving GamePage cancels active speech', async ({ page }) => {
@@ -97,11 +102,12 @@ test('leaving GamePage cancels active speech', async ({ page }) => {
   await page.goto('/games/game-one')
 
   const button = page.locator('.header-actions button[aria-pressed]')
+  const cancelCountBeforeSpeech = await speechCancelCount(page)
   await button.click()
   await page.evaluate(() => window.__lastUtterance.onstart())
   await expect(button).toHaveClass(/speaking/)
 
   await page.getByRole('link', { name: '← DIRECTORY' }).click()
   await expect(page).toHaveURL(/\/$/)
-  await expect.poll(() => page.evaluate(() => window.__speechCancelCount || 0)).toBe(1)
+  await expect.poll(() => speechCancelCount(page)).toBe(cancelCountBeforeSpeech + 1)
 })
