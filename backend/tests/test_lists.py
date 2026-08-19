@@ -81,17 +81,43 @@ def test_item_payloads_forbid_user_supplied_owner_id():
 
 
 @pytest.mark.asyncio
-async def test_list_index_returns_503_for_transport_failure():
-    class FailingListService:
-        async def list_lists(self, owner_id):
-            assert owner_id == USER_A["id"]
+async def test_list_reads_return_503_for_transport_failure():
+    class FailingReadListService:
+        @staticmethod
+        def _fail():
             raise httpx.RemoteProtocolError("Server disconnected")
 
-    with pytest.raises(lists.HTTPException) as exc:
-        await lists.list_user_lists(user=USER_A, service=FailingListService())
+        async def list_lists(self, owner_id):
+            assert owner_id == USER_A["id"]
+            self._fail()
 
-    assert exc.value.status_code == 503
-    assert exc.value.detail == "リストを一時的に取得できません。時間をおいて再試行してください。"
+        async def get_list(self, owner_id, list_id):
+            assert owner_id == USER_A["id"]
+            assert list_id == LIST_ID
+            self._fail()
+
+        async def get_owned_collection(self, owner_id):
+            assert owner_id == USER_A["id"]
+            self._fail()
+
+        async def owned_status(self, owner_id, game_id):
+            assert owner_id == USER_A["id"]
+            assert game_id == GAME_ID
+            self._fail()
+
+    service = FailingReadListService()
+    reads = (
+        lambda: lists.list_user_lists(user=USER_A, service=service),
+        lambda: lists.get_user_list(LIST_ID, user=USER_A, service=service),
+        lambda: lists.get_owned_games(user=USER_A, service=service),
+        lambda: lists.get_owned_game_status(GAME_ID, user=USER_A, service=service),
+    )
+
+    for read in reads:
+        with pytest.raises(lists.HTTPException) as exc:
+            await read()
+        assert exc.value.status_code == 503
+        assert exc.value.detail == "リストを一時的に取得できません。時間をおいて再試行してください。"
 
 
 @pytest.mark.asyncio
