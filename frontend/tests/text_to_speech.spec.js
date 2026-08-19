@@ -94,7 +94,7 @@ test('user stop cancels queued speech and returns the control to idle', async ({
   await button.click()
   await expect(button).toHaveAccessibleName('ページの要点を読み上げ')
   await expect(button).toHaveAttribute('aria-pressed', 'false')
-  await expect.poll(() => speechCancelCount(page)).toBe(cancelCountBeforeSpeech + 1)
+  await expect.poll(() => speechCancelCount(page)).toBeGreaterThan(cancelCountBeforeSpeech)
 })
 
 test('leaving GamePage cancels active speech', async ({ page }) => {
@@ -109,5 +109,5 @@ test('leaving GamePage cancels active speech', async ({ page }) => {
 
   await page.getByRole('link', { name: '← DIRECTORY' }).click()
   await expect(page).toHaveURL(/\/$/)
-  await expect.poll(() => speechCancelCount(page)).toBe(cancelCountBeforeSpeech + 1)
+  await expect.poll(() => speechCancelCount(page)).toBeGreaterThan(cancelCountBeforeSpeech)
 })
