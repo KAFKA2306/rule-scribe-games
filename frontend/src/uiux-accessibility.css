@@ -43,6 +43,14 @@
   font-weight: 700;
 }
 
+.filter-chip button {
+  min-width: 24px;
+  min-height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .asset-card-shell {
   position: relative;
   min-width: 0;
