@@ -32,7 +32,7 @@ async def get_sitemap_xml() -> str:
 
     for game in games:
         slug = str(game.get("slug") or "").strip()
-        if not slug:
+        if not slug or slug == "game":
             continue
 
         url_elem = ET.SubElement(root, f"{{{NS_SITEMAP}}}url")

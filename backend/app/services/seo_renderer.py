@@ -52,6 +52,7 @@ async def generate_seo_html(slug: str) -> str | None:
     game_url = f"{BASE_URL}/games/{slug}"
     page_title = _page_title(game, title)
     seo_description = description or f"「{title}」の登録済みルール要約と出典情報を確認できます。"
+    hide_from_search = slug == "game" and game.get("identity_status") != "verified"
 
     structured_data: dict[str, object] = {
         "@context": "https://schema.org",
@@ -120,6 +121,8 @@ async def generate_seo_html(slug: str) -> str | None:
         f"<title>{escaped_title}</title>",
     )
     html_content = _meta_tag(html_content, attr="name", key="description", content=seo_description)
+    if hide_from_search:
+        html_content = _meta_tag(html_content, attr="name", key="robots", content="noindex, follow")
     html_content = _meta_tag(html_content, attr="property", key="og:title", content=page_title)
     html_content = _meta_tag(html_content, attr="property", key="og:description", content=seo_description)
     html_content = _meta_tag(html_content, attr="property", key="og:url", content=game_url)
