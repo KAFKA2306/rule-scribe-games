@@ -383,7 +383,7 @@ function App() {
             </button>
             <span className="results-count">{filteredGames.length}件</span>
             {activePlayers && <div className="filter-chip">人数: {activePlayers} <button type="button" aria-label="人数フィルターを解除" onClick={() => setActivePlayers(null)}>×</button></div>}
-            {activeTime && <div className="filter-chip">時間: {activeTime} <button type="button" aria-label="時間フィルターを解除" onClick={() => setActiveTime(null)}>×</button></div>}
+            {activeTime && <div className="filter-chip">時間: {TIME_FILTERS.find((time) => time.id === activeTime)?.label || activeTime} <button type="button" aria-label="時間フィルターを解除" onClick={() => setActiveTime(null)}>×</button></div>}
             {activeTier && <div className="filter-chip">戦略ティア: {activeTier} <button type="button" aria-label="戦略ティアフィルターを解除" onClick={() => setActiveTier(null)}>×</button></div>}
           </div>
 
