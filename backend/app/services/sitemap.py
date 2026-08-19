@@ -3,6 +3,7 @@ import xml.etree.ElementTree as ET
 from datetime import datetime
 
 from app.core.supabase import list_for_sitemap
+from app.services.search_visibility import should_hide_game_from_search
 
 NS_SITEMAP = "http://www.sitemaps.org/schemas/sitemap/0.9"
 NS_IMAGE = "http://www.google.com/schemas/sitemap-image/1.1"
@@ -32,7 +33,7 @@ async def get_sitemap_xml() -> str:
 
     for game in games:
         slug = str(game.get("slug") or "").strip()
-        if not slug or slug == "game":
+        if not slug or should_hide_game_from_search(slug):
             continue
 
         url_elem = ET.SubElement(root, f"{{{NS_SITEMAP}}}url")
