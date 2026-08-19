@@ -62,3 +62,20 @@ async def test_invalid_game_slugs_are_not_emitted(monkeypatch: pytest.MonkeyPatc
     assert "https://example.test/games/valid-game" in xml_text
     assert "/games/None" not in xml_text
     assert "/games/  " not in xml_text
+
+
+@pytest.mark.asyncio
+async def test_known_mixed_game_record_is_not_emitted(monkeypatch: pytest.MonkeyPatch) -> None:
+    async def fake_list_for_sitemap() -> list[dict[str, str | None]]:
+        return [
+            {"slug": "game", "title": "Mixed", "updated_at": None, "image_url": None},
+            {"slug": "raise-your-goblets", "title": "Raise Your Goblets", "updated_at": None, "image_url": None},
+        ]
+
+    monkeypatch.setattr(sitemap, "list_for_sitemap", fake_list_for_sitemap)
+    monkeypatch.setenv("NEXT_PUBLIC_BASE_URL", "https://example.test")
+
+    xml_text = await sitemap.get_sitemap_xml()
+
+    assert "https://example.test/games/game" not in xml_text
+    assert "https://example.test/games/raise-your-goblets" in xml_text
