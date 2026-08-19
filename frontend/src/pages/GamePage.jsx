@@ -121,6 +121,9 @@ export default function GamePage({ slug: propSlug, initialGame }) {
   )
   const hasRuleFlow = Boolean(ruleGuide?.flow?.length)
   const hasInfographics = hasRuleFlow || legacyInfographicsVerified
+  const hasCoachSummary = Boolean(
+    game.setup_summary || game.gameplay_summary || game.end_game_summary,
+  )
 
   const pageTitle = `「${title}」のルール${sd.strategy_analysis ? '・戦略' : ''}・インスト要約 | ボドゲのミカタ`
   const description = game.summary || `「${title}」の登録済みルール要約と出典情報を確認できます。`
@@ -196,9 +199,11 @@ export default function GamePage({ slug: propSlug, initialGame }) {
             <button type="button" aria-pressed={activeTab === 'rules'} className={activeTab === 'rules' ? 'active' : ''} onClick={() => setActiveTab('rules')}>
               詳しいルール
             </button>
-            <button type="button" aria-pressed={activeTab === 'coach'} className={activeTab === 'coach' ? 'active' : ''} onClick={() => setActiveTab('coach')}>
-              準備・流れ・終了
-            </button>
+            {hasCoachSummary && (
+              <button type="button" aria-pressed={activeTab === 'coach'} className={activeTab === 'coach' ? 'active' : ''} onClick={() => setActiveTab('coach')}>
+                準備・流れ・終了
+              </button>
+            )}
             <button type="button" aria-pressed={activeTab === 'strategy'} className={activeTab === 'strategy' ? 'active' : ''} onClick={() => setActiveTab('strategy')}>
               戦略
             </button>
