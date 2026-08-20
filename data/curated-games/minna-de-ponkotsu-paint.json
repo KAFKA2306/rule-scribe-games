@@ -1,0 +1,78 @@
+{
+  "schema_version": "1",
+  "slug": "minna-de-ponkotsu-paint",
+  "work": {
+    "canonical_title": "みんなでぽんこつペイント",
+    "identity_status": "verified"
+  },
+  "source": {
+    "url": "https://hobbyjapan.games/ponkotsu_paint/",
+    "rule_version": "hobbyjapan-product-page-2018",
+    "revision": "hobbyjapan-ponkotsu-paint-accessed-2026-08-20"
+  },
+  "game": {
+    "slug": "minna-de-ponkotsu-paint",
+    "title": "みんなでぽんこつペイント",
+    "title_en": "Minna de Ponkotsu Paint",
+    "description": "お題を直線と正円だけで描き、少ない画数の人から回答者へ見せて当ててもらうお絵描きゲーム。",
+    "summary": "サイコロで決めたお題を直線と正円だけで表現します。全員が描き終わったら画数が少ない人から順に回答者へ見せ、少ない画数で早く見せるか、多く描いて分かりやすくするかを競います。",
+    "rules_content": "# みんなでぽんこつペイント\n\n## 目的\nサイコロで決めたお題を直線と正円だけで描き、回答者に当ててもらいます。\n\n## 描画\n各プレイヤーはお題を表す絵を、直線と正円だけを使って描きます。\n\n## 回答\n全員が描き終えたら、画数が少ない人から順に回答者へ絵を見せます。画数を増やせば伝わりやすくなる可能性がありますが、見せる順番は遅くなります。少ない画数なら早く見せられますが、伝わりにくくなる可能性があります。\n\n## 追加ルール\nホビージャパンの現行商品ページでは、7人まで遊べるチーム戦「ぽんこつ紅白チーム戦」と、2人用協力戦「ぽんこつデュエット」が追加ルールとして案内されています。",
+    "setup_summary": "サイコロでお題を決め、各プレイヤーが描画できるようにお絵かきボードとマーカーを用意します。",
+    "gameplay_summary": "直線と正円だけでお題を描き、全員が描き終わったら画数が少ない人から順に回答者へ見せます。",
+    "end_game_summary": "回答者にお題を当ててもらうことを目指し、画数の少なさと伝わりやすさのバランスを競います。",
+    "min_players": 2,
+    "max_players": 12,
+    "play_time": 10,
+    "min_age": 6,
+    "published_year": 2018,
+    "publisher": "ホビージャパン",
+    "official_url": "https://hobbyjapan.games/ponkotsu_paint/",
+    "source_url": "https://hobbyjapan.games/ponkotsu_paint/",
+    "source_revision": "hobbyjapan-ponkotsu-paint-accessed-2026-08-20",
+    "generated_from_source_revision": "hobbyjapan-ponkotsu-paint-accessed-2026-08-20",
+    "source_trust": "official_publisher",
+    "identity_status": "verified"
+  },
+  "guide": {
+    "reviewed": true,
+    "ruleVersion": "hobbyjapan-product-page-2018",
+    "source": {
+      "label": "ホビージャパン公式商品ページ",
+      "url": "https://hobbyjapan.games/ponkotsu_paint/",
+      "ruleVersion": "hobbyjapan-product-page-2018"
+    },
+    "facts": {
+      "playersMin": 2,
+      "playersMax": 12,
+      "playTimeMinutes": 10,
+      "minimumAge": 6,
+      "releaseYear": 2018,
+      "teamVariantMaxPlayers": 7,
+      "duetPlayers": 2
+    },
+    "quick": {
+      "win": "直線と正円だけでお題を表現し、回答者に当ててもらう。",
+      "actions": ["サイコロで決めたお題を確認する。", "直線と正円だけで絵を描く。", "画数が少ない人から順に回答者へ見せる。"],
+      "turnSteps": ["お題を直線と正円だけで描く。", "全員の描画完了後、画数を比較する。", "少ない画数の人から順に回答者へ見せる。"],
+      "turnEndChecks": ["直線と正円以外を使っていないか確認する。"],
+      "end": "回答者がお題を推測し、少ない画数と伝わりやすさの駆け引きを楽しむ。"
+    },
+    "scoring": {
+      "summary": "現行商品ページは、少ない画数ほど先に回答者へ見せられるという順序ルールを説明している。",
+      "rules": [
+        {"label": "表示順", "detail": "描いた絵の画数が少ない人から順に回答者へ見せる。"}
+      ]
+    },
+    "flow": [
+      {"id": "prompt", "kind": "step", "label": "サイコロでお題を決める"},
+      {"id": "draw", "kind": "step", "label": "直線と正円だけでお題を描く"},
+      {"id": "order", "kind": "step", "label": "画数が少ない人から順に回答者へ見せる"},
+      {"id": "guess", "kind": "end", "label": "回答者がお題を推測する"}
+    ]
+  },
+  "assertions": [
+    {"path": "facts.playersMax", "equals": 12},
+    {"path": "facts.playTimeMinutes", "equals": 10},
+    {"path": "quick.actions", "contains": "直線と正円"}
+  ]
+}
