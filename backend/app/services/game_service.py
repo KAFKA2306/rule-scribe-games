@@ -82,6 +82,24 @@ async def _load_identity_coherence_context() -> tuple[list[dict[str, Any]], list
     return await anyio.to_thread.run_sync(_q)
 
 
+async def _validate_current_title_identity(game: dict[str, Any]) -> None:
+    games, aliases = await _load_identity_coherence_context()
+    game_id = str(game.get("id") or "")
+    candidate = {key: game.get(key) for key in ("id", "slug", "work_id", *_TITLE_FIELDS)}
+    catalog = [candidate if str(row.get("id") or "") == game_id else row for row in games]
+    if not any(str(row.get("id") or "") == game_id for row in games):
+        catalog.append(candidate)
+
+    findings = [
+        finding
+        for finding in audit_title_work_coherence(catalog, aliases)
+        if str(finding.get("game_id") or "") == game_id
+    ]
+    if findings:
+        reasons = ", ".join(sorted({str(finding["reason"]) for finding in findings}))
+        raise GameIdentityConflictError(f"Content regeneration requires reviewed identity evidence: {reasons}")
+
+
 async def _validate_manual_title_update(
     game: dict[str, Any],
     merged: dict[str, Any],
@@ -272,6 +290,7 @@ class GameService:
             raise ValueError(f"Game not found for slug: {slug}")
         if game.get("identity_status") != "verified":
             raise UnverifiedGameIdentityError("Game identity must be verified before content regeneration")
+        await _validate_current_title_identity(game)
 
         title = game.get("title")
         summary = game.get("summary")
