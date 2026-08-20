@@ -15,10 +15,11 @@ def audit_title_work_coherence(
     games: list[dict[str, Any]],
     aliases: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
-    """Report title fields that resolve only to a different canonical work.
+    """Report title fields whose explicit alias bindings do not identify one work.
 
-    The audit is intentionally fail-closed: titles with no explicit alias binding are
-    reported as review_required instead of being guessed into a work.
+    The audit is intentionally fail-closed: titles with no explicit alias binding or
+    bindings to multiple works are reported as review_required instead of being
+    guessed into a work.
     """
     game_work_by_id = {
         str(game.get("id")): str(game.get("work_id"))
@@ -47,10 +48,14 @@ def audit_title_work_coherence(
                 continue
             normalized = _normalize_title(str(raw_value))
             bound_works = works_by_title.get(normalized, set())
-            if work_id in bound_works:
+
+            if bound_works == {work_id}:
                 continue
 
-            if bound_works:
+            if work_id in bound_works and len(bound_works) > 1:
+                status = "review_required"
+                reason = "title_alias_bound_to_multiple_works"
+            elif bound_works:
                 status = "identity_conflict"
                 reason = "title_bound_to_different_work"
             else:
