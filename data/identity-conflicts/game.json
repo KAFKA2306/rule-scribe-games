@@ -1,0 +1,67 @@
+{
+  "slug": "game",
+  "issue": "https://github.com/KAFKA2306/rule-scribe-games/issues/256",
+  "production_snapshot": {
+    "observed_at": "2026-08-15",
+    "fields": {
+      "title": "ワインと毒とゴブレット",
+      "title_ja": "みんなでぽんこつペイント",
+      "title_en": "Minna de Ponkotsu Paint",
+      "source_url": "https://hobbyjapan.games/raise_your_goblets/",
+      "min_players": 2,
+      "max_players": 6,
+      "play_time": 15,
+      "published_year": 2020
+    }
+  },
+  "canonical_works": [
+    {
+      "title_ja": "ワインと毒とゴブレット",
+      "title_original": "Raise Your Goblets",
+      "source_url": "https://hobbyjapan.games/wine_poison_and_goblets/",
+      "verified_facts": {
+        "min_players": 2,
+        "max_players": 12,
+        "play_time_minutes": 30,
+        "min_age": 8,
+        "release": "2016-10"
+      },
+      "field_assignment": [
+        "title",
+        "description",
+        "rules_content"
+      ]
+    },
+    {
+      "title_ja": "みんなでぽんこつペイント",
+      "source_url": "https://hobbyjapan.games/ponkotsu_paint/",
+      "verified_facts": {
+        "min_players": 2,
+        "max_players": 12,
+        "play_time_minutes": 10,
+        "min_age": 6,
+        "release": "2018-09"
+      },
+      "field_assignment": [
+        "title_ja",
+        "title_en",
+        "summary",
+        "structured_data.keywords"
+      ]
+    }
+  ],
+  "unresolved_fields": [
+    "min_players",
+    "max_players",
+    "play_time",
+    "published_year",
+    "source_url"
+  ],
+  "decision": {
+    "status": "identity_conflict",
+    "normal_mutation_allowed": false,
+    "indexable": false,
+    "destructive_auto_merge_allowed": false,
+    "repair": "reviewed split or merge into separately verified canonical works"
+  }
+}
