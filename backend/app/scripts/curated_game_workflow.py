@@ -208,20 +208,21 @@ def plan_identity(
 ) -> IdentityPlan:
     if len(slug_rows) > 1:
         raise WorkflowError(f"multiple games already use slug {spec.slug}")
-    if len(work_rows) > 1:
-        raise WorkflowError(f"multiple canonical works match {spec.work.canonical_title}")
 
     slug_row = slug_rows[0] if slug_rows else None
-    work_row = work_rows[0] if work_rows else None
-
     if slug_row:
         slug_work_id = str(slug_row.get("work_id") or "") or None
         if not slug_work_id:
             raise WorkflowError(f"existing slug {spec.slug} has no canonical work_id")
-        if work_row and slug_work_id != str(work_row["id"]):
+        matching_work_rows = [row for row in work_rows if str(row.get("id")) == slug_work_id]
+        if work_rows and len(matching_work_rows) != 1:
             raise WorkflowError(f"slug {spec.slug} belongs to a different canonical work")
         return IdentityPlan(game_id=str(slug_row["id"]), work_id=slug_work_id, create_work=False)
 
+    if len(work_rows) > 1:
+        raise WorkflowError(f"multiple canonical works match {spec.work.canonical_title}")
+
+    work_row = work_rows[0] if work_rows else None
     if work_row:
         edition_label = spec.game.get("edition_label")
         language_code = spec.game.get("language_code")
@@ -260,7 +261,7 @@ def preflight_identity(client: Any, spec: CuratedGameSpec) -> IdentityPlan:
             work_rows = actual_work
 
     edition_rows: list[dict[str, Any]] = []
-    if work_rows:
+    if len(work_rows) == 1:
         edition_rows = (
             client.table("games")
             .select("id,slug,work_id,edition_label,language_code,source_url,source_revision")
@@ -388,13 +389,10 @@ def main() -> None:
             verify_source_reachable(spec)
 
     materialize_registry(all_specs, args.check_materialization)
-
     for spec in specs:
         validate_runtime_guide(spec)
         if args.write:
-            row = write_catalog(spec)
-            if row.get("slug") != spec.slug:
-                raise WorkflowError("catalog write returned unexpected slug")
+            write_catalog(spec)
         if args.verify_production:
             verify_production(spec, args.base_url)
 
