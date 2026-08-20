@@ -4,11 +4,14 @@ import uuid
 from datetime import UTC, datetime
 from typing import Any
 
+import anyio
+
 from app.core import supabase
 from app.core.gemini import GeminiClient
 from app.core.llm_manager import LLMKeyRotator
 from app.models import GeneratedGameMetadata
 from app.prompts.prompts import PROMPTS
+from app.services.identity_coherence import audit_title_work_coherence
 from app.services.rule_quality import RULE_PROMPT_VERSION, RULE_QUALITY_GOLDEN_VERSION
 from app.utils.affiliate import amazon_search_url
 from app.utils.slugify import slugify
@@ -48,10 +51,15 @@ _ALLOWED_FIELDS = {
     "updated_at",
 }
 _RULE_DERIVED_FIELDS = ("rules_content", "min_players", "max_players", "play_time", "min_age", "bga_url")
+_TITLE_FIELDS = ("title", "title_ja", "title_en")
 
 
 class UnverifiedGameIdentityError(ValueError):
     """Raised when generation would use an unverified game identity as input."""
+
+
+class GameIdentityConflictError(UnverifiedGameIdentityError):
+    """Raised when a mutation cannot be tied to one verified canonical work."""
 
 
 def _load_prompt(key: str) -> str:
@@ -59,6 +67,47 @@ def _load_prompt(key: str) -> str:
     for part in key.split("."):
         data = data[part]
     return str(data).strip()
+
+
+async def _load_identity_coherence_context() -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    if supabase.is_local():
+        raise GameIdentityConflictError("Title identity changes require verified alias bindings")
+
+    def _q() -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+        client = supabase._get_client()
+        games = client.table("games").select("id,slug,work_id,title,title_ja,title_en").execute().data
+        aliases = client.table("game_title_aliases").select("game_id,title").execute().data
+        return games, aliases
+
+    return await anyio.to_thread.run_sync(_q)
+
+
+async def _validate_manual_title_update(
+    game: dict[str, Any],
+    merged: dict[str, Any],
+    safe_updates: dict[str, Any],
+) -> None:
+    changed_fields = {
+        field for field in _TITLE_FIELDS if field in safe_updates and safe_updates[field] != game.get(field)
+    }
+    if not changed_fields:
+        return
+
+    games, aliases = await _load_identity_coherence_context()
+    game_id = str(game.get("id") or "")
+    candidate = {key: merged.get(key) for key in ("id", "slug", "work_id", *_TITLE_FIELDS)}
+    catalog = [candidate if str(row.get("id") or "") == game_id else row for row in games]
+    if not any(str(row.get("id") or "") == game_id for row in games):
+        catalog.append(candidate)
+
+    findings = [
+        finding
+        for finding in audit_title_work_coherence(catalog, aliases)
+        if str(finding.get("game_id") or "") == game_id and finding.get("field") in changed_fields
+    ]
+    if findings:
+        reasons = ", ".join(sorted({str(finding["reason"]) for finding in findings}))
+        raise GameIdentityConflictError(f"Manual title update requires reviewed identity evidence: {reasons}")
 
 
 async def generate_metadata(query: str, context: str | None = None, source_bound: bool = False) -> dict[str, Any]:
@@ -254,6 +303,7 @@ class GameService:
         protected = {"id", "slug", "work_id", "identity_status"}
         safe_updates = {key: value for key, value in updates.items() if key not in protected}
         merged = {**game, **safe_updates}
+        await _validate_manual_title_update(game, merged, safe_updates)
         merged["updated_at"] = datetime.now(UTC).isoformat()
         out = await supabase.upsert(merged)
         if not out:
