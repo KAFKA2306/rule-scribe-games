@@ -82,6 +82,72 @@ async def _load_identity_coherence_context() -> tuple[list[dict[str, Any]], list
     return await anyio.to_thread.run_sync(_q)
 
 
+async def _load_source_work_bindings(source_url: str) -> set[str]:
+    if supabase.is_local():
+        raise GameIdentityConflictError("Source URL changes require canonical evidence bindings")
+
+    def _q() -> set[str]:
+        client = supabase._get_client()
+        source_rows = client.table("evidence_sources").select("source_id").eq("url", source_url).execute().data
+        source_ids = sorted({str(row.get("source_id") or "") for row in source_rows if row.get("source_id")})
+        if not source_ids:
+            return set()
+
+        binding_rows = (
+            client.table("evidence_bindings")
+            .select("claim_id")
+            .in_("source_id", source_ids)
+            .eq("relation", "supports")
+            .execute()
+            .data
+        )
+        claim_ids = sorted({str(row.get("claim_id") or "") for row in binding_rows if row.get("claim_id")})
+        if not claim_ids:
+            return set()
+
+        claim_rows = (
+            client.table("claims")
+            .select("claim_id,rule_set_id")
+            .in_("claim_id", claim_ids)
+            .eq("lifecycle_status", "accepted")
+            .execute()
+            .data
+        )
+        rule_set_ids = sorted({str(row.get("rule_set_id") or "") for row in claim_rows if row.get("rule_set_id")})
+        if not rule_set_ids:
+            return set()
+
+        rule_set_rows = client.table("rule_sets").select("id,game_id").in_("id", rule_set_ids).execute().data
+        game_ids = sorted({str(row.get("game_id") or "") for row in rule_set_rows if row.get("game_id")})
+        if not game_ids:
+            return set()
+
+        game_rows = client.table("games").select("id,work_id").in_("id", game_ids).execute().data
+        return {str(row.get("work_id") or "") for row in game_rows if row.get("work_id")}
+
+    return await anyio.to_thread.run_sync(_q)
+
+
+async def _validate_manual_source_update(game: dict[str, Any], safe_updates: dict[str, Any]) -> None:
+    if "source_url" not in safe_updates or safe_updates["source_url"] == game.get("source_url"):
+        return
+
+    source_url = str(safe_updates.get("source_url") or "").strip()
+    if not source_url:
+        return
+
+    work_id = str(game.get("work_id") or "")
+    source_work_ids = await _load_source_work_bindings(source_url)
+    if source_work_ids != {work_id}:
+        if not source_work_ids:
+            reason = "source_unbound"
+        elif work_id not in source_work_ids:
+            reason = "source_bound_to_another_work"
+        else:
+            reason = "source_bound_to_multiple_works"
+        raise GameIdentityConflictError(f"Manual source URL update requires reviewed evidence binding: {reason}")
+
+
 async def _validate_current_title_identity(game: dict[str, Any]) -> None:
     games, aliases = await _load_identity_coherence_context()
     game_id = str(game.get("id") or "")
@@ -323,6 +389,7 @@ class GameService:
         safe_updates = {key: value for key, value in updates.items() if key not in protected}
         merged = {**game, **safe_updates}
         await _validate_manual_title_update(game, merged, safe_updates)
+        await _validate_manual_source_update(game, safe_updates)
         merged["updated_at"] = datetime.now(UTC).isoformat()
         out = await supabase.upsert(merged)
         if not out:
