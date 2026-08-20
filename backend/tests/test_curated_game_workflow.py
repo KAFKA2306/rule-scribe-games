@@ -38,6 +38,37 @@ def test_existing_slug_for_same_work_is_idempotent_update():
     assert plan.create_work is False
 
 
+def test_exact_slug_disambiguates_duplicate_canonical_titles():
+    spec = load_spec(SKULL_KING)
+    plan = plan_identity(
+        spec,
+        slug_rows=[{"id": "game-1", "work_id": "work-2"}],
+        work_rows=[
+            {"id": "work-1", "canonical_title": "Skull King"},
+            {"id": "work-2", "canonical_title": "Skull King"},
+        ],
+        edition_rows=[],
+    )
+
+    assert plan.game_id == "game-1"
+    assert plan.work_id == "work-2"
+    assert plan.create_work is False
+
+
+def test_duplicate_canonical_titles_without_exact_slug_fail_closed():
+    spec = load_spec(SKULL_KING)
+    with pytest.raises(WorkflowError, match="multiple canonical works"):
+        plan_identity(
+            spec,
+            slug_rows=[],
+            work_rows=[
+                {"id": "work-1", "canonical_title": "Skull King"},
+                {"id": "work-2", "canonical_title": "Skull King"},
+            ],
+            edition_rows=[],
+        )
+
+
 def test_slug_collision_with_different_work_fails_before_write():
     spec = load_spec(SKULL_KING)
     with pytest.raises(WorkflowError, match="different canonical work"):
