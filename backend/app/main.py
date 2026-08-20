@@ -5,6 +5,7 @@ from fastapi.responses import HTMLResponse
 from app.core.logger import setup_logging
 from app.middleware.validation import ValidationMiddleware
 from app.routers import auth, games, lists, mechanical_dna, presentation, vrchat
+from app.services.search_visibility import should_return_gone
 from app.services.seo_renderer import generate_seo_html
 from app.services.sitemap import get_sitemap_xml
 
@@ -90,6 +91,8 @@ def game_not_found_html() -> str:
 @app.get("/games/{slug}", response_class=HTMLResponse)
 async def game_seo_page(slug: str):
     """Serve a crawlable game page with game-specific metadata and a real 404 boundary."""
+    if should_return_gone(slug):
+        return HTMLResponse(content=game_not_found_html(), status_code=410)
     content = await generate_seo_html(slug)
     if content is None:
         return HTMLResponse(content=game_not_found_html(), status_code=404)
