@@ -1,0 +1,79 @@
+{
+  "schema_version": "1",
+  "slug": "raise-your-goblets",
+  "work": {
+    "canonical_title": "ワインと毒とゴブレット",
+    "identity_status": "verified"
+  },
+  "source": {
+    "url": "https://hobbyjapan.games/wine_poison_and_goblets/",
+    "rule_version": "hobbyjapan-product-page-2016",
+    "revision": "hobbyjapan-wine-poison-and-goblets-accessed-2026-08-20"
+  },
+  "game": {
+    "slug": "raise-your-goblets",
+    "title": "ワインと毒とゴブレット",
+    "title_en": "Raise Your Goblets",
+    "description": "ゴブレットにワイン、毒、解毒薬を入れ、覗き、交換しながら標的を倒して自分は生き延びるブラフゲーム。",
+    "summary": "各プレイヤーは名家の一員となり、キャラクター能力を使いながらゴブレットへワイン・毒・解毒薬を入れたり、内容を確認したり、他人のゴブレットと交換したりします。乾杯後に生存、標的の殺害、ワイン量などで勝利点を得て、3ラウンドの合計点を競います。",
+    "rules_content": "# ワインと毒とゴブレット\n\n## 目的\n標的となる相手へ毒入りワインを飲ませつつ自分は生き延び、3ラウンドを通じて最も多くの勝利点を得ます。\n\n## ゲームの進行\nキャラクター能力を利用しながら、自分の前のゴブレットへワイン・毒・必要に応じて解毒薬を入れます。ゴブレットの中を確認したり、他プレイヤーの前のゴブレットと交換したりできます。乾杯後、自分の前のゴブレットを飲み、ラウンドを解決します。\n\n## 得点と終了\n公式商品説明では、自分が生き延びた場合、標的の殺害に成功した場合、飲んだゴブレット内のワイン量が最も多い場合に勝利点を得ます。これを3ラウンド行い、合計勝利点が最も多いプレイヤーが勝者です。",
+    "setup_summary": "各プレイヤーは名家のキャラクターを担当し、ゴブレットやワイン・毒・解毒薬を使ってラウンドを進めます。",
+    "gameplay_summary": "ゴブレットへワイン・毒・解毒薬を入れる、内容を確認する、他人のゴブレットと交換するといった行動を行い、乾杯後に結果を解決します。",
+    "end_game_summary": "各ラウンドで生存、標的の殺害、ワイン量などにより勝利点を得ます。3ラウンド終了時の合計勝利点が最多のプレイヤーが勝ちます。",
+    "min_players": 2,
+    "max_players": 12,
+    "play_time": 30,
+    "min_age": 8,
+    "published_year": 2016,
+    "publisher": "ホビージャパン",
+    "official_url": "https://hobbyjapan.games/wine_poison_and_goblets/",
+    "source_url": "https://hobbyjapan.games/wine_poison_and_goblets/",
+    "source_revision": "hobbyjapan-wine-poison-and-goblets-accessed-2026-08-20",
+    "generated_from_source_revision": "hobbyjapan-wine-poison-and-goblets-accessed-2026-08-20",
+    "source_trust": "official_publisher",
+    "identity_status": "verified"
+  },
+  "guide": {
+    "reviewed": true,
+    "ruleVersion": "hobbyjapan-product-page-2016",
+    "source": {
+      "label": "ホビージャパン公式商品ページ",
+      "url": "https://hobbyjapan.games/wine_poison_and_goblets/",
+      "ruleVersion": "hobbyjapan-product-page-2016"
+    },
+    "facts": {
+      "rounds": 3,
+      "playersMin": 2,
+      "playersMax": 12,
+      "playTimeMinutes": 30,
+      "minimumAge": 8,
+      "releaseYear": 2016
+    },
+    "quick": {
+      "win": "3ラウンドの合計勝利点を最も多くする。",
+      "actions": ["ゴブレットへワイン・毒・解毒薬を入れる。", "ゴブレットの内容を確認する。", "他プレイヤーのゴブレットと交換する。"],
+      "turnSteps": ["キャラクター能力を使いながらゴブレットを操作する。", "乾杯後に自分の前のゴブレットを飲む。", "生存・標的殺害・ワイン量に応じて得点を処理する。"],
+      "turnEndChecks": ["ラウンドの得点処理を完了したか確認する。"],
+      "end": "3ラウンド終了後、合計勝利点が最も多いプレイヤーが勝つ。"
+    },
+    "scoring": {
+      "summary": "公式商品説明では、生存、標的の殺害、飲んだゴブレット内のワイン量が最多の場合に勝利点を得る。",
+      "rules": [
+        {"label": "生存", "detail": "自分が生き延びた場合に勝利点を得る。"},
+        {"label": "標的", "detail": "標的の殺害に成功した場合に勝利点を得る。"},
+        {"label": "ワイン量", "detail": "飲んだゴブレット内のワイン量が最も多い場合に勝利点を得る。"}
+      ]
+    },
+    "flow": [
+      {"id": "manipulate", "kind": "step", "label": "ゴブレットへワイン・毒・解毒薬を入れ、確認・交換する"},
+      {"id": "toast", "kind": "step", "label": "乾杯して自分の前のゴブレットを飲む"},
+      {"id": "score", "kind": "step", "label": "生存・標的殺害・ワイン量に応じて得点する"},
+      {"id": "finish", "kind": "end", "label": "3ラウンド後に合計勝利点で勝者を決める"}
+    ]
+  },
+  "assertions": [
+    {"path": "facts.rounds", "equals": 3},
+    {"path": "facts.playersMax", "equals": 12},
+    {"path": "quick.end", "contains": "3ラウンド"}
+  ]
+}
