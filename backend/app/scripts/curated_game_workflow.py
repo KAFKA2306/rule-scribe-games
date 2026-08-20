@@ -308,7 +308,10 @@ def write_catalog(spec: CuratedGameSpec) -> dict[str, Any]:
 
     if not rows:
         raise WorkflowError("catalog write returned no game row")
-    return rows[0]
+    row = rows[0]
+    if row.get("slug") != spec.slug:
+        raise WorkflowError("catalog write returned unexpected slug")
+    return row
 
 
 def verify_production(spec: CuratedGameSpec, base_url: str) -> None:
