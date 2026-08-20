@@ -4,6 +4,7 @@ import pytest
 from pydantic import ValidationError
 
 from app.models import GameDetail, GameUpdate
+from app.services.metadata_coherence import audit_metadata_source_work_coherence
 
 
 MIGRATIONS = Path(__file__).resolve().parents[1] / "app/db/migrations"
@@ -85,3 +86,86 @@ def test_catalog_acl_tables_are_rls_protected_and_match_production_contract():
     assert "game_slug" in sql
     assert "outcome" in sql
     assert "ALTER TABLE public.catalog_mutation_audit ENABLE ROW LEVEL SECURITY" in sql
+
+
+def _metadata_game(**overrides):
+    game = {
+        "id": "game-1",
+        "slug": "sample",
+        "work_id": "work-1",
+        "source_url": "https://publisher.example/sample",
+        "min_players": 2,
+        "max_players": 4,
+        "play_time": 30,
+        "min_age": 8,
+        "published_year": 2024,
+    }
+    game.update(overrides)
+    return game
+
+
+def test_metadata_source_bound_only_to_current_work_is_coherent():
+    games = [_metadata_game()]
+    bindings = {"https://publisher.example/sample": {"work-1"}}
+
+    assert audit_metadata_source_work_coherence(games, bindings) == []
+
+
+def test_metadata_source_problems_fail_closed():
+    cases = [
+        (
+            _metadata_game(source_url=None),
+            {},
+            "review_required",
+            "metadata_source_missing",
+            [],
+        ),
+        (
+            _metadata_game(),
+            {},
+            "review_required",
+            "metadata_source_unbound",
+            [],
+        ),
+        (
+            _metadata_game(),
+            {"https://publisher.example/sample": {"work-2"}},
+            "identity_conflict",
+            "metadata_source_bound_to_different_work",
+            ["work-2"],
+        ),
+        (
+            _metadata_game(),
+            {"https://publisher.example/sample": {"work-1", "work-2"}},
+            "review_required",
+            "metadata_source_bound_to_multiple_works",
+            ["work-1", "work-2"],
+        ),
+    ]
+
+    for game, bindings, status, reason, bound_work_ids in cases:
+        findings = audit_metadata_source_work_coherence([game], bindings)
+        assert findings[0]["status"] == status
+        assert findings[0]["reason"] == reason
+        assert findings[0]["bound_work_ids"] == bound_work_ids
+
+
+def test_metadata_audit_reports_only_populated_fields():
+    game = _metadata_game(max_players=None, play_time=None, min_age=None, published_year=None)
+
+    findings = audit_metadata_source_work_coherence([game], {})
+
+    assert findings[0]["fields"] == ["min_players"]
+
+
+def test_game_without_metadata_is_not_reported():
+    game = _metadata_game(
+        min_players=None,
+        max_players=None,
+        play_time=None,
+        min_age=None,
+        published_year=None,
+        source_url=None,
+    )
+
+    assert audit_metadata_source_work_coherence([game], {}) == []
