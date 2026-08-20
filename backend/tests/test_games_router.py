@@ -103,7 +103,7 @@ def test_authorized_regeneration_reports_unverified_identity_conflict():
     }
     client = TestClient(app)
 
-    response = client.patch("/api/games/game?regenerate=true")
+    response = client.patch("/api/games/unverified-game?regenerate=true")
 
     assert response.status_code == 409
     assert response.json() == {"detail": "Game identity must be verified before content regeneration"}

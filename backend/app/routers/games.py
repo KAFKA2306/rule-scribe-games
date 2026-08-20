@@ -26,6 +26,7 @@ from app.services.evidence import EvidenceService
 from app.services.game_service import GameService, UnverifiedGameIdentityError
 from app.services.rule_graph import RuleGraphService
 from app.services.rulesets import RuleSetService
+from app.services.search_visibility import has_known_identity_conflict
 
 router = APIRouter()
 
@@ -234,7 +235,7 @@ async def get_game_claim_detail(
 ):
     result = await service.get_claim(slug, rule_set_id, claim_id)
     if result is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Claim not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Game not found")
     return result
 
 
@@ -268,6 +269,12 @@ async def update_game(
     editor: dict = Depends(require_catalog_editor),
     service: GameService = Depends(get_game_service),
 ) -> dict[str, object]:
+    if has_known_identity_conflict(slug):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Game identity conflict requires reviewed repair before mutation",
+        )
+
     try:
         if regenerate:
             if not gen_limiter.acquire():
