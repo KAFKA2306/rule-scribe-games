@@ -1,6 +1,7 @@
 import pytest
 from fastapi import HTTPException
 
+from app.main import game_seo_page
 from app.routers.games import get_game_details, update_game
 
 
@@ -41,3 +42,16 @@ async def test_repaired_mixed_game_slug_is_gone() -> None:
 
     assert exc_info.value.status_code == 410
     assert exc_info.value.detail == "Game record retired after identity repair"
+
+
+@pytest.mark.asyncio
+async def test_repaired_mixed_game_slug_is_not_rendered_in_ssr(monkeypatch) -> None:
+    async def _render_must_not_run(_slug: str):
+        pytest.fail("retired mixed identity must be rejected before SSR data read")
+
+    monkeypatch.setattr("app.main.generate_seo_html", _render_must_not_run)
+
+    response = await game_seo_page("game")
+
+    assert response.status_code == 410
+    assert "ゲームが見つかりません" in response.body.decode("utf-8")
