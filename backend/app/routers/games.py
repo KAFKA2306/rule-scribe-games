@@ -26,7 +26,7 @@ from app.services.evidence import EvidenceService
 from app.services.game_service import GameService, UnverifiedGameIdentityError
 from app.services.rule_graph import RuleGraphService
 from app.services.rulesets import RuleSetService
-from app.services.search_visibility import has_known_identity_conflict
+from app.services.search_visibility import has_known_identity_conflict, should_return_gone
 
 router = APIRouter()
 
@@ -254,6 +254,8 @@ async def get_game_rule_graph(
 
 @router.get("/games/{slug}", response_model=GameDetail)
 async def get_game_details(slug: str, service: GameService = Depends(get_game_service)):
+    if should_return_gone(slug):
+        raise HTTPException(status_code=status.HTTP_410_GONE, detail="Game record retired after identity repair")
     game = await service.get_game_by_slug(slug)
     if not game:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Game not found")
