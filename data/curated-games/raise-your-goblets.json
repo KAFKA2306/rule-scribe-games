@@ -1,6 +1,6 @@
 {
   "schema_version": "1",
-  "slug": "wine-poison-and-goblets",
+  "slug": "raise-your-goblets",
   "work": {
     "canonical_title": "ワインと毒とゴブレット",
     "identity_status": "verified"
@@ -11,7 +11,7 @@
     "revision": "hobbyjapan-wine-poison-and-goblets-accessed-2026-08-20"
   },
   "game": {
-    "slug": "wine-poison-and-goblets",
+    "slug": "raise-your-goblets",
     "title": "ワインと毒とゴブレット",
     "title_en": "Raise Your Goblets",
     "description": "ゴブレットにワイン、毒、解毒薬を入れ、覗き、交換しながら標的を倒して自分は生き延びるブラフゲーム。",
