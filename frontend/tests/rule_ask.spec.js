@@ -38,10 +38,10 @@ async function ask(page, question) {
 test('answers turn action from the current game official guide', async ({ page }) => {
   await mockSplendor(page)
   await page.goto('/games/splendor')
-
   await ask(page, '手番では何ができる？')
 
-  await expect(page.getByText(/異なる色の宝石トークンを3個取る/)).toBeVisible()
+  const answer = page.getByRole('status').filter({ hasText: '異なる色の宝石トークンを3個取る' })
+  await expect(answer).toBeVisible()
   const evidence = page.getByRole('link', { name: '公式ルールを確認' })
   await expect(evidence).toHaveAttribute('href', 'https://cdn.svc.asmodee.net/production-spacecowboys/uploads/2025/12/FR_SPLENDOR_Rules.pdf')
   await expect(page.getByText(/quick:actions/)).toBeVisible()
@@ -52,22 +52,21 @@ test('answers end, scoring, tie and token-limit questions with evidence', async 
   await page.goto('/games/splendor')
 
   await ask(page, 'ゲームはいつ終わる？')
-  await expect(page.getByText(/15点以上/)).toBeVisible()
+  await expect(page.getByRole('status').filter({ hasText: '15点以上' })).toBeVisible()
 
   await ask(page, '得点はどう数える？')
-  await expect(page.getByText(/威信ポイント/)).toBeVisible()
+  await expect(page.getByRole('status').filter({ hasText: '威信ポイント' })).toBeVisible()
 
   await ask(page, '同点ならどうなる？')
-  await expect(page.getByText(/購入した発展カード枚数が少ない方/)).toBeVisible()
+  await expect(page.getByRole('status').filter({ hasText: '購入した発展カード枚数が少ない方' })).toBeVisible()
 
   await ask(page, 'トークンは何個まで？')
-  await expect(page.getByText(/10個/)).toBeVisible()
+  await expect(page.getByRole('status').filter({ hasText: '10個' })).toBeVisible()
 })
 
 test('fails closed when reviewed setup evidence is unavailable', async ({ page }) => {
   await mockSplendor(page)
   await page.goto('/games/splendor')
-
   await ask(page, 'セットアップはどうする？')
 
   await expect(page.getByText('この質問に答えられる確認済み根拠がありません。公式ルール本文を確認してください。')).toBeVisible()
@@ -100,6 +99,6 @@ test('critical path works at mobile width', async ({ page }) => {
   await expect(page.getByRole('heading', { name: '宝石の煌き' })).toBeVisible()
   await expect(page.getByText('ルールを質問', { exact: true })).toBeVisible()
   await ask(page, '同点なら？')
-  await expect(page.getByText(/購入した発展カード枚数が少ない方/)).toBeVisible()
+  await expect(page.getByRole('status').filter({ hasText: '購入した発展カード枚数が少ない方' })).toBeVisible()
   await expect(page.getByRole('link', { name: '公式ルールを確認' })).toBeVisible()
 })
