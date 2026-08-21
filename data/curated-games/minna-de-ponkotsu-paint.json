@@ -71,8 +71,11 @@
     ]
   },
   "assertions": [
+    {"path": "facts.playersMin", "equals": 2},
     {"path": "facts.playersMax", "equals": 12},
     {"path": "facts.playTimeMinutes", "equals": 10},
+    {"path": "facts.minimumAge", "equals": 6},
+    {"path": "facts.releaseYear", "equals": 2018},
     {"path": "quick.actions", "contains": "直線と正円"}
   ]
 }
