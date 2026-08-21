@@ -72,6 +72,7 @@ def _query_local(
     limit: int,
     offset: int,
 ) -> dict[str, Any]:
+    local_db.init_db()
     rows = local_db.list_recent(limit=50000, offset=0)["data"]
     filtered = [
         game
