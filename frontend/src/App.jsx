@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { api } from './lib/api'
 
@@ -9,6 +9,8 @@ const TIME_FILTERS = [
   { id: '60-120', label: '60-120分' },
   { id: '120+', label: '120分以上' },
 ]
+const SORT_OPTIONS = ['recent', 'title', 'year', 'play_time']
+const PAGE_SIZE = 48
 const NO_IMAGE_URL = '/assets/no-image.webp'
 
 function gameImageUrl(game) {
@@ -35,6 +37,19 @@ function directoryTrustLabel(game) {
   if (game.identity_status !== 'verified') return '未検証'
   if (['review_required', 'ai_draft', 'unknown'].includes(game.content_review_status)) return '内容要確認'
   return null
+}
+
+function directoryParams({ query, players, time, tier, sort, offset = 0 }) {
+  const params = new URLSearchParams()
+  const trimmedQuery = query.trim()
+  if (trimmedQuery) params.set('q', trimmedQuery)
+  if (players) params.set('players', players)
+  if (time) params.set('time', time)
+  if (tier) params.set('tier', tier)
+  if (sort !== 'recent') params.set('sort', sort)
+  params.set('limit', String(PAGE_SIZE))
+  params.set('offset', String(offset))
+  return params
 }
 
 function Filters({
@@ -113,56 +128,108 @@ function Filters({
 
 function App() {
   const [searchParams, setSearchParams] = useSearchParams()
+  const initialPlayers = searchParams.get('players')
+  const initialTime = searchParams.get('time')
+  const initialSort = searchParams.get('sort')
 
   const [initialGames, setInitialGames] = useState([])
   const [totalGamesCount, setTotalGamesCount] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [reloadKey, setReloadKey] = useState(0)
 
-  const [query, setQuery] = useState(searchParams.get('q') || '')
-  const [activePlayers, setActivePlayers] = useState(null)
-  const [activeTime, setActiveTime] = useState(null)
-  const [activeTier, setActiveTier] = useState(null)
-  const [sortOption, setSortOption] = useState('recent')
+  const [query, setQuery] = useState((searchParams.get('q') || '').slice(0, 200))
+  const [activePlayers, setActivePlayers] = useState(PLAYER_FILTERS.includes(initialPlayers) ? initialPlayers : null)
+  const [activeTime, setActiveTime] = useState(TIME_FILTERS.some((time) => time.id === initialTime) ? initialTime : null)
+  const [activeTier, setActiveTier] = useState((searchParams.get('tier') || '').slice(0, 40) || null)
+  const [sortOption, setSortOption] = useState(SORT_OPTIONS.includes(initialSort) ? initialSort : 'recent')
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
 
   const [compareList, setCompareList] = useState([])
   const [compareNotice, setCompareNotice] = useState('')
   const [isBattleMode, setIsBattleMode] = useState(false)
+  const requestVersion = useRef(0)
 
-  const loadAllGames = async () => {
+  useEffect(() => {
+    const nextQuery = (searchParams.get('q') || '').slice(0, 200)
+    const nextPlayers = searchParams.get('players')
+    const nextTime = searchParams.get('time')
+    const nextTier = (searchParams.get('tier') || '').slice(0, 40) || null
+    const nextSort = searchParams.get('sort')
+
+    if (nextQuery !== query) setQuery(nextQuery)
+    const validPlayers = PLAYER_FILTERS.includes(nextPlayers) ? nextPlayers : null
+    if (validPlayers !== activePlayers) setActivePlayers(validPlayers)
+    const validTime = TIME_FILTERS.some((time) => time.id === nextTime) ? nextTime : null
+    if (validTime !== activeTime) setActiveTime(validTime)
+    if (nextTier !== activeTier) setActiveTier(nextTier)
+    const validSort = SORT_OPTIONS.includes(nextSort) ? nextSort : 'recent'
+    if (validSort !== sortOption) setSortOption(validSort)
+  }, [searchParams])
+
+  useEffect(() => {
+    const version = requestVersion.current + 1
+    requestVersion.current = version
+    const delay = query.trim() ? 300 : 0
+    const timer = window.setTimeout(async () => {
+      const urlParams = directoryParams({
+        query,
+        players: activePlayers,
+        time: activeTime,
+        tier: activeTier,
+        sort: sortOption,
+      })
+      const browserParams = new URLSearchParams(urlParams)
+      browserParams.delete('limit')
+      browserParams.delete('offset')
+      setSearchParams(browserParams, { replace: true })
+
+      setError(null)
+      setLoading(true)
+      try {
+        const data = await api.get(`/api/games?${urlParams.toString()}`)
+        if (requestVersion.current !== version) return
+        setInitialGames(data.games || [])
+        setTotalGamesCount(data.total || 0)
+      } catch (err) {
+        if (requestVersion.current !== version) return
+        console.error('Failed to load games:', err)
+        setError('ゲームの読み込みに失敗しました。')
+      } finally {
+        if (requestVersion.current === version) setLoading(false)
+      }
+    }, delay)
+
+    return () => window.clearTimeout(timer)
+  }, [query, activePlayers, activeTime, activeTier, sortOption, reloadKey, setSearchParams])
+
+  const handleLoadMore = async () => {
+    if (initialGames.length >= totalGamesCount || loading) return
+    const version = requestVersion.current + 1
+    requestVersion.current = version
     setError(null)
     setLoading(true)
     try {
-      const data = await api.get('/api/games?limit=20000&offset=0')
-      setInitialGames(data.games || [])
+      const params = directoryParams({
+        query,
+        players: activePlayers,
+        time: activeTime,
+        tier: activeTier,
+        sort: sortOption,
+        offset: initialGames.length,
+      })
+      const data = await api.get(`/api/games?${params.toString()}`)
+      if (requestVersion.current !== version) return
+      setInitialGames((current) => [...current, ...(data.games || [])])
       setTotalGamesCount(data.total || 0)
     } catch (err) {
-      console.error('Failed to load games:', err)
-      setError('ゲームの読み込みに失敗しました。')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleLoadMore = async () => {
-    if (initialGames.length >= totalGamesCount) return
-    setLoading(true)
-    try {
-      const data = await api.get(`/api/games?limit=1000&offset=${initialGames.length}`)
-      const newGames = data.games || []
-      setInitialGames((current) => [...current, ...newGames])
-    } catch (err) {
+      if (requestVersion.current !== version) return
       console.error('Failed to load more games:', err)
       setError('追加ゲームの読み込みに失敗しました。')
     } finally {
-      setLoading(false)
+      if (requestVersion.current === version) setLoading(false)
     }
   }
-
-  useEffect(() => {
-    loadAllGames()
-  }, [])
 
   useEffect(() => {
     if (!mobileFiltersOpen) return undefined
@@ -175,71 +242,9 @@ function App() {
 
   const availableTiers = useMemo(() => {
     const tiers = new Set(initialGames.map((game) => game.strategy_tier).filter(Boolean))
+    if (activeTier) tiers.add(activeTier)
     return Array.from(tiers).sort()
-  }, [initialGames])
-
-  const filteredGames = useMemo(() => {
-    let result = [...initialGames]
-
-    if (query) {
-      const normalized = query.trim().normalize('NFKC').toLowerCase()
-      result = result.filter((game) => {
-        const title = (game.title || '').normalize('NFKC').toLowerCase()
-        const titleJa = (game.title_ja || '').normalize('NFKC').toLowerCase()
-        const titleEn = (game.title_en || '').normalize('NFKC').toLowerCase()
-        const summary = (game.summary || '').normalize('NFKC').toLowerCase()
-        return title.includes(normalized) || titleJa.includes(normalized) || titleEn.includes(normalized) || summary.includes(normalized)
-      })
-    }
-
-    if (activePlayers) {
-      const playerCount = Number.parseInt(activePlayers, 10)
-      result = result.filter((game) => {
-        const min = game.min_players
-        const max = game.max_players
-        if (!Number.isFinite(min) || min <= 0 || !Number.isFinite(max) || max <= 0) return false
-        if (activePlayers === '5+') return max >= 5
-        return playerCount >= min && playerCount <= max
-      })
-    }
-
-    if (activeTime) {
-      result = result.filter((game) => {
-        const time = game.play_time || 0
-        if (activeTime === '30-') return time > 0 && time <= 30
-        if (activeTime === '30-60') return time > 30 && time <= 60
-        if (activeTime === '60-120') return time > 60 && time <= 120
-        if (activeTime === '120+') return time > 120
-        return true
-      })
-    }
-
-    if (activeTier) result = result.filter((game) => game.strategy_tier === activeTier)
-
-    result.sort((a, b) => {
-      if (sortOption === 'recent') {
-        return (b.created_at ? new Date(b.created_at).getTime() : 0) - (a.created_at ? new Date(a.created_at).getTime() : 0)
-      }
-      if (sortOption === 'title') return (a.title_ja || a.title || '').localeCompare(b.title_ja || b.title || '')
-      if (sortOption === 'year') return (b.published_year || 0) - (a.published_year || 0)
-      if (sortOption === 'play_time') {
-        const aTime = Number.isFinite(a.play_time) && a.play_time > 0 ? a.play_time : Number.POSITIVE_INFINITY
-        const bTime = Number.isFinite(b.play_time) && b.play_time > 0 ? b.play_time : Number.POSITIVE_INFINITY
-        return aTime - bTime
-      }
-      return 0
-    })
-
-    return result
-  }, [initialGames, query, activePlayers, activeTime, activeTier, sortOption])
-
-  useEffect(() => {
-    const timer = window.setTimeout(() => {
-      if (query) setSearchParams({ q: query }, { replace: true })
-      else setSearchParams({}, { replace: true })
-    }, 300)
-    return () => window.clearTimeout(timer)
-  }, [query, setSearchParams])
+  }, [initialGames, activeTier])
 
   const handleDirectorySearch = (event) => {
     event.preventDefault()
@@ -343,6 +348,7 @@ function App() {
             className="search-input"
             placeholder="ゲーム名・概要で検索"
             value={query}
+            maxLength={200}
             onChange={(event) => setQuery(event.target.value)}
           />
         </form>
@@ -381,7 +387,7 @@ function App() {
             >
               フィルター
             </button>
-            <span className="results-count">{filteredGames.length}件</span>
+            <span className="results-count">{totalGamesCount}件</span>
             {activePlayers && <div className="filter-chip">人数: {activePlayers} <button type="button" aria-label="人数フィルターを解除" onClick={() => setActivePlayers(null)}>×</button></div>}
             {activeTime && <div className="filter-chip">時間: {TIME_FILTERS.find((time) => time.id === activeTime)?.label || activeTime} <button type="button" aria-label="時間フィルターを解除" onClick={() => setActiveTime(null)}>×</button></div>}
             {activeTier && <div className="filter-chip">戦略ティア: {activeTier} <button type="button" aria-label="戦略ティアフィルターを解除" onClick={() => setActiveTier(null)}>×</button></div>}
@@ -400,24 +406,24 @@ function App() {
           <div className="app-feedback app-feedback--error" role="alert">
             <span>{error}</span>
             {initialGames.length === 0 && (
-              <button type="button" className="filter-btn" onClick={loadAllGames}>
+              <button type="button" className="filter-btn" onClick={() => setReloadKey((value) => value + 1)}>
                 再読み込み
               </button>
             )}
           </div>
         )}
         {compareNotice && <div className="app-feedback compare-feedback" role="status">{compareNotice}</div>}
+        {loading && initialGames.length > 0 && <div className="app-loading-state" role="status">ゲーム一覧を更新中…</div>}
 
-        {loading ? (
+        {loading && initialGames.length === 0 ? (
           <div className="app-loading-state" role="status">ゲーム一覧を読み込み中…</div>
         ) : (
           <div className="asset-grid">
-            {filteredGames.map((game) => {
+            {initialGames.map((game, index) => {
               const selected = compareList.some((candidate) => candidate.id === game.id)
               const limitReached = compareList.length >= 3 && !selected
               const title = game.title_ja || game.title || 'このゲーム'
               const trustLabel = directoryTrustLabel(game)
-              const firstVisibleGame = game === filteredGames[0]
               return (
                 <div key={game.id} className="asset-card-shell">
                   <Link to={`/games/${game.slug}`} className="asset-card asset-card-link">
@@ -428,8 +434,8 @@ function App() {
                         onError={handleGameImageError}
                         alt={title}
                         className="asset-thumb"
-                        loading={firstVisibleGame ? 'eager' : 'lazy'}
-                        {...{ fetchpriority: firstVisibleGame ? 'high' : 'auto' }}
+                        loading={index === 0 ? 'eager' : 'lazy'}
+                        {...{ fetchpriority: index === 0 ? 'high' : 'auto' }}
                       />
                     </div>
                     <div className="asset-info">
@@ -457,7 +463,7 @@ function App() {
                 </div>
               )
             })}
-            {filteredGames.length === 0 && !loading && !error && <div className="app-empty-state">条件に一致するゲームが見つかりません。</div>}
+            {initialGames.length === 0 && !loading && !error && <div className="app-empty-state">条件に一致するゲームが見つかりません。</div>}
           </div>
         )}
 

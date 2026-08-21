@@ -22,6 +22,7 @@ from app.routers.auth import require_catalog_editor
 from app.services import catalog_access
 from app.services.component_catalog import ComponentCatalogService
 from app.services.concept_taxonomy import ConceptTaxonomyService
+from app.services.directory_query import DirectorySort, DirectoryTime, list_directory_games
 from app.services.evidence import EvidenceService
 from app.services.game_service import GameService, UnverifiedGameIdentityError
 from app.services.rule_graph import RuleGraphService
@@ -89,8 +90,24 @@ async def search_games_post(
 
 
 @router.get("/games", response_model=GameListResponse)
-async def list_recent_games(limit: int = 100, offset: int = 0, service: GameService = Depends(get_game_service)):
-    result = await service.list_recent_games(limit=limit, offset=offset)
+async def list_games(
+    q: str | None = Query(default=None, max_length=200),
+    players: str | None = Query(default=None, pattern=r"^(1|2|3|4|5\+)$"),
+    time_filter: DirectoryTime | None = Query(default=None, alias="time"),
+    tier: str | None = Query(default=None, max_length=40),
+    sort: DirectorySort = Query(default="recent"),
+    limit: int = Query(default=48, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+):
+    result = await list_directory_games(
+        q=q,
+        players=players,
+        time_filter=time_filter,
+        tier=tier,
+        sort=sort,
+        limit=limit,
+        offset=offset,
+    )
     return {
         "games": result["data"],
         "total": result["total"] or 0,

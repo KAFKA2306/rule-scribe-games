@@ -5,6 +5,80 @@ const LIST_ID = 'aaaaaaaa-0000-4000-8000-000000000001'
 const GAME_ID = '11111111-1111-4111-8111-111111111111'
 const TOKEN = 'eyJhbGciOiJub25lIn0.eyJzdWIiOiJhYWFhYWFhYS1hYWFhLTRhYWEtOGFhYS1hYWFhYWFhYWFhYWFhYSIsInJvbGUiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjo0MTAyNDQ0ODAwfQ.'
 
+function normalize(value) {
+  return (value || '').normalize('NFKC').toLowerCase().trim()
+}
+
+function directoryResponse(games, requestUrl) {
+  const url = new URL(requestUrl)
+  const query = normalize(url.searchParams.get('q'))
+  const players = url.searchParams.get('players')
+  const time = url.searchParams.get('time')
+  const tier = url.searchParams.get('tier')
+  const sort = url.searchParams.get('sort') || 'recent'
+  const limit = Number.parseInt(url.searchParams.get('limit') || '48', 10)
+  const offset = Number.parseInt(url.searchParams.get('offset') || '0', 10)
+
+  let result = [...games]
+  if (query) {
+    result = result.filter((game) => [game.title, game.title_ja, game.title_en, game.summary, game.description]
+      .some((value) => normalize(value).includes(query)))
+  }
+  if (players) {
+    result = result.filter((game) => {
+      if (!Number.isFinite(game.min_players) || !Number.isFinite(game.max_players)) return false
+      if (players === '5+') return game.max_players >= 5
+      const count = Number.parseInt(players, 10)
+      return game.min_players <= count && count <= game.max_players
+    })
+  }
+  if (time) {
+    result = result.filter((game) => {
+      if (!Number.isFinite(game.play_time) || game.play_time <= 0) return false
+      if (time === '30-') return game.play_time <= 30
+      if (time === '30-60') return game.play_time > 30 && game.play_time <= 60
+      if (time === '60-120') return game.play_time > 60 && game.play_time <= 120
+      return game.play_time > 120
+    })
+  }
+  if (tier) result = result.filter((game) => game.strategy_tier === tier)
+
+  result.sort((a, b) => {
+    if (sort === 'title') return (a.title_ja || a.title || '').localeCompare(b.title_ja || b.title || '')
+    if (sort === 'year') return (b.published_year || 0) - (a.published_year || 0)
+    if (sort === 'play_time') {
+      const aTime = Number.isFinite(a.play_time) && a.play_time > 0 ? a.play_time : Number.POSITIVE_INFINITY
+      const bTime = Number.isFinite(b.play_time) && b.play_time > 0 ? b.play_time : Number.POSITIVE_INFINITY
+      return aTime - bTime
+    }
+    return (b.created_at ? new Date(b.created_at).getTime() : 0) - (a.created_at ? new Date(a.created_at).getTime() : 0)
+  })
+
+  return {
+    games: result.slice(offset, offset + limit),
+    total: result.length,
+    limit,
+    offset,
+  }
+}
+
+async function mockDirectory(page, games, { failFirst = false } = {}) {
+  let requests = 0
+  await page.route('**/api/games?*', async (route) => {
+    requests += 1
+    if (failFirst && requests === 1) {
+      await route.fulfill({ status: 503, contentType: 'application/json', body: JSON.stringify({ detail: 'unavailable' }) })
+      return
+    }
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(directoryResponse(games, route.request().url())),
+    })
+  })
+  return () => requests
+}
+
 async function installSession(page) {
   await page.addInitScript(({ token, userId }) => {
     localStorage.setItem('sb-example-auth-token', JSON.stringify({
@@ -25,16 +99,9 @@ async function installSession(page) {
 }
 
 async function mockNavigationApis(page) {
-  await page.route('**/api/games?limit=20000&offset=0', async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({
-        games: [{ id: GAME_ID, slug: 'game-one', title: 'Game One', title_ja: 'ゲーム1', summary: 'summary', min_players: 2, max_players: 4 }],
-        total: 1,
-      }),
-    })
-  })
+  await mockDirectory(page, [
+    { id: GAME_ID, slug: 'game-one', title: 'Game One', title_ja: 'ゲーム1', summary: 'summary', min_players: 2, max_players: 4 },
+  ])
   await page.route('**/api/games/game-one', async (route) => {
     await route.fulfill({
       status: 200,
@@ -183,13 +250,7 @@ test('play-time sorting keeps unknown durations after known games', async ({ pag
     { id: '2', slug: 'medium', title_ja: '45分ゲーム', min_players: 2, max_players: 4, play_time: 45 },
     { id: '3', slug: 'unknown', title_ja: '時間未確認ゲーム', min_players: 2, max_players: 4, play_time: null },
   ]
-  await page.route('**/api/games?limit=20000&offset=0', async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({ games, total: games.length }),
-    })
-  })
+  await mockDirectory(page, games)
 
   await page.goto('/')
   await page.getByLabel('ゲームの並び順').selectOption('play_time')
@@ -202,13 +263,7 @@ test('player filters exclude games with unknown player bounds', async ({ page })
     { id: '1', slug: 'known', title_ja: '2人対応ゲーム', min_players: 2, max_players: 4, play_time: 30 },
     { id: '2', slug: 'unknown', title_ja: '人数未確認ゲーム', min_players: null, max_players: null, play_time: null },
   ]
-  await page.route('**/api/games?limit=20000&offset=0', async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({ games, total: games.length }),
-    })
-  })
+  await mockDirectory(page, games)
 
   await page.goto('/')
   await page.getByRole('button', { name: '2人', exact: true }).click()
@@ -222,13 +277,7 @@ test('play-time filter chip uses the visible label instead of the internal filte
     { id: '1', slug: 'short', title_ja: '30分ゲーム', min_players: 2, max_players: 4, play_time: 30 },
     { id: '2', slug: 'medium', title_ja: '45分ゲーム', min_players: 2, max_players: 4, play_time: 45 },
   ]
-  await page.route('**/api/games?limit=20000&offset=0', async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({ games, total: games.length }),
-    })
-  })
+  await mockDirectory(page, games)
 
   await page.goto('/')
   await page.getByRole('button', { name: '30分以内', exact: true }).click()
@@ -242,13 +291,7 @@ test('comparison renders missing player count and duration as unknown', async ({
     { id: '1', slug: 'known', title_ja: '既知ゲーム', min_players: 2, max_players: 4, play_time: 30 },
     { id: '2', slug: 'unknown', title_ja: '未確認ゲーム', min_players: null, max_players: null, play_time: null },
   ]
-  await page.route('**/api/games?limit=20000&offset=0', async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({ games, total: games.length }),
-    })
-  })
+  await mockDirectory(page, games)
 
   await page.goto('/')
   await page.getByRole('button', { name: '既知ゲームを比較に追加' }).click()
@@ -269,13 +312,7 @@ test('directory prioritizes only the first visible game image', async ({ page })
     { id: '1', slug: 'first', title_ja: '最初のゲーム', image_url: '/first.webp' },
     { id: '2', slug: 'second', title_ja: '次のゲーム', image_url: '/second.webp' },
   ]
-  await page.route('**/api/games?limit=20000&offset=0', async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({ games, total: games.length }),
-    })
-  })
+  await mockDirectory(page, games)
 
   await page.goto('/')
 
@@ -293,13 +330,7 @@ test('directory labels unverified and review-required games without warning revi
     { id: '2', slug: 'review', title_ja: '要確認ゲーム', identity_status: 'verified', content_review_status: 'review_required' },
     { id: '3', slug: 'reviewed', title_ja: '確認済みゲーム', identity_status: 'verified', content_review_status: 'human_reviewed' },
   ]
-  await page.route('**/api/games?limit=20000&offset=0', async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({ games, total: games.length }),
-    })
-  })
+  await mockDirectory(page, games)
 
   await page.goto('/')
 
@@ -326,19 +357,8 @@ test('directory labels unverified and review-required games without warning revi
 })
 
 test('directory load failure stays distinct from empty results and can be retried', async ({ page }) => {
-  let requests = 0
-  await page.route('**/api/games?limit=20000&offset=0', async (route) => {
-    requests += 1
-    if (requests === 1) {
-      await route.fulfill({ status: 503, contentType: 'application/json', body: JSON.stringify({ detail: 'unavailable' }) })
-      return
-    }
-    await route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({ games: [{ id: '1', slug: 'retry-game', title_ja: '再読込ゲーム' }], total: 1 }),
-    })
-  })
+  const games = [{ id: '1', slug: 'retry-game', title_ja: '再読込ゲーム' }]
+  const requestCount = await mockDirectory(page, games, { failFirst: true })
 
   await page.goto('/')
 
@@ -348,5 +368,5 @@ test('directory load failure stays distinct from empty results and can be retrie
 
   await expect(page.getByRole('alert')).toHaveCount(0)
   await expect(page.getByText('再読込ゲーム', { exact: true })).toBeVisible()
-  expect(requests).toBe(2)
+  expect(requestCount()).toBe(2)
 })

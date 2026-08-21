@@ -9,10 +9,10 @@ export function ScoringBreakdown({ scoring }) {
       {scoring.rules?.length > 0 && (
         <div className="scoring-rule-list">
           {scoring.rules.map((rule) => (
-            <details className="scoring-rule" key={rule.label}>
-              <summary>{rule.label}</summary>
+            <div className="scoring-rule" key={rule.label}>
+              <div className="scoring-rule-label">{rule.label}</div>
               <p>{rule.detail}</p>
-            </details>
+            </div>
           ))}
         </div>
       )}

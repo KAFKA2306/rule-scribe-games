@@ -51,10 +51,16 @@ async function mockApi(page) {
     const path = url.pathname
 
     if (path === '/api/games' && request.method() === 'GET') {
+      const query = (url.searchParams.get('q') || '').trim().toLocaleLowerCase()
+      const filteredGames = query
+        ? games.filter((game) => [game.title, game.title_ja, game.summary]
+          .filter(Boolean)
+          .some((value) => value.toLocaleLowerCase().includes(query)))
+        : games
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ games, total: games.length }),
+        body: JSON.stringify({ games: filteredGames, total: filteredGames.length }),
       })
       return
     }
