@@ -1,0 +1,99 @@
+name: Web Analytics Snapshot
+
+on:
+  pull_request:
+    paths:
+      - frontend/index.html
+      - scripts/export_vercel_web_analytics.py
+      - .github/workflows/web-analytics.yml
+  push:
+    branches:
+      - main
+    paths:
+      - frontend/index.html
+      - scripts/export_vercel_web_analytics.py
+      - .github/workflows/web-analytics.yml
+  schedule:
+    # 00:24 JST. Re-query the latest 31 days and merge them into durable history.
+    - cron: "24 15 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: web-analytics-history
+  cancel-in-progress: false
+
+jobs:
+  Validate-Exporter:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Compile exporter
+        run: python -m py_compile scripts/export_vercel_web_analytics.py
+      - name: Test history merge
+        run: python scripts/export_vercel_web_analytics.py --self-test
+
+  Snapshot-Production-Traffic:
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Install Vercel CLI
+        run: npm install --global vercel@59.0.0
+      - name: Link production project
+        run: vercel pull --yes --environment=production --token="${VERCEL_TOKEN}"
+      - name: Enable Vercel Web Analytics
+        run: vercel project web-analytics --token="${VERCEL_TOKEN}" --format json
+      - name: Read existing durable history
+        shell: bash
+        run: |
+          if git ls-remote --exit-code --heads origin analytics-history >/dev/null 2>&1; then
+            git fetch origin analytics-history
+            git show FETCH_HEAD:data/analytics/web-traffic.json > /tmp/web-traffic.previous.json || true
+            echo "ANALYTICS_HISTORY_REF=FETCH_HEAD" >> "$GITHUB_ENV"
+          else
+            echo "ANALYTICS_HISTORY_REF=" >> "$GITHUB_ENV"
+          fi
+      - name: Export rolling production traffic
+        shell: bash
+        run: |
+          args=(--output /tmp/web-traffic.json --since-days 31)
+          if [ -s /tmp/web-traffic.previous.json ]; then
+            args+=(--existing /tmp/web-traffic.previous.json)
+          fi
+          python scripts/export_vercel_web_analytics.py "${args[@]}"
+      - name: Persist history outside deployment branch
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if [ -n "${ANALYTICS_HISTORY_REF}" ]; then
+            git switch -C analytics-history "${ANALYTICS_HISTORY_REF}"
+          else
+            git switch --orphan analytics-history
+            git rm -rf .
+          fi
+          mkdir -p data/analytics
+          cp /tmp/web-traffic.json data/analytics/web-traffic.json
+          git add data/analytics/web-traffic.json
+          if git diff --cached --quiet; then
+            echo "Analytics history is unchanged."
+            exit 0
+          fi
+          git commit -m "data: update web analytics history"
+          git push origin HEAD:analytics-history
