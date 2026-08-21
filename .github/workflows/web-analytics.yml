@@ -56,11 +56,16 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
+      # Web Analytics only needs to be enabled when this workflow is introduced
+      # or manually re-run. Scheduled snapshots query the API directly.
       - name: Install Vercel CLI
+        if: github.event_name != 'schedule'
         run: npm install --global vercel@59.0.0
       - name: Link production project
+        if: github.event_name != 'schedule'
         run: vercel pull --yes --environment=production --token="${VERCEL_TOKEN}"
       - name: Enable Vercel Web Analytics
+        if: github.event_name != 'schedule'
         run: vercel project web-analytics --token="${VERCEL_TOKEN}" --format json --non-interactive
       - name: Read existing durable history
         shell: bash
