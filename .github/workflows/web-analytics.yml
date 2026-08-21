@@ -22,8 +22,9 @@ permissions:
   contents: read
 
 concurrency:
-  group: web-analytics-history
-  cancel-in-progress: false
+  group: web-analytics-history-${{ github.event_name == 'pull_request' && github.event.pull_request.number || 'production' }}
+  # PR validation should converge on the latest head; production snapshots must not race.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   Validate-Exporter:
