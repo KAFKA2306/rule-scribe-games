@@ -13,7 +13,7 @@
 | Find | 人数・時間・名前などから候補を探す | BoardGameGeek等のcatalog/search | `q`, players, time, tier, sort のserver-side directory検索 | 小 |
 | Decide | 候補を並べて今遊ぶ1本を決める | catalog/recommendation tools | 最大3件の比較、人数・時間・概要・mechanics | 中 |
 | Learn | 選んだゲームを実際に始められる状態になる | 公式rulebook、tutorial services | 30秒概要、QuickRules、準備・流れ・終了、詳細ルール、図解 | 中 |
-| Ask | プレイ中の具体的な疑問を、そのゲームの根拠付き回答へ解決する | 公式FAQ/errata、rulebook検索、Web検索 | 詳細ルール本文の閲覧は可能だが、質問→該当裁定への直接導線がない | **大** |
+| Ask | プレイ中の具体的な疑問を、そのゲームの根拠付き回答へ解決する | 公式FAQ/errata、rulebook検索、Web検索 | PR #362でevidence-backed Rule Askの最初のvertical sliceを実装中 | **実装中** |
 
 ## 現在確認できる実装
 
@@ -21,7 +21,7 @@ Directory (`frontend/src/App.jsx`) は検索、人数、時間、戦略tier、so
 
 Game page (`frontend/src/pages/GamePage.jsx`) は基本情報、30秒概要、QuickRules、詳細ルール、準備・流れ・終了、戦略、レビュー、関連ゲーム、図解、source/trust情報を持つ。
 
-したがって、Find/Decide/Learnを捨てて別製品を作る必要はない。現在最も大きいjourney gapは **Ask** である。
+AskはPR #362で、reviewed curated rule guideを回答authorityとするfail-closedな最初のvertical sliceを実装中。外部LLM/APIは追加しない。
 
 ## 最優先の未完了journey: Ask
 
