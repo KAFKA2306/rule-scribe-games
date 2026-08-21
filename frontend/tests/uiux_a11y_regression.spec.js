@@ -7,12 +7,39 @@ const games = [
   { id: '44444444-4444-4444-8444-444444444444', slug: 'game-four', title: 'Game Four', title_ja: 'ゲーム4', summary: '山のゲーム', min_players: 4, max_players: 8, play_time: 90, published_year: 2023, structured_data: {} },
 ]
 
+function normalize(value) {
+  return (value || '').normalize('NFKC').toLowerCase().trim()
+}
+
+function directoryResponse(url) {
+  const query = normalize(url.searchParams.get('q'))
+  const players = url.searchParams.get('players')
+  const limit = Number.parseInt(url.searchParams.get('limit') || '48', 10)
+  const offset = Number.parseInt(url.searchParams.get('offset') || '0', 10)
+
+  let result = games.filter((game) => {
+    if (query && ![game.title, game.title_ja, game.summary].some((value) => normalize(value).includes(query))) return false
+    if (!players) return true
+    if (!Number.isFinite(game.min_players) || !Number.isFinite(game.max_players)) return false
+    if (players === '5+') return game.max_players >= 5
+    const count = Number.parseInt(players, 10)
+    return game.min_players <= count && count <= game.max_players
+  })
+
+  return {
+    games: result.slice(offset, offset + limit),
+    total: result.length,
+    limit,
+    offset,
+  }
+}
+
 async function mockDirectory(page, counters = { generated: 0 }) {
   await page.route('**/api/**', async (route) => {
     const request = route.request()
     const url = new URL(request.url())
     if (url.pathname === '/api/games' && request.method() === 'GET') {
-      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ games, total: games.length }) })
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(directoryResponse(url)) })
       return
     }
     if (url.pathname === '/api/search' && request.method() === 'POST') {
