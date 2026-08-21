@@ -4,6 +4,8 @@ import './rule-guide.css'
 export function QuickRulesPanel({ guide }) {
   if (!guide) return null
 
+  const showActions = Number.isInteger(guide.facts?.actionCount) && guide.quick.actions?.length > 0
+
   return (
     <section className="quick-rules-panel" aria-label="すぐ遊ぶ" data-testid="quick-rules-panel">
       <div className="quick-rules-header">
@@ -25,7 +27,7 @@ export function QuickRulesPanel({ guide }) {
           <ol className="quick-turn-steps">
             {guide.quick.turnSteps.map((step) => <li key={step}>{step}</li>)}
           </ol>
-          {guide.quick.actions?.length > 0 && (
+          {showActions && (
             <ul className="quick-check-list" style={{ marginTop: '0.65rem' }}>
               {guide.quick.actions.map((action) => <li key={action}>{action}</li>)}
             </ul>
