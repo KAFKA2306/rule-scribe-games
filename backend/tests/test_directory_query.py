@@ -1,3 +1,5 @@
+import pytest
+
 from app.services import directory_query
 
 
@@ -91,3 +93,43 @@ def test_five_plus_filter_matches_games_that_support_at_least_five(monkeypatch):
 
     assert result["total"] == 1
     assert result["data"][0]["id"] == "five"
+
+
+def test_ranked_search_keeps_canonical_relevance_for_default_sort():
+    rows = [
+        _game("exact", title="Skull King", minimum=2, maximum=8, play_time=45, year=2013, created_at="2020-01-01"),
+        _game("summary", title="Pirate Tricks", minimum=2, maximum=4, play_time=30, year=2026, created_at="2026-01-01"),
+    ]
+
+    result = directory_query._query_ranked_search_results(
+        rows,
+        players=None,
+        time_filter=None,
+        tier=None,
+        sort="recent",
+        limit=48,
+        offset=0,
+    )
+
+    assert [game["id"] for game in result["data"]] == ["exact", "summary"]
+
+
+@pytest.mark.asyncio
+async def test_directory_query_reuses_canonical_search(monkeypatch):
+    ranked = [
+        _game("alias-hit", title="6 nimmt!", minimum=2, maximum=10, play_time=45, year=1994, created_at="2020-01-01"),
+        _game("other", title="11 nimmt!", minimum=2, maximum=7, play_time=30, year=2010, created_at="2026-01-01"),
+    ]
+    calls = []
+
+    async def fake_search(query):
+        calls.append(query)
+        return ranked
+
+    monkeypatch.setattr(directory_query.supabase, "search", fake_search)
+
+    result = await directory_query.list_directory_games(q="6 Nimmt", limit=1)
+
+    assert calls == ["6 Nimmt"]
+    assert result["total"] == 2
+    assert [game["id"] for game in result["data"]] == ["alias-hit"]
