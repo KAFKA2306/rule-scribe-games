@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Export Vercel Web Analytics daily pageviews into a durable history file."""
+"""Export completed UTC days from Vercel Web Analytics into durable history."""
 
 from __future__ import annotations
 
@@ -34,6 +34,11 @@ def normalize_rows(rows: Any) -> list[dict[str, Any]]:
             }
         )
     return normalized
+
+
+def completed_days(rows: list[dict[str, Any]], today_utc: str) -> list[dict[str, Any]]:
+    """Exclude the in-progress UTC day so persisted daily values are final."""
+    return [row for row in rows if row["date"] < today_utc]
 
 
 def read_existing(path: Path | None) -> dict[str, Any]:
@@ -111,7 +116,7 @@ def write_history(
     result = {
         "schema_version": SCHEMA_VERSION,
         "source": API_URL,
-        "scope": "production pageviews grouped by UTC day",
+        "scope": "production pageviews grouped by completed UTC day",
         "collected_at": collected_at,
         "days": merge_history(existing, fresh_days),
     }
@@ -141,8 +146,14 @@ def self_test() -> None:
                 "pageviews": 7,
                 "visitors": 6,
             },
+            {
+                "timestamp": "2026-08-21T00:00:00.000Z",
+                "pageviews": 1,
+                "visitors": 1,
+            },
         ]
     )
+    fresh = completed_days(fresh, "2026-08-21")
     assert merge_history(existing, fresh) == [
         {"date": "2026-08-18", "pageviews": 2, "visitors": 2},
         {"date": "2026-08-19", "pageviews": 5, "visitors": 4},
@@ -183,14 +194,18 @@ def main() -> int:
         raise SystemExit("Missing required environment variables: " + ", ".join(missing))
 
     now = datetime.now(timezone.utc)
-    since = (now - timedelta(days=args.since_days - 1)).date().isoformat()
-    until = (now + timedelta(days=1)).date().isoformat()
-    fresh_days = fetch_daily(
-        token=token,
-        project_id=project_id,
-        team_id=team_id,
-        since=since,
-        until=until,
+    today_utc = now.date().isoformat()
+    since = (now - timedelta(days=args.since_days)).date().isoformat()
+    until = today_utc
+    fresh_days = completed_days(
+        fetch_daily(
+            token=token,
+            project_id=project_id,
+            team_id=team_id,
+            since=since,
+            until=until,
+        ),
+        today_utc,
     )
     write_history(
         args.output,
@@ -198,7 +213,7 @@ def main() -> int:
         fresh_days,
         now.isoformat(),
     )
-    print(f"wrote {len(fresh_days)} refreshed day(s) to {args.output}")
+    print(f"wrote {len(fresh_days)} completed day(s) to {args.output}")
     return 0
 
 
