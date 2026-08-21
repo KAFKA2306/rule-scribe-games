@@ -1,4 +1,4 @@
-name: Cleanup merged branches
+name: Cleanup inactive branches
 
 on:
   push:
@@ -17,15 +17,13 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
     steps:
-      - name: Find safely deletable merged branches
+      - name: Find branches without an open pull request
+        id: candidates
         shell: bash
         run: |
           set -euo pipefail
           repo="$GITHUB_REPOSITORY"
-
-          gh api --paginate "repos/$repo/pulls?state=closed&per_page=100" \
-            --jq '.[] | select(.merged_at != null and .head.repo.full_name == .base.repo.full_name) | [.head.ref, .head.sha] | @tsv' \
-            | sort -u > /tmp/merged-heads.tsv
+          default_branch="$(gh api "repos/$repo" --jq '.default_branch')"
 
           gh api --paginate "repos/$repo/pulls?state=open&per_page=100" \
             --jq '.[] | select(.head.repo.full_name == .base.repo.full_name) | .head.ref' \
@@ -37,19 +35,16 @@ jobs:
 
           : > /tmp/delete-candidates.tsv
           while IFS=$'\t' read -r branch sha; do
-            [[ -z "$branch" || "$branch" == "main" ]] && continue
+            [[ -z "$branch" || "$branch" == "$default_branch" ]] && continue
             grep -Fxq "$branch" /tmp/open-heads.txt && continue
-            if awk -F'\t' -v b="$branch" -v s="$sha" '$1 == b && $2 == s { found=1 } END { exit !found }' /tmp/merged-heads.tsv; then
-              printf '%s\t%s\n' "$branch" "$sha" >> /tmp/delete-candidates.tsv
-            fi
+            printf '%s\t%s\n' "$branch" "$sha" >> /tmp/delete-candidates.tsv
           done < /tmp/current-branches.tsv
 
-          echo "Safely deletable merged branches:"
+          echo "Branches without an open PR:"
           cat /tmp/delete-candidates.tsv || true
           echo "candidate_count=$(wc -l < /tmp/delete-candidates.tsv | tr -d ' ')" >> "$GITHUB_OUTPUT"
-        id: candidates
 
-      - name: Delete merged branches after main update
+      - name: Delete branches whose refs did not move
         shell: bash
         run: |
           set -euo pipefail
@@ -61,7 +56,7 @@ jobs:
               echo "Skip $branch: ref moved from audited SHA $sha to $current_sha"
               continue
             fi
-            echo "Deleting merged branch: $branch ($sha)"
+            echo "Deleting inactive branch: $branch ($sha)"
             gh api --method DELETE "repos/$repo/git/refs/heads/$branch"
           done < /tmp/delete-candidates.tsv
 
@@ -69,8 +64,8 @@ jobs:
         shell: bash
         run: |
           {
-            echo "## Merged branch cleanup"
+            echo "## Inactive branch cleanup"
             echo
             echo "Candidates: ${{ steps.candidates.outputs.candidate_count }}"
-            echo "Only same-repository merged PR branches whose current SHA exactly matches the merged PR head SHA are eligible. Open PR branches are excluded."
+            echo "Policy: keep only the default branch and same-repository branches that are heads of open pull requests. Delete every other branch only if its ref SHA still matches the audited SHA."
           } >> "$GITHUB_STEP_SUMMARY"
