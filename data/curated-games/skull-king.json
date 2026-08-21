@@ -7,8 +7,8 @@
   },
   "source": {
     "url": "https://www.grandpabecksgames.com/pages/skull-king",
-    "rule_version": "grandpa-becks-current-2026-08-14",
-    "revision": "grandpa-becks-current-rulebook-accessed-2026-08-14"
+    "rule_version": "grandpa-becks-current-en-2026-08-22",
+    "revision": "grandpa-becks-current-en-rulebook-faq-accessed-2026-08-22"
   },
   "game": {
     "slug": "skull-king",
@@ -17,7 +17,7 @@
     "title_en": "Skull King",
     "description": "Grandpa Beck's Gamesの現行版Skull King。通常ゲームは10ラウンドで、毎ラウンド配られた手札を見て獲得トリック数をビッドします。黒は切り札で、海賊・スカルキング・人魚などの特殊カードが通常の数字カードより強い相互作用を持ちます。ビッドを正確に当てることと、ボーナスカードを取ることが得点につながります。",
     "summary": "各ラウンドで取るトリック数を予想してビッドし、予想どおりに取ることを目指す海賊テーマのトリックテイキング。",
-    "rules_content": "# スカルキング\n\n## 目的\n10ラウンドを通して得点し、終了時に合計得点が最も高いプレイヤーが勝ちます。各ラウンドの最初に、そのラウンドで自分が取るトリック数をビッドします。\n\n## 通常ゲームの準備\n1. ブランクカード、Loot、Kraken、White Whaleを通常デッキから外します。これらは任意の上級ルール用です。\n2. 残りのカードをシャッフルします。\n3. 第1ラウンドは1枚、第2ラウンドは2枚というように、通常はラウンド数と同じ枚数を各プレイヤーへ配ります。第10ラウンドは10枚です。8人戦では第9・第10ラウンドも8枚ずつ配ります。\n\n## ビッド\n手札を見て、そのラウンドで自分が取ると思うトリック数を宣言します。0もビッドできます。\n\n## 1トリックの流れ\n1. ディーラー左隣のプレイヤーが最初のトリックをリードし、以後は直前のトリックの勝者が次をリードします。\n2. 数字カードがリードされ、数字カードを出す場合、リードされたスートを持っていれば同じスートを出します。特殊カードはいつでも出せます。\n3. 全員が1枚ずつ出したら、最も強いカードを出したプレイヤーがトリックを取ります。\n\n## カードの基本関係\n- 緑・黄・紫は通常スートです。同じスート同士なら数字が高い方が勝ちます。\n- 黒（Jolly Roger）は切り札で、通常スートより強いです。\n- Pirateはすべての数字カードより強く、複数のPirateが出た場合は先に出たPirateが勝ちます。\n- Tigressは出したときにPirateまたはEscapeとして扱うかを選びます。\n- Skull Kingは数字カードとPirateに勝ち、Mermaidに負けます。\n- MermaidはSkull Kingと数字カードに勝ち、通常はPirateに負けます。ただしPirate・Skull King・Mermaidが同じトリックに揃った場合はMermaidが勝ちます。\n- Escapeは通常は負けます。全員がEscapeまたはEscape扱いのカードだけを出した場合は、最初に出たEscapeが勝ちます。\n\n## 得点\n### 1以上をビッド\n- ビッドどおりなら、取ったトリック1つにつき20点です。\n- 多くても少なくても、ビッドとの差1トリックにつき10点を失います。この場合、取ったトリック自体の得点はありません。\n\n### 0をビッド\n- 0トリックを達成すると、そのラウンドの配札枚数 × 10点を獲得します。\n- 1トリック以上取ると、そのラウンドの配札枚数 × 10点を失います。\n\n### ボーナス\nボーナスはビッドを成功させたラウンドだけ得られます。\n- 緑・黄・紫の14を取る: 各10点\n- 黒の14を取る: 20点\n- PirateでMermaidを取る: Mermaid 1枚につき20点\n- Skull KingでPirateを取る: Pirate 1枚につき30点\n- MermaidでSkull Kingを取る: 40点\n\n## ゲーム終了\n10ラウンド終了後に合計得点を比べます。同点なら、決着するまで追加ラウンドを行います。\n\n## 2人プレイ\n現行版には「Graybeard's Ghost」を使う専用の2人ルールがあります。通常の3人以上の手順とは一部処理が異なるため、2人で遊ぶ場合は公式ルールブックの2人用項目を参照してください。",
+    "rules_content": "# スカルキング\n\n## 目的\n10ラウンドを通して得点し、終了時に合計得点が最も高いプレイヤーが勝ちます。各ラウンドの最初に、そのラウンドで自分が取るトリック数をビッドします。\n\n## 通常ゲームの準備\n1. ブランクカード、Loot、Kraken、White Whaleを通常デッキから外します。これらは任意の上級ルール用です。\n2. 残りのカードをシャッフルします。\n3. 第1ラウンドは1枚、第2ラウンドは2枚というように、通常はラウンド数と同じ枚数を各プレイヤーへ配ります。第10ラウンドは10枚です。8人戦では第9・第10ラウンドも8枚ずつ配ります。\n\n## ビッド\n手札を見て、そのラウンドで自分が取ると思うトリック数を宣言します。0もビッドできます。\n\n## 1トリックの流れ\n1. ディーラー左隣のプレイヤーが最初のトリックをリードし、以後は直前のトリックの勝者が次をリードします。\n2. 数字カードがリードされ、数字カードを出す場合、リードされたスートを持っていれば同じスートを出します。特殊カードはいつでも出せます。\n3. 全員が1枚ずつ出したら、最も強いカードを出したプレイヤーがトリックを取ります。\n\n## カードの基本関係\n- 緑・黄・紫は通常スートです。同じスート同士なら数字が高い方が勝ちます。\n- 黒（Jolly Roger）は切り札で、通常スートより強いです。\n- Pirateはすべての数字カードより強く、複数のPirateが出た場合は先に出たPirateが勝ちます。\n- Tigressは出したときにPirateまたはEscapeとして扱うかを選びます。\n- Skull Kingは数字カードとPirateに勝ち、Mermaidに負けます。\n- MermaidはSkull Kingと数字カードに勝ち、通常はPirateに負けます。ただしPirate・Skull King・Mermaidが同じトリックに揃った場合はMermaidが勝ちます。\n- Escapeは通常は負けます。全員がEscapeまたはEscape扱いのカードだけを出した場合は、最初に出たEscapeが勝ちます。\n\n## 得点\n### 1以上をビッド\n- ビッドどおりなら、取ったトリック1つにつき20点です。\n- 多くても少なくても、ビッドとの差1トリックにつき10点を失います。この場合、取ったトリック自体の得点はありません。\n\n### 0をビッド\n- 0トリックを達成すると、そのラウンドの配札枚数 × 10点を獲得します。\n- 1トリック以上取ると、そのラウンドの配札枚数 × 10点を失います。\n\n### ボーナス\nボーナスはビッドを成功させたラウンドだけ得られます。\n- 緑・黄・紫の14を取る: 各10点\n- 黒の14を取る: 20点\n- PirateでMermaidを取る: Mermaid 1枚につき20点\n- Skull KingでPirateを取る: Pirate 1枚につき30点\n- MermaidでSkull Kingを取る: 40点\n\n## ゲーム終了\n10ラウンド終了後に合計得点を比べます。同点なら、決着するまで追加ラウンドを行います。\n\n## 2人プレイ\n1. 3人分の手札を配り、3つ目の手札は裏向きのままGraybeard's Ghost用にします。2人のプレイヤーは通常どおりビッドしてプレイします。\n2. 2人のプレイヤーはラウンドごとにリード役を交代します。誰がリードしてもGraybeardは各トリックで2番目にプレイします。\n3. Graybeardの手番では裏向き手札の一番上を表にしてそのままトリックへ加えます。Graybeardはリードされたスートをフォローする必要がありません。\n4. Graybeardがトリックを取った場合、次のトリックはGraybeardがリードし、そのラウンドのリード役だったプレイヤーが2番目にプレイします。\n5. GraybeardがTigressを出した場合はEscapeとして扱います。Lootカードは2人プレイでは使用しません。",
     "setup_summary": "通常ルールでは上級カードを外してシャッフルし、通常はラウンド数と同じ枚数を配る。8人戦の第9・第10ラウンドは8枚ずつ。",
     "gameplay_summary": "各ラウンドで獲得トリック数をビッドし、数字カードのフォロー義務と特殊カードの例外に従って全手札をプレイする。",
     "end_game_summary": "10ラウンド終了時に合計得点が最も高いプレイヤーが勝利。同点なら決着まで追加ラウンド。",
@@ -27,12 +27,12 @@
     "published_year": 2013,
     "publisher": "Grandpa Beck's Games",
     "edition_label": "Grandpa Beck's Games current edition",
-    "language_code": null,
+    "language_code": "en",
     "official_url": "https://www.grandpabecksgames.com/products/copy-of-skull-king%C2%AE",
     "bga_url": "https://ja.boardgamearena.com/gamepanel?game=skullking",
     "source_url": "https://www.grandpabecksgames.com/pages/skull-king",
-    "source_revision": "grandpa-becks-current-rulebook-accessed-2026-08-14",
-    "generated_from_source_revision": "grandpa-becks-current-rulebook-accessed-2026-08-14",
+    "source_revision": "grandpa-becks-current-en-rulebook-faq-accessed-2026-08-22",
+    "generated_from_source_revision": "grandpa-becks-current-en-rulebook-faq-accessed-2026-08-22",
     "source_trust": "official_publisher",
     "identity_status": "verified",
     "structured_data": {
@@ -47,22 +47,37 @@
       "rule_mistakes": [
         "数字カードをフォローできる状況でも、特殊カードは出せる。",
         "Pirate・Skull King・Mermaidが同じトリックに出た場合はMermaidが勝つ。",
-        "ボーナス点はそのラウンドのビッド成功時だけ得られる。"
+        "ボーナス点はそのラウンドのビッド成功時だけ得られる。",
+        "2人プレイでGraybeardがTigressを出した場合はPirateではなくEscapeとして扱う。"
       ],
       "source_documents": [
         {
           "url": "https://www.grandpabecksgames.com/pages/skull-king",
           "type": "publisher_official",
           "label": "Grandpa Beck's Games — Skull King rules",
-          "locator": "Current rulebook: Setup, Game Play, The Cards, Scoring, Bonus Points, Two-Player Rules",
-          "accessed_at": "2026-08-14"
+          "locator": "Current English rulebook, Player Reference Cards, Advanced Rules, Rascal Scoring, Earlier Editions, and FAQ index",
+          "accessed_at": "2026-08-22"
+        },
+        {
+          "url": "https://cdn.shopify.com/s/files/1/0565/3230/4053/files/Skull_King_Simplified_Rulebook_US_WEB_NO_CROP_a0eb3b84-f1cd-4087-8bda-0aab43d231af.pdf?v=1764178570",
+          "type": "publisher_official_rulebook",
+          "label": "Grandpa Beck's Games — Skull King English current rulebook",
+          "locator": "Setup; Game Play; The Cards; Scoring; Bonus Points; Two-Player Rules",
+          "accessed_at": "2026-08-22"
+        },
+        {
+          "url": "https://www.grandpabecksgames.com/pages/faq-skull-king",
+          "type": "official_faq",
+          "label": "Grandpa Beck's Games — Skull King FAQ",
+          "locator": "Pirate power timing; Graybeard/Tigress; Mermaid + Skull King + Pirate; Kraken + White Whale clarifications",
+          "accessed_at": "2026-08-22"
         },
         {
           "url": "https://www.grandpabecksgames.com/products/copy-of-skull-king%C2%AE",
           "type": "publisher_official",
           "label": "Grandpa Beck's Games — Skull King product",
-          "locator": "Players 2-8; Ages 8-99; Minutes 30-45; current edition notes",
-          "accessed_at": "2026-08-14"
+          "locator": "Players 2-8; Ages 8+; Time 30-45; current edition notes",
+          "accessed_at": "2026-08-22"
         },
         {
           "url": "https://ja.boardgamearena.com/gamepanel?game=skullking",
@@ -83,11 +98,11 @@
   },
   "guide": {
     "reviewed": true,
-    "ruleVersion": "grandpa-becks-current-2026-08-14",
+    "ruleVersion": "grandpa-becks-current-en-2026-08-22",
     "source": {
       "label": "Grandpa Beck's Games 公式ルール",
       "url": "https://www.grandpabecksgames.com/pages/skull-king",
-      "ruleVersion": "grandpa-becks-current-2026-08-14"
+      "ruleVersion": "grandpa-becks-current-en-2026-08-22"
     },
     "facts": {
       "rounds": 10,
