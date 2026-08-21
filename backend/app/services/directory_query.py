@@ -72,7 +72,6 @@ def _query_local(
     limit: int,
     offset: int,
 ) -> dict[str, Any]:
-    local_db.init_db()
     rows = local_db.list_recent(limit=50000, offset=0)["data"]
     filtered = [
         game
@@ -99,6 +98,7 @@ async def list_directory_games(
 ) -> dict[str, Any]:
     """Return one filtered directory page without loading the full catalog into the browser."""
     if supabase.is_local():
+        local_db.init_db()
         return _query_local(
             q=q,
             players=players,
