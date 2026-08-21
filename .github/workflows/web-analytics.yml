@@ -19,7 +19,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: web-analytics-history
@@ -42,6 +42,8 @@ jobs:
   Snapshot-Production-Traffic:
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     env:
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
@@ -90,7 +92,10 @@ jobs:
           fi
           mkdir -p data/analytics
           cp /tmp/web-traffic.json data/analytics/web-traffic.json
-          git add data/analytics/web-traffic.json
+          # Prevent Vercel Git integration from creating daily preview deployments
+          # for the data-only history branch.
+          printf '%s\n' '{"ignoreCommand":"exit 0"}' > vercel.json
+          git add data/analytics/web-traffic.json vercel.json
           if git diff --cached --quiet; then
             echo "Analytics history is unchanged."
             exit 0
