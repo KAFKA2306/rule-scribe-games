@@ -174,7 +174,41 @@ def test_post_search_remains_read_only_for_legacy_clients():
     assert service.created is False
 
 
-def test_public_game_reads_use_standard_shared_cache_control():
+def test_directory_query_parameters_are_forwarded(monkeypatch):
+    captured = {}
+
+    async def fake_directory_query(**kwargs):
+        captured.update(kwargs)
+        return {"data": [], "total": 7}
+
+    monkeypatch.setattr(games, "list_directory_games", fake_directory_query)
+    client = TestClient(_app_with_service(PublicReadService()))
+
+    response = client.get(
+        "/api/games?q=alpha&players=3&time=30-60&tier=A&sort=year&limit=10&offset=20"
+    )
+
+    assert response.status_code == 200
+    assert response.json()["total"] == 7
+    assert captured == {
+        "q": "alpha",
+        "players": "3",
+        "time_filter": "30-60",
+        "tier": "A",
+        "sort": "year",
+        "limit": 10,
+        "offset": 20,
+    }
+
+
+def test_public_game_reads_use_standard_shared_cache_control(monkeypatch):
+    async def fake_directory_query(**kwargs):
+        return {
+            "data": [{"id": "game-1", "slug": "example", "title": "Example", "work_id": "work-1"}],
+            "total": 1,
+        }
+
+    monkeypatch.setattr(games, "list_directory_games", fake_directory_query)
     production_app.dependency_overrides[games.get_game_service] = lambda: PublicReadService()
     try:
         client = TestClient(production_app)
