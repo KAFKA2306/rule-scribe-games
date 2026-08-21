@@ -17,6 +17,7 @@ const ListsPage = lazy(() => import('./pages/ListsPage.jsx'))
 import { AuthProvider } from './auth/AuthContext.jsx'
 import AppShell from './components/AppShell.jsx'
 import LoadingFallback from './components/LoadingFallback.jsx'
+import { RuleAskPanel } from './components/game/RuleAskPanel.jsx'
 import { installMobileFilterFocus } from './lib/mobileFilterFocus.js'
 
 installMobileFilterFocus()
@@ -38,6 +39,7 @@ const router = createBrowserRouter([
         element: (
           <Suspense fallback={<LoadingFallback />}>
             <GamePage />
+            <RuleAskPanel />
           </Suspense>
         ),
       },
