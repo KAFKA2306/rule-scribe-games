@@ -1,4 +1,3 @@
-import re
 import unicodedata
 from typing import Any, Literal
 
@@ -68,6 +67,7 @@ def _query_local(
     q: str | None,
     players: str | None,
     time_filter: DirectoryTime | None,
+    tier: str | None,
     sort: DirectorySort,
     limit: int,
     offset: int,
@@ -79,6 +79,7 @@ def _query_local(
         if _matches_query(game, q or "")
         and _matches_players(game, players)
         and _matches_time(game, time_filter)
+        and (not tier or game.get("strategy_tier") == tier)
     ]
     reverse = sort in {"recent", "year"}
     filtered.sort(key=lambda game: _sort_key(game, sort), reverse=reverse)
@@ -90,6 +91,7 @@ async def list_directory_games(
     q: str | None = None,
     players: str | None = None,
     time_filter: DirectoryTime | None = None,
+    tier: str | None = None,
     sort: DirectorySort = "recent",
     limit: int = 48,
     offset: int = 0,
@@ -100,6 +102,7 @@ async def list_directory_games(
             q=q,
             players=players,
             time_filter=time_filter,
+            tier=tier,
             sort=sort,
             limit=limit,
             offset=offset,
@@ -138,6 +141,9 @@ async def list_directory_games(
             query = query.gt("play_time", 60).lte("play_time", 120)
         elif time_filter == "120+":
             query = query.gt("play_time", 120)
+
+        if tier:
+            query = query.eq("strategy_tier", tier)
 
         if sort == "title":
             query = query.order("title_ja", desc=False, nullsfirst=False).order("title", desc=False, nullsfirst=False)
