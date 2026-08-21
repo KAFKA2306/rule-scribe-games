@@ -9,6 +9,7 @@ import { TextToSpeech } from '../components/game/TextToSpeech'
 import { ExternalLinks } from '../components/game/ExternalLinks'
 import { InfographicsGallery } from '../components/game/InfographicsGallery'
 import { QuickRulesPanel } from '../components/game/QuickRulesPanel'
+import { RuleAskPanel } from '../components/game/RuleAskPanel'
 import { RuleFlowDiagram } from '../components/game/RuleFlowDiagram'
 import { ConceptGlossary } from '../components/game/ConceptGlossary'
 
@@ -194,6 +195,8 @@ export default function GamePage({ slug: propSlug, initialGame }) {
             onShowFlow={hasInfographics ? () => setActiveTab('infographics') : null}
             onShowRules={() => setActiveTab('rules')}
           />
+
+          <RuleAskPanel />
 
           <div className="rules-tabs" role="group" aria-label="ゲーム詳細表示">
             <button type="button" aria-pressed={activeTab === 'rules'} className={activeTab === 'rules' ? 'active' : ''} onClick={() => setActiveTab('rules')}>
