@@ -62,6 +62,40 @@ def _sort_key(game: dict[str, Any], sort: DirectorySort):
     return str(game.get("created_at") or "")
 
 
+def _filter_rows(
+    rows: list[dict[str, Any]],
+    *,
+    players: str | None,
+    time_filter: DirectoryTime | None,
+    tier: str | None,
+) -> list[dict[str, Any]]:
+    return [
+        game
+        for game in rows
+        if _matches_players(game, players)
+        and _matches_time(game, time_filter)
+        and (not tier or game.get("strategy_tier") == tier)
+    ]
+
+
+def _query_ranked_search_results(
+    rows: list[dict[str, Any]],
+    *,
+    players: str | None,
+    time_filter: DirectoryTime | None,
+    tier: str | None,
+    sort: DirectorySort,
+    limit: int,
+    offset: int,
+) -> dict[str, Any]:
+    """Filter canonical ranked search results without replacing relevance with recent order."""
+    filtered = _filter_rows(rows, players=players, time_filter=time_filter, tier=tier)
+    if sort != "recent":
+        reverse = sort == "year"
+        filtered.sort(key=lambda game: _sort_key(game, sort), reverse=reverse)
+    return {"data": filtered[offset : offset + limit], "total": len(filtered)}
+
+
 def _query_local(
     *,
     q: str | None,
@@ -97,10 +131,22 @@ async def list_directory_games(
     offset: int = 0,
 ) -> dict[str, Any]:
     """Return one filtered directory page without loading the full catalog into the browser."""
+    if q and q.strip():
+        ranked = await supabase.search(q.strip())
+        return _query_ranked_search_results(
+            ranked,
+            players=players,
+            time_filter=time_filter,
+            tier=tier,
+            sort=sort,
+            limit=limit,
+            offset=offset,
+        )
+
     if supabase.is_local():
         local_db.init_db()
         return _query_local(
-            q=q,
+            q=None,
             players=players,
             time_filter=time_filter,
             tier=tier,
@@ -111,21 +157,6 @@ async def list_directory_games(
 
     def _q() -> dict[str, Any]:
         query = supabase._get_client().table("games").select("*", count="exact")
-
-        if q and q.strip():
-            safe_query = q.strip().replace('"', '\\"')
-            term = f"*{safe_query}*"
-            query = query.or_(
-                ",".join(
-                    [
-                        f'title.ilike."{term}"',
-                        f'title_ja.ilike."{term}"',
-                        f'title_en.ilike."{term}"',
-                        f'summary.ilike."{term}"',
-                        f'description.ilike."{term}"',
-                    ]
-                )
-            )
 
         if players:
             if players == "5+":
