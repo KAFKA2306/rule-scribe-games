@@ -14,9 +14,9 @@ permissions:
 
 concurrency:
   group: vercel-${{ github.workflow }}-${{ github.ref }}
-  # Never let an hourly catch-up cancel a main-push production verification.
-  # A queued catch-up re-checks the exact SHA and becomes a no-op when production is current.
-  cancel-in-progress: false
+  # PR validation should converge on the latest head. Production/catch-up runs
+  # must never cancel one another because they verify/deploy exact main state.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   Build-Preview:
