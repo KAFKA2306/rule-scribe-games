@@ -24,7 +24,7 @@ permissions:
   contents: read
 
 jobs:
-  validate-release-source:
+  curated-game:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -46,7 +46,8 @@ jobs:
         run: uv run python backend/app/scripts/curated_game_fast_path_v2.py check-all
 
   publish-catalog:
-    needs: validate-release-source
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: curated-game
     runs-on: ubuntu-latest
     timeout-minutes: 10
     concurrency:
