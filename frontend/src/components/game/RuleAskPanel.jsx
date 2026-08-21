@@ -17,7 +17,7 @@ export function RuleAskPanel() {
       <section className="pro-card" aria-labelledby="rule-ask-title">
         <div className="pro-card-title" id="rule-ask-title">ルールを質問</div>
         <p className="summary-text">
-          確認済みの公式ルール根拠だけから回答します。根拠が足りない場合は推測しません。
+          確認済みの公式ルール根拠だけから回答します。回答は登録済み要約で、公式本文そのものではありません。
         </p>
         <form onSubmit={submit}>
           <label htmlFor="rule-question" className="sr-only">ルールの質問</label>
