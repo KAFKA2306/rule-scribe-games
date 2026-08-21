@@ -29,29 +29,7 @@
 
 外部LLM/API、dependency、backend serviceは追加しない。
 
-最初の実動対象は `splendor`。以下を回帰対象にする。
-
-1. turn action → answered
-2. scoring → answered
-3. end condition → answered
-4. exception / tie / token limit → answered
-5. setup → reviewed setup evidenceが現在ないため `unresolved`
-
-別slugではSplendorのguideを再利用しないcross-game contamination testを持つ。
-
-## Fail-closed cases
-
-- reviewed curated guideが存在しない
-- evidence targetが存在しない
-- questionに対応する十分なevidenceがない
-
-上記では推測回答を返さない。
-
-## UI critical path
-
-`/games/:slug` → 「ルールを質問」 → 質問入力 → 回答または「確認できません」 → 公式ルール根拠を開く。
-
-mobile viewportでもこの順序をregression testする。
+最初の実動対象は `splendor`。turn action、scoring、end condition、tie/token limitを回答し、reviewed setup evidenceがない質問は`unresolved`にする。
 
 ## Current completion state
 
