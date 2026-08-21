@@ -67,9 +67,11 @@ export function askRule(slug, question) {
   }
 
   if (intent === 'limit') {
-    const limitText = guide.quick?.turnEndChecks?.find((item) => /上限|超え|以下|まで/.test(item))
-      || guide.flow?.find((node) => /上限|超え|以下|まで/.test(`${node.label || ''} ${node.note || ''}`))?.label
-    if (limitText) return answered(slug, trimmedQuestion, guide, 'quick:turnEndChecks', limitText)
+    const limitCheck = guide.quick?.turnEndChecks?.find((item) => /上限|超え|以下|まで/.test(item))
+    if (limitCheck) return answered(slug, trimmedQuestion, guide, 'quick:turnEndChecks', limitCheck)
+
+    const limitNode = guide.flow?.find((node) => /上限|超え|以下|まで/.test(`${node.label || ''} ${node.note || ''}`))
+    if (limitNode?.label) return answered(slug, trimmedQuestion, guide, `flow:${limitNode.id}`, limitNode.label)
   }
 
   // Setup is intentionally fail-closed until the curated guide has reviewed setup evidence.
