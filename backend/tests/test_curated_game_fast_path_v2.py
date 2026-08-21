@@ -42,8 +42,8 @@ def test_deployment_manifest_is_deterministic_and_revision_bound():
     payload = v2.deployment_manifest_payload(specs)
     assert len(payload["revision_contract_sha256"]) == 64
     assert payload["games"]["skull-king"] == {
-        "rule_version": "grandpa-becks-current-2026-08-14",
-        "source_revision": "grandpa-becks-current-rulebook-accessed-2026-08-14",
+        "rule_version": "grandpa-becks-current-en-2026-08-22",
+        "source_revision": "grandpa-becks-current-en-rulebook-faq-accessed-2026-08-22",
     }
 
 
