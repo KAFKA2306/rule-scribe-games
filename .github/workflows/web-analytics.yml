@@ -14,8 +14,8 @@ on:
       - scripts/export_vercel_web_analytics.py
       - .github/workflows/web-analytics.yml
   schedule:
-    # 00:24 JST. Re-query the latest 31 days and merge them into durable history.
-    - cron: "24 15 * * *"
+    # 09:24 JST / 00:24 UTC. Persist only completed UTC days.
+    - cron: "24 0 * * *"
   workflow_dispatch:
 
 permissions:
@@ -61,7 +61,7 @@ jobs:
       - name: Link production project
         run: vercel pull --yes --environment=production --token="${VERCEL_TOKEN}"
       - name: Enable Vercel Web Analytics
-        run: vercel project web-analytics --token="${VERCEL_TOKEN}" --format json
+        run: vercel project web-analytics --token="${VERCEL_TOKEN}" --format json --non-interactive
       - name: Read existing durable history
         shell: bash
         run: |
@@ -93,9 +93,8 @@ jobs:
           fi
           mkdir -p data/analytics
           cp /tmp/web-traffic.json data/analytics/web-traffic.json
-          # Prevent Vercel Git integration from creating daily preview deployments
-          # for the data-only history branch.
-          printf '%s\n' '{"ignoreCommand":"exit 0"}' > vercel.json
+          # The history branch is data-only and must never trigger a Vercel Git deployment.
+          printf '%s\n' '{"git":{"deploymentEnabled":false}}' > vercel.json
           git add data/analytics/web-traffic.json vercel.json
           if git diff --cached --quiet; then
             echo "Analytics history is unchanged."
