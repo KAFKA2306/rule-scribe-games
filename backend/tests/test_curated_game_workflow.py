@@ -19,7 +19,7 @@ def test_skull_king_replays_from_structured_input_without_semantic_diff():
 
     assert spec.slug == "skull-king"
     assert spec.source.url == "https://www.grandpabecksgames.com/pages/skull-king"
-    assert spec.source.revision == "grandpa-becks-current-rulebook-accessed-2026-08-14"
+    assert spec.source.revision == "grandpa-becks-current-en-rulebook-faq-accessed-2026-08-22"
     assert spec.guide["facts"]["rounds"] == 10
     assert spec.guide["scoring"]["summary"].find("配札枚数×10点") >= 0
 
@@ -92,7 +92,7 @@ def test_duplicate_work_edition_under_another_slug_fails_before_write():
                     "id": "game-2",
                     "slug": "skull-king-copy",
                     "edition_label": "Grandpa Beck's Games current edition",
-                    "language_code": None,
+                    "language_code": "en",
                 }
             ],
         )
