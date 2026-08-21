@@ -120,8 +120,9 @@ test('new user can search IPSO and reach quick rules, scoring, diagram and sourc
 
   const scoring = page.getByTestId('scoring-breakdown')
   await scoring.locator('summary').first().click()
-  await expect(scoring.getByText(/昇順でない段は0点/)).toBeVisible()
-  await expect(scoring.getByText('合計 26点')).toBeVisible()
+  await expect(scoring.getByText(/昇順になっていない列は得点しない/)).toBeVisible()
+  await expect(scoring.getByText(/複数色ならカード1枚につき1点/)).toBeVisible()
+  await expect(scoring.getByText(/同じ色だけならカード1枚につき2点/)).toBeVisible()
   await scoring.scrollIntoViewIfNeeded()
   await page.screenshot({ path: testInfo.outputPath(`ipso-scoring-${testInfo.project.name}.png`), animations: 'disabled' })
 
