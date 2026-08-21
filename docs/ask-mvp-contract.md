@@ -20,40 +20,38 @@
 - evidenceごとにsource URL / source type / locator / revision evidenceを可能な範囲で保持する
 - verified fact、公式本文、要約・説明をUIで混同しない
 
-## First vertical slice
+## Implemented vertical slice
 
-既存curated gameのうち、一次sourceとstructured rule evidenceが十分な1作品を選ぶ。以下の5カテゴリを固定fixtureとして持つ。
+`frontend/src/lib/ruleAsk.js` が既存 `curatedRuleGuides` を唯一の回答authorityとして利用し、質問意図を決定的に分類する。外部LLM/APIは使わない。
 
-1. setup
-2. turn flow
-3. legal action
-4. scoring or end condition
-5. exception / tie / edge case
+`frontend/src/components/game/RuleAskPanel.jsx` を `/games/:slug` に表示し、回答には公式source URL・rule version・evidence locatorを付ける。
 
-各fixtureは expected evidence target を持つ。文字列一致だけでなく、別ゲームのevidenceが混入しないことをassertする。
+最初の実動対象は `splendor`。以下を回帰対象にする。
+
+1. turn action → answered
+2. scoring → answered
+3. end condition → answered
+4. exception / tie / token limit → answered
+5. setup → reviewed setup evidenceが現在ないため `unresolved`
+
+別slugではSplendorのguideを再利用しないcross-game contamination testを持つ。
 
 ## Fail-closed cases
 
-- game identityがunverified
-- sourceが対象gameへ結び付いていない
+- curated / reviewed guideが存在しない
 - evidence targetが存在しない
 - questionに対応する十分なevidenceがない
-- conflicting evidenceが解消されていない
 
 上記では推測回答を返さない。
 
 ## UI critical path
 
-`/games/:slug` → 「ルールを質問」 → 質問入力 → 回答または「確認できません」 → 根拠箇所を開く。
+`/games/:slug` → 「ルールを質問」 → 質問入力 → 回答または「確認できません」 → 公式ルール根拠を開く。
 
-mobile viewportでもこの順序で完了できること。
+mobile viewportでもこの順序をregression testする。
 
-## Completion
+## Remaining completion checks
 
-- API/selector contract test
-- 5カテゴリのgame-specific regression
-- cross-game contamination regression
-- unresolved regression
-- game page UI regression
 - exact-head CI
-- production read-back
+- preview/deployed critical-path read-back
+- production read-back after merge
