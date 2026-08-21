@@ -6,7 +6,7 @@
 
 ## Product boundary
 
-これは汎用チャットではない。入力された質問に対して、canonical game identityを固定したまま、そのゲームのrule / FAQ / errata evidenceだけを検索する。
+これは汎用チャットではない。入力された質問に対して、canonical game identityを固定したまま、そのゲームのreviewed curated rule guideだけを検索する。
 
 根拠が十分でなければ回答を生成せず、未解決として返す。表示する回答は登録済み要約であり、公式本文そのものとは区別する。
 
@@ -38,7 +38,7 @@
 
 ## Fail-closed cases
 
-- curated / reviewed guideが存在しない
+- reviewed curated guideが存在しない
 - evidence targetが存在しない
 - questionに対応する十分なevidenceがない
 
