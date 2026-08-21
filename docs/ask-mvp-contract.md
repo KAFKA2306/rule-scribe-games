@@ -50,8 +50,6 @@
 
 mobile viewportでもこの順序をregression testする。
 
-## Remaining completion checks
+## Current completion state
 
-- exact-head CI
-- preview/deployed critical-path read-back
-- production read-back after merge
+実装と回帰テストはPR branchに存在する。完了には exact-head CI、preview/deployed critical-path read-back、merge後のproduction read-back が必要。
