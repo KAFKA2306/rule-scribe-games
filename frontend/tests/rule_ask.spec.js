@@ -42,6 +42,7 @@ test('answers turn action from the current game official guide', async ({ page }
 
   const answer = page.getByRole('status').filter({ hasText: '異なる色の宝石トークンを3個取る' })
   await expect(answer).toBeVisible()
+  await expect(answer).toContainText('供給に異なる3色を取れるだけ残っていない場合は、異なる2色または1色だけ取ってよい')
   const evidence = page.getByRole('link', { name: '公式ルールを確認' })
   await expect(evidence).toHaveAttribute('href', 'https://cdn.svc.asmodee.net/production-spacecowboys/uploads/2025/12/FR_SPLENDOR_Rules.pdf')
   await expect(page.getByText(/quick:actions/)).toBeVisible()
