@@ -31,6 +31,9 @@
 
 最初の実動対象は `splendor`。turn action、scoring、end condition、tie/token limitを回答し、reviewed setup evidenceがない質問は`unresolved`にする。
 
-## Current completion state
+## Completion gates
 
-実装と回帰テストはPR branchに存在する。完了には exact-head CI、preview/deployed critical-path read-back、merge後のproduction read-back が必要。
+- exact-head CI PASS
+- preview/deployed critical-path read-back
+- merge
+- production read-back
