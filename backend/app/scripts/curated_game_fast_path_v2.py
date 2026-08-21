@@ -148,6 +148,24 @@ def write_catalog_with_plan(client: Any, spec: CuratedGameSpec, plan: IdentityPl
     return row
 
 
+def validate_exposed_catalog_fields(expected: Any, actual: Any, path: str = "game") -> None:
+    """Compare structured source fields that the public API actually exposes.
+
+    API response models intentionally omit some storage-only curated fields. Those
+    keys are skipped, while every exposed key from the canonical spec must match.
+    """
+    if isinstance(expected, dict):
+        if not isinstance(actual, dict):
+            raise WorkflowError(f"production catalog mismatch at {path}")
+        for key, expected_value in expected.items():
+            if key not in actual:
+                continue
+            validate_exposed_catalog_fields(expected_value, actual[key], f"{path}.{key}")
+        return
+    if expected != actual:
+        raise WorkflowError(f"production catalog mismatch at {path}")
+
+
 def verify_catalog_live(spec: CuratedGameSpec, base_url: str) -> None:
     base = base_url.rstrip("/")
     with httpx.Client(follow_redirects=True, timeout=20) as client:
@@ -161,6 +179,7 @@ def verify_catalog_live(spec: CuratedGameSpec, base_url: str) -> None:
             raise WorkflowError("production API source provenance does not match structured input")
         if not payload.get("work_id"):
             raise WorkflowError("production API record has no canonical work_id")
+        validate_exposed_catalog_fields(spec.game, payload)
 
         page_response = client.get(f"{base}/games/{spec.slug}")
         if page_response.status_code != 200:
@@ -200,6 +219,13 @@ def verify_frontend_release(
     if response.status_code != 200:
         raise WorkflowError(f"production curated manifest failed: HTTP {response.status_code}")
     validate_release_manifest(expected, response.json(), game=game)
+
+
+def verify_release(specs: list[CuratedGameSpec], base_url: str) -> None:
+    generate_artifacts(specs)
+    verify_frontend_release(specs, base_url)
+    for spec in specs:
+        verify_catalog_live(spec, base_url)
 
 
 def routine_files(spec: CuratedGameSpec) -> list[str]:
@@ -295,8 +321,7 @@ def main() -> None:
     if args.mode == "check-all":
         check_all(specs)
     else:
-        generate_artifacts(specs)
-        verify_frontend_release(specs, args.base_url)
+        verify_release(specs, args.base_url)
 
 
 if __name__ == "__main__":
