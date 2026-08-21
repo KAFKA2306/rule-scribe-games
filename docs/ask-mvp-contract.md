@@ -10,16 +10,6 @@
 
 根拠が十分でなければ回答を生成せず、未解決として返す。表示する回答は登録済み要約であり、公式本文そのものとは区別する。
 
-## Response contract
-
-- `game_slug`: canonical game identity
-- `question`: user input
-- `status`: `answered` or `unresolved`
-- `answer`: evidenceから導出した登録済み要約。`unresolved`ではnull
-- `evidence`: answerを支持する1件以上のevidence target
-- evidenceごとにsource URL / source type / locator / revision evidenceを可能な範囲で保持する
-- verified fact、公式本文、要約・説明をUIで混同しない
-
 ## Implemented vertical slice
 
 - `frontend/src/lib/ruleAsk.js`: reviewed curated guideだけを検索するdeterministic selector
