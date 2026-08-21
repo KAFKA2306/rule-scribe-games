@@ -113,7 +113,7 @@ test('new user can search IPSO and reach quick rules, scoring, diagram and sourc
   await expect(quick).toBeVisible()
   await expect(quick.getByText('今の手番ですること')).toBeVisible()
   await expect(quick.getByText('中央の表向き2枚から1枚を選ぶ。')).toBeVisible()
-  await expect(quick.getByText(/全員の14枚が表向き/)).toBeVisible()
+  await expect(quick.getByText(/全員のピラミッドが表向き/)).toBeVisible()
   await expect(quick.getByText('公式ルール確認済み')).toBeVisible()
   await quick.scrollIntoViewIfNeeded()
   await page.screenshot({ path: testInfo.outputPath(`ipso-quick-rules-${testInfo.project.name}.png`), animations: 'disabled' })
