@@ -73,7 +73,11 @@
   },
   "assertions": [
     {"path": "facts.rounds", "equals": 3},
+    {"path": "facts.playersMin", "equals": 2},
     {"path": "facts.playersMax", "equals": 12},
+    {"path": "facts.playTimeMinutes", "equals": 30},
+    {"path": "facts.minimumAge", "equals": 8},
+    {"path": "facts.releaseYear", "equals": 2016},
     {"path": "quick.end", "contains": "3ラウンド"}
   ]
 }
