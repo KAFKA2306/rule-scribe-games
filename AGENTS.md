@@ -32,6 +32,8 @@ Prefer the smallest coherent change. Do not redesign unrelated schemas or UI, cr
 
 Run the narrowest meaningful tests first, then the broader checks required by the affected code or repository CI. Do not weaken or skip checks to make a change pass.
 
-When safe, complete work through implementation, tests, pull request, exact-head CI, merge, issue close, cleanup, and production verification. Do not claim CI, deployment, production state, or cleanup unless directly verified.
+Treat **PR merge** and **product release** as separate decisions. Merge checks run on the pull request and must not require production credentials, production writes, or production deployment. Release checks run only after the change reaches `main` and cover production publication, deployment, exact-main-SHA verification, and production read-back. A release failure means the merged change is not yet released; do not retroactively redefine a passed PR merge check as failed.
 
-After merge, remove temporary files and superseded work when the available GitHub operations allow it. Report the repository, Issue or PR, commit, measurable change, tests, CI, files and lines changed, dependency or configuration changes, production verification, and remaining unverified items.
+When safe, complete work through implementation, tests, pull request, exact-head merge checks, merge, post-merge release, cleanup, and production verification. Do not claim CI, deployment, production state, or cleanup unless directly verified. If release is blocked after merge, report the product as **UNRELEASED/UNVERIFIED** and preserve the successful merge evidence separately.
+
+After merge, remove temporary files and superseded work when the available GitHub operations allow it. Report the repository, Issue or PR, commit, measurable change, merge-check evidence, release evidence, files and lines changed, dependency or configuration changes, production verification, and remaining unverified items.

@@ -2,7 +2,7 @@ name: Curated game release verification
 
 on:
   workflow_run:
-    workflows: ["Vercel Deployment"]
+    workflows: ["Vercel Deployment", "Curated game release"]
     types: [completed]
   workflow_dispatch:
 

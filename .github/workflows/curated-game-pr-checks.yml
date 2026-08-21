@@ -1,0 +1,44 @@
+name: Curated game PR checks
+
+on:
+  pull_request:
+    paths:
+      - "data/curated-games/**"
+      - "backend/app/scripts/curated_game_workflow.py"
+      - "backend/app/scripts/curated_game_fast_path_v2.py"
+      - "backend/tests/test_curated_game_workflow.py"
+      - "backend/tests/test_curated_game_fast_path_v2.py"
+      - "frontend/scripts/generate-curated-game-artifacts.mjs"
+      - "frontend/package.json"
+      - "frontend/src/lib/curatedRuleGuides.js"
+      - ".gitignore"
+      - "Taskfile.yml"
+      - "docs/CURATED_GAME_FAST_PATH.md"
+      - ".github/workflows/curated-game-pr-checks.yml"
+      - ".github/workflows/curated-game-fast-path.yml"
+      - ".github/workflows/curated-game-release-verification.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  curated-game:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install uv
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9
+      - name: Install Python dependencies
+        run: uv sync --frozen --dev
+      - name: Run focused workflow tests
+        env:
+          PYTHONPATH: backend
+        run: >-
+          uv run pytest -q
+          backend/tests/test_curated_game_workflow.py
+          backend/tests/test_curated_game_fast_path_v2.py
+      - name: Regenerate and validate all curated artifacts from source
+        env:
+          PYTHONPATH: backend
+        run: uv run python backend/app/scripts/curated_game_fast_path_v2.py check-all
