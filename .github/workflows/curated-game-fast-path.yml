@@ -1,21 +1,6 @@
-name: Curated game fast path
+name: Curated game release
 
 on:
-  pull_request:
-    paths:
-      - "data/curated-games/**"
-      - "backend/app/scripts/curated_game_workflow.py"
-      - "backend/app/scripts/curated_game_fast_path_v2.py"
-      - "backend/tests/test_curated_game_workflow.py"
-      - "backend/tests/test_curated_game_fast_path_v2.py"
-      - "frontend/scripts/generate-curated-game-artifacts.mjs"
-      - "frontend/package.json"
-      - "frontend/src/lib/curatedRuleGuides.js"
-      - ".gitignore"
-      - "Taskfile.yml"
-      - "docs/CURATED_GAME_FAST_PATH.md"
-      - ".github/workflows/curated-game-fast-path.yml"
-      - ".github/workflows/curated-game-release-verification.yml"
   push:
     branches:
       - main
@@ -31,6 +16,7 @@ on:
       - ".gitignore"
       - "Taskfile.yml"
       - "docs/CURATED_GAME_FAST_PATH.md"
+      - ".github/workflows/curated-game-pr-checks.yml"
       - ".github/workflows/curated-game-fast-path.yml"
       - ".github/workflows/curated-game-release-verification.yml"
 
@@ -38,7 +24,7 @@ permissions:
   contents: read
 
 jobs:
-  curated-game:
+  validate-release-source:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -60,8 +46,7 @@ jobs:
         run: uv run python backend/app/scripts/curated_game_fast_path_v2.py check-all
 
   publish-catalog:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: curated-game
+    needs: validate-release-source
     runs-on: ubuntu-latest
     timeout-minutes: 10
     concurrency:
