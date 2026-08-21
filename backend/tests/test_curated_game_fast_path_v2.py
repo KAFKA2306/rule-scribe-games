@@ -169,6 +169,63 @@ def test_release_manifest_digest_mismatch_fails():
         v2.validate_release_manifest(expected, deployed, game="skull-king")
 
 
+def test_exposed_catalog_field_mismatch_fails():
+    expected = {
+        "rules_content": "current rules",
+        "identity_source": "https://publisher.example/game",
+        "structured_data": {
+            "rule_mistakes": ["current clarification"],
+            "source_documents": [{"url": "https://publisher.example/rules"}],
+        },
+    }
+    deployed = {
+        "rules_content": "old rules",
+        "identity_source": None,
+        "structured_data": {
+            "rule_mistakes": ["old clarification"],
+        },
+    }
+
+    with pytest.raises(WorkflowError, match="game.rules_content"):
+        v2.validate_exposed_catalog_fields(expected, deployed)
+
+
+def test_unexposed_storage_fields_do_not_fail_catalog_comparison():
+    expected = {
+        "rules_content": "current rules",
+        "structured_data": {
+            "rule_mistakes": ["current clarification"],
+            "source_documents": [{"url": "https://publisher.example/rules"}],
+        },
+        "publisher": "Publisher",
+    }
+    deployed = {
+        "rules_content": "current rules",
+        "structured_data": {
+            "rule_mistakes": ["current clarification"],
+        },
+    }
+
+    v2.validate_exposed_catalog_fields(expected, deployed)
+
+
+def test_release_check_verifies_catalog_for_every_curated_game(monkeypatch):
+    specs = load_all_specs()[:2]
+    events = []
+
+    monkeypatch.setattr(v2, "generate_artifacts", lambda values: events.append("generate"))
+    monkeypatch.setattr(v2, "verify_frontend_release", lambda values, base_url: events.append("frontend"))
+    monkeypatch.setattr(
+        v2,
+        "verify_catalog_live",
+        lambda spec, base_url: events.append(f"catalog:{spec.slug}"),
+    )
+
+    v2.verify_release(specs, "https://example.invalid")
+
+    assert events == ["generate", "frontend", *[f"catalog:{spec.slug}" for spec in specs]]
+
+
 def test_routine_pr_contains_only_structured_source():
     spec = load_spec(SKULL_KING)
 
