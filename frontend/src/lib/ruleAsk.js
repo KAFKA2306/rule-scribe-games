@@ -74,6 +74,5 @@ export function askRule(slug, question) {
     if (limitNode?.label) return answered(slug, trimmedQuestion, guide, `flow:${limitNode.id}`, limitNode.label)
   }
 
-  // Setup is intentionally fail-closed until the curated guide has reviewed setup evidence.
   return { game_slug: slug, question: trimmedQuestion, status: 'unresolved', answer: null, evidence: [] }
 }
