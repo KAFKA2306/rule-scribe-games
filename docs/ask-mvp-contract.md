@@ -22,9 +22,12 @@
 
 ## Implemented vertical slice
 
-`frontend/src/lib/ruleAsk.js` が既存 `curatedRuleGuides` を唯一の回答authorityとして利用し、質問意図を決定的に分類する。外部LLM/APIは使わない。
+- `frontend/src/lib/ruleAsk.js`: reviewed curated guideだけを検索するdeterministic selector
+- `frontend/src/components/game/RuleAskPanel.jsx`: `/games/:slug` の質問UI
+- `frontend/src/main.jsx`: game routeへのmount
+- `frontend/tests/rule_ask.spec.js`: answered / unresolved / cross-game / mobile regression
 
-`frontend/src/components/game/RuleAskPanel.jsx` を `/games/:slug` に表示し、回答には公式source URL・rule version・evidence locatorを付ける。
+外部LLM/API、dependency、backend serviceは追加しない。
 
 最初の実動対象は `splendor`。以下を回帰対象にする。
 
