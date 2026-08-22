@@ -6,6 +6,8 @@ import re
 from pathlib import Path
 
 from app.core.supabase import get_by_slug
+from app.services.presentation_projection import PresentationProjectionReadError, PresentationProjectionService
+from app.services.rulesets import RuleSetService
 from app.services.search_visibility import should_hide_game_from_search
 
 logger = logging.getLogger(__name__)
@@ -58,6 +60,49 @@ def _player_count_projection(game: dict) -> tuple[dict[str, object] | None, str]
     else:
         label = f"最大{max_players}人"
     return quantitative_value, label
+
+
+def _render_projection_rules(projection) -> str | None:
+    sections = (
+        ("セットアップ", projection.setup),
+        ("ゲーム進行", projection.game_flow),
+        ("終了条件・勝利", projection.end_condition),
+        ("得点", projection.scoring),
+    )
+    rendered: list[str] = []
+    for label, section in sections:
+        if not section.items:
+            continue
+        rendered.append(f"## {label}\n" + "\n".join(f"- {item.text}" for item in section.items))
+    return "\n\n".join(rendered) or None
+
+
+async def _canonical_rule_text(slug: str) -> str | None:
+    rulesets = await RuleSetService().get_by_slug(slug)
+    if not rulesets or rulesets.status != "available":
+        return None
+
+    candidates = [
+        ruleset
+        for ruleset in rulesets.rulesets
+        if ruleset.is_active and ruleset.verification_status == "source_bound"
+    ]
+    for ruleset in candidates:
+        try:
+            projection = await PresentationProjectionService().get_by_slug(
+                slug,
+                rule_set_id=ruleset.ruleset_id,
+                language_code=ruleset.language_code or "ja",
+            )
+        except PresentationProjectionReadError:
+            logger.exception("Canonical SSR projection failed for %s/%s", slug, ruleset.ruleset_id)
+            continue
+        if projection is None or projection.status != "available":
+            continue
+        rendered = _render_projection_rules(projection)
+        if rendered:
+            return rendered
+    return None
 
 
 async def generate_seo_html(slug: str) -> str | None:
@@ -171,7 +216,13 @@ async def generate_seo_html(slug: str) -> str | None:
 
     safe_title = html.escape(title)
     safe_summary = html.escape(str(game.get("summary") or ""))
-    safe_rules = html.escape(str(game.get("rules_content") or "")[:2000])
+    canonical_rules = await _canonical_rule_text(slug)
+    if canonical_rules:
+        safe_rules = html.escape(canonical_rules)
+        rules_heading = "出典付きルール要約"
+    else:
+        safe_rules = html.escape(str(game.get("rules_content") or "")[:2000])
+        rules_heading = "ルール"
     players_info = ""
     if player_count_label:
         players_info = f"<p><strong>プレイ人数:</strong> {html.escape(player_count_label)}</p>"
@@ -198,7 +249,7 @@ async def generate_seo_html(slug: str) -> str | None:
       {time_info}
     </section>
     <section>
-      <h2>ルール</h2>
+      <h2>{rules_heading}</h2>
       <pre itemprop="text">{safe_rules}</pre>
     </section>
   </article>
