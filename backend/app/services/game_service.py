@@ -135,6 +135,9 @@ class GameService:
 
             local_db.init_db()
 
+    async def search_games(self, query: str) -> list[dict[str, Any]]:
+        return await supabase.search(query)
+
     async def get_game_by_slug(self, slug: str) -> dict[str, Any] | None:
         return await supabase.get_by_slug(slug)
 
