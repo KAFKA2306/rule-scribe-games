@@ -1,0 +1,99 @@
+name: Web Analytics Snapshot
+
+on:
+  pull_request:
+    paths:
+      - frontend/index.html
+      - scripts/export_vercel_web_analytics.py
+      - .github/workflows/web-analytics.yml
+      - vercel.json
+  push:
+    branches:
+      - main
+    paths:
+      - frontend/index.html
+      - scripts/export_vercel_web_analytics.py
+      - .github/workflows/web-analytics.yml
+      - vercel.json
+  schedule:
+    # 09:24 JST / 00:24 UTC. Persist only completed UTC days.
+    - cron: "24 0 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: web-analytics-history-${{ github.event_name == 'pull_request' && github.event.pull_request.number || 'production' }}
+  # PR validation should converge on the latest head; production snapshots must not race.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  Validate-Exporter:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Compile exporter
+        run: python -m py_compile scripts/export_vercel_web_analytics.py
+      - name: Test history merge
+        run: python scripts/export_vercel_web_analytics.py --self-test
+
+  Snapshot-Production-Traffic:
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          ref: main
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      # Web Analytics only needs to be enabled when this workflow is introduced
+      # or manually re-run. Scheduled snapshots query the API directly.
+      - name: Install Vercel CLI
+        if: github.event_name != 'schedule'
+        run: npm install --global vercel@59.0.0
+      - name: Link production project
+        if: github.event_name != 'schedule'
+        run: vercel pull --yes --environment=production --token="${VERCEL_TOKEN}"
+      - name: Enable Vercel Web Analytics
+        if: github.event_name != 'schedule'
+        run: vercel project web-analytics --token="${VERCEL_TOKEN}" --format json --non-interactive
+      - name: Export rolling production traffic
+        shell: bash
+        run: |
+          args=(--output /tmp/web-traffic.json --since-days 31)
+          if [ -s data/analytics/web-traffic.json ]; then
+            args+=(--existing data/analytics/web-traffic.json)
+          fi
+          python scripts/export_vercel_web_analytics.py "${args[@]}"
+      - name: Persist history on main
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main
+          git reset --hard origin/main
+          mkdir -p data/analytics
+          cp /tmp/web-traffic.json data/analytics/web-traffic.json
+          git add data/analytics/web-traffic.json
+          if git diff --cached --quiet; then
+            echo "Analytics history is unchanged."
+            exit 0
+          fi
+          # GitHub Actions recognizes [skip ci] on push commits. Vercel separately
+          # ignores commits whose only changed path is data/analytics/**.
+          git commit -m "data: update web analytics history [skip ci]"
+          git push origin HEAD:main

@@ -1,6 +1,7 @@
 {
   "buildCommand": "cd frontend && npm ci && npm run build",
   "outputDirectory": "frontend/dist",
+  "ignoreCommand": "git diff HEAD^ HEAD --quiet -- . ':(exclude)data/analytics/**'",
   "rewrites": [
     {
       "source": "/api/:path*",

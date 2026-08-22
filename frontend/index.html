@@ -42,6 +42,22 @@
     />
     <meta name="twitter:image" content="https://bodoge-no-mikata.vercel.app/og-image.webp" />
 
+    <!-- Vercel Web Analytics. Strip query/hash values so search text is not retained. -->
+    <script>
+      window.va =
+        window.va ||
+        function () {
+          ;(window.vaq = window.vaq || []).push(arguments)
+        }
+      window.va('beforeSend', function (event) {
+        const url = new URL(event.url)
+        url.search = ''
+        url.hash = ''
+        return { ...event, url: url.toString() }
+      })
+    </script>
+    <script defer src="/_vercel/insights/script.js"></script>
+
     <!-- Structured Data (JSON-LD) -->
     <script type="application/ld+json">
       {
