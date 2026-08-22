@@ -1,33 +1,18 @@
 # Core Module (`app/core/`)
 
-`app/core` は、アプリケーション全体で共有される設定やシングルトンインスタンスを管理します。
+`app/core` は、アプリケーション全体で共有するruntime設定とデータアクセス基盤を管理します。
 
-## 構成ファイル
+## 現行構成
 
-### [`settings.py`](./settings.py)
-アプリケーションの設定と環境変数のロードを担当します。
-- `Settings` クラス: 環境変数 (`GEMINI_API_KEY`, `SUPABASE_URL` 等) を読み込み、検証します。
-- `CANONICAL_GEMINI_MODEL`: 使用するGeminiモデル名（`models/gemini-3-flash-preview`）を厳格に定義しています。config.yamlまたは環境変数で異なるモデルが指定された場合、エラーを発生させて意図しないモデル利用を防ぎます。
+- `settings.py`: `.env` を読み、server-side Supabase接続に必要な設定だけを保持します。
+- `supabase.py`: PostgreSQL/Supabaseへのcanonical catalog read/writeを提供します。
+- `local_db.py`: Supabase未設定時のローカル開発用データストアです。
+- `logger.py`: logging設定です。
+- `task_manager.py`: runtime task状態の管理です。
+- `rate_limiter.py`: rate-limitが必要なendpoint向けの共通実装です。
 
-> [!CAUTION]
-> **このモデル名は変更しないでください。** プロジェクトは `models/gemini-3-flash-preview` 専用に設計されています。
+## 境界
 
-- `_config`: プロジェクトルートの `config.yaml` をロードします。
+ゲーム内容をLLMで生成してcatalogへ書くruntime経路はありません。ゲーム固有のsource-backed変更は `data/curated-games/<slug>.json` とcurated-game workflowを正準入口にします。
 
-### [`gemini.py`](./gemini.py)
-Google Gemini API との通信を行うクライアントラッパーです。
-- シングルトンとして管理されることが推奨されます。
-- `generate_structured_json`: プロンプトを受け取り、Geminiから構造化されたJSONレスポンスを取得します。
-
-### [`supabase.py`](./supabase.py)
-Supabase (PostgreSQL) との非同期通信を担当します。
-- `games` テーブルへのCRUD操作（検索、取得、更新、作成）を抽象化しています。
-- RPC呼び出しやフィルタリングロジックを含みます。
-
-### [`logger.py`](./logger.py)
-アプリケーションのロギング設定を行います。
-- ログレベルやフォーマットの統一を管理します。
-
-## 設計思想
-- **Fail Fast**: 設定の不備（必須環境変数の欠落や誤ったモデル名など）がある場合、アプリケーション起動時に即座に例外を発生させ、不安定な状態での稼働を防ぎます。
-- **Singleton**: データベース接続やAPIクライアントは、リクエストごとに生成せず再利用することでパフォーマンスを最適化します。
+Backendのproduction DB接続は `SUPABASE_SERVICE_ROLE_KEY` を要求し、browser-safe keyへfallbackしません。

@@ -74,10 +74,6 @@ tasks:
       - npm run lint
       - npx prettier --check .
 
-  db:init:
-    desc: DB初期化用SQLを表示
-    cmd: cat backend/init_db.sql
-
   clean:
     desc: キャッシュとビルドアーティファクトの削除
     ignore_error: true

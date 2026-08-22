@@ -3,12 +3,9 @@ name: Rule quality gate
 on:
   pull_request:
     paths:
-      - "backend/app/prompts/**"
-      - "backend/app/services/game_service.py"
       - "backend/app/services/rule_quality.py"
       - "backend/app/models/**"
       - "backend/tests/test_rule_quality.py"
-      - "backend/tests/test_rule_source_gate.py"
       - "evaluation/rules/**"
       - "scripts/evaluate_rule_quality.py"
       - ".github/workflows/rule-quality.yml"
@@ -16,12 +13,9 @@ on:
     branches:
       - main
     paths:
-      - "backend/app/prompts/**"
-      - "backend/app/services/game_service.py"
       - "backend/app/services/rule_quality.py"
       - "backend/app/models/**"
       - "backend/tests/test_rule_quality.py"
-      - "backend/tests/test_rule_source_gate.py"
       - "evaluation/rules/**"
       - "scripts/evaluate_rule_quality.py"
       - ".github/workflows/rule-quality.yml"
@@ -48,7 +42,7 @@ jobs:
       - name: Run deterministic regression tests
         env:
           PYTHONPATH: backend
-        run: uv run pytest -q backend/tests/test_rule_quality.py backend/tests/test_rule_source_gate.py
+        run: uv run pytest -q backend/tests/test_rule_quality.py
 
       - name: Build rule quality report
         env:

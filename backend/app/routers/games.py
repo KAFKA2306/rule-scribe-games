@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import ValidationError
 
 from app.core.rate_limiter import RateLimiter
-from app.models import GameDetail, GameListResponse, GameUpdate, SearchRequest
+from app.models import GameDetail, GameListResponse, GameUpdate
 from app.models.component_catalog import (
     ComponentDetailResponse,
     ComponentKind,
@@ -24,16 +24,13 @@ from app.services.component_catalog import ComponentCatalogService
 from app.services.concept_taxonomy import ConceptTaxonomyService
 from app.services.directory_query import DirectorySort, DirectoryTime, list_directory_games
 from app.services.evidence import EvidenceService
-from app.services.game_service import GameService, UnverifiedGameIdentityError
+from app.services.game_service import GameIdentityConflictError, GameService
 from app.services.rule_graph import RuleGraphService
 from app.services.rulesets import RuleSetService
 from app.services.search_visibility import has_known_identity_conflict, should_return_gone
 
 router = APIRouter()
-
-# Shared limiters
 search_limiter = RateLimiter.get_limiter("search", max_requests=100, window_seconds=60)
-gen_limiter = RateLimiter.get_limiter("generation", max_requests=10, window_seconds=60)
 
 
 def get_game_service():
@@ -64,29 +61,7 @@ def get_concept_taxonomy_service():
 async def search_games(q: str = Query(..., min_length=1), service: GameService = Depends(get_game_service)):
     if not search_limiter.acquire():
         raise HTTPException(status_code=429, detail="Search rate limit exceeded")
-
-    if not q or not q.strip():
-        return []
     return await service.search_games(q.strip())
-
-
-@router.post("/search", response_model=list[GameDetail])
-async def search_games_post(
-    body: SearchRequest,
-    service: GameService = Depends(get_game_service),
-):
-    # Legacy clients may still send generate=true. Public search is deliberately
-    # read-only; catalog generation requires an authenticated editor workflow.
-    if body.generate:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Catalog generation is not available from public search",
-        )
-    if not search_limiter.acquire():
-        raise HTTPException(status_code=429, detail="Search rate limit exceeded")
-    if not body.query or not body.query.strip():
-        return []
-    return await service.search_games(body.query.strip())
 
 
 @router.get("/games", response_model=GameListResponse)
@@ -282,9 +257,7 @@ async def get_game_details(slug: str, service: GameService = Depends(get_game_se
 @router.patch("/games/{slug}")
 async def update_game(
     slug: str,
-    game_update: GameUpdate | None = None,
-    regenerate: bool = False,
-    fill_missing_only: bool = False,
+    game_update: GameUpdate,
     editor: dict = Depends(require_catalog_editor),
     service: GameService = Depends(get_game_service),
 ) -> dict[str, object]:
@@ -294,45 +267,21 @@ async def update_game(
             detail="Game identity conflict requires reviewed repair before mutation",
         )
 
-    try:
-        if regenerate:
-            if not gen_limiter.acquire():
-                raise HTTPException(status_code=429, detail="Generation rate limit exceeded")
-            result = await service.update_game_content(slug, fill_missing_only=fill_missing_only)
-            await catalog_access.record_catalog_mutation(
-                editor_user_id=str(editor["id"]),
-                game=result,
-                slug=slug,
-                action="regenerate",
-                changed_fields=[
-                    "rules_content",
-                    "structured_data",
-                    "min_players",
-                    "max_players",
-                    "play_time",
-                    "min_age",
-                    "bga_url",
-                    "content_review_status",
-                    "data_version",
-                ],
-            )
-            return result
+    updates = game_update.model_dump(exclude_unset=True)
+    if not updates:
+        return {"status": "ok", "message": "No fields supplied"}
 
-        if game_update:
-            updates = game_update.model_dump(exclude_unset=True)
-            if updates:
-                result = await service.update_game_manual(slug, updates)
-                await catalog_access.record_catalog_mutation(
-                    editor_user_id=str(editor["id"]),
-                    game=result,
-                    slug=slug,
-                    action="manual_update",
-                    changed_fields=list(updates),
-                )
-                return result
-    except UnverifiedGameIdentityError as exc:
+    try:
+        result = await service.update_game_manual(slug, updates)
+        await catalog_access.record_catalog_mutation(
+            editor_user_id=str(editor["id"]),
+            game=result,
+            slug=slug,
+            action="manual_update",
+            changed_fields=list(updates),
+        )
+        return result
+    except GameIdentityConflictError as exc:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Game not found") from exc
-
-    return {"status": "ok", "message": "No action taken (regenerate=False, no body)"}
