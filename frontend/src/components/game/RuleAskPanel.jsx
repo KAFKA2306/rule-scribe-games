@@ -18,7 +18,7 @@ function ruleSetLabel(ruleset) {
   return ruleset.edition_label || ruleset.variant_label || ruleset.platform || ruleset.ruleset_id
 }
 
-export function RuleAskPanel() {
+export function RuleAskPanel({ game }) {
   const { slug } = useParams()
   const [question, setQuestion] = useState('')
   const [result, setResult] = useState(null)
@@ -27,13 +27,9 @@ export function RuleAskPanel() {
   useEffect(() => {
     let cancelled = false
 
-    Promise.all([
-      api.get(`/api/games/${slug}`),
-      api.get(`/api/games/${slug}/rule-sets`),
-    ])
-      .then(([gameResponse, rulesetResponse]) => {
+    api.get(`/api/games/${slug}/rule-sets`)
+      .then((rulesetResponse) => {
         if (cancelled || rulesetResponse?.status !== 'available' || !rulesetResponse.rulesets?.length) return
-        const game = Array.isArray(gameResponse) ? gameResponse[0] : gameResponse?.game || gameResponse
         const displayed = findDisplayedRuleSet(game, rulesetResponse.rulesets)
         setRuleSetContext({ displayed, rulesets: rulesetResponse.rulesets })
       })
@@ -42,7 +38,7 @@ export function RuleAskPanel() {
       })
 
     return () => { cancelled = true }
-  }, [slug])
+  }, [game, slug])
 
   const submit = (event) => {
     event.preventDefault()
