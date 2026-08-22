@@ -1,0 +1,111 @@
+name: Source-bound RuleSet data contract
+
+on:
+  pull_request:
+    paths:
+      - "backend/app/db/migrations/022_seed_pili_pili_rulesets.sql"
+      - "backend/app/db/migrations/023_align_pili_pili_legacy_provenance.sql"
+      - "backend/app/db/migrations/024_seed_terraforming_mars_dice_ruleset.sql"
+      - ".github/workflows/test-game-ruleset-data.yml"
+  push:
+    branches: [main]
+    paths:
+      - "backend/app/db/migrations/022_seed_pili_pili_rulesets.sql"
+      - "backend/app/db/migrations/023_align_pili_pili_legacy_provenance.sql"
+      - "backend/app/db/migrations/024_seed_terraforming_mars_dice_ruleset.sql"
+      - ".github/workflows/test-game-ruleset-data.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  ruleset-data:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: ruleset_data_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d ruleset_data_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/ruleset_data_test
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Build canonical schema and apply game RuleSet seeds twice
+        shell: bash
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 <<'SQL'
+          CREATE TABLE public.game_works (
+            id uuid PRIMARY KEY DEFAULT gen_random_uuid()
+          );
+          CREATE TABLE public.games (
+            id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+            slug text NOT NULL UNIQUE,
+            title text,
+            work_id uuid REFERENCES public.game_works(id),
+            identity_status text NOT NULL DEFAULT 'unverified',
+            identity_source text,
+            source_url text,
+            source_trust text,
+            rules_content text
+          );
+
+          INSERT INTO public.game_works DEFAULT VALUES;
+          INSERT INTO public.games(slug, title, work_id, identity_status, source_url, source_trust, rules_content)
+          SELECT 'pili-pili', 'Pili Pili', id, 'verified',
+                 'https://atmgaming.com/product/pili-pili', 'official_publisher',
+                 'このページは Board Game Arena（BGA）実装 を基準にしています。'
+          FROM public.game_works LIMIT 1;
+
+          INSERT INTO public.game_works DEFAULT VALUES;
+          INSERT INTO public.games(slug, title, work_id, identity_status, identity_source, source_url, source_trust, rules_content)
+          SELECT 'terraforming-mars-the-dice-game', 'Terraforming Mars: The Dice Game', id, 'verified',
+                 'https://arclightgames.jp/product/826ter/',
+                 'https://arclightgames.jp/wp-content/uploads/2024/04/TM_DICEGAME_RULES-JPN-fix-2023Dec-for-Web-2.pdf',
+                 'official_publisher', 'source-bound Japanese revised rules'
+          FROM public.game_works
+          ORDER BY id DESC LIMIT 1;
+          SQL
+
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/010_rule_graph.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/011_concept_taxonomy.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/013_ruleset_identity.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/014_component_catalog.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/015_claim_evidence.sql
+
+          for pass in 1 2; do
+            psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/022_seed_pili_pili_rulesets.sql
+            psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/023_align_pili_pili_legacy_provenance.sql
+            psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/024_seed_terraforming_mars_dice_ruleset.sql
+          done
+
+      - name: Verify Pili Pili edition isolation remains intact
+        shell: bash
+        run: |
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_sets rs join public.games g on g.id=rs.game_id where g.slug='pili-pili';")" = "2"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.claims where rule_set_id=(select id from public.rule_sets where platform='physical' and publisher_name='ATM Gaming') and field_path='components.pili_cards' and lifecycle_status='candidate';")" = "2"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.claims where rule_set_id=(select id from public.rule_sets where platform='physical' and publisher_name='ATM Gaming') and field_path='components.pili_cards' and lifecycle_status='accepted';")" = "0"
+          test "$(psql "$DATABASE_URL" -Atc "select source_trust from public.games where slug='pili-pili';")" = "authorized_partner"
+
+      - name: Verify Terraforming Mars Japanese revised RuleSet and evidence
+        shell: bash
+        run: |
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_sets rs join public.games g on g.id=rs.game_id where g.slug='terraforming-mars-the-dice-game' and rs.platform='physical' and rs.language_code='ja' and rs.revision_label='2024-05-30' and rs.verification_status='source_bound';")" = "1"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.claims c join public.rule_sets rs on rs.id=c.rule_set_id join public.games g on g.id=rs.game_id where g.slug='terraforming-mars-the-dice-game' and c.lifecycle_status='accepted';")" = "5"
+          test "$(psql "$DATABASE_URL" -Atc "select normalized_payload->>'global_parameters_required' from public.claims where claim_id='tm-dice:physical:multiplayer-end';")" = "2"
+          test "$(psql "$DATABASE_URL" -Atc "select normalized_payload->>'turns' from public.claims where claim_id='tm-dice:physical:solo-turn-limit';")" = "50"
+          test "$(psql "$DATABASE_URL" -Atc "select normalized_payload->>'global_parameters_required' from public.claims where claim_id='tm-dice:physical:solo-end';")" = "3"
+          test "$(psql "$DATABASE_URL" -Atc "select normalized_payload->>'unit' from public.claims where claim_id='tm-dice:physical:time-marker';")" = "turn"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.evidence_bindings eb join public.claims c on c.claim_id=eb.claim_id where c.claim_id like 'tm-dice:physical:%' and eb.relation='supports';")" = "5"
