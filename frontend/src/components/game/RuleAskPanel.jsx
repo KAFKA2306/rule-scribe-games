@@ -1,11 +1,48 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
+import { api } from '../../lib/api'
 import { askRule } from '../../lib/ruleAsk.js'
+
+function findDisplayedRuleSet(game, rulesets) {
+  const visibleRuleText = `${game?.rules_content || ''} ${game?.setup_summary || ''} ${game?.gameplay_summary || ''} ${game?.end_game_summary || ''}`.toLowerCase()
+  if (!visibleRuleText) return null
+
+  return rulesets.find((ruleset) => [
+    ruleset.edition_label,
+    ruleset.platform,
+    ruleset.revision_label,
+  ].filter(Boolean).some((value) => visibleRuleText.includes(String(value).toLowerCase()))) || null
+}
+
+function ruleSetLabel(ruleset) {
+  return ruleset.edition_label || ruleset.variant_label || ruleset.platform || ruleset.ruleset_id
+}
 
 export function RuleAskPanel() {
   const { slug } = useParams()
   const [question, setQuestion] = useState('')
   const [result, setResult] = useState(null)
+  const [ruleSetContext, setRuleSetContext] = useState(null)
+
+  useEffect(() => {
+    let cancelled = false
+
+    Promise.all([
+      api.get(`/api/games/${slug}`),
+      api.get(`/api/games/${slug}/rule-sets`),
+    ])
+      .then(([gameResponse, rulesetResponse]) => {
+        if (cancelled || rulesetResponse?.status !== 'available' || !rulesetResponse.rulesets?.length) return
+        const game = Array.isArray(gameResponse) ? gameResponse[0] : gameResponse?.game || gameResponse
+        const displayed = findDisplayedRuleSet(game, rulesetResponse.rulesets)
+        setRuleSetContext({ displayed, rulesets: rulesetResponse.rulesets })
+      })
+      .catch(() => {
+        if (!cancelled) setRuleSetContext(null)
+      })
+
+    return () => { cancelled = true }
+  }, [slug])
 
   const submit = (event) => {
     event.preventDefault()
@@ -14,6 +51,32 @@ export function RuleAskPanel() {
 
   return (
     <section className="pro-card" aria-labelledby="rule-ask-title">
+      {ruleSetContext?.rulesets?.length > 1 && (
+        <div className="game-empty-note" aria-label="RuleSet context" style={{ marginBottom: '1rem' }}>
+          <strong>表示中のルール版:</strong>{' '}
+          {ruleSetContext.displayed ? (
+            <>
+              {ruleSetLabel(ruleSetContext.displayed)}
+              {ruleSetContext.displayed.platform ? ` · ${ruleSetContext.displayed.platform}` : ''}
+              {ruleSetContext.displayed.language_code ? ` · ${ruleSetContext.displayed.language_code}` : ''}
+              {ruleSetContext.displayed.revision_label ? ` · ${ruleSetContext.displayed.revision_label}` : ''}
+              {` · ${ruleSetContext.displayed.verification_status}`}
+            </>
+          ) : (
+            '既存本文とRuleSetの対応を確認できません'
+          )}
+          <div style={{ marginTop: '0.5rem' }}>
+            別版: {ruleSetContext.rulesets
+              .filter((ruleset) => ruleset.ruleset_id !== ruleSetContext.displayed?.ruleset_id)
+              .map((ruleset) => `${ruleSetLabel(ruleset)}${ruleset.platform ? ` · ${ruleset.platform}` : ''}${ruleset.language_code ? ` · ${ruleset.language_code}` : ''} · ${ruleset.verification_status}`)
+              .join(' / ')}
+          </div>
+          <div style={{ marginTop: '0.5rem' }}>
+            版ごとのRuleSetは分離されています。別版の情報を現在表示中の本文へ自動的に混ぜません。
+          </div>
+        </div>
+      )}
+
       <div className="pro-card-title" id="rule-ask-title">ルールを質問</div>
       <p className="summary-text">
         確認済みの公式ルール根拠だけから回答します。回答は登録済み要約で、公式本文そのものではありません。
