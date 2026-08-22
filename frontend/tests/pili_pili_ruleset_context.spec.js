@@ -12,8 +12,8 @@ const piliPili = {
   gameplay_summary: 'BGA版の流れ',
   end_game_summary: 'BGA版では誰かが6ピリで終了',
   structured_data: {},
-  source_url: 'https://atmgaming.com/product/pili-pili',
-  source_trust: 'official_publisher',
+  source_url: 'https://ja.boardgamearena.com/gamepanel?game=pilipili',
+  source_trust: 'authorized_partner',
   content_review_status: 'review_required',
   identity_status: 'verified',
 }
@@ -57,7 +57,7 @@ const ruleSets = {
   ],
 }
 
-test('Pili Pili identifies the displayed BGA RuleSet without merging the physical edition', async ({ page }) => {
+test('Pili Pili rule questions stay inside the selected RuleSet', async ({ page }) => {
   await page.route('**/api/games/pili-pili/rule-sets', route => route.fulfill({
     status: 200,
     contentType: 'application/json',
@@ -77,7 +77,21 @@ test('Pili Pili identifies the displayed BGA RuleSet without merging the physica
   await page.goto('/games/pili-pili')
 
   const context = page.getByLabel('RuleSet context')
-  await expect(context).toContainText('表示中のルール版: BGA implementation · Board Game Arena · ja · 260623-1715 · source_bound')
-  await expect(context).toContainText('別版: ATM Gaming physical product · physical · fr · source_bound')
-  await expect(context).toContainText('別版の情報を現在表示中の本文へ自動的に混ぜません')
+  const selector = page.getByLabel('確認するルール版:')
+  const question = page.getByLabel('ルールの質問')
+  const submit = page.getByRole('button', { name: '根拠付きで確認' })
+
+  await expect(selector).toHaveValue('bga-ruleset')
+  await expect(context).toContainText('表示中の本文: BGA implementation · Board Game Arena · ja · 260623-1715 · source_bound')
+  await expect(question).toBeEnabled()
+
+  await selector.selectOption('physical-ruleset')
+
+  await expect(context).toContainText('ATM Gaming physical product · physical · fr の質問回答用projectionは未整備です')
+  await expect(context).toContainText('別版の登録済み回答を流用しません')
+  await expect(question).toBeDisabled()
+  await expect(submit).toBeDisabled()
+
+  await selector.selectOption('bga-ruleset')
+  await expect(question).toBeEnabled()
 })

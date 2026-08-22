@@ -34,11 +34,21 @@ function ruleSetLabel(ruleset) {
   return ruleset.edition_label || ruleset.variant_label || ruleset.platform || ruleset.ruleset_id
 }
 
+function ruleSetOptionLabel(ruleset) {
+  return [
+    ruleSetLabel(ruleset),
+    ruleset.platform,
+    ruleset.language_code,
+    ruleset.revision_label,
+  ].filter(Boolean).join(' · ')
+}
+
 export function RuleAskPanel() {
   const { slug } = useParams()
   const [question, setQuestion] = useState('')
   const [result, setResult] = useState(null)
   const [ruleSetContext, setRuleSetContext] = useState(null)
+  const [selectedRuleSetId, setSelectedRuleSetId] = useState(null)
 
   useEffect(() => {
     let cancelled = false
@@ -53,16 +63,28 @@ export function RuleAskPanel() {
 
         const displayed = findDisplayedRuleSet(game, rulesetResponse.rulesets)
         setRuleSetContext({ displayed, rulesets: rulesetResponse.rulesets })
+        setSelectedRuleSetId(displayed?.ruleset_id || rulesetResponse.rulesets[0].ruleset_id)
       })
       .catch(() => {
-        if (!cancelled) setRuleSetContext(null)
+        if (!cancelled) {
+          setRuleSetContext(null)
+          setSelectedRuleSetId(null)
+        }
       })
 
     return () => { cancelled = true }
   }, [slug])
 
+  const selectedRuleSet = ruleSetContext?.rulesets?.find(
+    (ruleset) => ruleset.ruleset_id === selectedRuleSetId,
+  ) || null
+  const selectedUsesDisplayedProjection = Boolean(
+    !ruleSetContext?.displayed || selectedRuleSetId === ruleSetContext.displayed.ruleset_id,
+  )
+
   const submit = (event) => {
     event.preventDefault()
+    if (!selectedUsesDisplayedProjection) return
     setResult(askRule(slug, question))
   }
 
@@ -70,33 +92,37 @@ export function RuleAskPanel() {
     <section className="pro-card" aria-labelledby="rule-ask-title">
       {ruleSetContext?.rulesets?.length > 1 && (
         <div className="game-empty-note" aria-label="RuleSet context" style={{ marginBottom: '1rem' }}>
-          <strong>表示中のルール版:</strong>{' '}
-          {ruleSetContext.displayed ? (
-            <>
-              {ruleSetLabel(ruleSetContext.displayed)}
-              {ruleSetContext.displayed.platform ? ` · ${ruleSetContext.displayed.platform}` : ''}
-              {ruleSetContext.displayed.language_code ? ` · ${ruleSetContext.displayed.language_code}` : ''}
-              {ruleSetContext.displayed.revision_label ? ` · ${ruleSetContext.displayed.revision_label}` : ''}
-              {` · ${ruleSetContext.displayed.verification_status}`}
-            </>
-          ) : (
-            '既存本文とRuleSetの対応を確認できません'
+          <label htmlFor="rule-set-select"><strong>確認するルール版:</strong></label>{' '}
+          <select
+            id="rule-set-select"
+            value={selectedRuleSetId || ''}
+            onChange={(event) => {
+              setSelectedRuleSetId(event.target.value)
+              setResult(null)
+            }}
+          >
+            {ruleSetContext.rulesets.map((ruleset) => (
+              <option key={ruleset.ruleset_id} value={ruleset.ruleset_id}>
+                {ruleSetOptionLabel(ruleset)}
+              </option>
+            ))}
+          </select>
+          <div style={{ marginTop: '0.5rem' }}>
+            表示中の本文: {ruleSetContext.displayed
+              ? `${ruleSetOptionLabel(ruleSetContext.displayed)} · ${ruleSetContext.displayed.verification_status}`
+              : '既存本文とRuleSetの対応を確認できません'}
+          </div>
+          {selectedRuleSet && !selectedUsesDisplayedProjection && (
+            <div role="status" style={{ marginTop: '0.5rem' }}>
+              {ruleSetOptionLabel(selectedRuleSet)} の質問回答用projectionは未整備です。別版の登録済み回答を流用しません。
+            </div>
           )}
-          <div style={{ marginTop: '0.5rem' }}>
-            別版: {ruleSetContext.rulesets
-              .filter((ruleset) => ruleset.ruleset_id !== ruleSetContext.displayed?.ruleset_id)
-              .map((ruleset) => `${ruleSetLabel(ruleset)}${ruleset.platform ? ` · ${ruleset.platform}` : ''}${ruleset.language_code ? ` · ${ruleset.language_code}` : ''} · ${ruleset.verification_status}`)
-              .join(' / ')}
-          </div>
-          <div style={{ marginTop: '0.5rem' }}>
-            版ごとのRuleSetは分離されています。別版の情報を現在表示中の本文へ自動的に混ぜません。
-          </div>
         </div>
       )}
 
       <div className="pro-card-title" id="rule-ask-title">ルールを質問</div>
       <p className="summary-text">
-        確認済みの公式ルール根拠だけから回答します。回答は登録済み要約で、公式本文そのものではありません。
+        確認済みの登録済みルール根拠だけから回答します。回答は要約で、公式本文そのものではありません。
       </p>
       <form onSubmit={submit}>
         <label htmlFor="rule-question" className="sr-only">ルールの質問</label>
@@ -108,8 +134,14 @@ export function RuleAskPanel() {
           maxLength={200}
           placeholder="例: 同点ならどうなる？"
           onChange={(event) => setQuestion(event.target.value)}
+          disabled={!selectedUsesDisplayedProjection}
         />
-        <button type="submit" className="filter-btn" disabled={!question.trim()} style={{ marginTop: '0.75rem' }}>
+        <button
+          type="submit"
+          className="filter-btn"
+          disabled={!question.trim() || !selectedUsesDisplayedProjection}
+          style={{ marginTop: '0.75rem' }}
+        >
           根拠付きで確認
         </button>
       </form>
