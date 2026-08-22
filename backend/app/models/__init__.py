@@ -1,4 +1,3 @@
-from datetime import datetime
 from typing import Any, Literal
 from urllib.parse import urlparse
 
@@ -38,30 +37,11 @@ class KeyElement(BaseSchema):
     reason: str
 
 
-class PersonaReview(BaseSchema):
-    persona: str
-    review_text: str
-    rating: float
-
-
-class GenerationProvenance(BaseSchema):
-    model: str
-    prompt_version: str
-    golden_version: str
-    source_bound: bool
-    content_review_status: ContentReviewStatus = "ai_draft"
-
-
 class StructuredData(BaseSchema):
     keywords: list[Keyword] = []
     key_elements: list[KeyElement] = []
     mechanics: list[str] = []
     best_player_count: str | None = None
-    pro_tips: list[str] = []
-    rule_mistakes: list[str] = []
-    strategy_analysis: str | None = None
-    persona_reviews: list[PersonaReview] = []
-    generation_provenance: GenerationProvenance | None = None
 
 
 class GameDetail(BaseSchema):
@@ -71,16 +51,12 @@ class GameDetail(BaseSchema):
     identity_status: IdentityStatus = "unverified"
     identity_source: str | None = None
     title: str
+    title_ja: str | None = None
+    title_en: str | None = None
     description: str | None = None
-    rules_content: str | None = None
-    rules_summary: str | None = None
-    setup_summary: str | None = None
-    gameplay_summary: str | None = None
-    end_game_summary: str | None = None
-    image_url: str | None = None
     summary: str | None = None
+    image_url: str | None = None
     structured_data: StructuredData | None = None
-    infographics: dict[str, str] | None = None
     source_url: str | None = None
     source_trust: SourceTrust = "unknown"
     content_review_status: ContentReviewStatus = "unknown"
@@ -88,14 +64,11 @@ class GameDetail(BaseSchema):
     view_count: int | None = 0
     search_count: int | None = 0
     data_version: int = 1
-    last_regenerated_at: datetime | None = None
     min_players: int | None = None
     max_players: int | None = None
     play_time: int | None = None
     min_age: int | None = None
     published_year: int | None = None
-    title_ja: str | None = None
-    title_en: str | None = None
     bgg_url: str | None = None
     bga_url: str | None = None
     amazon_url: str | None = None
@@ -112,10 +85,6 @@ class GameUpdate(BaseSchema):
     title_ja: str | None = None
     description: str | None = None
     summary: str | None = None
-    rules_summary: str | None = None
-    setup_summary: str | None = None
-    gameplay_summary: str | None = None
-    end_game_summary: str | None = None
     min_players: int | None = None
     max_players: int | None = None
     play_time: int | None = None
@@ -127,11 +96,7 @@ class GameUpdate(BaseSchema):
     content_review_status: ContentReviewStatus | None = None
     bgg_url: str | None = None
     bga_url: str | None = None
-    structured_data: StructuredData | None = None
-    rules_content: str | None = None
-    infographics: dict[str, str] | None = None
-    data_version: int | None = None
-    last_regenerated_at: datetime | None = None
+    amazon_url: str | None = None
 
     _validate_bga_url = field_validator("bga_url")(validate_bga_url)
 
