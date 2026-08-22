@@ -1,16 +1,11 @@
-import { useEffect, useState } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
+import { Link, useParams } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
-import ReactMarkdown from 'react-markdown'
 import { api } from '../lib/api'
-import { getCuratedRuleGuide } from '../lib/curatedRuleGuides'
 import { ShareButton, TwitterShareButton } from '../components/game/ShareButtons'
 import { TextToSpeech } from '../components/game/TextToSpeech'
 import { ExternalLinks } from '../components/game/ExternalLinks'
-import { InfographicsGallery } from '../components/game/InfographicsGallery'
-import { QuickRulesPanel } from '../components/game/QuickRulesPanel'
 import { RuleAskPanel } from '../components/game/RuleAskPanel'
-import { RuleFlowDiagram } from '../components/game/RuleFlowDiagram'
 import { ConceptGlossary } from '../components/game/ConceptGlossary'
 
 const IDENTITY_LABELS = {
@@ -19,19 +14,55 @@ const IDENTITY_LABELS = {
   unverified: 'IDENTITY UNVERIFIED',
 }
 
-const SOURCE_TRUST_LABELS = {
-  official_publisher: 'PUBLISHER SOURCE',
-  authorized_partner: 'AUTHORIZED PARTNER SOURCE',
-  third_party: 'THIRD-PARTY SOURCE',
-  unknown: 'SOURCE UNVERIFIED',
+function ruleSetLabel(ruleSet) {
+  if (!ruleSet) return 'RuleSet未選択'
+  return [
+    ruleSet.edition_label || ruleSet.variant_label || ruleSet.ruleset_id,
+    ruleSet.platform,
+    ruleSet.language_code,
+    ruleSet.revision_label,
+  ].filter(Boolean).join(' · ')
 }
 
-const REVIEW_LABELS = {
-  publisher_reviewed: 'PUBLISHER REVIEWED',
-  human_reviewed: 'HUMAN REVIEWED',
-  review_required: 'REVIEW REQUIRED',
-  ai_draft: 'AI DRAFT',
-  unknown: 'REVIEW UNKNOWN',
+function availableItems(section) {
+  return section?.status === 'available' ? section.items || [] : []
+}
+
+function RuleSection({ title, section }) {
+  const items = availableItems(section)
+  if (!items.length) return null
+  return (
+    <section className="pro-card" aria-label={title}>
+      <div className="pro-card-title">{title}</div>
+      <ol style={{ display: 'grid', gap: '0.65rem', paddingLeft: '1.25rem', margin: 0 }}>
+        {items.map((item) => (
+          <li key={item.rule_id}>
+            <div>{item.text}</div>
+            <div className="game-empty-note" style={{ marginTop: '3px' }}>
+              Claim {item.evidence.claim_id} · Sources {item.evidence.source_ids.join(', ')}
+            </div>
+          </li>
+        ))}
+      </ol>
+    </section>
+  )
+}
+
+function CoachStep({ number, title, section }) {
+  const items = availableItems(section)
+  return (
+    <div className={`coach-step${number === 1 ? ' active' : ''}`}>
+      <span className="coach-step-num">STEP {number}</span>
+      <div className="coach-step-title">{title}</div>
+      {items.length ? (
+        <ol style={{ fontSize: '0.95rem', lineHeight: 1.6, paddingLeft: '1.25rem' }}>
+          {items.map((item) => <li key={item.rule_id}>{item.text}</li>)}
+        </ol>
+      ) : (
+        <div className="game-empty-note">このsectionのaccepted evidence-backed ruleは未整備です。</div>
+      )}
+    </div>
+  )
 }
 
 export default function GamePage({ slug: propSlug, initialGame }) {
@@ -45,37 +76,80 @@ export default function GamePage({ slug: propSlug, initialGame }) {
   const [connections, setConnections] = useState(null)
   const [connectionsLoading, setConnectionsLoading] = useState(false)
   const [connectionsError, setConnectionsError] = useState(false)
+  const [ruleSets, setRuleSets] = useState([])
+  const [selectedRuleSetId, setSelectedRuleSetId] = useState('')
+  const [projection, setProjection] = useState(null)
+  const [projectionStatus, setProjectionStatus] = useState('loading')
 
   const BASE_URL = 'https://bodoge-no-mikata.vercel.app'
 
   useEffect(() => {
-    const fetchData = async () => {
-      if (!initialGame) {
-        setLoading(true)
-        setError(null)
-        try {
-          const data = await api.get(`/api/games/${slug}`)
-          const gameData = Array.isArray(data) ? data[0] : data.game || data
-          setGame(gameData)
-        } catch (err) {
-          console.error(err)
-          setError('ゲーム情報の取得に失敗しました')
-        } finally {
-          setLoading(false)
-        }
-      }
-    }
-    fetchData()
+    if (initialGame) return undefined
+    let cancelled = false
+    setLoading(true)
+    setError(null)
+    api.get(`/api/games/${slug}`)
+      .then((data) => {
+        if (cancelled) return
+        const gameData = Array.isArray(data) ? data[0] : data.game || data
+        setGame(gameData)
+      })
+      .catch((err) => {
+        console.error(err)
+        if (!cancelled) setError('ゲーム情報の取得に失敗しました')
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+    return () => { cancelled = true }
   }, [slug, initialGame])
 
   useEffect(() => {
-    if (activeTab !== 'graph') return undefined
+    let cancelled = false
+    setRuleSets([])
+    setSelectedRuleSetId('')
+    setProjection(null)
+    setProjectionStatus('loading')
 
+    api.get(`/api/games/${slug}/rule-sets`)
+      .then((data) => {
+        if (cancelled) return
+        const rows = data?.status === 'available' ? data.rulesets || [] : []
+        setRuleSets(rows)
+        setSelectedRuleSetId(rows[0]?.ruleset_id || '')
+        if (!rows.length) setProjectionStatus('not_available')
+      })
+      .catch(() => {
+        if (!cancelled) setProjectionStatus('not_available')
+      })
+
+    return () => { cancelled = true }
+  }, [slug])
+
+  useEffect(() => {
+    if (!selectedRuleSetId) return undefined
+    let cancelled = false
+    setProjection(null)
+    setProjectionStatus('loading')
+    const params = new URLSearchParams({ rule_set_id: selectedRuleSetId, language_code: 'ja' })
+    api.get(`/api/games/${slug}/presentation?${params}`)
+      .then((data) => {
+        if (cancelled) return
+        setProjection(data)
+        setProjectionStatus(data?.status === 'available' ? 'available' : 'not_available')
+      })
+      .catch(() => {
+        if (!cancelled) setProjectionStatus('not_available')
+      })
+    return () => { cancelled = true }
+  }, [slug, selectedRuleSetId])
+
+  useEffect(() => {
+    if (activeTab !== 'graph') return undefined
     let cancelled = false
     setConnectionsLoading(true)
     setConnectionsError(false)
     setConnections(null)
-
     api.get(`/api/games/${slug}/connections?limit=8`)
       .then((data) => {
         if (!cancelled) setConnections(data)
@@ -87,9 +161,19 @@ export default function GamePage({ slug: propSlug, initialGame }) {
       .finally(() => {
         if (!cancelled) setConnectionsLoading(false)
       })
-
     return () => { cancelled = true }
   }, [activeTab, slug])
+
+  const selectedRuleSet = useMemo(
+    () => ruleSets.find((row) => row.ruleset_id === selectedRuleSetId) || null,
+    [ruleSets, selectedRuleSetId],
+  )
+  const hasCoach = Boolean(
+    availableItems(projection?.setup).length ||
+    availableItems(projection?.game_flow).length ||
+    availableItems(projection?.end_condition).length,
+  )
+  const speechText = availableItems(projection?.quick_rules).map((item) => item.text).join(' ')
 
   if (loading) {
     return <div className="page-state page-state--loading" role="status">ARCHIVE LOADING...</div>
@@ -107,27 +191,9 @@ export default function GamePage({ slug: propSlug, initialGame }) {
   }
 
   const title = game.title_ja || game.title || 'Untitled'
-  const rules = game.rules_content || ''
-  const sd = game.structured_data || {}
-  const coachSourceUrl = game.source_url || null
   const identityLabel = IDENTITY_LABELS[game.identity_status] || IDENTITY_LABELS.unverified
-  const sourceTrustLabel = SOURCE_TRUST_LABELS[game.source_trust] || SOURCE_TRUST_LABELS.unknown
-  const reviewLabel = REVIEW_LABELS[game.content_review_status] || REVIEW_LABELS.unknown
-  const ruleGuide = getCuratedRuleGuide(slug)
-  const legacyInfographicsSourceUrl = game.infographics_source_url || coachSourceUrl
-  const legacyInfographicsVerified = Boolean(
-    game.infographics &&
-    game.infographics_reviewed === true &&
-    legacyInfographicsSourceUrl,
-  )
-  const hasRuleFlow = Boolean(ruleGuide?.flow?.length)
-  const hasInfographics = hasRuleFlow || legacyInfographicsVerified
-  const hasCoachSummary = Boolean(
-    game.setup_summary || game.gameplay_summary || game.end_game_summary,
-  )
-
-  const pageTitle = `「${title}」のルール${sd.strategy_analysis ? '・戦略' : ''}・インスト要約 | ボドゲのミカタ`
-  const description = game.summary || `「${title}」の登録済みルール要約と出典情報を確認できます。`
+  const pageTitle = `「${title}」のルール・出典 | ボドゲのミカタ`
+  const description = game.summary || game.description || `「${title}」の登録情報と出典を確認できます。`
   const gameUrl = `${BASE_URL}/games/${slug}`
   const imageUrl = game.image_url || `${BASE_URL}/assets/no-image.webp`
 
@@ -143,7 +209,7 @@ export default function GamePage({ slug: propSlug, initialGame }) {
       <div className="game-page-toolbar">
         <Link to="/" className="back-link" style={{ margin: 0 }}>← DIRECTORY</Link>
         <div className="header-actions">
-          <TextToSpeech text={`${title}. ${ruleGuide?.quick?.turnSteps?.join(' ') || description}`} />
+          <TextToSpeech text={`${title}. ${speechText || description}`} />
           <TwitterShareButton slug={slug} title={title} />
           <ShareButton slug={slug} />
         </div>
@@ -165,7 +231,9 @@ export default function GamePage({ slug: propSlug, initialGame }) {
               <div className="pro-stat-label">PLAYERS</div>
               <div className="pro-stat-value">
                 {game.min_players != null
-                  ? `${game.min_players}${game.max_players != null && game.max_players !== game.min_players ? `-${game.max_players}` : ''}`
+                  ? game.max_players != null
+                    ? `${game.min_players}${game.max_players !== game.min_players ? `-${game.max_players}` : ''}`
+                    : `${game.min_players}+`
                   : 'N/A'}
               </div>
             </div>
@@ -184,122 +252,91 @@ export default function GamePage({ slug: propSlug, initialGame }) {
           </div>
 
           <div className="pro-card pro-card--synopsis">
-            <div className="pro-card-title">
-              {ruleGuide?.quick ? `30秒でわかる「${title}」` : `「${title}」のゲーム概要`}
-            </div>
-            <div className="summary-text">{game.summary || game.description}</div>
+            <div className="pro-card-title">「{title}」のゲーム概要</div>
+            <div className="summary-text">{description}</div>
           </div>
 
-          <QuickRulesPanel
-            guide={ruleGuide}
-            onShowFlow={hasInfographics ? () => setActiveTab('infographics') : null}
-            onShowRules={() => setActiveTab('rules')}
-          />
+          <section className="pro-card" aria-label="RuleSet selector">
+            <div className="pro-card-title">RULESET</div>
+            {ruleSets.length ? (
+              <>
+                {ruleSets.length > 1 ? (
+                  <label>
+                    <span className="sr-only">表示するルール版</span>
+                    <select
+                      value={selectedRuleSetId}
+                      onChange={(event) => {
+                        setSelectedRuleSetId(event.target.value)
+                        setActiveTab('rules')
+                      }}
+                    >
+                      {ruleSets.map((row) => (
+                        <option key={row.ruleset_id} value={row.ruleset_id}>{ruleSetLabel(row)}</option>
+                      ))}
+                    </select>
+                  </label>
+                ) : (
+                  <div>{ruleSetLabel(selectedRuleSet)}</div>
+                )}
+                <div className="game-empty-note" style={{ marginTop: '0.5rem' }}>
+                  verification: {selectedRuleSet?.verification_status || 'unknown'}
+                  {selectedRuleSet?.source_ids?.length ? ` · sources: ${selectedRuleSet.source_ids.join(', ')}` : ''}
+                </div>
+              </>
+            ) : (
+              <div className="game-empty-state" role="status">
+                正準RuleSetはまだ登録されていません。旧ゲーム行のルール本文へfallbackしません。
+              </div>
+            )}
+          </section>
 
-          <RuleAskPanel />
+          <RuleAskPanel projection={projection} ruleSet={selectedRuleSet} />
 
           <div className="rules-tabs" role="group" aria-label="ゲーム詳細表示">
             <button type="button" aria-pressed={activeTab === 'rules'} className={activeTab === 'rules' ? 'active' : ''} onClick={() => setActiveTab('rules')}>
               詳しいルール
             </button>
-            {hasCoachSummary && (
+            {hasCoach && (
               <button type="button" aria-pressed={activeTab === 'coach'} className={activeTab === 'coach' ? 'active' : ''} onClick={() => setActiveTab('coach')}>
                 準備・流れ・終了
               </button>
             )}
-            <button type="button" aria-pressed={activeTab === 'strategy'} className={activeTab === 'strategy' ? 'active' : ''} onClick={() => setActiveTab('strategy')}>
-              戦略
-            </button>
-            <button type="button" aria-pressed={activeTab === 'reviews'} className={activeTab === 'reviews' ? 'active' : ''} onClick={() => setActiveTab('reviews')}>
-              レビュー
-            </button>
             <button type="button" aria-pressed={activeTab === 'graph'} className={activeTab === 'graph' ? 'active' : ''} onClick={() => setActiveTab('graph')}>
               関連ゲーム
             </button>
-            {hasInfographics && (
-              <button type="button" aria-pressed={activeTab === 'infographics'} className={activeTab === 'infographics' ? 'active' : ''} onClick={() => setActiveTab('infographics')}>
-                図で見る
-              </button>
-            )}
           </div>
 
           <div className="pro-main-col">
             {activeTab === 'rules' && (
-              <div className="markdown-content">
-                <ReactMarkdown>{rules}</ReactMarkdown>
+              <div style={{ display: 'grid', gap: '1rem' }}>
+                {projectionStatus === 'loading' && (
+                  <div className="game-empty-state" role="status">正準ルールを照合しています...</div>
+                )}
+                {projectionStatus === 'not_available' && (
+                  <div className="game-empty-state" role="status">
+                    選択中RuleSetにはaccepted evidence-backed presentationがまだありません。
+                  </div>
+                )}
+                {projectionStatus === 'available' && (
+                  <>
+                    <RuleSection title="QUICK RULES" section={projection.quick_rules} />
+                    <RuleSection title="SETUP" section={projection.setup} />
+                    <RuleSection title="GAME FLOW" section={projection.game_flow} />
+                    <RuleSection title="END CONDITION" section={projection.end_condition} />
+                    <RuleSection title="SCORING" section={projection.scoring} />
+                  </>
+                )}
               </div>
             )}
 
             {activeTab === 'coach' && (
               <div className="coach-mode">
-                <div className="coach-step active">
-                  <span className="coach-step-num">STEP 1</span>
-                  <div className="coach-step-title">セットアップ</div>
-                  <div style={{ fontSize: '0.95rem', lineHeight: 1.6 }}>
-                    {game.setup_summary || 'このゲーム固有のセットアップ要約は未確認です。'}
-                  </div>
-                </div>
-
-                <div className="coach-step">
-                  <span className="coach-step-num">STEP 2</span>
-                  <div className="coach-step-title">ゲームの流れ</div>
-                  <div style={{ fontSize: '0.95rem', lineHeight: 1.6 }}>
-                    {game.gameplay_summary || 'このゲーム固有のゲーム進行要約は未確認です。'}
-                  </div>
-                </div>
-
-                <div className="coach-step">
-                  <span className="coach-step-num">STEP 3</span>
-                  <div className="coach-step-title">ゲーム終了</div>
-                  <div style={{ fontSize: '0.95rem', lineHeight: 1.6 }}>
-                    {game.end_game_summary || 'このゲーム固有の終了条件要約は未確認です。'}
-                  </div>
-                </div>
-
+                <CoachStep number={1} title="セットアップ" section={projection?.setup} />
+                <CoachStep number={2} title="ゲームの流れ" section={projection?.game_flow} />
+                <CoachStep number={3} title="ゲーム終了" section={projection?.end_condition} />
                 <div style={{ textAlign: 'center', padding: '1rem', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
-                  登録済みのゲーム固有要約を表示しています。AI生成・要約を含む場合があり、公式裁定ではありません。
-                  {coachSourceUrl && (
-                    <>
-                      {' '}
-                      <a href={coachSourceUrl} target="_blank" rel="noreferrer">出典を確認</a>
-                    </>
-                  )}
+                  選択中RuleSetのaccepted evidence-backed RuleNodeだけを表示しています。
                 </div>
-              </div>
-            )}
-
-            {activeTab === 'strategy' && (
-              <div className="markdown-content">
-                {sd.strategy_analysis ? (
-                  <ReactMarkdown>{sd.strategy_analysis}</ReactMarkdown>
-                ) : (
-                  <div className="game-empty-state" role="status">
-                    戦略解説はまだ登録されていません。
-                  </div>
-                )}
-              </div>
-            )}
-
-            {activeTab === 'reviews' && (
-              <div className="persona-reviews">
-                <div className="pro-card-title">SUB-AGENT PERSPECTIVES</div>
-                <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
-                  異なるプレイスタイルのAIエージェントによる多角的な評価。
-                </p>
-
-                {sd.persona_reviews?.length > 0 ? sd.persona_reviews.map((rev, i) => (
-                  <div key={i} className="review-card">
-                    <div className="review-header">
-                      <span className="persona-badge">{rev.persona}</span>
-                      <span className="rating-badge">{rev.rating} / 10</span>
-                    </div>
-                    <div className="review-text">「{rev.review_text}」</div>
-                  </div>
-                )) : (
-                  <div className="game-empty-state" role="status">
-                    レビューはまだ登録されていません。
-                  </div>
-                )}
               </div>
             )}
 
@@ -309,29 +346,16 @@ export default function GamePage({ slug: propSlug, initialGame }) {
                 <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
                   正準Concept IDの共有関係から、説明可能な関連ゲームを算出します。
                 </p>
-
-                {connectionsLoading && (
-                  <div className="game-empty-state" role="status">関連ゲームを照合しています...</div>
-                )}
-
+                {connectionsLoading && <div className="game-empty-state" role="status">関連ゲームを照合しています...</div>}
                 {!connectionsLoading && connectionsError && (
-                  <div className="game-empty-state" role="status">
-                    関連ゲームの正準データを取得できませんでした。
-                  </div>
+                  <div className="game-empty-state" role="status">関連ゲームの正準データを取得できませんでした。</div>
                 )}
-
                 {!connectionsLoading && !connectionsError && connections?.status === 'not_available' && (
-                  <div className="game-empty-state" role="status">
-                    関連ゲームの正準データは未整備です。
-                  </div>
+                  <div className="game-empty-state" role="status">関連ゲームの正準データは未整備です。</div>
                 )}
-
                 {!connectionsLoading && !connectionsError && connections?.status === 'available' && connections.connections?.length === 0 && (
-                  <div className="game-empty-state" role="status">
-                    正準Concept上の関連ゲームはまだ登録されていません。
-                  </div>
+                  <div className="game-empty-state" role="status">正準Concept上の関連ゲームはまだ登録されていません。</div>
                 )}
-
                 {!connectionsLoading && connections?.status === 'available' && connections.connections?.map((connection) => (
                   <Link to={`/games/${connection.slug}`} key={connection.game_id} className="relation-node" style={{ alignItems: 'flex-start' }}>
                     <img
@@ -351,37 +375,11 @@ export default function GamePage({ slug: propSlug, initialGame }) {
                           共有DNA: {connection.shared_concepts.map((concept) => concept.label || concept.concept_id).join(' · ')}
                         </div>
                       )}
-                      {connection.hierarchy_matches?.length > 0 && (
-                        <div className="game-empty-note" style={{ marginTop: '3px' }}>
-                          階層DNA: {connection.hierarchy_matches.map((match) => `${match.source_concept_id} ${match.relation_type} ${match.candidate_concept_id}`).join(' · ')}
-                        </div>
-                      )}
                     </div>
                   </Link>
                 ))}
-
-                {connections?.algorithm_version && (
-                  <div className="game-empty-note" style={{ marginTop: '1rem' }}>
-                    Algorithm: {connections.algorithm_version}
-                  </div>
-                )}
               </div>
             )}
-
-            {activeTab === 'infographics' && (
-              <div style={{ display: 'grid', gap: '1rem' }}>
-                {hasRuleFlow && <RuleFlowDiagram guide={ruleGuide} />}
-                {legacyInfographicsVerified && (
-                  <InfographicsGallery
-                    infographics={game.infographics}
-                    verified={legacyInfographicsVerified}
-                    sourceUrl={legacyInfographicsSourceUrl}
-                  />
-                )}
-              </div>
-            )}
-
-            {activeTab === 'data' && <pre className="game-data-dump">{JSON.stringify(game, null, 2)}</pre>}
           </div>
         </div>
 
@@ -389,32 +387,12 @@ export default function GamePage({ slug: propSlug, initialGame }) {
           <div className="pro-card" aria-label="データ信頼状態">
             <div className="pro-card-title">TRUST &amp; PROVENANCE</div>
             <div className="game-empty-note">{identityLabel}</div>
-            <div className="game-empty-note">{sourceTrustLabel}</div>
-            <div className="game-empty-note">{reviewLabel}</div>
+            <div className="game-empty-note">
+              RULESET {selectedRuleSet?.verification_status?.toUpperCase() || 'NOT AVAILABLE'}
+            </div>
           </div>
 
-          {sd.pro_tips?.length > 0 && (
-            <div className="pro-card">
-              <div className="pro-card-title">💡 PRO TIPS</div>
-              {sd.pro_tips.map((tip, i) => (
-                <div key={i} className="tip-item">
-                  <span className="tip-bullet">»</span>
-                  <span>{tip}</span>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {sd.rule_mistakes?.length > 0 && (
-            <div className="pro-card">
-              <div className="pro-card-title">⚠️ COMMON ERRORS</div>
-              {sd.rule_mistakes.map((err, i) => (
-                <div key={i} className="mistake-item">{err}</div>
-              ))}
-            </div>
-          )}
-
-          <ConceptGlossary slug={slug} legacyKeywords={sd.keywords || []} />
+          <ConceptGlossary slug={slug} />
 
           <div className="pro-card">
             <div className="pro-card-title">LINKS</div>
