@@ -6,6 +6,7 @@ on:
       - "backend/app/db/migrations/022_seed_pili_pili_rulesets.sql"
       - "backend/app/db/migrations/023_align_pili_pili_legacy_provenance.sql"
       - "backend/app/db/migrations/024_seed_terraforming_mars_dice_ruleset.sql"
+      - "backend/app/db/migrations/025_seed_splendor_2024_ruleset.sql"
       - ".github/workflows/test-game-ruleset-data.yml"
   push:
     branches: [main]
@@ -13,6 +14,7 @@ on:
       - "backend/app/db/migrations/022_seed_pili_pili_rulesets.sql"
       - "backend/app/db/migrations/023_align_pili_pili_legacy_provenance.sql"
       - "backend/app/db/migrations/024_seed_terraforming_mars_dice_ruleset.sql"
+      - "backend/app/db/migrations/025_seed_splendor_2024_ruleset.sql"
       - ".github/workflows/test-game-ruleset-data.yml"
 
 permissions:
@@ -59,7 +61,12 @@ jobs:
             identity_source text,
             source_url text,
             source_trust text,
-            rules_content text
+            rules_content text,
+            edition_label text,
+            language_code text,
+            publisher text,
+            source_revision text,
+            updated_at timestamptz NOT NULL DEFAULT now()
           );
 
           INSERT INTO public.game_works DEFAULT VALUES;
@@ -77,6 +84,14 @@ jobs:
                  'official_publisher', 'source-bound Japanese revised rules'
           FROM public.game_works
           ORDER BY id DESC LIMIT 1;
+
+          INSERT INTO public.game_works DEFAULT VALUES;
+          INSERT INTO public.games(slug, title, work_id, identity_status, source_url, source_trust, rules_content)
+          SELECT 'splendor', 'Splendor (宝石の煌き)', id, 'unverified',
+                 'https://hobbyjapan.games/splendor/', 'unknown',
+                 'legacy player-facing Splendor rules retained until canonical projection cutover'
+          FROM public.game_works
+          ORDER BY id DESC LIMIT 1;
           SQL
 
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/010_rule_graph.sql
@@ -89,6 +104,7 @@ jobs:
             psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/022_seed_pili_pili_rulesets.sql
             psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/023_align_pili_pili_legacy_provenance.sql
             psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/024_seed_terraforming_mars_dice_ruleset.sql
+            psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/025_seed_splendor_2024_ruleset.sql
           done
 
       - name: Verify Pili Pili edition isolation remains intact
@@ -109,3 +125,17 @@ jobs:
           test "$(psql "$DATABASE_URL" -Atc "select normalized_payload->>'global_parameters_required' from public.claims where claim_id='tm-dice:physical:solo-end';")" = "3"
           test "$(psql "$DATABASE_URL" -Atc "select normalized_payload->>'unit' from public.claims where claim_id='tm-dice:physical:time-marker';")" = "turn"
           test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.evidence_bindings eb join public.claims c on c.claim_id=eb.claim_id where c.claim_id like 'tm-dice:physical:%' and eb.relation='supports';")" = "5"
+
+      - name: Verify Splendor 2024 Japanese identity, projection inputs, and evidence
+        shell: bash
+        run: |
+          test "$(psql "$DATABASE_URL" -Atc "select identity_status from public.games where slug='splendor';")" = "verified"
+          test "$(psql "$DATABASE_URL" -Atc "select edition_label from public.games where slug='splendor';")" = "ホビージャパン日本語版 改訂版 (2024)"
+          test "$(psql "$DATABASE_URL" -Atc "select identity_source from public.games where slug='splendor';")" = "https://hobbyjapan.games/splendor/"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_sets rs join public.games g on g.id=rs.game_id where g.slug='splendor' and rs.platform='physical' and rs.language_code='ja' and rs.revision_label='2024-refresh' and rs.verification_status='source_bound';")" = "1"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='splendor' and rn.verification_status='source_bound';")" = "14"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.claims c join public.rule_sets rs on rs.id=c.rule_set_id join public.games g on g.id=rs.game_id where g.slug='splendor' and c.target_type='rule_node' and c.lifecycle_status='accepted';")" = "14"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.evidence_bindings eb join public.claims c on c.claim_id=eb.claim_id join public.rule_sets rs on rs.id=c.rule_set_id join public.games g on g.id=rs.game_id where g.slug='splendor' and eb.relation='supports';")" = "14"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_nodes rn join public.claims c on c.rule_set_id=rn.rule_set_id and c.rule_id=rn.rule_id where rn.rule_set_id=(select rs.id from public.rule_sets rs join public.games g on g.id=rs.game_id where g.slug='splendor') and c.normalized_payload->>'statement'=rn.normalized_statement;")" = "14"
+          test "$(psql "$DATABASE_URL" -Atc "select normalized_statement from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='splendor' and rn.rule_id='game-end.trigger';")" = "ターン終了時に威信ポイントが15点以上になったプレイヤーが出るとゲーム終了が発動し、全員の手番数が同じになるまで続ける。"
+          test "$(psql "$DATABASE_URL" -Atc "select normalized_statement from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='splendor' and rn.rule_id='victory.tie-break';")" = "威信ポイントが同点なら、獲得した発展カードがより少ない同点プレイヤーが勝つ。それでも同点なら勝利を共有する。"
