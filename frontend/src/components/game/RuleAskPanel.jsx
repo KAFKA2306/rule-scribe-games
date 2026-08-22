@@ -3,15 +3,31 @@ import { useParams } from 'react-router-dom'
 import { api } from '../../lib/api'
 import { askRule } from '../../lib/ruleAsk.js'
 
+function visibleRuleText(game) {
+  return `${game?.rules_content || ''} ${game?.setup_summary || ''} ${game?.gameplay_summary || ''} ${game?.end_game_summary || ''}`.toLowerCase()
+}
+
+function hasEditionBoundary(game) {
+  const text = visibleRuleText(game)
+  return [
+    'board game arena',
+    'bga',
+    'implementation',
+    '物理版',
+    '別版',
+    '版差',
+  ].some((marker) => text.includes(marker))
+}
+
 function findDisplayedRuleSet(game, rulesets) {
-  const visibleRuleText = `${game?.rules_content || ''} ${game?.setup_summary || ''} ${game?.gameplay_summary || ''} ${game?.end_game_summary || ''}`.toLowerCase()
-  if (!visibleRuleText) return null
+  const text = visibleRuleText(game)
+  if (!text) return null
 
   return rulesets.find((ruleset) => [
     ruleset.edition_label,
     ruleset.platform,
     ruleset.revision_label,
-  ].filter(Boolean).some((value) => visibleRuleText.includes(String(value).toLowerCase()))) || null
+  ].filter(Boolean).some((value) => text.includes(String(value).toLowerCase()))) || null
 }
 
 function ruleSetLabel(ruleset) {
@@ -27,13 +43,14 @@ export function RuleAskPanel() {
   useEffect(() => {
     let cancelled = false
 
-    Promise.all([
-      api.get(`/api/games/${slug}`),
-      api.get(`/api/games/${slug}/rule-sets`),
-    ])
-      .then(([gameResponse, rulesetResponse]) => {
-        if (cancelled || rulesetResponse?.status !== 'available' || !rulesetResponse.rulesets?.length) return
+    api.get(`/api/games/${slug}`)
+      .then(async (gameResponse) => {
         const game = Array.isArray(gameResponse) ? gameResponse[0] : gameResponse?.game || gameResponse
+        if (cancelled || !hasEditionBoundary(game)) return
+
+        const rulesetResponse = await api.get(`/api/games/${slug}/rule-sets`)
+        if (cancelled || rulesetResponse?.status !== 'available' || !rulesetResponse.rulesets?.length) return
+
         const displayed = findDisplayedRuleSet(game, rulesetResponse.rulesets)
         setRuleSetContext({ displayed, rulesets: rulesetResponse.rulesets })
       })
