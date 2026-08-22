@@ -27,11 +27,6 @@ class BaseSchema(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
 
-class SearchRequest(BaseSchema):
-    query: str
-    generate: bool = False
-
-
 class Keyword(BaseSchema):
     term: str
     description: str
@@ -142,23 +137,6 @@ class GameUpdate(BaseSchema):
 
 
 SEARCH_RESULT = GameDetail
-
-
-class GeneratedGameMetadata(BaseSchema):
-    title: str
-    title_ja: str | None = None
-    summary: str | None = None
-    description: str | None = None
-    min_players: int | None = None
-    max_players: int | None = None
-    play_time: int | None = None
-    min_age: int | None = None
-    rules_content: str | None = None
-    structured_data: StructuredData = StructuredData()
-    bga_url: str | None = None
-    infographics: dict[str, str] | None = None
-
-    _validate_bga_url = field_validator("bga_url")(validate_bga_url)
 
 
 class StrategyTier(BaseSchema):
