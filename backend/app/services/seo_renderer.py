@@ -6,8 +6,6 @@ import re
 from pathlib import Path
 
 from app.core.supabase import get_by_slug
-from app.services.presentation_projection import PresentationProjectionReadError, PresentationProjectionService
-from app.services.rulesets import RuleSetService
 from app.services.search_visibility import should_hide_game_from_search
 
 logger = logging.getLogger(__name__)
@@ -34,8 +32,11 @@ def _safe_json_script(data: dict) -> str:
     return payload.replace("&", "\\u0026").replace("<", "\\u003c").replace(">", "\\u003e")
 
 
-def _page_title(title: str) -> str:
-    return f"「{title}」のルール・出典 | ボドゲのミカタ"
+def _page_title(game: dict, title: str) -> str:
+    structured_data = game.get("structured_data")
+    has_strategy = isinstance(structured_data, dict) and bool(structured_data.get("strategy_analysis"))
+    strategy_label = "・戦略" if has_strategy else ""
+    return f"「{title}」のルール{strategy_label}・インスト要約 | ボドゲのミカタ"
 
 
 def _player_count_projection(game: dict) -> tuple[dict[str, object] | None, str]:
@@ -59,50 +60,11 @@ def _player_count_projection(game: dict) -> tuple[dict[str, object] | None, str]
     return quantitative_value, label
 
 
-async def _load_canonical_projection(slug: str):
-    rule_sets = await RuleSetService().get_by_slug(slug)
-    if rule_sets is None or rule_sets.status != "available" or not rule_sets.rulesets:
-        return None
-    selected = rule_sets.rulesets[0]
-    try:
-        projection = await PresentationProjectionService().get_by_slug(slug, selected.ruleset_id, "ja")
-    except PresentationProjectionReadError:
-        return None
-    if projection is None or projection.status != "available":
-        return None
-    return projection
-
-
-def _projection_rule_text(projection) -> str:
-    if projection is None:
-        return ""
-    sections = (
-        projection.setup,
-        projection.game_flow,
-        projection.end_condition,
-        projection.scoring,
-    )
-    seen: set[str] = set()
-    parts: list[str] = []
-    for section in sections:
-        if section.status != "available":
-            continue
-        for item in section.items:
-            if item.rule_id in seen:
-                continue
-            seen.add(item.rule_id)
-            parts.append(item.text)
-    if not parts and projection.quick_rules.status == "available":
-        parts = [item.text for item in projection.quick_rules.items]
-    return "\n".join(parts)
-
-
 async def generate_seo_html(slug: str) -> str | None:
     game = await get_by_slug(slug)
     if not game:
         return None
 
-    projection = await _load_canonical_projection(slug)
     title = str(game.get("title_ja") or game.get("title") or game.get("name") or "Untitled")
     description = str(game.get("summary") or game.get("description") or "")
     image_url = str(game.get("image_url") or f"{BASE_URL}/assets/no-image.webp")
@@ -110,8 +72,8 @@ async def generate_seo_html(slug: str) -> str | None:
         image_url = f"{BASE_URL}{image_url}"
 
     game_url = f"{BASE_URL}/games/{slug}"
-    page_title = _page_title(title)
-    seo_description = description or f"「{title}」の登録情報とsource-boundルールを確認できます。"
+    page_title = _page_title(game, title)
+    seo_description = description or f"「{title}」の登録済みルール要約と出典情報を確認できます。"
     hide_from_search = should_hide_game_from_search(slug)
 
     structured_data: dict[str, object] = {
@@ -132,22 +94,23 @@ async def generate_seo_html(slug: str) -> str | None:
         }
     if game.get("play_time"):
         structured_data["timeRequired"] = f"PT{game.get('play_time')}M"
-    if projection is not None and projection.quick_rules.status == "available":
-        structured_data["subjectOf"] = [
-            {
-                "@type": "CreativeWork",
-                "identifier": item.rule_id,
-                "text": item.text,
-            }
-            for item in projection.quick_rules.items
-        ]
 
     breadcrumb_data = {
         "@context": "https://schema.org",
         "@type": "BreadcrumbList",
         "itemListElement": [
-            {"@type": "ListItem", "position": 1, "name": "ゲーム一覧", "item": f"{BASE_URL}/"},
-            {"@type": "ListItem", "position": 2, "name": title, "item": game_url},
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "ゲーム一覧",
+                "item": f"{BASE_URL}/",
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": title,
+                "item": game_url,
+            },
         ],
     }
 
@@ -164,10 +127,10 @@ async def generate_seo_html(slug: str) -> str | None:
                 html_content = path.read_text(encoding="utf-8")
                 break
         except Exception as exc:
-            logger.warning("Error reading path %s: %s", path, exc)
+            logger.warning(f"Error reading path {path}: {exc}")
 
     if not html_content:
-        logger.error("index.html template not found in %s", possible_paths)
+        logger.error(f"index.html template not found in {possible_paths}")
         html_content = '<html lang="ja"><head><title>ボドゲのミカタ</title></head><body><div id="root"></div></body></html>'
 
     escaped_title = html.escape(page_title, quote=False)
@@ -197,7 +160,9 @@ async def generate_seo_html(slug: str) -> str | None:
     json_ld = _safe_json_script(structured_data)
     script_tag = f'<script type="application/ld+json" data-game-seo="true">{json_ld}</script>'
     breadcrumb_json_ld = _safe_json_script(breadcrumb_data)
-    breadcrumb_script_tag = f'<script type="application/ld+json" data-breadcrumb-seo="true">{breadcrumb_json_ld}</script>'
+    breadcrumb_script_tag = (
+        f'<script type="application/ld+json" data-breadcrumb-seo="true">{breadcrumb_json_ld}</script>'
+    )
     html_content = html_content.replace(
         "</head>",
         f"  {script_tag}\n  {breadcrumb_script_tag}\n</head>",
@@ -205,19 +170,14 @@ async def generate_seo_html(slug: str) -> str | None:
     )
 
     safe_title = html.escape(title)
-    safe_summary = html.escape(description)
-    safe_rules = html.escape(_projection_rule_text(projection)[:2000])
+    safe_summary = html.escape(str(game.get("summary") or ""))
+    safe_rules = html.escape(str(game.get("rules_content") or "")[:2000])
     players_info = ""
     if player_count_label:
         players_info = f"<p><strong>プレイ人数:</strong> {html.escape(player_count_label)}</p>"
     time_info = ""
     if game.get("play_time"):
         time_info = f"<p><strong>プレイ時間:</strong> {html.escape(str(game.get('play_time')))}分</p>"
-    rules_section = (
-        f"<section><h2>ルール</h2><pre itemprop=\"text\">{safe_rules}</pre></section>"
-        if safe_rules
-        else "<section><h2>ルール</h2><p>正準RuleSet projectionは未整備です。</p></section>"
-    )
 
     ssr_content = f"""<div id="root">
   <article itemscope itemtype="https://schema.org/Game" data-ssr-game="true">
@@ -237,7 +197,10 @@ async def generate_seo_html(slug: str) -> str | None:
       {players_info}
       {time_info}
     </section>
-    {rules_section}
+    <section>
+      <h2>ルール</h2>
+      <pre itemprop="text">{safe_rules}</pre>
+    </section>
   </article>
 </div>"""
     return html_content.replace('<div id="root"></div>', ssr_content, 1)
