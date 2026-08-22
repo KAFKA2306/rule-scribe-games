@@ -4,11 +4,13 @@ on:
   pull_request:
     paths:
       - "backend/app/db/migrations/022_seed_pili_pili_rulesets.sql"
+      - "backend/app/db/migrations/023_align_pili_pili_legacy_provenance.sql"
       - ".github/workflows/test-pili-pili-rulesets.yml"
   push:
     branches: [main]
     paths:
       - "backend/app/db/migrations/022_seed_pili_pili_rulesets.sql"
+      - "backend/app/db/migrations/023_align_pili_pili_legacy_provenance.sql"
       - ".github/workflows/test-pili-pili-rulesets.yml"
 
 permissions:
@@ -39,7 +41,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - name: Build canonical schema and apply seed twice
+      - name: Build canonical schema and apply seeds twice
         shell: bash
         run: |
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 <<'SQL'
@@ -51,11 +53,21 @@ jobs:
             slug text NOT NULL UNIQUE,
             title text,
             work_id uuid REFERENCES public.game_works(id),
-            identity_status text NOT NULL DEFAULT 'unverified'
+            identity_status text NOT NULL DEFAULT 'unverified',
+            identity_source text,
+            source_url text,
+            source_trust text,
+            rules_content text
           );
           INSERT INTO public.game_works DEFAULT VALUES;
-          INSERT INTO public.games(slug, title, work_id, identity_status)
-          SELECT 'pili-pili', 'Pili Pili', id, 'verified' FROM public.game_works LIMIT 1;
+          INSERT INTO public.games(
+            slug, title, work_id, identity_status, source_url, source_trust, rules_content
+          )
+          SELECT
+            'pili-pili', 'Pili Pili', id, 'verified',
+            'https://atmgaming.com/product/pili-pili', 'official_publisher',
+            'このページは Board Game Arena（BGA）実装 を基準にしています。'
+          FROM public.game_works LIMIT 1;
           SQL
 
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/010_rule_graph.sql
@@ -65,6 +77,8 @@ jobs:
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/015_claim_evidence.sql
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/022_seed_pili_pili_rulesets.sql
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/022_seed_pili_pili_rulesets.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/023_align_pili_pili_legacy_provenance.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/023_align_pili_pili_legacy_provenance.sql
 
       - name: Verify edition isolation and unresolved publisher conflict
         shell: bash
@@ -84,3 +98,8 @@ jobs:
           test "$(psql "$DATABASE_URL" -Atc "select normalized_payload->>'value' from public.claims c join public.rule_sets rs on rs.id=c.rule_set_id where rs.platform='Board Game Arena' and c.field_path='components.pili_cards';")" = "17"
           test "$(psql "$DATABASE_URL" -Atc "select normalized_payload->>'pili_threshold' from public.claims c join public.rule_sets rs on rs.id=c.rule_set_id where rs.platform='Board Game Arena' and c.field_path='rules.game_end';")" = "6"
           test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.claims c join public.rule_sets rs on rs.id=c.rule_set_id where rs.platform='physical' and c.field_path='rules.game_end';")" = "0"
+
+          # The legacy public projection may show BGA rules, but must not label them as publisher rules.
+          test "$(psql "$DATABASE_URL" -Atc "select source_url from public.games where slug='pili-pili';")" = "https://ja.boardgamearena.com/gamepanel?game=pilipili"
+          test "$(psql "$DATABASE_URL" -Atc "select source_trust from public.games where slug='pili-pili';")" = "authorized_partner"
+          test "$(psql "$DATABASE_URL" -Atc "select identity_source from public.games where slug='pili-pili';")" = "https://atmgaming.com/product/pili-pili"
