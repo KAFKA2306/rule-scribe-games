@@ -17,6 +17,13 @@ def test_page_title_includes_strategy_when_available() -> None:
     assert seo_renderer._page_title(game, "Example") == "「Example」のルール・戦略・インスト要約 | ボドゲのミカタ"
 
 
+def test_open_ended_player_count_does_not_invent_maximum() -> None:
+    structured, label = seo_renderer._player_count_projection({"min_players": 3, "max_players": None})
+
+    assert structured == {"@type": "QuantitativeValue", "minValue": 3}
+    assert label == "3人以上"
+
+
 @pytest.mark.asyncio
 async def test_missing_game_returns_none(monkeypatch: pytest.MonkeyPatch) -> None:
     async def missing(_slug: str):
