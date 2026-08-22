@@ -39,6 +39,27 @@ def _page_title(game: dict, title: str) -> str:
     return f"「{title}」のルール{strategy_label}・インスト要約 | ボドゲのミカタ"
 
 
+def _player_count_projection(game: dict) -> tuple[dict[str, object] | None, str]:
+    min_players = game.get("min_players")
+    max_players = game.get("max_players")
+    if not min_players and not max_players:
+        return None, ""
+
+    quantitative_value: dict[str, object] = {"@type": "QuantitativeValue"}
+    if min_players:
+        quantitative_value["minValue"] = min_players
+    if max_players:
+        quantitative_value["maxValue"] = max_players
+
+    if min_players and max_players:
+        label = f"{min_players}人" if min_players == max_players else f"{min_players}-{max_players}人"
+    elif min_players:
+        label = f"{min_players}人以上"
+    else:
+        label = f"最大{max_players}人"
+    return quantitative_value, label
+
+
 async def generate_seo_html(slug: str) -> str | None:
     game = await get_by_slug(slug)
     if not game:
@@ -63,12 +84,9 @@ async def generate_seo_html(slug: str) -> str | None:
         "image": image_url,
         "url": game_url,
     }
-    if game.get("min_players") or game.get("max_players"):
-        structured_data["numberOfPlayers"] = {
-            "@type": "QuantitativeValue",
-            "minValue": game.get("min_players"),
-            "maxValue": game.get("max_players") or game.get("min_players"),
-        }
+    player_count, player_count_label = _player_count_projection(game)
+    if player_count:
+        structured_data["numberOfPlayers"] = player_count
     if game.get("min_age"):
         structured_data["audience"] = {
             "@type": "PeopleAudience",
@@ -155,12 +173,8 @@ async def generate_seo_html(slug: str) -> str | None:
     safe_summary = html.escape(str(game.get("summary") or ""))
     safe_rules = html.escape(str(game.get("rules_content") or "")[:2000])
     players_info = ""
-    if game.get("min_players"):
-        max_players = game.get("max_players") or game.get("min_players")
-        players_info = (
-            f"<p><strong>プレイ人数:</strong> {html.escape(str(game.get('min_players')))}-"
-            f"{html.escape(str(max_players))}人</p>"
-        )
+    if player_count_label:
+        players_info = f"<p><strong>プレイ人数:</strong> {html.escape(player_count_label)}</p>"
     time_info = ""
     if game.get("play_time"):
         time_info = f"<p><strong>プレイ時間:</strong> {html.escape(str(game.get('play_time')))}分</p>"
