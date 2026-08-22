@@ -2,32 +2,53 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '../../lib/api'
 
-export function ConceptGlossary({ slug }) {
+function LegacyGlossary({ keywords }) {
+  if (!keywords?.length) return null
+  return (
+    <div className="pro-card">
+      <div className="pro-card-title">GLOSSARY</div>
+      <div className="tag-list">
+        {keywords.map((kw, i) => (
+          <div key={`${kw.term}-${i}`} className="tag-item" title={kw.description}>{kw.term}</div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+export function ConceptGlossary({ slug, legacyKeywords = [] }) {
   const [entries, setEntries] = useState([])
   const [selectedId, setSelectedId] = useState(null)
   const [detail, setDetail] = useState(null)
-  const [status, setStatus] = useState('loading')
+  const [canonicalAvailable, setCanonicalAvailable] = useState(false)
+  const [loadedSlug, setLoadedSlug] = useState(null)
+  const hasGlossary = legacyKeywords.length > 0
 
   useEffect(() => {
-    let cancelled = false
-    setStatus('loading')
-    setEntries([])
-    setSelectedId(null)
-    setDetail(null)
+    if (!hasGlossary) return undefined
 
+    let cancelled = false
     api.get(`/api/games/${slug}/glossary?language_code=ja`)
       .then((data) => {
         if (cancelled) return
         const available = data?.status === 'available' && data.entries?.length > 0
         setEntries(available ? data.entries : [])
-        setStatus(available ? 'available' : 'not_available')
+        setSelectedId(null)
+        setDetail(null)
+        setCanonicalAvailable(Boolean(available))
+        setLoadedSlug(slug)
       })
       .catch(() => {
-        if (!cancelled) setStatus('not_available')
+        if (cancelled) return
+        setEntries([])
+        setSelectedId(null)
+        setDetail(null)
+        setCanonicalAvailable(false)
+        setLoadedSlug(slug)
       })
 
     return () => { cancelled = true }
-  }, [slug])
+  }, [slug, hasGlossary])
 
   const selected = useMemo(
     () => entries.find((entry) => entry.concept_id === selectedId) || null,
@@ -46,11 +67,13 @@ export function ConceptGlossary({ slug }) {
       const response = await api.get(`/api/concepts/${encodeURIComponent(conceptId)}`)
       setDetail(response)
     } catch {
-      setDetail(null)
+      // The game glossary remains useful even if the deeper backlink view is unavailable.
     }
   }
 
-  if (status !== 'available') return null
+  if (!hasGlossary || loadedSlug !== slug || !canonicalAvailable) {
+    return <LegacyGlossary keywords={legacyKeywords} />
+  }
 
   return (
     <div className="pro-card" aria-label="用語集">

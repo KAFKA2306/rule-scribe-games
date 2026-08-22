@@ -1,75 +1,129 @@
 import { useEffect, useState } from 'react'
+import { useParams } from 'react-router-dom'
+import { api } from '../../lib/api'
+import { askRule } from '../../lib/ruleAsk.js'
 
-const INTENTS = [
-  { id: 'setup', terms: ['準備', 'セットアップ', '配る', '最初に'], section: 'setup' },
-  { id: 'end', terms: ['終了', '終わる', '終わり', 'ゲームエンド', '勝利条件'], section: 'end_condition' },
-  { id: 'score', terms: ['得点', '点数', 'スコア', '何点', '同点', 'タイブレーク'], section: 'scoring' },
-  { id: 'action', terms: ['手番', 'ターン', '何ができ', 'アクション', '行動', '流れ'], section: 'game_flow' },
-]
-
-function normalize(text) {
-  return String(text || '').normalize('NFKC').toLowerCase().replace(/\s+/g, '')
+function visibleRuleText(game) {
+  return `${game?.rules_content || ''} ${game?.setup_summary || ''} ${game?.gameplay_summary || ''} ${game?.end_game_summary || ''}`.toLowerCase()
 }
 
-function findSection(question) {
-  const normalized = normalize(question)
-  return INTENTS.find((intent) => intent.terms.some((term) => normalized.includes(normalize(term))))?.section || 'quick_rules'
+function hasEditionBoundary(game) {
+  const text = visibleRuleText(game)
+  return [
+    'board game arena',
+    'bga',
+    'implementation',
+    '物理版',
+    '別版',
+    '版差',
+  ].some((marker) => text.includes(marker))
 }
 
-function answerFromProjection(projection, question) {
-  const trimmed = String(question || '').trim()
-  if (!projection || projection.status !== 'available' || !trimmed) {
-    return { status: 'unresolved', answer: null, evidence: [] }
-  }
+function findDisplayedRuleSet(game, rulesets) {
+  const text = visibleRuleText(game)
+  if (!text) return null
 
-  const sectionName = findSection(trimmed)
-  const preferred = projection[sectionName]
-  const fallback = projection.quick_rules
-  const items = preferred?.status === 'available' ? preferred.items : fallback?.items || []
-  if (!items.length) return { status: 'unresolved', answer: null, evidence: [] }
-
-  return {
-    status: 'answered',
-    answer: items.map((item) => item.text).join(' '),
-    evidence: items.map((item) => ({
-      rule_id: item.rule_id,
-      claim_id: item.evidence.claim_id,
-      source_ids: item.evidence.source_ids,
-    })),
-  }
+  return rulesets.find((ruleset) => [
+    ruleset.edition_label,
+    ruleset.platform,
+    ruleset.revision_label,
+  ].filter(Boolean).some((value) => text.includes(String(value).toLowerCase()))) || null
 }
 
-export function RuleAskPanel({ projection, ruleSet }) {
+function ruleSetLabel(ruleset) {
+  return ruleset.edition_label || ruleset.variant_label || ruleset.platform || ruleset.ruleset_id
+}
+
+function ruleSetOptionLabel(ruleset) {
+  return [
+    ruleSetLabel(ruleset),
+    ruleset.platform,
+    ruleset.language_code,
+    ruleset.revision_label,
+  ].filter(Boolean).join(' · ')
+}
+
+export function RuleAskPanel() {
+  const { slug } = useParams()
   const [question, setQuestion] = useState('')
   const [result, setResult] = useState(null)
-  const available = projection?.status === 'available'
+  const [ruleSetContext, setRuleSetContext] = useState(null)
+  const [selectedRuleSetId, setSelectedRuleSetId] = useState(null)
 
   useEffect(() => {
-    setQuestion('')
-    setResult(null)
-  }, [projection?.rule_set_id])
+    let cancelled = false
+
+    api.get(`/api/games/${slug}`)
+      .then(async (gameResponse) => {
+        const game = Array.isArray(gameResponse) ? gameResponse[0] : gameResponse?.game || gameResponse
+        if (cancelled || !hasEditionBoundary(game)) return
+
+        const rulesetResponse = await api.get(`/api/games/${slug}/rule-sets`)
+        if (cancelled || rulesetResponse?.status !== 'available' || !rulesetResponse.rulesets?.length) return
+
+        const displayed = findDisplayedRuleSet(game, rulesetResponse.rulesets)
+        setRuleSetContext({ displayed, rulesets: rulesetResponse.rulesets })
+        setSelectedRuleSetId(displayed?.ruleset_id || rulesetResponse.rulesets[0].ruleset_id)
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setRuleSetContext(null)
+          setSelectedRuleSetId(null)
+        }
+      })
+
+    return () => { cancelled = true }
+  }, [slug])
+
+  const selectedRuleSet = ruleSetContext?.rulesets?.find(
+    (ruleset) => ruleset.ruleset_id === selectedRuleSetId,
+  ) || null
+  const selectedUsesDisplayedProjection = Boolean(
+    !ruleSetContext?.displayed || selectedRuleSetId === ruleSetContext.displayed.ruleset_id,
+  )
 
   const submit = (event) => {
     event.preventDefault()
-    setResult(answerFromProjection(projection, question))
+    if (!selectedUsesDisplayedProjection) return
+    setResult(askRule(slug, question))
   }
 
   return (
     <section className="pro-card" aria-labelledby="rule-ask-title">
+      {ruleSetContext?.rulesets?.length > 1 && (
+        <div className="game-empty-note" aria-label="RuleSet context" style={{ marginBottom: '1rem' }}>
+          <label htmlFor="rule-set-select"><strong>確認するルール版:</strong></label>{' '}
+          <select
+            id="rule-set-select"
+            value={selectedRuleSetId || ''}
+            onChange={(event) => {
+              setSelectedRuleSetId(event.target.value)
+              setResult(null)
+            }}
+          >
+            {ruleSetContext.rulesets.map((ruleset) => (
+              <option key={ruleset.ruleset_id} value={ruleset.ruleset_id}>
+                {ruleSetOptionLabel(ruleset)}
+              </option>
+            ))}
+          </select>
+          <div style={{ marginTop: '0.5rem' }}>
+            表示中の本文: {ruleSetContext.displayed
+              ? `${ruleSetOptionLabel(ruleSetContext.displayed)} · ${ruleSetContext.displayed.verification_status}`
+              : '既存本文とRuleSetの対応を確認できません'}
+          </div>
+          {selectedRuleSet && !selectedUsesDisplayedProjection && (
+            <div role="status" style={{ marginTop: '0.5rem' }}>
+              {ruleSetOptionLabel(selectedRuleSet)} の質問回答用projectionは未整備です。別版の登録済み回答を流用しません。
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="pro-card-title" id="rule-ask-title">ルールを質問</div>
       <p className="summary-text">
-        選択中のRuleSetで accepted かつ supporting evidence があるRuleNodeだけから回答します。
+        確認済みの登録済みルール根拠だけから回答します。回答は要約で、公式本文そのものではありません。
       </p>
-      {ruleSet && (
-        <div className="game-empty-note" style={{ marginBottom: '0.75rem' }}>
-          RuleSet: {[ruleSet.edition_label, ruleSet.platform, ruleSet.language_code, ruleSet.revision_label].filter(Boolean).join(' · ')}
-        </div>
-      )}
-      {!available && (
-        <div className="game-empty-state" role="status" style={{ marginBottom: '1rem' }}>
-          このRuleSetには質問回答へ使える正準projectionがまだありません。
-        </div>
-      )}
       <form onSubmit={submit}>
         <label htmlFor="rule-question" className="sr-only">ルールの質問</label>
         <input
@@ -78,14 +132,14 @@ export function RuleAskPanel({ projection, ruleSet }) {
           className="search-input"
           value={question}
           maxLength={200}
-          placeholder="例: いつゲームが終わる？"
+          placeholder="例: 同点ならどうなる？"
           onChange={(event) => setQuestion(event.target.value)}
-          disabled={!available}
+          disabled={!selectedUsesDisplayedProjection}
         />
         <button
           type="submit"
           className="filter-btn"
-          disabled={!question.trim() || !available}
+          disabled={!question.trim() || !selectedUsesDisplayedProjection}
           style={{ marginTop: '0.75rem' }}
         >
           根拠付きで確認
@@ -96,16 +150,17 @@ export function RuleAskPanel({ projection, ruleSet }) {
         <div role="status" style={{ marginTop: '1rem' }}>
           <p>{result.answer}</p>
           {result.evidence.map((item) => (
-            <div key={`${item.rule_id}-${item.claim_id}`} className="game-empty-note" style={{ marginTop: '6px' }}>
-              Rule {item.rule_id} · Claim {item.claim_id} · Sources {item.source_ids.join(', ')}
-            </div>
+            <p key={`${item.source_url}-${item.locator}`} style={{ fontSize: '0.85rem' }}>
+              根拠: {item.locator} · {item.rule_version}{' '}
+              <a href={item.source_url} target="_blank" rel="noreferrer">公式ルールを確認</a>
+            </p>
           ))}
         </div>
       )}
 
       {result?.status === 'unresolved' && (
         <div className="game-empty-state" role="status" style={{ marginTop: '1rem' }}>
-          この質問に答えられるaccepted evidence-backed ruleがありません。
+          この質問に答えられる確認済み根拠がありません。公式ルール本文を確認してください。
         </div>
       )}
     </section>
