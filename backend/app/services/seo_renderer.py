@@ -78,7 +78,11 @@ def _render_projection_rules(projection) -> str | None:
 
 
 async def _canonical_rule_text(slug: str) -> str | None:
-    rulesets = await RuleSetService().get_by_slug(slug)
+    try:
+        rulesets = await RuleSetService().get_by_slug(slug)
+    except Exception:
+        logger.exception("Canonical SSR RuleSet lookup failed for %s; using legacy fallback", slug)
+        return None
     if not rulesets or rulesets.status != "available":
         return None
 
