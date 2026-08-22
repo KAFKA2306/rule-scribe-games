@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import ValidationError
 
+from app.core.rate_limiter import RateLimiter
 from app.models import GameDetail, GameListResponse, GameUpdate
 from app.models.component_catalog import (
     ComponentDetailResponse,
@@ -29,6 +30,7 @@ from app.services.rulesets import RuleSetService
 from app.services.search_visibility import has_known_identity_conflict, should_return_gone
 
 router = APIRouter()
+search_limiter = RateLimiter.get_limiter("search", max_requests=100, window_seconds=60)
 
 
 def get_game_service():
@@ -53,6 +55,13 @@ def get_evidence_service():
 
 def get_concept_taxonomy_service():
     return ConceptTaxonomyService()
+
+
+@router.get("/search", response_model=list[GameDetail])
+async def search_games(q: str = Query(..., min_length=1), service: GameService = Depends(get_game_service)):
+    if not search_limiter.acquire():
+        raise HTTPException(status_code=429, detail="Search rate limit exceeded")
+    return await service.search_games(q.strip())
 
 
 @router.get("/games", response_model=GameListResponse)
