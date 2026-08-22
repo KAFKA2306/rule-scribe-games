@@ -1,12 +1,10 @@
 # Game Components
 
-ゲーム詳細ページ用コンポーネント。
+ゲーム詳細ページの小さな再利用componentだけを置きます。ルールのtruthはcomponent内へ複製せず、GamePageが選択RuleSetのpresentation projectionを受け取って表示します。
 
-## ファイル
-
-| ファイル               | 役割                        |
-| ---------------------- | --------------------------- |
-| `ExternalLinks.jsx`    | 外部リンク（BGG, Amazon等） |
-| `RegenerateButton.jsx` | AI再生成ボタン              |
-| `ShareButtons.jsx`     | SNSシェアボタン             |
-| `TextToSpeech.jsx`     | 読み上げ機能                |
+- `ConceptGlossary.jsx`: canonical Concept/glossary read
+- `RuleAskPanel.jsx`: 選択中presentation projectionだけを使うrule lookup
+- `ExternalLinks.jsx`: catalog external links
+- `ShareButtons.jsx`: share actions
+- `TextToSpeech.jsx`: 現在表示中のテキスト読み上げ
+- `AddToListButton.jsx` / `OwnedGameButton.jsx`: user list state
