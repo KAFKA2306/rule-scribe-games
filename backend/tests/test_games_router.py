@@ -20,6 +20,9 @@ class MutableGameService:
 
 
 class PublicReadService:
+    async def search_games(self, query: str):
+        return [{"id": "game-1", "slug": "example", "title": "Example", "work_id": "work-1"}]
+
     async def get_game_by_slug(self, slug: str):
         return {"id": "game-1", "slug": slug, "title": "Example", "work_id": "work-1"}
 
@@ -50,11 +53,13 @@ def test_catalog_patch_requires_authentication_before_mutation():
     assert service.updated is False
 
 
-def test_legacy_search_routes_are_removed():
+def test_read_only_search_remains_and_legacy_post_search_is_removed():
     client = TestClient(_app_with_service(PublicReadService()))
 
-    assert client.get("/api/search?q=example").status_code == 404
-    assert client.post("/api/search", json={"query": "example", "generate": True}).status_code == 404
+    get_response = client.get("/api/search?q=example")
+    assert get_response.status_code == 200
+    assert get_response.json()[0]["slug"] == "example"
+    assert client.post("/api/search", json={"query": "example", "generate": True}).status_code == 405
 
 
 def test_legacy_regeneration_request_has_no_mutation_contract():
