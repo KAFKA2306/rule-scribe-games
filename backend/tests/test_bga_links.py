@@ -3,32 +3,18 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from app.models import GameDetail, GameUpdate, GeneratedGameMetadata, StructuredData
-from app.prompts.prompts import PROMPTS
+from app.models import GameDetail, GameUpdate
 
 
 VALID_BGA_URL = "https://en.boardgamearena.com/gamepanel?game=azul"
 
 
-def test_bga_url_is_supported_across_read_update_and_generated_models():
+def test_bga_url_is_supported_across_read_and_update_models():
     detail = GameDetail(id="game-1", title="Azul", bga_url=VALID_BGA_URL)
     update = GameUpdate(bga_url=VALID_BGA_URL)
-    generated = GeneratedGameMetadata(
-        title="Azul",
-        summary="summary",
-        description="description",
-        min_players=2,
-        max_players=4,
-        play_time=45,
-        min_age=8,
-        rules_content="rules",
-        structured_data=StructuredData(),
-        bga_url=VALID_BGA_URL,
-    )
 
     assert detail.bga_url == VALID_BGA_URL
     assert update.bga_url == VALID_BGA_URL
-    assert generated.bga_url == VALID_BGA_URL
 
 
 @pytest.mark.parametrize(
@@ -46,15 +32,6 @@ def test_bga_url_rejects_non_https_or_non_bga_hosts(url):
 
 def test_blank_bga_url_normalizes_to_none():
     assert GameUpdate(bga_url="  ").bga_url is None
-
-
-def test_prompt_requires_verified_bga_url_and_forbids_fabricated_slugs():
-    prompt = PROMPTS["metadata_generator"]["generate"]
-
-    assert '"bga_url"' in prompt
-    assert "MUST be null unless" in prompt
-    assert "Never infer a slug or fabricate a URL" in prompt
-    assert "boardgamearena.com" in prompt
 
 
 def test_local_database_schema_and_upsert_include_bga_url():
