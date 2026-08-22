@@ -7,6 +7,7 @@ on:
       - "backend/app/db/migrations/023_align_pili_pili_legacy_provenance.sql"
       - "backend/app/db/migrations/024_seed_terraforming_mars_dice_ruleset.sql"
       - "backend/app/db/migrations/025_seed_splendor_2024_ruleset.sql"
+      - "backend/app/db/migrations/026_seed_catan_2026_ruleset.sql"
       - ".github/workflows/test-game-ruleset-data.yml"
   push:
     branches: [main]
@@ -15,6 +16,7 @@ on:
       - "backend/app/db/migrations/023_align_pili_pili_legacy_provenance.sql"
       - "backend/app/db/migrations/024_seed_terraforming_mars_dice_ruleset.sql"
       - "backend/app/db/migrations/025_seed_splendor_2024_ruleset.sql"
+      - "backend/app/db/migrations/026_seed_catan_2026_ruleset.sql"
       - ".github/workflows/test-game-ruleset-data.yml"
 
 permissions:
@@ -92,6 +94,14 @@ jobs:
                  'legacy player-facing Splendor rules retained until canonical projection cutover'
           FROM public.game_works
           ORDER BY id DESC LIMIT 1;
+
+          INSERT INTO public.game_works DEFAULT VALUES;
+          INSERT INTO public.games(slug, title, work_id, identity_status, source_url, source_trust, rules_content)
+          SELECT 'catan', 'Catan', id, 'unverified',
+                 'https://www.gp-inc.jp/boardgame_catan_new_s.html', 'unknown',
+                 'legacy player-facing Catan rules retained until canonical projection cutover'
+          FROM public.game_works
+          ORDER BY id DESC LIMIT 1;
           SQL
 
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/010_rule_graph.sql
@@ -105,6 +115,7 @@ jobs:
             psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/023_align_pili_pili_legacy_provenance.sql
             psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/024_seed_terraforming_mars_dice_ruleset.sql
             psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/025_seed_splendor_2024_ruleset.sql
+            psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/026_seed_catan_2026_ruleset.sql
           done
 
       - name: Verify Pili Pili edition isolation remains intact
@@ -139,3 +150,17 @@ jobs:
           test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_nodes rn join public.claims c on c.rule_set_id=rn.rule_set_id and c.rule_id=rn.rule_id where rn.rule_set_id=(select rs.id from public.rule_sets rs join public.games g on g.id=rs.game_id where g.slug='splendor') and c.normalized_payload->>'statement'=rn.normalized_statement;")" = "14"
           test "$(psql "$DATABASE_URL" -Atc "select normalized_statement from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='splendor' and rn.rule_id='game-end.trigger';")" = "ターン終了時に威信ポイントが15点以上になったプレイヤーが出るとゲーム終了が発動し、全員の手番数が同じになるまで続ける。"
           test "$(psql "$DATABASE_URL" -Atc "select normalized_statement from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='splendor' and rn.rule_id='victory.tie-break';")" = "威信ポイントが同点なら、獲得した発展カードがより少ない同点プレイヤーが勝つ。それでも同点なら勝利を共有する。"
+
+      - name: Verify Catan 2026 Japanese identity, projection inputs, and evidence
+        shell: bash
+        run: |
+          test "$(psql "$DATABASE_URL" -Atc "select identity_status from public.games where slug='catan';")" = "verified"
+          test "$(psql "$DATABASE_URL" -Atc "select edition_label from public.games where slug='catan';")" = "GP Games 日本語版 スタンダード版 (2026リニューアル)"
+          test "$(psql "$DATABASE_URL" -Atc "select identity_source from public.games where slug='catan';")" = "https://www.gp-inc.jp/boardgame_catan_new_s.html"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_sets rs join public.games g on g.id=rs.game_id where g.slug='catan' and rs.platform='physical' and rs.language_code='ja' and rs.revision_label='2026-renewed-6e' and rs.verification_status='source_bound';")" = "1"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='catan' and rn.verification_status='source_bound';")" = "11"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.claims c join public.rule_sets rs on rs.id=c.rule_set_id join public.games g on g.id=rs.game_id where g.slug='catan' and c.target_type='rule_node' and c.lifecycle_status='accepted';")" = "11"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.evidence_bindings eb join public.claims c on c.claim_id=eb.claim_id join public.rule_sets rs on rs.id=c.rule_set_id join public.games g on g.id=rs.game_id where g.slug='catan' and eb.relation='supports';")" = "11"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_nodes rn join public.claims c on c.rule_set_id=rn.rule_set_id and c.rule_id=rn.rule_id where rn.rule_set_id=(select rs.id from public.rule_sets rs join public.games g on g.id=rs.game_id where g.slug='catan') and c.normalized_payload->>'statement'=rn.normalized_statement;")" = "11"
+          test "$(psql "$DATABASE_URL" -Atc "select normalized_statement from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='catan' and rn.rule_id='game-end.ten-vp';")" = "自分の手番中に勝利ポイントが10点以上になった時点でゲームは終了し、そのプレイヤーが勝者となる。"
+          test "$(psql "$DATABASE_URL" -Atc "select normalized_statement from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='catan' and rn.rule_id='turn.seven-robber';")" like "%資源カードを8枚以上%"
