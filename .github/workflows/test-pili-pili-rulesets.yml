@@ -59,6 +59,7 @@ jobs:
           SQL
 
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/010_rule_graph.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/011_concept_taxonomy.sql
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/013_ruleset_identity.sql
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/014_component_catalog.sql
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/015_claim_evidence.sql
