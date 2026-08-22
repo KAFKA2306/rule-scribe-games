@@ -41,6 +41,7 @@ birmingham_infographics_urls.json
 
 # Logs
 *.log
+backend/tests/logs/
 
 # Editor/IDE specific
 .idea/
