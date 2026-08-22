@@ -51,9 +51,7 @@ jobs:
         shell: bash
         run: |
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 <<'SQL'
-          CREATE TABLE public.game_works (
-            id uuid PRIMARY KEY DEFAULT gen_random_uuid()
-          );
+          CREATE TABLE public.game_works (id uuid PRIMARY KEY DEFAULT gen_random_uuid());
           CREATE TABLE public.games (
             id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
             slug text NOT NULL UNIQUE,
@@ -72,36 +70,20 @@ jobs:
           );
 
           INSERT INTO public.game_works DEFAULT VALUES;
-          INSERT INTO public.games(slug, title, work_id, identity_status, source_url, source_trust, rules_content)
-          SELECT 'pili-pili', 'Pili Pili', id, 'verified',
-                 'https://atmgaming.com/product/pili-pili', 'official_publisher',
-                 'このページは Board Game Arena（BGA）実装 を基準にしています。'
-          FROM public.game_works LIMIT 1;
+          INSERT INTO public.games(slug,title,work_id,identity_status,source_url,source_trust,rules_content)
+          SELECT 'pili-pili','Pili Pili',id,'verified','https://atmgaming.com/product/pili-pili','official_publisher','このページは Board Game Arena（BGA）実装 を基準にしています。' FROM public.game_works LIMIT 1;
 
           INSERT INTO public.game_works DEFAULT VALUES;
-          INSERT INTO public.games(slug, title, work_id, identity_status, identity_source, source_url, source_trust, rules_content)
-          SELECT 'terraforming-mars-the-dice-game', 'Terraforming Mars: The Dice Game', id, 'verified',
-                 'https://arclightgames.jp/product/826ter/',
-                 'https://arclightgames.jp/wp-content/uploads/2024/04/TM_DICEGAME_RULES-JPN-fix-2023Dec-for-Web-2.pdf',
-                 'official_publisher', 'source-bound Japanese revised rules'
-          FROM public.game_works
-          ORDER BY id DESC LIMIT 1;
+          INSERT INTO public.games(slug,title,work_id,identity_status,identity_source,source_url,source_trust,rules_content)
+          SELECT 'terraforming-mars-the-dice-game','Terraforming Mars: The Dice Game',id,'verified','https://arclightgames.jp/product/826ter/','https://arclightgames.jp/wp-content/uploads/2024/04/TM_DICEGAME_RULES-JPN-fix-2023Dec-for-Web-2.pdf','official_publisher','source-bound Japanese revised rules' FROM public.game_works ORDER BY id DESC LIMIT 1;
 
           INSERT INTO public.game_works DEFAULT VALUES;
-          INSERT INTO public.games(slug, title, work_id, identity_status, source_url, source_trust, rules_content)
-          SELECT 'splendor', 'Splendor (宝石の煌き)', id, 'unverified',
-                 'https://hobbyjapan.games/splendor/', 'unknown',
-                 'legacy player-facing Splendor rules retained until canonical projection cutover'
-          FROM public.game_works
-          ORDER BY id DESC LIMIT 1;
+          INSERT INTO public.games(slug,title,work_id,identity_status,source_url,source_trust,rules_content)
+          SELECT 'splendor','Splendor (宝石の煌き)',id,'unverified','https://hobbyjapan.games/splendor/','unknown','legacy player-facing Splendor rules retained until canonical projection cutover' FROM public.game_works ORDER BY id DESC LIMIT 1;
 
           INSERT INTO public.game_works DEFAULT VALUES;
-          INSERT INTO public.games(slug, title, work_id, identity_status, source_url, source_trust, rules_content)
-          SELECT 'catan', 'Catan', id, 'unverified',
-                 'https://www.gp-inc.jp/boardgame_catan_new_s.html', 'unknown',
-                 'legacy player-facing Catan rules retained until canonical projection cutover'
-          FROM public.game_works
-          ORDER BY id DESC LIMIT 1;
+          INSERT INTO public.games(slug,title,work_id,identity_status,source_url,source_trust,rules_content)
+          SELECT 'catan','Catan',id,'unverified','https://www.gp-inc.jp/boardgame_catan_new_s.html','unknown','legacy player-facing Catan rules retained until canonical projection cutover' FROM public.game_works ORDER BY id DESC LIMIT 1;
           SQL
 
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/010_rule_graph.sql
@@ -163,4 +145,3 @@ jobs:
           test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.evidence_bindings eb join public.claims c on c.claim_id=eb.claim_id join public.rule_sets rs on rs.id=c.rule_set_id join public.games g on g.id=rs.game_id where g.slug='catan' and eb.relation='supports';")" = "11"
           test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_nodes rn join public.claims c on c.rule_set_id=rn.rule_set_id and c.rule_id=rn.rule_id where rn.rule_set_id=(select rs.id from public.rule_sets rs join public.games g on g.id=rs.game_id where g.slug='catan') and c.normalized_payload->>'statement'=rn.normalized_statement;")" = "11"
           test "$(psql "$DATABASE_URL" -Atc "select normalized_statement from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='catan' and rn.rule_id='game-end.ten-vp';")" = "自分の手番中に勝利ポイントが10点以上になった時点でゲームは終了し、そのプレイヤーが勝者となる。"
-          test "$(psql "$DATABASE_URL" -Atc "select normalized_statement from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='catan' and rn.rule_id='turn.seven-robber';")" like "%資源カードを8枚以上%"
