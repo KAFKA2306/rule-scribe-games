@@ -107,6 +107,7 @@ jobs:
           tests/text_to_speech.spec.js
           tests/source_links.spec.js
           tests/rule_ask.spec.js
+          tests/pili_pili_ruleset_context.spec.js
           --project=chromium
 
       - name: Gate responsive geometry and pixel screenshot baselines
