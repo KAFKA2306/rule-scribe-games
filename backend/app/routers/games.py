@@ -28,6 +28,7 @@ from app.services.game_service import GameIdentityConflictError, GameService
 from app.services.rule_graph import RuleGraphService
 from app.services.rulesets import RuleSetService
 from app.services.search_visibility import has_known_identity_conflict, should_return_gone
+from app.services.seo_renderer import _canonical_rule_text
 
 router = APIRouter()
 search_limiter = RateLimiter.get_limiter("search", max_requests=100, window_seconds=60)
@@ -251,6 +252,9 @@ async def get_game_details(slug: str, service: GameService = Depends(get_game_se
     game = await service.get_game_by_slug(slug)
     if not game:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Game not found")
+    canonical_rules = await _canonical_rule_text(slug)
+    if canonical_rules:
+        game = {**game, "rules_content": canonical_rules}
     return game
 
 
