@@ -54,7 +54,7 @@ jobs:
             slug text NOT NULL UNIQUE,
             title text,
             description text,
-            rules jsonb,
+            rules jsonb NOT NULL DEFAULT '{}'::jsonb,
             work_id uuid REFERENCES public.game_works(id),
             identity_status text NOT NULL DEFAULT 'unverified',
             identity_source text,
@@ -143,6 +143,7 @@ jobs:
           test "$(psql "$DATABASE_URL" -Atc "select identity_status from public.games where slug='hack-clad';")" = "verified"
           test "$(psql "$DATABASE_URL" -Atc "select identity_source from public.games where slug='hack-clad';")" = "https://www.hackclad.jp/home"
           test "$(psql "$DATABASE_URL" -Atc "select min_players||':'||max_players from public.games where slug='hack-clad';")" = "1:4"
+          test "$(psql "$DATABASE_URL" -Atc "select rules::text from public.games where slug='hack-clad';")" = "{}"
           test -z "$(psql "$DATABASE_URL" -Atc "select rules_content from public.games where slug='hack-clad';")"
           test "$(psql "$DATABASE_URL" -Atc "select structured_data::text from public.games where slug='hack-clad';")" = "{}"
           test -z "$(psql "$DATABASE_URL" -Atc "select bgg_url from public.games where slug='hack-clad';")"
