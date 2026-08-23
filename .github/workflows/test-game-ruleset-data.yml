@@ -8,6 +8,7 @@ on:
       - "backend/app/db/migrations/024_seed_terraforming_mars_dice_ruleset.sql"
       - "backend/app/db/migrations/025_seed_splendor_2024_ruleset.sql"
       - "backend/app/db/migrations/026_seed_catan_2026_ruleset.sql"
+      - "backend/app/db/migrations/028_seed_dune_uprising_ruleset.sql"
       - ".github/workflows/test-game-ruleset-data.yml"
   push:
     branches: [main]
@@ -17,6 +18,7 @@ on:
       - "backend/app/db/migrations/024_seed_terraforming_mars_dice_ruleset.sql"
       - "backend/app/db/migrations/025_seed_splendor_2024_ruleset.sql"
       - "backend/app/db/migrations/026_seed_catan_2026_ruleset.sql"
+      - "backend/app/db/migrations/028_seed_dune_uprising_ruleset.sql"
       - ".github/workflows/test-game-ruleset-data.yml"
 
 permissions:
@@ -84,6 +86,10 @@ jobs:
           INSERT INTO public.game_works DEFAULT VALUES;
           INSERT INTO public.games(slug,title,work_id,identity_status,source_url,source_trust,rules_content)
           SELECT 'catan','Catan',id,'unverified','https://www.gp-inc.jp/boardgame_catan_new_s.html','unknown','legacy player-facing Catan rules retained until canonical projection cutover' FROM public.game_works ORDER BY id DESC LIMIT 1;
+
+          INSERT INTO public.game_works DEFAULT VALUES;
+          INSERT INTO public.games(slug,title,work_id,identity_status,source_url,source_trust,rules_content)
+          SELECT 'dune-imperium-uprising','Dune: Imperium - Uprising',id,'unverified','https://www.direwolfdigital.com/dune-imperium-uprising/','unknown','legacy player-facing Uprising rules retained until canonical projection cutover' FROM public.game_works ORDER BY id DESC LIMIT 1;
           SQL
 
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/010_rule_graph.sql
@@ -98,6 +104,7 @@ jobs:
             psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/024_seed_terraforming_mars_dice_ruleset.sql
             psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/025_seed_splendor_2024_ruleset.sql
             psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/026_seed_catan_2026_ruleset.sql
+            psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/028_seed_dune_uprising_ruleset.sql
           done
 
       - name: Verify Pili Pili edition isolation remains intact
@@ -145,3 +152,17 @@ jobs:
           test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.evidence_bindings eb join public.claims c on c.claim_id=eb.claim_id join public.rule_sets rs on rs.id=c.rule_set_id join public.games g on g.id=rs.game_id where g.slug='catan' and eb.relation='supports';")" = "11"
           test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_nodes rn join public.claims c on c.rule_set_id=rn.rule_set_id and c.rule_id=rn.rule_id where rn.rule_set_id=(select rs.id from public.rule_sets rs join public.games g on g.id=rs.game_id where g.slug='catan') and c.normalized_payload->>'statement'=rn.normalized_statement;")" = "11"
           test "$(psql "$DATABASE_URL" -Atc "select normalized_statement from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='catan' and rn.rule_id='game-end.ten-vp';")" = "自分の手番中に勝利ポイントが10点以上になった時点でゲームは終了し、そのプレイヤーが勝者となる。"
+
+      - name: Verify Dune Uprising identity, projection inputs, and evidence
+        shell: bash
+        run: |
+          test "$(psql "$DATABASE_URL" -Atc "select identity_status from public.games where slug='dune-imperium-uprising';")" = "verified"
+          test "$(psql "$DATABASE_URL" -Atc "select edition_label from public.games where slug='dune-imperium-uprising';")" = "Dune: Imperium – Uprising standalone physical (2023)"
+          test "$(psql "$DATABASE_URL" -Atc "select identity_source from public.games where slug='dune-imperium-uprising';")" = "https://www.direwolfdigital.com/dune-imperium/resources/"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_sets rs join public.games g on g.id=rs.game_id where g.slug='dune-imperium-uprising' and rs.platform='physical' and rs.language_code='ja' and rs.revision_label='2023-10-12' and rs.verification_status='source_bound';")" = "1"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='dune-imperium-uprising' and rn.verification_status='source_bound';")" = "12"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.claims c join public.rule_sets rs on rs.id=c.rule_set_id join public.games g on g.id=rs.game_id where g.slug='dune-imperium-uprising' and c.target_type='rule_node' and c.lifecycle_status='accepted';")" = "12"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.evidence_bindings eb join public.claims c on c.claim_id=eb.claim_id join public.rule_sets rs on rs.id=c.rule_set_id join public.games g on g.id=rs.game_id where g.slug='dune-imperium-uprising' and eb.relation='supports';")" = "12"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_nodes rn join public.claims c on c.rule_set_id=rn.rule_set_id and c.rule_id=rn.rule_id where rn.rule_set_id=(select rs.id from public.rule_sets rs join public.games g on g.id=rs.game_id where g.slug='dune-imperium-uprising') and c.normalized_payload->>'statement'=rn.normalized_statement;")" = "12"
+          test "$(psql "$DATABASE_URL" -Atc "select normalized_statement from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='dune-imperium-uprising' and rn.rule_id='game-end.trigger';")" = "ラウンド終了時にいずれかのプレイヤーが勝利ポイント10点以上に到達している、または紛争デッキが空ならゲームを終了する。"
+          test "$(psql "$DATABASE_URL" -Atc "select normalized_statement from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='dune-imperium-uprising' and rn.rule_id='variant.choam-module-boundary';")" = "CHOAM契約は任意のモジュールである。CHOAMモジュールを使わないゲームでは、契約アイコンを解決すると契約を取る代わりに2ソラリを得る。"
