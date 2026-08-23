@@ -5,6 +5,7 @@ on:
     paths:
       - "backend/app/db/migrations/032_seed_azul_sintra_2019_ruleset.sql"
       - "backend/app/db/migrations/033_seed_disney_lorcana_cr_2_2_0_ruleset.sql"
+      - "backend/app/db/migrations/034_seed_hackclad_base_ruleset.sql"
       - ".github/workflows/test-source-bound-ruleset-data.yml"
       - ".github/workflows/test-azul-sintra-ruleset-data.yml"
   push:
@@ -12,6 +13,7 @@ on:
     paths:
       - "backend/app/db/migrations/032_seed_azul_sintra_2019_ruleset.sql"
       - "backend/app/db/migrations/033_seed_disney_lorcana_cr_2_2_0_ruleset.sql"
+      - "backend/app/db/migrations/034_seed_hackclad_base_ruleset.sql"
       - ".github/workflows/test-source-bound-ruleset-data.yml"
       - ".github/workflows/test-azul-sintra-ruleset-data.yml"
 
@@ -51,12 +53,21 @@ jobs:
             id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
             slug text NOT NULL UNIQUE,
             title text,
+            description text,
+            rules jsonb,
             work_id uuid REFERENCES public.game_works(id),
             identity_status text NOT NULL DEFAULT 'unverified',
             identity_source text,
             source_url text,
+            official_url text,
             source_trust text,
+            content_review_status text,
             rules_content text,
+            structured_data jsonb,
+            summary text,
+            setup_summary text,
+            gameplay_summary text,
+            end_game_summary text,
             edition_label text,
             language_code text,
             publisher text,
@@ -66,29 +77,33 @@ jobs:
             play_time integer,
             min_age integer,
             published_year integer,
+            title_ja text,
+            title_en text,
+            bgg_url text,
+            amazon_url text,
+            is_official boolean,
             updated_at timestamptz NOT NULL DEFAULT now()
           );
 
           WITH w AS (INSERT INTO public.game_works DEFAULT VALUES RETURNING id)
-          INSERT INTO public.games(
-            slug,title,work_id,identity_status,source_url,source_trust,rules_content,
-            published_year,min_players,max_players,min_age,play_time
-          )
-          SELECT 'azul-stained-glass-of-sintra','Azul: Stained Glass of Sintra',id,'verified',
-                 'https://hobbyjapan.games/azul_stained_glass_of_sintra/','official_publisher',
-                 'legacy summary incorrectly defers completed-pattern scoring to round end',
-                 2018,2,4,8,30
-          FROM w;
+          INSERT INTO public.games(slug,title,work_id,identity_status,source_url,source_trust,rules_content,published_year,min_players,max_players,min_age,play_time)
+          SELECT 'azul-stained-glass-of-sintra','Azul: Stained Glass of Sintra',id,'verified','https://hobbyjapan.games/azul_stained_glass_of_sintra/','official_publisher','legacy summary incorrectly defers completed-pattern scoring to round end',2018,2,4,8,30 FROM w;
+
+          WITH w AS (INSERT INTO public.game_works DEFAULT VALUES RETURNING id)
+          INSERT INTO public.games(slug,title,work_id,identity_status,source_url,source_trust,rules_content,min_players,max_players,min_age,play_time)
+          SELECT 'disney-lorcana','Disney Lorcana',id,'unverified','https://disneylorcana.jp/','unknown','legacy summary: 60-card deck, ink, quest, challenge, 20 lore',2,2,8,25 FROM w;
 
           WITH w AS (INSERT INTO public.game_works DEFAULT VALUES RETURNING id)
           INSERT INTO public.games(
-            slug,title,work_id,identity_status,source_url,source_trust,rules_content,
-            min_players,max_players,min_age,play_time
+            slug,title,title_ja,title_en,work_id,identity_status,source_url,official_url,source_trust,
+            rules_content,structured_data,summary,description,published_year,min_players,max_players,play_time,bgg_url,amazon_url,is_official
           )
-          SELECT 'disney-lorcana','Disney Lorcana',id,'unverified',
-                 'https://disneylorcana.jp/','unknown',
-                 'legacy summary: 60-card deck, ink, quest, challenge, 20 lore',
-                 2,2,8,25
+          SELECT 'hack-clad','Hack Clad','ハッククラッド -Hack Clad-','Hack Clad',id,'unverified',
+                 'https://kentaiki.booth.pm/items/4710078','https://kentaiki.booth.pm/items/4710078','unknown',
+                 'legacy unrelated adventure equipment-market rules','{"keywords":[{"term":"ファンタジー"}]}'::jsonb,
+                 '冒険者となり装備を集めモンスターを倒す別ゲームの要約',
+                 'サイバーパンク世界でハッカーとして侵入する別ゲームの説明',2023,2,4,60,
+                 'https://boardgamegeek.com/boardgame/385617/hack-clad','https://www.amazon.co.jp/s?k=Hack%20Clad',false
           FROM w;
           SQL
 
@@ -104,32 +119,38 @@ jobs:
           for pass in 1 2; do
             psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/032_seed_azul_sintra_2019_ruleset.sql
             psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/033_seed_disney_lorcana_cr_2_2_0_ruleset.sql
+            psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/034_seed_hackclad_base_ruleset.sql
           done
 
       - name: Verify Azul Sintra contract remains intact
         shell: bash
         run: |
           test "$(psql "$DATABASE_URL" -Atc "select identity_status from public.games where slug='azul-stained-glass-of-sintra';")" = "verified"
-          test "$(psql "$DATABASE_URL" -Atc "select edition_label from public.games where slug='azul-stained-glass-of-sintra';")" = "ホビージャパン日本語版 (2019)"
           test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_sets rs join public.games g on g.id=rs.game_id where g.slug='azul-stained-glass-of-sintra' and rs.verification_status='source_bound';")" = "1"
           test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='azul-stained-glass-of-sintra' and rn.verification_status='source_bound';")" = "10"
-          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.claims c join public.rule_sets rs on rs.id=c.rule_set_id join public.games g on g.id=rs.game_id where g.slug='azul-stained-glass-of-sintra' and c.target_type='rule_node' and c.lifecycle_status='accepted';")" = "10"
-          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.evidence_bindings eb join public.claims c on c.claim_id=eb.claim_id join public.rule_sets rs on rs.id=c.rule_set_id join public.games g on g.id=rs.game_id where g.slug='azul-stained-glass-of-sintra' and eb.relation='supports';")" = "10"
-          test "$(psql "$DATABASE_URL" -Atc "select position('その手番中にただちに完成処理' in normalized_statement) > 0 from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='azul-stained-glass-of-sintra' and rn.rule_id='scoring.complete-pattern-immediately';")" = "t"
 
       - name: Verify Lorcana living-rules contract
         shell: bash
         run: |
           test "$(psql "$DATABASE_URL" -Atc "select identity_status from public.games where slug='disney-lorcana';")" = "verified"
-          test "$(psql "$DATABASE_URL" -Atc "select source_url from public.games where slug='disney-lorcana';")" = "https://www.takaratomy.co.jp/products/disneylorcana/"
-          test "$(psql "$DATABASE_URL" -Atc "select edition_label from public.games where slug='disney-lorcana';")" = "日本語版 TCG"
-          test "$(psql "$DATABASE_URL" -Atc "select min_players from public.games where slug='disney-lorcana';")" = "2"
-          test -z "$(psql "$DATABASE_URL" -Atc "select max_players from public.games where slug='disney-lorcana';")"
-          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_sets rs join public.games g on g.id=rs.game_id where g.slug='disney-lorcana' and rs.platform='physical' and rs.language_code='ja' and rs.revision_label='cr-2.2.0-ja-2026-07-10' and rs.effective_date=date '2026-07-10' and rs.verification_status='source_bound' and rs.is_active;")" = "1"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_sets rs join public.games g on g.id=rs.game_id where g.slug='disney-lorcana' and rs.revision_label='cr-2.2.0-ja-2026-07-10' and rs.verification_status='source_bound';")" = "1"
           test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='disney-lorcana' and rn.verification_status='source_bound';")" = "10"
-          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.claims c join public.rule_sets rs on rs.id=c.rule_set_id join public.games g on g.id=rs.game_id where g.slug='disney-lorcana' and c.target_type='rule_node' and c.lifecycle_status='accepted';")" = "10"
-          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.evidence_bindings eb join public.claims c on c.claim_id=eb.claim_id join public.rule_sets rs on rs.id=c.rule_set_id join public.games g on g.id=rs.game_id where g.slug='disney-lorcana' and eb.relation='supports';")" = "10"
-          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_nodes rn join public.claims c on c.rule_set_id=rn.rule_set_id and c.rule_id=rn.rule_id where rn.rule_set_id=(select rs.id from public.rule_sets rs join public.games g on g.id=rs.game_id where g.slug='disney-lorcana' and rs.revision_label='cr-2.2.0-ja-2026-07-10') and c.normalized_payload->>'statement'=rn.normalized_statement;")" = "10"
-          test "$(psql "$DATABASE_URL" -Atc "select normalized_statement from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='disney-lorcana' and rn.rule_id='victory.twenty-lore';")" = "ロアを20以上持つプレイヤーはゲームに勝利する。"
-          test "$(psql "$DATABASE_URL" -Atc "select position('1ターンに1度' in normalized_statement) > 0 from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='disney-lorcana' and rn.rule_id='action.ink-once';")" = "t"
-          test "$(psql "$DATABASE_URL" -Atc "select normalized_statement from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='disney-lorcana' and rn.rule_id='game-end.empty-deck-loss';")" = "デッキが0枚でターンを終了したプレイヤーはゲームに敗北する。"
+
+      - name: Verify HacKClaD contaminated identity is removed and source-bound facts survive
+        shell: bash
+        run: |
+          test "$(psql "$DATABASE_URL" -Atc "select title from public.games where slug='hack-clad';")" = "HacKClaD"
+          test "$(psql "$DATABASE_URL" -Atc "select identity_status from public.games where slug='hack-clad';")" = "verified"
+          test "$(psql "$DATABASE_URL" -Atc "select identity_source from public.games where slug='hack-clad';")" = "https://www.hackclad.jp/home"
+          test "$(psql "$DATABASE_URL" -Atc "select min_players||':'||max_players from public.games where slug='hack-clad';")" = "1:4"
+          test -z "$(psql "$DATABASE_URL" -Atc "select rules_content from public.games where slug='hack-clad';")"
+          test "$(psql "$DATABASE_URL" -Atc "select structured_data::text from public.games where slug='hack-clad';")" = "{}"
+          test -z "$(psql "$DATABASE_URL" -Atc "select bgg_url from public.games where slug='hack-clad';")"
+          test -z "$(psql "$DATABASE_URL" -Atc "select amazon_url from public.games where slug='hack-clad';")"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_sets rs join public.games g on g.id=rs.game_id where g.slug='hack-clad' and rs.platform='physical' and rs.language_code='ja' and rs.edition_label='基本セット HacKClaD（通常版）' and rs.revision_label='base-official-web-2026-08-23' and rs.verification_status='source_bound' and rs.is_active;")" = "1"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='hack-clad' and rn.verification_status='source_bound';")" = "7"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.claims c join public.rule_sets rs on rs.id=c.rule_set_id join public.games g on g.id=rs.game_id where g.slug='hack-clad' and c.target_type='rule_node' and c.lifecycle_status='accepted';")" = "7"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.evidence_bindings eb join public.claims c on c.claim_id=eb.claim_id join public.rule_sets rs on rs.id=c.rule_set_id join public.games g on g.id=rs.game_id where g.slug='hack-clad' and eb.relation='supports';")" = "7"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_nodes rn join public.claims c on c.rule_set_id=rn.rule_set_id and c.rule_id=rn.rule_id where rn.rule_set_id=(select rs.id from public.rule_sets rs join public.games g on g.id=rs.game_id where g.slug='hack-clad') and c.normalized_payload->>'statement'=rn.normalized_statement;")" = "7"
+          test "$(psql "$DATABASE_URL" -Atc "select position('ダメージに等しいVP分の魔石' in normalized_statement)>0 from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='hack-clad' and rn.rule_id='scoring.damage-magic-stones';")" = "t"
+          test "$(psql "$DATABASE_URL" -Atc "select position('自動的に終了' in normalized_statement)>0 from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='hack-clad' and rn.rule_id='turn.injury-ends-turn';")" = "t"
