@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import ValidationError
 
 from app.core.rate_limiter import RateLimiter
-from app.models import GameDetail, GameListResponse, GameUpdate
+from app.models import GameDetail, GameListResponse, GamePageDetail, GameUpdate
 from app.models.component_catalog import (
     ComponentDetailResponse,
     ComponentKind,
@@ -244,7 +244,7 @@ async def get_game_rule_graph(
     return graph
 
 
-@router.get("/games/{slug}", response_model=GameDetail)
+@router.get("/games/{slug}", response_model=GamePageDetail)
 async def get_game_details(slug: str, service: GameService = Depends(get_game_service)):
     if should_return_gone(slug):
         raise HTTPException(status_code=status.HTTP_410_GONE, detail="Game record retired after identity repair")

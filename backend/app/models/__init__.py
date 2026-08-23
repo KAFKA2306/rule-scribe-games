@@ -37,11 +37,24 @@ class KeyElement(BaseSchema):
     reason: str
 
 
+class PersonaReview(BaseSchema):
+    persona: str
+    review_text: str
+    rating: float
+
+
 class StructuredData(BaseSchema):
     keywords: list[Keyword] = []
     key_elements: list[KeyElement] = []
     mechanics: list[str] = []
     best_player_count: str | None = None
+
+
+class GamePageStructuredData(StructuredData):
+    pro_tips: list[str] = []
+    rule_mistakes: list[str] = []
+    strategy_analysis: str | None = None
+    persona_reviews: list[PersonaReview] = []
 
 
 class GameDetail(BaseSchema):
@@ -78,6 +91,17 @@ class GameDetail(BaseSchema):
     updated_at: str | None = None
 
     _validate_bga_url = field_validator("bga_url")(validate_bga_url)
+
+
+class GamePageDetail(GameDetail):
+    """Player-facing detail fields retained until canonical presentation covers the catalog."""
+
+    rules_content: str | None = None
+    setup_summary: str | None = None
+    gameplay_summary: str | None = None
+    end_game_summary: str | None = None
+    structured_data: GamePageStructuredData | None = None
+    infographics: dict[str, str] | None = None
 
 
 class GameUpdate(BaseSchema):

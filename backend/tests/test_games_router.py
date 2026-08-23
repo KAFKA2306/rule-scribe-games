@@ -24,7 +24,28 @@ class PublicReadService:
         return [{"id": "game-1", "slug": "example", "title": "Example", "work_id": "work-1"}]
 
     async def get_game_by_slug(self, slug: str):
-        return {"id": "game-1", "slug": slug, "title": "Example", "work_id": "work-1"}
+        return {
+            "id": "game-1",
+            "slug": slug,
+            "title": "Example",
+            "work_id": "work-1",
+            "rules_content": "# Example\n\nDetailed player-facing rules.",
+            "setup_summary": "Set up the example.",
+            "gameplay_summary": "Take turns.",
+            "end_game_summary": "Finish the example.",
+            "structured_data": {
+                "keywords": [],
+                "key_elements": [],
+                "mechanics": [],
+                "best_player_count": None,
+                "strategy_analysis": "Example strategy.",
+                "persona_reviews": [
+                    {"persona": "planner", "review_text": "Readable rules matter.", "rating": 8.0}
+                ],
+                "pro_tips": ["Example tip."],
+                "rule_mistakes": ["Example mistake."],
+            },
+        }
 
 
 def _app_with_service(service):
@@ -40,6 +61,24 @@ def test_missing_game_slug_returns_404_instead_of_response_validation_500():
 
     assert response.status_code == 404
     assert response.json() == {"detail": "Game not found"}
+
+
+def test_game_detail_preserves_player_facing_rule_fields_without_bloating_search():
+    client = TestClient(_app_with_service(PublicReadService()))
+
+    detail = client.get("/api/games/example")
+    assert detail.status_code == 200
+    payload = detail.json()
+    assert payload["rules_content"] == "# Example\n\nDetailed player-facing rules."
+    assert payload["setup_summary"] == "Set up the example."
+    assert payload["gameplay_summary"] == "Take turns."
+    assert payload["end_game_summary"] == "Finish the example."
+    assert payload["structured_data"]["strategy_analysis"] == "Example strategy."
+    assert payload["structured_data"]["persona_reviews"][0]["persona"] == "planner"
+
+    search = client.get("/api/search?q=example")
+    assert search.status_code == 200
+    assert "rules_content" not in search.json()[0]
 
 
 def test_catalog_patch_requires_authentication_before_mutation():
