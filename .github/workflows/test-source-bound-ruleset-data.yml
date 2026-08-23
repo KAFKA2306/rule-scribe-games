@@ -7,6 +7,7 @@ on:
       - "backend/app/db/migrations/033_seed_disney_lorcana_cr_2_2_0_ruleset.sql"
       - "backend/app/db/migrations/034_seed_hackclad_base_ruleset.sql"
       - "backend/app/db/migrations/035_extend_hackclad_base_faq_rules.sql"
+      - "backend/app/db/migrations/036_seed_sky_team_2024_ja_ruleset.sql"
       - ".github/workflows/test-source-bound-ruleset-data.yml"
       - ".github/workflows/test-azul-sintra-ruleset-data.yml"
   push:
@@ -16,6 +17,7 @@ on:
       - "backend/app/db/migrations/033_seed_disney_lorcana_cr_2_2_0_ruleset.sql"
       - "backend/app/db/migrations/034_seed_hackclad_base_ruleset.sql"
       - "backend/app/db/migrations/035_extend_hackclad_base_faq_rules.sql"
+      - "backend/app/db/migrations/036_seed_sky_team_2024_ja_ruleset.sql"
       - ".github/workflows/test-source-bound-ruleset-data.yml"
       - ".github/workflows/test-azul-sintra-ruleset-data.yml"
 
@@ -107,6 +109,18 @@ jobs:
                  'サイバーパンク世界でハッカーとして侵入する別ゲームの説明',2023,2,4,60,
                  'https://boardgamegeek.com/boardgame/385617/hack-clad','https://www.amazon.co.jp/s?k=Hack%20Clad',false
           FROM w;
+
+          WITH w AS (INSERT INTO public.game_works DEFAULT VALUES RETURNING id)
+          INSERT INTO public.games(
+            slug,title,title_ja,work_id,identity_status,source_url,source_trust,content_review_status,
+            rules_content,structured_data,summary,description,min_players,max_players,play_time,amazon_url
+          )
+          SELECT 'sky-team','Sky Team','スカイチーム',id,'unverified','https://www.scorpionmasque.com/en/sky-team','unknown','unknown',
+                 'legacy summary includes generic setup and fuel-exhaustion loss','{"keywords":[{"term":"無言の連携"}]}'::jsonb,
+                 '2人協力型で飛行機を安全に着陸させるダイスプレイスメントゲーム',
+                 'ダイスを配置して飛行機の速度、高度、フラップ、ギアなどを管理する',2,2,20,
+                 'https://www.amazon.co.jp/s?k=%E3%82%B9%E3%82%AB%E3%82%A4%E3%83%81%E3%83%BC%E3%83%A0&tag=bodogemikata-22'
+          FROM w;
           SQL
 
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/010_rule_graph.sql
@@ -123,6 +137,7 @@ jobs:
             psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/033_seed_disney_lorcana_cr_2_2_0_ruleset.sql
             psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/034_seed_hackclad_base_ruleset.sql
             psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/035_extend_hackclad_base_faq_rules.sql
+            psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/036_seed_sky_team_2024_ja_ruleset.sql
           done
 
       - name: Verify Azul Sintra contract remains intact
@@ -162,3 +177,24 @@ jobs:
           test "$(psql "$DATABASE_URL" -Atc "select position('捨て札にした後' in normalized_statement)>0 from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='hack-clad' and rn.rule_id='action.knockback-resolution-order';")" = "t"
           test "$(psql "$DATABASE_URL" -Atc "select normalized_statement from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='hack-clad' and rn.rule_id='condition.multiple-missions';")" = "条件を満たしている場合、複数のミッションを同時に達成できる。"
           test "$(psql "$DATABASE_URL" -Atc "select position('使用したものとして扱う' in normalized_statement)>0 from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='hack-clad' and rn.rule_id='action.card-use-established';")" = "t"
+
+      - name: Verify Sky Team Japanese base-game contract
+        shell: bash
+        run: |
+          test "$(psql "$DATABASE_URL" -Atc "select identity_status from public.games where slug='sky-team';")" = "verified"
+          test "$(psql "$DATABASE_URL" -Atc "select identity_source from public.games where slug='sky-team';")" = "https://sugorokuya.jp/p/sky-team"
+          test "$(psql "$DATABASE_URL" -Atc "select edition_label from public.games where slug='sky-team';")" = "スカイチーム 日本語版（2024年6月）"
+          test "$(psql "$DATABASE_URL" -Atc "select min_players||':'||max_players||':'||play_time||':'||min_age||':'||published_year from public.games where slug='sky-team';")" = "2:2:20:12:2024"
+          test "$(psql "$DATABASE_URL" -Atc "select rules::text from public.games where slug='sky-team';")" = "{}"
+          test -z "$(psql "$DATABASE_URL" -Atc "select rules_content from public.games where slug='sky-team';")"
+          test "$(psql "$DATABASE_URL" -Atc "select structured_data::text from public.games where slug='sky-team';")" = "{}"
+          test "$(psql "$DATABASE_URL" -Atc "select position('bodogemikata-22' in amazon_url)>0 from public.games where slug='sky-team';")" = "t"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_sets rs join public.games g on g.id=rs.game_id where g.slug='sky-team' and rs.platform='physical' and rs.language_code='ja' and rs.edition_label='スカイチーム 日本語版（2024年6月）' and rs.revision_label='landing-procedure-2023-06-06-ja-2024-06' and rs.verification_status='source_bound' and rs.is_active;")" = "1"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='sky-team' and rn.verification_status='source_bound';")" = "13"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.claims c join public.rule_sets rs on rs.id=c.rule_set_id join public.games g on g.id=rs.game_id where g.slug='sky-team' and c.target_type='rule_node' and c.lifecycle_status='accepted';")" = "13"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.evidence_bindings eb join public.claims c on c.claim_id=eb.claim_id join public.rule_sets rs on rs.id=c.rule_set_id join public.games g on g.id=rs.game_id where g.slug='sky-team' and eb.relation='supports';")" = "13"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_nodes rn join public.claims c on c.rule_set_id=rn.rule_set_id and c.rule_id=rn.rule_id where rn.rule_set_id=(select rs.id from public.rule_sets rs join public.games g on g.id=rs.game_id where g.slug='sky-team') and c.normalized_payload->>'statement'=rn.normalized_statement;")" = "13"
+          test "$(psql "$DATABASE_URL" -Atc "select position('上級モジュール用の部品は基本ゲームでは使わない' in normalized_statement)>0 from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='sky-team' and rn.rule_id='setup.montreal-basic';")" = "t"
+          test "$(psql "$DATABASE_URL" -Atc "select position('ラウンド終了まで会話しない' in normalized_statement)>0 from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='sky-team' and rn.rule_id='round.communication';")" = "t"
+          test "$(psql "$DATABASE_URL" -Atc "select position('衝突' in normalized_statement)>0 and position('オーバーシュート' in normalized_statement)>0 from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='sky-team' and rn.rule_id='action.engines';")" = "t"
+          test "$(psql "$DATABASE_URL" -Atc "select position('進入トラック上に飛行機コマが無く' in normalized_statement)>0 and position('完全に水平' in normalized_statement)>0 and position('ブレーキ値より小さければ' in normalized_statement)>0 from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='sky-team' and rn.rule_id='game.victory';")" = "t"
