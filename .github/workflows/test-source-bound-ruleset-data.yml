@@ -8,6 +8,7 @@ on:
       - "backend/app/db/migrations/034_seed_hackclad_base_ruleset.sql"
       - "backend/app/db/migrations/035_extend_hackclad_base_faq_rules.sql"
       - "backend/app/db/migrations/036_seed_sky_team_2024_ja_ruleset.sql"
+      - "backend/app/db/migrations/037_seed_brass_birmingham_2019_ja_ruleset.sql"
       - ".github/workflows/test-source-bound-ruleset-data.yml"
       - ".github/workflows/test-azul-sintra-ruleset-data.yml"
   push:
@@ -18,6 +19,7 @@ on:
       - "backend/app/db/migrations/034_seed_hackclad_base_ruleset.sql"
       - "backend/app/db/migrations/035_extend_hackclad_base_faq_rules.sql"
       - "backend/app/db/migrations/036_seed_sky_team_2024_ja_ruleset.sql"
+      - "backend/app/db/migrations/037_seed_brass_birmingham_2019_ja_ruleset.sql"
       - ".github/workflows/test-source-bound-ruleset-data.yml"
       - ".github/workflows/test-azul-sintra-ruleset-data.yml"
 
@@ -121,6 +123,17 @@ jobs:
                  'ダイスを配置して飛行機の速度、高度、フラップ、ギアなどを管理する',2,2,20,
                  'https://www.amazon.co.jp/s?k=%E3%82%B9%E3%82%AB%E3%82%A4%E3%83%81%E3%83%BC%E3%83%A0&tag=bodogemikata-22'
           FROM w;
+
+          WITH w AS (INSERT INTO public.game_works DEFAULT VALUES RETURNING id)
+          INSERT INTO public.games(
+            slug,title,title_ja,title_en,work_id,identity_status,source_url,source_trust,content_review_status,
+            rules_content,structured_data,summary,description,min_players,max_players,play_time,min_age,published_year
+          )
+          SELECT 'brass-birmingham','Brass Birmingham','ブラス：バーミンガム','Brass: Birmingham',id,'unverified',
+                 'https://boardgamegeek.com/boardgame/224517/brass-birmingham','unknown','unknown',
+                 'legacy rules mix unspecified Brass-era summary','{"keywords":[{"term":"産業革命"}]}'::jsonb,
+                 '産業革命をテーマにした経済ゲーム','運河と鉄道を使う重量級ゲーム',2,4,120,14,2018
+          FROM w;
           SQL
 
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/010_rule_graph.sql
@@ -138,6 +151,7 @@ jobs:
             psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/034_seed_hackclad_base_ruleset.sql
             psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/035_extend_hackclad_base_faq_rules.sql
             psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/036_seed_sky_team_2024_ja_ruleset.sql
+            psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/037_seed_brass_birmingham_2019_ja_ruleset.sql
           done
 
       - name: Verify Azul Sintra contract remains intact
@@ -198,3 +212,23 @@ jobs:
           test "$(psql "$DATABASE_URL" -Atc "select position('ラウンド終了まで会話しない' in normalized_statement)>0 from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='sky-team' and rn.rule_id='round.communication';")" = "t"
           test "$(psql "$DATABASE_URL" -Atc "select position('衝突' in normalized_statement)>0 and position('オーバーシュート' in normalized_statement)>0 from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='sky-team' and rn.rule_id='action.engines';")" = "t"
           test "$(psql "$DATABASE_URL" -Atc "select position('進入トラック上に飛行機コマが無く' in normalized_statement)>0 and position('完全に水平' in normalized_statement)>0 and position('ブレーキ値より小さければ' in normalized_statement)>0 from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='sky-team' and rn.rule_id='game.victory';")" = "t"
+
+      - name: Verify Brass Birmingham Japanese edition contract
+        shell: bash
+        run: |
+          test "$(psql "$DATABASE_URL" -Atc "select identity_status from public.games where slug='brass-birmingham';")" = "verified"
+          test "$(psql "$DATABASE_URL" -Atc "select edition_label from public.games where slug='brass-birmingham';")" = "ブラス：バーミンガム 完全日本語版（2019年11月28日）"
+          test "$(psql "$DATABASE_URL" -Atc "select min_players||':'||max_players||':'||play_time||':'||min_age||':'||published_year from public.games where slug='brass-birmingham';")" = "2:4:120:14:2019"
+          test "$(psql "$DATABASE_URL" -Atc "select rules::text from public.games where slug='brass-birmingham';")" = "{}"
+          test -z "$(psql "$DATABASE_URL" -Atc "select rules_content from public.games where slug='brass-birmingham';")"
+          test "$(psql "$DATABASE_URL" -Atc "select structured_data::text from public.games where slug='brass-birmingham';")" = "{}"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_sets rs join public.games g on g.id=rs.game_id where g.slug='brass-birmingham' and rs.platform='physical' and rs.language_code='ja' and rs.edition_label='ブラス：バーミンガム 完全日本語版（2019年11月28日）' and rs.revision_label='roxley-2018.11.20-ja-2019-11-28' and rs.verification_status='source_bound' and rs.is_active;")" = "1"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='brass-birmingham' and rn.verification_status='source_bound';")" = "14"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.claims c join public.rule_sets rs on rs.id=c.rule_set_id join public.games g on g.id=rs.game_id where g.slug='brass-birmingham' and c.target_type='rule_node' and c.lifecycle_status='accepted';")" = "14"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.evidence_bindings eb join public.claims c on c.claim_id=eb.claim_id join public.rule_sets rs on rs.id=c.rule_set_id join public.games g on g.id=rs.game_id where g.slug='brass-birmingham' and eb.relation='supports';")" = "14"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_nodes rn join public.claims c on c.rule_set_id=rn.rule_set_id and c.rule_id=rn.rule_id where rn.rule_set_id=(select rs.id from public.rule_sets rs join public.games g on g.id=rs.game_id where g.slug='brass-birmingham') and c.normalized_payload->>'statement'=rn.normalized_statement;")" = "14"
+          test "$(psql "$DATABASE_URL" -Atc "select position('運河時代の第1ラウンド' in normalized_statement)>0 from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='brass-birmingham' and rn.rule_id='turn.actions';")" = "t"
+          test "$(psql "$DATABASE_URL" -Atc "select position('合計£15' in normalized_statement)>0 and position('ビール1個' in normalized_statement)>0 from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='brass-birmingham' and rn.rule_id='action.network';")" = "t"
+          test "$(psql "$DATABASE_URL" -Atc "select position('3収入レベル' in normalized_statement)>0 from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='brass-birmingham' and rn.rule_id='action.loan';")" = "t"
+          test "$(psql "$DATABASE_URL" -Atc "select position('ワイルド産業カード1枚' in normalized_statement)>0 from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='brass-birmingham' and rn.rule_id='action.scout';")" = "t"
+          test "$(psql "$DATABASE_URL" -Atc "select position('レベル1産業' in normalized_statement)>0 from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='brass-birmingham' and rn.rule_id='game.scoring';")" = "t"
