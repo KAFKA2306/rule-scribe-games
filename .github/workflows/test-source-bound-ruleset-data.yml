@@ -6,6 +6,7 @@ on:
       - "backend/app/db/migrations/032_seed_azul_sintra_2019_ruleset.sql"
       - "backend/app/db/migrations/033_seed_disney_lorcana_cr_2_2_0_ruleset.sql"
       - "backend/app/db/migrations/034_seed_hackclad_base_ruleset.sql"
+      - "backend/app/db/migrations/035_extend_hackclad_base_faq_rules.sql"
       - ".github/workflows/test-source-bound-ruleset-data.yml"
       - ".github/workflows/test-azul-sintra-ruleset-data.yml"
   push:
@@ -14,6 +15,7 @@ on:
       - "backend/app/db/migrations/032_seed_azul_sintra_2019_ruleset.sql"
       - "backend/app/db/migrations/033_seed_disney_lorcana_cr_2_2_0_ruleset.sql"
       - "backend/app/db/migrations/034_seed_hackclad_base_ruleset.sql"
+      - "backend/app/db/migrations/035_extend_hackclad_base_faq_rules.sql"
       - ".github/workflows/test-source-bound-ruleset-data.yml"
       - ".github/workflows/test-azul-sintra-ruleset-data.yml"
 
@@ -120,6 +122,7 @@ jobs:
             psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/032_seed_azul_sintra_2019_ruleset.sql
             psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/033_seed_disney_lorcana_cr_2_2_0_ruleset.sql
             psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/034_seed_hackclad_base_ruleset.sql
+            psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/035_extend_hackclad_base_faq_rules.sql
           done
 
       - name: Verify Azul Sintra contract remains intact
@@ -149,9 +152,13 @@ jobs:
           test -z "$(psql "$DATABASE_URL" -Atc "select bgg_url from public.games where slug='hack-clad';")"
           test -z "$(psql "$DATABASE_URL" -Atc "select amazon_url from public.games where slug='hack-clad';")"
           test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_sets rs join public.games g on g.id=rs.game_id where g.slug='hack-clad' and rs.platform='physical' and rs.language_code='ja' and rs.edition_label='基本セット HacKClaD（通常版）' and rs.revision_label='base-official-web-2026-08-23' and rs.verification_status='source_bound' and rs.is_active;")" = "1"
-          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='hack-clad' and rn.verification_status='source_bound';")" = "7"
-          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.claims c join public.rule_sets rs on rs.id=c.rule_set_id join public.games g on g.id=rs.game_id where g.slug='hack-clad' and c.target_type='rule_node' and c.lifecycle_status='accepted';")" = "7"
-          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.evidence_bindings eb join public.claims c on c.claim_id=eb.claim_id join public.rule_sets rs on rs.id=c.rule_set_id join public.games g on g.id=rs.game_id where g.slug='hack-clad' and eb.relation='supports';")" = "7"
-          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_nodes rn join public.claims c on c.rule_set_id=rn.rule_set_id and c.rule_id=rn.rule_id where rn.rule_set_id=(select rs.id from public.rule_sets rs join public.games g on g.id=rs.game_id where g.slug='hack-clad') and c.normalized_payload->>'statement'=rn.normalized_statement;")" = "7"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='hack-clad' and rn.verification_status='source_bound';")" = "11"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.claims c join public.rule_sets rs on rs.id=c.rule_set_id join public.games g on g.id=rs.game_id where g.slug='hack-clad' and c.target_type='rule_node' and c.lifecycle_status='accepted';")" = "11"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.evidence_bindings eb join public.claims c on c.claim_id=eb.claim_id join public.rule_sets rs on rs.id=c.rule_set_id join public.games g on g.id=rs.game_id where g.slug='hack-clad' and eb.relation='supports';")" = "11"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_nodes rn join public.claims c on c.rule_set_id=rn.rule_set_id and c.rule_id=rn.rule_id where rn.rule_set_id=(select rs.id from public.rule_sets rs join public.games g on g.id=rs.game_id where g.slug='hack-clad') and c.normalized_payload->>'statement'=rn.normalized_statement;")" = "11"
           test "$(psql "$DATABASE_URL" -Atc "select position('ダメージに等しいVP分の魔石' in normalized_statement)>0 from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='hack-clad' and rn.rule_id='scoring.damage-magic-stones';")" = "t"
           test "$(psql "$DATABASE_URL" -Atc "select position('自動的に終了' in normalized_statement)>0 from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='hack-clad' and rn.rule_id='turn.injury-ends-turn';")" = "t"
+          test "$(psql "$DATABASE_URL" -Atc "select position('移動攻撃として扱い' in normalized_statement)>0 from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='hack-clad' and rn.rule_id='reaction.effect-caused-movement';")" = "t"
+          test "$(psql "$DATABASE_URL" -Atc "select position('捨て札にした後' in normalized_statement)>0 from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='hack-clad' and rn.rule_id='action.knockback-resolution-order';")" = "t"
+          test "$(psql "$DATABASE_URL" -Atc "select normalized_statement from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='hack-clad' and rn.rule_id='condition.multiple-missions';")" = "条件を満たしている場合、複数のミッションを同時に達成できる。"
+          test "$(psql "$DATABASE_URL" -Atc "select position('使用したものとして扱う' in normalized_statement)>0 from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='hack-clad' and rn.rule_id='action.card-use-established';")" = "t"
