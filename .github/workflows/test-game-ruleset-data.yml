@@ -10,6 +10,7 @@ on:
       - "backend/app/db/migrations/026_seed_catan_2026_ruleset.sql"
       - "backend/app/db/migrations/028_seed_dune_uprising_ruleset.sql"
       - "backend/app/db/migrations/029_seed_power_grid_recharged_ruleset.sql"
+      - "backend/app/db/migrations/030_seed_jaipur_2020_ruleset.sql"
       - ".github/workflows/test-game-ruleset-data.yml"
   push:
     branches: [main]
@@ -21,6 +22,7 @@ on:
       - "backend/app/db/migrations/026_seed_catan_2026_ruleset.sql"
       - "backend/app/db/migrations/028_seed_dune_uprising_ruleset.sql"
       - "backend/app/db/migrations/029_seed_power_grid_recharged_ruleset.sql"
+      - "backend/app/db/migrations/030_seed_jaipur_2020_ruleset.sql"
       - ".github/workflows/test-game-ruleset-data.yml"
 
 permissions:
@@ -96,6 +98,10 @@ jobs:
           INSERT INTO public.game_works DEFAULT VALUES;
           INSERT INTO public.games(slug,title,work_id,identity_status,source_url,source_trust,rules_content)
           SELECT 'power-grid','電力会社',id,'unverified',NULL,'unknown','legacy player-facing Power Grid rules retained until canonical projection cutover' FROM public.game_works ORDER BY id DESC LIMIT 1;
+
+          INSERT INTO public.game_works DEFAULT VALUES;
+          INSERT INTO public.games(slug,title,work_id,identity_status,source_url,source_trust,rules_content)
+          SELECT 'jaipur','Jaipur',id,'unverified','https://www.spacecowboys.fr/jaipur','unknown','legacy player-facing Jaipur rules retained until canonical projection cutover' FROM public.game_works ORDER BY id DESC LIMIT 1;
           SQL
 
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/010_rule_graph.sql
@@ -112,6 +118,7 @@ jobs:
             psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/026_seed_catan_2026_ruleset.sql
             psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/028_seed_dune_uprising_ruleset.sql
             psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/029_seed_power_grid_recharged_ruleset.sql
+            psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/030_seed_jaipur_2020_ruleset.sql
           done
 
       - name: Verify Pili Pili edition isolation remains intact
@@ -187,3 +194,17 @@ jobs:
           test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_nodes rn join public.claims c on c.rule_set_id=rn.rule_set_id and c.rule_id=rn.rule_id where rn.rule_set_id=(select rs.id from public.rule_sets rs join public.games g on g.id=rs.game_id where g.slug='power-grid') and c.normalized_payload->>'statement'=rn.normalized_statement;")" = "10"
           test "$(psql "$DATABASE_URL" -Atc "select normalized_statement from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='power-grid' and rn.rule_id='game-end.threshold';")" = "建設フェイズ終了後、誰かが人数別の終了都市数以上へ接続していればゲーム終了となる。終了都市数は2人戦18、3〜4人戦17、5人戦15、6人戦14。"
           test "$(psql "$DATABASE_URL" -Atc "select normalized_statement from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='power-grid' and rn.rule_id='victory.powered-cities';")" = "ゲーム終了時、所有する発電所で最も多くの自分の都市へ電力を供給できるプレイヤーが勝つ。同数なら残金が最も多いプレイヤーが勝つ。"
+
+      - name: Verify Jaipur 2020 Japanese identity, projection inputs, and evidence
+        shell: bash
+        run: |
+          test "$(psql "$DATABASE_URL" -Atc "select identity_status from public.games where slug='jaipur';")" = "verified"
+          test "$(psql "$DATABASE_URL" -Atc "select edition_label from public.games where slug='jaipur';")" = "ホビージャパン日本語版 (2020 SPACE Cowboys edition)"
+          test "$(psql "$DATABASE_URL" -Atc "select identity_source from public.games where slug='jaipur';")" = "https://hobbyjapan.games/jaipur/"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_sets rs join public.games g on g.id=rs.game_id where g.slug='jaipur' and rs.platform='physical' and rs.language_code='ja' and rs.revision_label='2020-space-cowboys-ja' and rs.verification_status='source_bound';")" = "1"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='jaipur' and rn.verification_status='source_bound';")" = "11"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.claims c join public.rule_sets rs on rs.id=c.rule_set_id join public.games g on g.id=rs.game_id where g.slug='jaipur' and c.target_type='rule_node' and c.lifecycle_status='accepted';")" = "11"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.evidence_bindings eb join public.claims c on c.claim_id=eb.claim_id join public.rule_sets rs on rs.id=c.rule_set_id join public.games g on g.id=rs.game_id where g.slug='jaipur' and eb.relation='supports';")" = "11"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_nodes rn join public.claims c on c.rule_set_id=rn.rule_set_id and c.rule_id=rn.rule_id where rn.rule_set_id=(select rs.id from public.rule_sets rs join public.games g on g.id=rs.game_id where g.slug='jaipur') and c.normalized_payload->>'statement'=rn.normalized_statement;")" = "11"
+          test "$(psql "$DATABASE_URL" -Atc "select normalized_statement from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='jaipur' and rn.rule_id='setup.market-and-hands';")" = "市場には最初にラクダ3枚を表向きで置く。残りのカードを混ぜて各プレイヤーへ5枚ずつ配り、山札から2枚を市場へ追加して5枚にする。その後、各プレイヤーは手札にあるラクダをすべて自分の群れへ移す。ラクダを移した後に手札を5枚へ補充はしない。"
+          test "$(psql "$DATABASE_URL" -Atc "select normalized_statement from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='jaipur' and rn.rule_id='round-end.market-or-tokens';")" = "ラウンドは、6種類の商品トークンのうち3種類の山がなくなった場合、または山札のカードが足りず市場を5枚まで補充できない場合にただちに終了する。"
