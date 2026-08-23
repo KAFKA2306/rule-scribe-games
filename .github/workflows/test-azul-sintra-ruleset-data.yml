@@ -1,0 +1,94 @@
+name: Azul Sintra RuleSet data contract
+
+on:
+  pull_request:
+    paths:
+      - "backend/app/db/migrations/032_seed_azul_sintra_2019_ruleset.sql"
+      - ".github/workflows/test-azul-sintra-ruleset-data.yml"
+  push:
+    branches: [main]
+    paths:
+      - "backend/app/db/migrations/032_seed_azul_sintra_2019_ruleset.sql"
+      - ".github/workflows/test-azul-sintra-ruleset-data.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  ruleset-data:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: azul_sintra_ruleset_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d azul_sintra_ruleset_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/azul_sintra_ruleset_test
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Build canonical schema and apply migration twice
+        shell: bash
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 <<'SQL'
+          CREATE TABLE public.game_works (id uuid PRIMARY KEY DEFAULT gen_random_uuid());
+          CREATE TABLE public.games (
+            id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+            slug text NOT NULL UNIQUE,
+            title text,
+            work_id uuid REFERENCES public.game_works(id),
+            identity_status text NOT NULL DEFAULT 'unverified',
+            identity_source text,
+            source_url text,
+            source_trust text,
+            rules_content text,
+            edition_label text,
+            language_code text,
+            publisher text,
+            source_revision text,
+            min_players integer,
+            max_players integer,
+            play_time integer,
+            min_age integer,
+            published_year integer,
+            updated_at timestamptz NOT NULL DEFAULT now()
+          );
+          INSERT INTO public.game_works DEFAULT VALUES;
+          INSERT INTO public.games(slug,title,work_id,identity_status,source_url,source_trust,rules_content,published_year,min_players,max_players,min_age,play_time)
+          SELECT 'azul-stained-glass-of-sintra','Azul: Stained Glass of Sintra',id,'verified','https://hobbyjapan.games/azul_stained_glass_of_sintra/','official_publisher','legacy summary incorrectly defers completed-pattern scoring to round end',2018,2,4,8,30
+          FROM public.game_works ORDER BY id DESC LIMIT 1;
+          SQL
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/010_rule_graph.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/011_concept_taxonomy.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/013_ruleset_identity.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/014_component_catalog.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/015_claim_evidence.sql
+          for pass in 1 2; do
+            psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/032_seed_azul_sintra_2019_ruleset.sql
+          done
+
+      - name: Verify identity, projection inputs, evidence, and corrected scoring timing
+        shell: bash
+        run: |
+          test "$(psql "$DATABASE_URL" -Atc "select identity_status from public.games where slug='azul-stained-glass-of-sintra';")" = "verified"
+          test "$(psql "$DATABASE_URL" -Atc "select edition_label from public.games where slug='azul-stained-glass-of-sintra';")" = "ホビージャパン日本語版 (2019)"
+          test "$(psql "$DATABASE_URL" -Atc "select identity_source from public.games where slug='azul-stained-glass-of-sintra';")" = "https://hobbyjapan.games/azul_stained_glass_of_sintra/"
+          test "$(psql "$DATABASE_URL" -Atc "select published_year from public.games where slug='azul-stained-glass-of-sintra';")" = "2019"
+          test "$(psql "$DATABASE_URL" -Atc "select play_time from public.games where slug='azul-stained-glass-of-sintra';")" = "45"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_sets rs join public.games g on g.id=rs.game_id where g.slug='azul-stained-glass-of-sintra' and rs.platform='physical' and rs.language_code='ja' and rs.revision_label='2019-hobbyjapan-ja' and rs.verification_status='source_bound';")" = "1"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='azul-stained-glass-of-sintra' and rn.verification_status='source_bound';")" = "10"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.claims c join public.rule_sets rs on rs.id=c.rule_set_id join public.games g on g.id=rs.game_id where g.slug='azul-stained-glass-of-sintra' and c.target_type='rule_node' and c.lifecycle_status='accepted';")" = "10"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.evidence_bindings eb join public.claims c on c.claim_id=eb.claim_id join public.rule_sets rs on rs.id=c.rule_set_id join public.games g on g.id=rs.game_id where g.slug='azul-stained-glass-of-sintra' and eb.relation='supports';")" = "10"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_nodes rn join public.claims c on c.rule_set_id=rn.rule_set_id and c.rule_id=rn.rule_id where rn.rule_set_id=(select rs.id from public.rule_sets rs join public.games g on g.id=rs.game_id where g.slug='azul-stained-glass-of-sintra') and c.normalized_payload->>'statement'=rn.normalized_statement;")" = "10"
+          test "$(psql "$DATABASE_URL" -Atc "select normalized_statement from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='azul-stained-glass-of-sintra' and rn.rule_id='game.six-rounds';")" = "ゲームは全6ラウンドで行い、第6ラウンド終了後に最終得点計算を行う。"
+          test "$(psql "$DATABASE_URL" -Atc "select position('その手番中にただちに完成処理' in normalized_statement) > 0 from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='azul-stained-glass-of-sintra' and rn.rule_id='scoring.complete-pattern-immediately';")" = "t"
