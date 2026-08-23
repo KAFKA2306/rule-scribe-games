@@ -26,12 +26,11 @@ BEGIN
   SELECT id,work_id INTO v_game_id,v_work_id FROM public.games WHERE slug='hack-clad' LIMIT 1;
   IF v_game_id IS NULL OR v_work_id IS NULL THEN RAISE EXCEPTION 'Canonical HacKClaD Game/Work row is required'; END IF;
 
-  -- Remove the contaminated identity/rules that belonged to an unrelated BOOTH title.
   UPDATE public.games SET
     title='HacKClaD',title_ja='HacKClaD',title_en='HacKClaD',
     description='フィールドを暴れまわる怪物「クラッド」と戦い、名声を競うデッキ構築型戦略シミュレーションゲーム。',
     summary='予知されたクラッドの行動に合わせてアクションを組み立て、魔石を獲得しながらキャラクター固有のスキルデッキを成長させる。',
-    rules=NULL,rules_content=NULL,structured_data='{}'::jsonb,setup_summary=NULL,gameplay_summary=NULL,end_game_summary=NULL,
+    rules='{}'::jsonb,rules_content=NULL,structured_data='{}'::jsonb,setup_summary=NULL,gameplay_summary=NULL,end_game_summary=NULL,
     identity_status='verified',identity_source='https://www.hackclad.jp/home',source_url='https://www.hackclad.jp/home',official_url='https://www.hackclad.jp/home',source_trust='official_publisher',content_review_status='review_required',is_official=true,
     edition_label='基本セット HacKClaD（通常版）',language_code='ja',publisher='SUSABI GAMES',source_revision='Official website + base-rules FAQ; audited 2026-08-23',
     min_players=1,max_players=4,play_time=NULL,published_year=NULL,bgg_url=NULL,amazon_url=NULL,updated_at=now()
