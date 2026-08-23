@@ -9,6 +9,7 @@ on:
       - "backend/app/db/migrations/025_seed_splendor_2024_ruleset.sql"
       - "backend/app/db/migrations/026_seed_catan_2026_ruleset.sql"
       - "backend/app/db/migrations/028_seed_dune_uprising_ruleset.sql"
+      - "backend/app/db/migrations/029_seed_power_grid_recharged_ruleset.sql"
       - ".github/workflows/test-game-ruleset-data.yml"
   push:
     branches: [main]
@@ -19,6 +20,7 @@ on:
       - "backend/app/db/migrations/025_seed_splendor_2024_ruleset.sql"
       - "backend/app/db/migrations/026_seed_catan_2026_ruleset.sql"
       - "backend/app/db/migrations/028_seed_dune_uprising_ruleset.sql"
+      - "backend/app/db/migrations/029_seed_power_grid_recharged_ruleset.sql"
       - ".github/workflows/test-game-ruleset-data.yml"
 
 permissions:
@@ -90,6 +92,10 @@ jobs:
           INSERT INTO public.game_works DEFAULT VALUES;
           INSERT INTO public.games(slug,title,work_id,identity_status,source_url,source_trust,rules_content)
           SELECT 'dune-imperium-uprising','Dune: Imperium - Uprising',id,'unverified','https://www.direwolfdigital.com/dune-imperium-uprising/','unknown','legacy player-facing Uprising rules retained until canonical projection cutover' FROM public.game_works ORDER BY id DESC LIMIT 1;
+
+          INSERT INTO public.game_works DEFAULT VALUES;
+          INSERT INTO public.games(slug,title,work_id,identity_status,source_url,source_trust,rules_content)
+          SELECT 'power-grid','電力会社',id,'unverified',NULL,'unknown','legacy player-facing Power Grid rules retained until canonical projection cutover' FROM public.game_works ORDER BY id DESC LIMIT 1;
           SQL
 
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/010_rule_graph.sql
@@ -105,6 +111,7 @@ jobs:
             psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/025_seed_splendor_2024_ruleset.sql
             psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/026_seed_catan_2026_ruleset.sql
             psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/028_seed_dune_uprising_ruleset.sql
+            psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/029_seed_power_grid_recharged_ruleset.sql
           done
 
       - name: Verify Pili Pili edition isolation remains intact
@@ -166,3 +173,17 @@ jobs:
           test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_nodes rn join public.claims c on c.rule_set_id=rn.rule_set_id and c.rule_id=rn.rule_id where rn.rule_set_id=(select rs.id from public.rule_sets rs join public.games g on g.id=rs.game_id where g.slug='dune-imperium-uprising') and c.normalized_payload->>'statement'=rn.normalized_statement;")" = "12"
           test "$(psql "$DATABASE_URL" -Atc "select normalized_statement from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='dune-imperium-uprising' and rn.rule_id='game-end.trigger';")" = "ラウンド終了時にいずれかのプレイヤーが勝利ポイント10点以上に到達している、または紛争デッキが空ならゲームを終了する。"
           test "$(psql "$DATABASE_URL" -Atc "select normalized_statement from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='dune-imperium-uprising' and rn.rule_id='variant.choam-module-boundary';")" = "CHOAM契約は任意のモジュールである。CHOAMモジュールを使わないゲームでは、契約アイコンを解決すると契約を取る代わりに2ソラリを得る。"
+
+      - name: Verify Power Grid Recharged Japanese identity, projection inputs, and evidence
+        shell: bash
+        run: |
+          test "$(psql "$DATABASE_URL" -Atc "select identity_status from public.games where slug='power-grid';")" = "verified"
+          test "$(psql "$DATABASE_URL" -Atc "select edition_label from public.games where slug='power-grid';")" = "電力会社 充電完了！ 完全日本語版 (2019 Recharged)"
+          test "$(psql "$DATABASE_URL" -Atc "select identity_source from public.games where slug='power-grid';")" = "https://arclightgames.jp/product/%E9%9B%BB%E5%8A%9B%E4%BC%9A%E7%A4%BE%E5%85%85%E9%9B%BB%E5%AE%8C%E4%BA%86%EF%BC%81/"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_sets rs join public.games g on g.id=rs.game_id where g.slug='power-grid' and rs.platform='physical' and rs.language_code='ja' and rs.revision_label='2019-recharged' and rs.verification_status='source_bound';")" = "1"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='power-grid' and rn.verification_status='source_bound';")" = "10"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.claims c join public.rule_sets rs on rs.id=c.rule_set_id join public.games g on g.id=rs.game_id where g.slug='power-grid' and c.target_type='rule_node' and c.lifecycle_status='accepted';")" = "10"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.evidence_bindings eb join public.claims c on c.claim_id=eb.claim_id join public.rule_sets rs on rs.id=c.rule_set_id join public.games g on g.id=rs.game_id where g.slug='power-grid' and eb.relation='supports';")" = "10"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_nodes rn join public.claims c on c.rule_set_id=rn.rule_set_id and c.rule_id=rn.rule_id where rn.rule_set_id=(select rs.id from public.rule_sets rs join public.games g on g.id=rs.game_id where g.slug='power-grid') and c.normalized_payload->>'statement'=rn.normalized_statement;")" = "10"
+          test "$(psql "$DATABASE_URL" -Atc "select normalized_statement from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='power-grid' and rn.rule_id='game-end.threshold';")" = "建設フェイズ終了後、誰かが人数別の終了都市数以上へ接続していればゲーム終了となる。終了都市数は2人戦18、3〜4人戦17、5人戦15、6人戦14。"
+          test "$(psql "$DATABASE_URL" -Atc "select normalized_statement from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='power-grid' and rn.rule_id='victory.powered-cities';")" = "ゲーム終了時、所有する発電所で最も多くの自分の都市へ電力を供給できるプレイヤーが勝つ。同数なら残金が最も多いプレイヤーが勝つ。"
