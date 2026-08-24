@@ -47,7 +47,7 @@ BEGIN
     rule_set_id,rule_id,node_type,normalized_statement,sequence,verification_status,
     source_claim_ref,evidence_ref,source_url,source_locator,metadata
   ) VALUES
-    (v_ruleset_id,'gameplay.red-resource-icon.discard','rule','赤枠の資源アイコンは、対象プレイヤーが示された資源を保有している場合、その資源1個を破棄させる。対象プレイヤーがその資源を保有していない場合、破棄は発生しない。',59,'source_bound','tm-dice:rule:gameplay.red-resource-icon.discard','tm-dice:binding:gameplay.red-resource-icon.discard','https://arclightgames.jp/wp-content/uploads/2023/12/3086b3fad2b13c82efd8eec9cd9907b9.pdf','tm-dice:errata:red-resource-icon-discard','{"errata":true,"scope":"base_game_icon"}'::jsonb)
+    (v_ruleset_id,'gameplay.red-resource-icon.discard','effect','赤枠の資源アイコンは、対象プレイヤーが示された資源を保有している場合、その資源1個を破棄させる。対象プレイヤーがその資源を保有していない場合、破棄は発生しない。',59,'source_bound','tm-dice:rule:gameplay.red-resource-icon.discard','tm-dice:binding:gameplay.red-resource-icon.discard','https://arclightgames.jp/wp-content/uploads/2023/12/3086b3fad2b13c82efd8eec9cd9907b9.pdf','tm-dice:errata:red-resource-icon-discard','{"errata":true,"scope":"base_game_icon"}'::jsonb)
   ON CONFLICT(rule_set_id,rule_id) DO UPDATE SET
     node_type=EXCLUDED.node_type,
     normalized_statement=EXCLUDED.normalized_statement,
