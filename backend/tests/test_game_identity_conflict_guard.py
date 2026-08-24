@@ -2,14 +2,12 @@ import pytest
 from fastapi import HTTPException
 
 from app.main import game_seo_page
+from app.models import GameUpdate
 from app.routers.games import get_game_details, update_game
 from app.services.search_visibility import has_known_identity_conflict
 
 
 class _MutationMustNotRun:
-    async def update_game_content(self, *_args, **_kwargs):
-        pytest.fail("known identity conflicts must be rejected before regeneration")
-
     async def update_game_manual(self, *_args, **_kwargs):
         pytest.fail("known identity conflicts must be rejected before manual update")
 
@@ -20,13 +18,11 @@ class _ReadMustNotRun:
 
 
 @pytest.mark.asyncio
-async def test_known_identity_conflict_blocks_regeneration() -> None:
+async def test_known_identity_conflict_blocks_manual_update() -> None:
     with pytest.raises(HTTPException) as exc_info:
         await update_game(
             slug="game",
-            game_update=None,
-            regenerate=True,
-            fill_missing_only=False,
+            game_update=GameUpdate(title="replacement"),
             editor={"id": "editor"},
             service=_MutationMustNotRun(),
         )
