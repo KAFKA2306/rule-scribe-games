@@ -22,6 +22,11 @@
       "source": "/games/heart-of-crown",
       "destination": "/games/heart-of-crown-2nd-edition",
       "permanent": true
+    },
+    {
+      "source": "/games/icefall",
+      "destination": "/games/ice-fall",
+      "permanent": true
     }
   ],
   "rewrites": [
