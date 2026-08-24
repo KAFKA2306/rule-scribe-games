@@ -12,6 +12,11 @@
       "source": "/games/3",
       "destination": "/games/3-second-try",
       "permanent": true
+    },
+    {
+      "source": "/games/little-town-builders",
+      "destination": "/games/little-town",
+      "permanent": true
     }
   ],
   "rewrites": [
