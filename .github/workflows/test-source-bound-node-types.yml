@@ -1,0 +1,52 @@
+name: Source-bound RuleNode type contract
+
+on:
+  pull_request:
+    paths:
+      - "backend/app/db/migrations/*.sql"
+      - ".github/workflows/test-source-bound-node-types.yml"
+  push:
+    branches: [main]
+    paths:
+      - "backend/app/db/migrations/*.sql"
+      - ".github/workflows/test-source-bound-node-types.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  node-types:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+      - name: Reject RuleNode types outside the canonical schema
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+          import sys
+
+          allowed = {
+              "phase", "turn", "action", "condition", "effect", "setup",
+              "scoring", "round_end", "game_end", "victory", "exception",
+              "targeting", "conflict_resolution", "variant",
+          }
+          pattern = re.compile(r"\(v_ruleset_id\s*,\s*'[^']+'\s*,\s*'([^']+)'")
+          errors = []
+
+          for path in sorted(Path("backend/app/db/migrations").glob("[0-9][0-9][0-9]_*.sql")):
+              if int(path.name[:3]) < 32:
+                  continue
+              text = path.read_text(encoding="utf-8")
+              if "source_bound" not in text:
+                  continue
+              for node_type in pattern.findall(text):
+                  if node_type not in allowed:
+                      errors.append(f"{path}: invalid RuleNode node_type={node_type!r}")
+
+          if errors:
+              print("\n".join(errors), file=sys.stderr)
+              raise SystemExit(1)
+
+          print("All literal source-bound RuleNode types match the canonical schema.")
