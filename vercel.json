@@ -7,6 +7,11 @@
       "source": "/games/hackclad",
       "destination": "/games/hack-clad",
       "permanent": true
+    },
+    {
+      "source": "/games/3",
+      "destination": "/games/3-second-try",
+      "permanent": true
     }
   ],
   "rewrites": [
