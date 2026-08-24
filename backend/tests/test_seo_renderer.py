@@ -98,16 +98,14 @@ async def test_game_ssr_replaces_metadata_and_escapes_db_content(
     assert "\\u003cscript" in rendered
 
 
-@pytest.mark.parametrize("slug", ["game", "hack-clad"])
 @pytest.mark.asyncio
-async def test_known_mixed_game_records_are_noindex(
+async def test_known_mixed_game_record_is_noindex(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
-    slug: str,
 ) -> None:
     async def game(_slug: str):
         return {
-            "slug": slug,
+            "slug": "game",
             "title": "Mixed record",
             "identity_status": "unverified",
             "summary": "mixed identity fixture",
@@ -124,7 +122,7 @@ async def test_known_mixed_game_records_are_noindex(
     monkeypatch.setattr(seo_renderer, "get_by_slug", game)
     monkeypatch.setenv("LAMBDA_TASK_ROOT", str(tmp_path))
 
-    rendered = await seo_renderer.generate_seo_html(slug)
+    rendered = await seo_renderer.generate_seo_html("game")
 
     assert rendered is not None
     assert '<meta name="robots" content="noindex, follow" />' in rendered

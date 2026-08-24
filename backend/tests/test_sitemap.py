@@ -65,12 +65,11 @@ async def test_invalid_game_slugs_are_not_emitted(monkeypatch: pytest.MonkeyPatc
 
 
 @pytest.mark.asyncio
-async def test_known_mixed_game_records_are_not_emitted(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_retired_mixed_game_record_is_not_emitted(monkeypatch: pytest.MonkeyPatch) -> None:
     async def fake_list_for_sitemap() -> list[dict[str, str | None]]:
         return [
             {"slug": "game", "title": "Mixed", "updated_at": None, "image_url": None},
-            {"slug": "hack-clad", "title": "Mixed Hack Clad", "updated_at": None, "image_url": None},
-            {"slug": "hackclad", "title": "HacKClaD", "updated_at": None, "image_url": None},
+            {"slug": "hack-clad", "title": "HacKClaD", "updated_at": None, "image_url": None},
             {"slug": "raise-your-goblets", "title": "Raise Your Goblets", "updated_at": None, "image_url": None},
         ]
 
@@ -80,6 +79,5 @@ async def test_known_mixed_game_records_are_not_emitted(monkeypatch: pytest.Monk
     xml_text = await sitemap.get_sitemap_xml()
 
     assert "https://example.test/games/game" not in xml_text
-    assert "https://example.test/games/hack-clad" not in xml_text
-    assert "https://example.test/games/hackclad" in xml_text
+    assert "https://example.test/games/hack-clad" in xml_text
     assert "https://example.test/games/raise-your-goblets" in xml_text
