@@ -7,6 +7,7 @@ EXCLUDED_GAME_SLUGS = frozenset({
     "3",
     "little-town-builders",
     "heart-of-crown",
+    "icefall",
 })
 
 # `game` mixed two different games and has no single correct canonical target.
@@ -14,6 +15,7 @@ EXCLUDED_GAME_SLUGS = frozenset({
 # `3` is a superseded duplicate of the source-backed `3-second-try` work.
 # `little-town-builders` is a superseded duplicate of verified `little-town`.
 # `heart-of-crown` duplicates the explicitly edition-scoped `heart-of-crown-2nd-edition` record.
+# `icefall` points to an unrelated Game Market product and duplicates the repaired `ice-fall` title.
 # Public reads must not continue serving retired records as canonical content.
 GONE_GAME_SLUGS = frozenset({
     "game",
@@ -21,6 +23,7 @@ GONE_GAME_SLUGS = frozenset({
     "3",
     "little-town-builders",
     "heart-of-crown",
+    "icefall",
 })
 
 
