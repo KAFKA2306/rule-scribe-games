@@ -76,3 +76,57 @@ def audit_title_work_coherence(
             )
 
     return findings
+
+
+def audit_duplicate_title_candidates(games: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Find exact normalized titles that are attached to multiple canonical works.
+
+    This is a candidate audit, not a merge rule. Exact title equality can still
+    represent different editions or products, so every result remains
+    review_required until stable identity evidence establishes a canonical target.
+    """
+    rows_by_title: dict[str, list[dict[str, str]]] = defaultdict(list)
+
+    for game in games:
+        game_id = str(game.get("id") or "")
+        work_id = str(game.get("work_id") or "")
+        slug = str(game.get("slug") or "")
+        if not game_id or not work_id or not slug:
+            continue
+
+        seen_for_game: set[str] = set()
+        for field in _TITLE_FIELDS:
+            raw_value = game.get(field)
+            if not raw_value:
+                continue
+            normalized = _normalize_title(str(raw_value))
+            if not normalized or normalized in seen_for_game:
+                continue
+            seen_for_game.add(normalized)
+            rows_by_title[normalized].append(
+                {
+                    "game_id": game_id,
+                    "work_id": work_id,
+                    "slug": slug,
+                    "field": field,
+                    "value": str(raw_value),
+                }
+            )
+
+    findings: list[dict[str, Any]] = []
+    for normalized_title, rows in sorted(rows_by_title.items()):
+        work_ids = sorted({row["work_id"] for row in rows})
+        if len(work_ids) < 2:
+            continue
+
+        findings.append(
+            {
+                "normalized_title": normalized_title,
+                "status": "review_required",
+                "reason": "exact_title_shared_across_multiple_works",
+                "work_ids": work_ids,
+                "candidates": sorted(rows, key=lambda row: (row["slug"], row["field"])),
+            }
+        )
+
+    return findings
