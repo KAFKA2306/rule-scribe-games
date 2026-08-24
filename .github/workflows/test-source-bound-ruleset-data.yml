@@ -209,7 +209,7 @@ jobs:
           test "$(psql "$DATABASE_URL" -Atc "select position('捨て札にした後' in normalized_statement)>0 from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='hack-clad' and rn.rule_id='action.knockback-resolution-order';")" = "t"
           test "$(psql "$DATABASE_URL" -Atc "select normalized_statement from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='hack-clad' and rn.rule_id='condition.multiple-missions';")" = "条件を満たしている場合、複数のミッションを同時に達成できる。"
           test "$(psql "$DATABASE_URL" -Atc "select position('使用したものとして扱う' in normalized_statement)>0 from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='hack-clad' and rn.rule_id='action.card-use-established';")" = "t"
-          test "$(psql "$DATABASE_URL" -Atc "select position('第9ラウンド' in normalized_statement)>0 from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='hack-clad' and rn.rule_id='game.round-9-end';")" = "t"
+          test "$(psql "$DATABASE_URL" -Atc "select position('第9ラウンド' in normalized_statement)>0 from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='hack-clad' and rn.rule_id='game.end-round-9';")" = "t"
 
       - name: Verify Sky Team Japanese base-game contract
         shell: bash
