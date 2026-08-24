@@ -3,6 +3,7 @@ from fastapi import HTTPException
 
 from app.main import game_seo_page
 from app.routers.games import get_game_details, update_game
+from app.services.search_visibility import has_known_identity_conflict
 
 
 class _MutationMustNotRun:
@@ -19,11 +20,10 @@ class _ReadMustNotRun:
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("slug", ["game", "hack-clad"])
-async def test_known_identity_conflict_blocks_regeneration(slug: str) -> None:
+async def test_known_identity_conflict_blocks_regeneration() -> None:
     with pytest.raises(HTTPException) as exc_info:
         await update_game(
-            slug=slug,
+            slug="game",
             game_update=None,
             regenerate=True,
             fill_missing_only=False,
@@ -33,6 +33,10 @@ async def test_known_identity_conflict_blocks_regeneration(slug: str) -> None:
 
     assert exc_info.value.status_code == 409
     assert exc_info.value.detail == "Game identity conflict requires reviewed repair before mutation"
+
+
+def test_repaired_hackclad_is_not_kept_in_identity_conflict_registry() -> None:
+    assert has_known_identity_conflict("hack-clad") is False
 
 
 @pytest.mark.asyncio
