@@ -3,25 +3,13 @@ name: Source-bound RuleSet data contract
 on:
   pull_request:
     paths:
-      - "backend/app/db/migrations/032_seed_azul_sintra_2019_ruleset.sql"
-      - "backend/app/db/migrations/033_seed_disney_lorcana_cr_2_2_0_ruleset.sql"
-      - "backend/app/db/migrations/034_seed_hackclad_base_ruleset.sql"
-      - "backend/app/db/migrations/035_extend_hackclad_base_faq_rules.sql"
-      - "backend/app/db/migrations/036_seed_sky_team_2024_ja_ruleset.sql"
-      - "backend/app/db/migrations/037_seed_brass_birmingham_2019_ja_ruleset.sql"
-      - "backend/app/db/migrations/038_seed_elfenland_amigo_v3_ruleset.sql"
+      - "backend/app/db/migrations/*.sql"
       - ".github/workflows/test-source-bound-ruleset-data.yml"
       - ".github/workflows/test-azul-sintra-ruleset-data.yml"
   push:
     branches: [main]
     paths:
-      - "backend/app/db/migrations/032_seed_azul_sintra_2019_ruleset.sql"
-      - "backend/app/db/migrations/033_seed_disney_lorcana_cr_2_2_0_ruleset.sql"
-      - "backend/app/db/migrations/034_seed_hackclad_base_ruleset.sql"
-      - "backend/app/db/migrations/035_extend_hackclad_base_faq_rules.sql"
-      - "backend/app/db/migrations/036_seed_sky_team_2024_ja_ruleset.sql"
-      - "backend/app/db/migrations/037_seed_brass_birmingham_2019_ja_ruleset.sql"
-      - "backend/app/db/migrations/038_seed_elfenland_amigo_v3_ruleset.sql"
+      - "backend/app/db/migrations/*.sql"
       - ".github/workflows/test-source-bound-ruleset-data.yml"
       - ".github/workflows/test-azul-sintra-ruleset-data.yml"
 
@@ -148,6 +136,18 @@ jobs:
                  'エルフとして街を巡るゲーム','移動手段を計画してできるだけ多くの街を訪れる',2,6,
                  'https://www.amazon.co.jp/s?k=%E3%82%A8%E3%83%AB%E3%83%95%E3%82%A7%E3%83%B3%E3%83%A9%E3%83%B3%E3%83%89&tag=bodogemikata-22'
           FROM w;
+
+          WITH w AS (INSERT INTO public.game_works DEFAULT VALUES RETURNING id)
+          INSERT INTO public.games(
+            slug,title,title_ja,title_en,work_id,identity_status,source_url,source_trust,content_review_status,
+            rules_content,structured_data,summary,description,min_players,max_players,play_time,min_age,published_year,amazon_url
+          )
+          SELECT 'russian-railroads','Russian Railroads','ロシアン・レイルロード','Russian Railroads',id,'unverified',
+                 'https://www.hans-im-glueck.de/en/game/ultimate-railroads-2/','unknown','unknown',
+                 'legacy rules risk mixing the 2013 original with Ultimate Railroads','{}'::jsonb,
+                 '鉄道会社を発展させるワーカープレイスメントゲーム','線路・機関車・工業化を発展させて得点する',2,4,120,13,2013,
+                 'https://www.amazon.co.jp/s?k=Russian%20Railroads&tag=bodogemikata-22'
+          FROM w;
           SQL
 
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/010_rule_graph.sql
@@ -156,17 +156,20 @@ jobs:
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/014_component_catalog.sql
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/015_claim_evidence.sql
 
-      - name: Apply source-bound seeds twice
+      - name: Apply every source-bound migration twice
         shell: bash
         run: |
+          mapfile -t source_bound_migrations < <(
+            grep -l "source_bound" backend/app/db/migrations/[0-9][0-9][0-9]_*.sql \
+              | awk -F/ '{ name=$NF; if ((substr(name,1,3) + 0) >= 32) print }' \
+              | sort
+          )
+          test "${#source_bound_migrations[@]}" -ge 10
+          printf 'Source-bound migrations:\n%s\n' "${source_bound_migrations[@]}"
           for pass in 1 2; do
-            psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/032_seed_azul_sintra_2019_ruleset.sql
-            psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/033_seed_disney_lorcana_cr_2_2_0_ruleset.sql
-            psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/034_seed_hackclad_base_ruleset.sql
-            psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/035_extend_hackclad_base_faq_rules.sql
-            psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/036_seed_sky_team_2024_ja_ruleset.sql
-            psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/037_seed_brass_birmingham_2019_ja_ruleset.sql
-            psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/038_seed_elfenland_amigo_v3_ruleset.sql
+            for migration in "${source_bound_migrations[@]}"; do
+              psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "$migration"
+            done
           done
 
       - name: Verify Azul Sintra contract remains intact
@@ -196,16 +199,17 @@ jobs:
           test -z "$(psql "$DATABASE_URL" -Atc "select bgg_url from public.games where slug='hack-clad';")"
           test -z "$(psql "$DATABASE_URL" -Atc "select amazon_url from public.games where slug='hack-clad';")"
           test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_sets rs join public.games g on g.id=rs.game_id where g.slug='hack-clad' and rs.platform='physical' and rs.language_code='ja' and rs.edition_label='基本セット HacKClaD（通常版）' and rs.revision_label='base-official-web-2026-08-23' and rs.verification_status='source_bound' and rs.is_active;")" = "1"
-          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='hack-clad' and rn.verification_status='source_bound';")" = "11"
-          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.claims c join public.rule_sets rs on rs.id=c.rule_set_id join public.games g on g.id=rs.game_id where g.slug='hack-clad' and c.target_type='rule_node' and c.lifecycle_status='accepted';")" = "11"
-          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.evidence_bindings eb join public.claims c on c.claim_id=eb.claim_id join public.rule_sets rs on rs.id=c.rule_set_id join public.games g on g.id=rs.game_id where g.slug='hack-clad' and eb.relation='supports';")" = "11"
-          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_nodes rn join public.claims c on c.rule_set_id=rn.rule_set_id and c.rule_id=rn.rule_id where rn.rule_set_id=(select rs.id from public.rule_sets rs join public.games g on g.id=rs.game_id where g.slug='hack-clad') and c.normalized_payload->>'statement'=rn.normalized_statement;")" = "11"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='hack-clad' and rn.verification_status='source_bound';")" = "12"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.claims c join public.rule_sets rs on rs.id=c.rule_set_id join public.games g on g.id=rs.game_id where g.slug='hack-clad' and c.target_type='rule_node' and c.lifecycle_status='accepted';")" = "12"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.evidence_bindings eb join public.claims c on c.claim_id=eb.claim_id join public.rule_sets rs on rs.id=c.rule_set_id join public.games g on g.id=rs.game_id where g.slug='hack-clad' and eb.relation='supports';")" = "12"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_nodes rn join public.claims c on c.rule_set_id=rn.rule_set_id and c.rule_id=rn.rule_id where rn.rule_set_id=(select rs.id from public.rule_sets rs join public.games g on g.id=rs.game_id where g.slug='hack-clad') and c.normalized_payload->>'statement'=rn.normalized_statement;")" = "12"
           test "$(psql "$DATABASE_URL" -Atc "select position('ダメージに等しいVP分の魔石' in normalized_statement)>0 from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='hack-clad' and rn.rule_id='scoring.damage-magic-stones';")" = "t"
           test "$(psql "$DATABASE_URL" -Atc "select position('自動的に終了' in normalized_statement)>0 from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='hack-clad' and rn.rule_id='turn.injury-ends-turn';")" = "t"
           test "$(psql "$DATABASE_URL" -Atc "select position('移動攻撃として扱い' in normalized_statement)>0 from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='hack-clad' and rn.rule_id='reaction.effect-caused-movement';")" = "t"
           test "$(psql "$DATABASE_URL" -Atc "select position('捨て札にした後' in normalized_statement)>0 from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='hack-clad' and rn.rule_id='action.knockback-resolution-order';")" = "t"
           test "$(psql "$DATABASE_URL" -Atc "select normalized_statement from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='hack-clad' and rn.rule_id='condition.multiple-missions';")" = "条件を満たしている場合、複数のミッションを同時に達成できる。"
           test "$(psql "$DATABASE_URL" -Atc "select position('使用したものとして扱う' in normalized_statement)>0 from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='hack-clad' and rn.rule_id='action.card-use-established';")" = "t"
+          test "$(psql "$DATABASE_URL" -Atc "select position('第9ラウンド' in normalized_statement)>0 from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='hack-clad' and rn.rule_id='game.round-9-end';")" = "t"
 
       - name: Verify Sky Team Japanese base-game contract
         shell: bash
@@ -260,11 +264,31 @@ jobs:
           test "$(psql "$DATABASE_URL" -Atc "select structured_data::text from public.games where slug='elfenland';")" = "{}"
           test "$(psql "$DATABASE_URL" -Atc "select position('bodogemikata-22' in amazon_url)>0 from public.games where slug='elfenland';")" = "t"
           test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_sets rs join public.games g on g.id=rs.game_id where g.slug='elfenland' and rs.platform='physical' and rs.language_code='ja' and rs.edition_label='AMIGO Elfenland（Rules Version 3.0 / 2013）' and rs.revision_label='amigo-v3.0-2013-ja' and rs.verification_status='source_bound' and rs.is_active;")" = "1"
-          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='elfenland' and rn.verification_status='source_bound';")" = "11"
-          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.claims c join public.rule_sets rs on rs.id=c.rule_set_id join public.games g on g.id=rs.game_id where g.slug='elfenland' and c.target_type='rule_node' and c.lifecycle_status='accepted';")" = "11"
-          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.evidence_bindings eb join public.claims c on c.claim_id=eb.claim_id join public.rule_sets rs on rs.id=c.rule_set_id join public.games g on g.id=rs.game_id where g.slug='elfenland' and eb.relation='supports';")" = "11"
-          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_nodes rn join public.claims c on c.rule_set_id=rn.rule_set_id and c.rule_id=rn.rule_id where rn.rule_set_id=(select rs.id from public.rule_sets rs join public.games g on g.id=rs.game_id where g.slug='elfenland') and c.normalized_payload->>'statement'=rn.normalized_statement;")" = "11"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='elfenland' and rn.verification_status='source_bound';")" = "13"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.claims c join public.rule_sets rs on rs.id=c.rule_set_id join public.games g on g.id=rs.game_id where g.slug='elfenland' and c.target_type='rule_node' and c.lifecycle_status='accepted';")" = "13"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.evidence_bindings eb join public.claims c on c.claim_id=eb.claim_id join public.rule_sets rs on rs.id=c.rule_set_id join public.games g on g.id=rs.game_id where g.slug='elfenland' and eb.relation='supports';")" = "13"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_nodes rn join public.claims c on c.rule_set_id=rn.rule_set_id and c.rule_id=rn.rule_id where rn.rule_set_id=(select rs.id from public.rule_sets rs join public.games g on g.id=rs.game_id where g.slug='elfenland') and c.normalized_payload->>'statement'=rn.normalized_statement;")" = "13"
           test "$(psql "$DATABASE_URL" -Atc "select position('目的地カード12枚は基本ゲームでは使わない' in normalized_statement)>0 from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='elfenland' and rn.rule_id='setup.base';")" = "t"
           test "$(psql "$DATABASE_URL" -Atc "select position('後続ラウンドでは最大5枚' in normalized_statement)>0 from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='elfenland' and rn.rule_id='round.transport-counters';")" = "t"
           test "$(psql "$DATABASE_URL" -Atc "select position('フェリー' in normalized_statement)>0 and position('いかだカード2枚' in normalized_statement)>0 from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='elfenland' and rn.rule_id='move.water';")" = "t"
+          test "$(psql "$DATABASE_URL" -Atc "select position('街に到着' in normalized_statement)>0 from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='elfenland' and rn.rule_id='move.collect-town-piece';")" = "t"
+          test "$(psql "$DATABASE_URL" -Atc "select position('4枚になるまで' in normalized_statement)>0 from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='elfenland' and rn.rule_id='turn.hand-limit';")" = "t"
           test "$(psql "$DATABASE_URL" -Atc "select position('第4ラウンド終了後' in normalized_statement)>0 and position('移動カードが多い' in normalized_statement)>0 from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='elfenland' and rn.rule_id='game.end';")" = "t"
+
+      - name: Verify Russian Railroads 2013 original contract
+        shell: bash
+        run: |
+          test "$(psql "$DATABASE_URL" -Atc "select identity_status from public.games where slug='russian-railroads';")" = "verified"
+          test "$(psql "$DATABASE_URL" -Atc "select edition_label from public.games where slug='russian-railroads';")" = "Russian Railroads（2013 original）"
+          test "$(psql "$DATABASE_URL" -Atc "select min_players||':'||max_players||':'||play_time||':'||min_age||':'||published_year from public.games where slug='russian-railroads';")" = "2:4:120:13:2013"
+          test "$(psql "$DATABASE_URL" -Atc "select rules::text from public.games where slug='russian-railroads';")" = "{}"
+          test -z "$(psql "$DATABASE_URL" -Atc "select rules_content from public.games where slug='russian-railroads';")"
+          test "$(psql "$DATABASE_URL" -Atc "select structured_data::text from public.games where slug='russian-railroads';")" = "{}"
+          test "$(psql "$DATABASE_URL" -Atc "select position('bodogemikata-22' in amazon_url)>0 from public.games where slug='russian-railroads';")" = "t"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_sets rs join public.games g on g.id=rs.game_id where g.slug='russian-railroads' and rs.platform='physical' and rs.language_code='ja' and rs.edition_label='Russian Railroads（2013 original）' and rs.revision_label='hig-zman-2013-original-en' and rs.verification_status='source_bound' and rs.is_active;")" = "1"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='russian-railroads' and rn.verification_status='source_bound';")" = "9"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.claims c join public.rule_sets rs on rs.id=c.rule_set_id join public.games g on g.id=rs.game_id where g.slug='russian-railroads' and c.target_type='rule_node' and c.lifecycle_status='accepted';")" = "9"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.evidence_bindings eb join public.claims c on c.claim_id=eb.claim_id join public.rule_sets rs on rs.id=c.rule_set_id join public.games g on g.id=rs.game_id where g.slug='russian-railroads' and eb.relation='supports';")" = "9"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_nodes rn join public.claims c on c.rule_set_id=rn.rule_set_id and c.rule_id=rn.rule_id where rn.rule_set_id=(select rs.id from public.rule_sets rs join public.games g on g.id=rs.game_id where g.slug='russian-railroads') and c.normalized_payload->>'statement'=rn.normalized_statement;")" = "9"
+          test "$(psql "$DATABASE_URL" -Atc "select position('Ultimate Railroads' in source_revision)>0 from public.games where slug='russian-railroads';")" = "t"
+          test "$(psql "$DATABASE_URL" -Atc "select position('7ラウンド' in normalized_statement)>0 and position('6ラウンド' in normalized_statement)>0 from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='russian-railroads' and rn.rule_id='game.round-count';")" = "t"
