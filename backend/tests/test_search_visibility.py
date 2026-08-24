@@ -17,6 +17,8 @@ async def test_canonical_search_hides_retired_records_and_keeps_verified_games(m
             {"slug": "3-second-try", "title": "3秒トライ！"},
             {"slug": "little-town-builders", "title": "リトルタウンビルダーズ"},
             {"slug": "little-town", "title": "リトルタウンビルダーズ"},
+            {"slug": "heart-of-crown", "title": "Heart of Crown 2nd Edition"},
+            {"slug": "heart-of-crown-2nd-edition", "title": "Heart of Crown 2nd Edition"},
         ]
 
     monkeypatch.setattr(supabase, "search", _search)
@@ -24,14 +26,21 @@ async def test_canonical_search_hides_retired_records_and_keeps_verified_games(m
 
     results = await service.search_games("game")
 
-    assert [row["slug"] for row in results] == ["hack-clad", "3-second-try", "little-town"]
+    assert [row["slug"] for row in results] == [
+        "hack-clad",
+        "3-second-try",
+        "little-town",
+        "heart-of-crown-2nd-edition",
+    ]
     assert has_known_identity_conflict("game") is True
     assert has_known_identity_conflict("hackclad") is True
     assert has_known_identity_conflict("3") is True
     assert has_known_identity_conflict("little-town-builders") is True
+    assert has_known_identity_conflict("heart-of-crown") is True
     assert has_known_identity_conflict("hack-clad") is False
     assert has_known_identity_conflict("3-second-try") is False
     assert has_known_identity_conflict("little-town") is False
+    assert has_known_identity_conflict("heart-of-crown-2nd-edition") is False
 
 
 def test_directory_filter_uses_same_identity_visibility_contract() -> None:
@@ -43,15 +52,24 @@ def test_directory_filter_uses_same_identity_visibility_contract() -> None:
         {"slug": "3-second-try", "title": "3秒トライ！"},
         {"slug": "little-town-builders", "title": "リトルタウンビルダーズ"},
         {"slug": "little-town", "title": "リトルタウンビルダーズ"},
+        {"slug": "heart-of-crown", "title": "Heart of Crown 2nd Edition"},
+        {"slug": "heart-of-crown-2nd-edition", "title": "Heart of Crown 2nd Edition"},
     ]
 
     filtered = _filter_rows(rows, players=None, time_filter=None, tier=None)
 
-    assert [row["slug"] for row in filtered] == ["hack-clad", "3-second-try", "little-town"]
+    assert [row["slug"] for row in filtered] == [
+        "hack-clad",
+        "3-second-try",
+        "little-town",
+        "heart-of-crown-2nd-edition",
+    ]
     assert should_hide_game_from_search("game") is True
     assert should_hide_game_from_search("hackclad") is True
     assert should_hide_game_from_search("3") is True
     assert should_hide_game_from_search("little-town-builders") is True
+    assert should_hide_game_from_search("heart-of-crown") is True
     assert should_hide_game_from_search("hack-clad") is False
     assert should_hide_game_from_search("3-second-try") is False
     assert should_hide_game_from_search("little-town") is False
+    assert should_hide_game_from_search("heart-of-crown-2nd-edition") is False
