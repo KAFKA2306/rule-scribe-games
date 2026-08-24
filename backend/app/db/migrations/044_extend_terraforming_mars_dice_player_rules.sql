@@ -4,6 +4,32 @@ BEGIN;
 -- source-bound rules from the 2024-05-30 canonical revision.
 -- The Corporate Era expansion and promo-card rules remain outside this base projection.
 
+INSERT INTO public.evidence_sources (
+  source_id, url, document_identity, source_type, publisher_name, platform,
+  language_code, revision_label, trust_metadata
+)
+VALUES (
+  'publisher:arclight:tm-dice:revised-2024-05-30',
+  'https://arclightgames.jp/wp-content/uploads/2024/04/TM_DICEGAME_RULES-JPN-fix-2023Dec-for-Web-2.pdf',
+  'Terraforming Mars: The Dice Game Japanese revised rulebook',
+  'publisher_rulebook',
+  'Arclight Games',
+  'physical',
+  'ja',
+  '2024-05-30',
+  '{"authority":"publisher","role":"canonical_for_arclight_japanese_revised_rules","audit_date":"2026-08-24"}'::jsonb
+)
+ON CONFLICT (source_id) DO UPDATE SET
+  url=EXCLUDED.url,
+  document_identity=EXCLUDED.document_identity,
+  source_type=EXCLUDED.source_type,
+  publisher_name=EXCLUDED.publisher_name,
+  platform=EXCLUDED.platform,
+  language_code=EXCLUDED.language_code,
+  revision_label=EXCLUDED.revision_label,
+  trust_metadata=EXCLUDED.trust_metadata,
+  updated_at=now();
+
 INSERT INTO public.source_locators (
   locator_id, source_id, page_number, section_heading, external_reference
 ) VALUES
