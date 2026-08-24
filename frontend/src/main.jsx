@@ -1,6 +1,6 @@
 import { StrictMode, Suspense, lazy } from 'react'
 import { createRoot } from 'react-dom/client'
-import { createBrowserRouter, Navigate, RouterProvider } from 'react-router-dom'
+import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import { HelmetProvider } from 'react-helmet-async'
 import App from './App.jsx'
 import './index.css'
@@ -32,10 +32,6 @@ const router = createBrowserRouter([
             <App />
           </Suspense>
         ),
-      },
-      {
-        path: '/games/hackclad',
-        element: <Navigate to="/games/hack-clad" replace />,
       },
       {
         path: '/games/:slug',
