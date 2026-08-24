@@ -1,12 +1,12 @@
 # Public discovery must exclude records whose canonical identity is intentionally
 # retired or still known to mix multiple works. Keep this list limited to active
 # conflicts; repaired titles must return to normal search and mutation paths.
-EXCLUDED_GAME_SLUGS = frozenset({"game"})
+EXCLUDED_GAME_SLUGS = frozenset({"game", "hackclad"})
 
 # `game` mixed two different games and has no single correct canonical target.
-# Its two source-backed works exist separately, so public reads must not continue
-# serving the contaminated historical row.
-GONE_GAME_SLUGS = frozenset({"game"})
+# `hackclad` is a superseded duplicate of the verified `hack-clad` canonical work.
+# Public reads must not continue serving either retired record as canonical content.
+GONE_GAME_SLUGS = frozenset({"game", "hackclad"})
 
 
 def has_known_identity_conflict(slug: str) -> bool:
