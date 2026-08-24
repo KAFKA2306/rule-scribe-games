@@ -6,6 +6,7 @@ import anyio
 
 from app.core import supabase
 from app.services.identity_coherence import audit_title_work_coherence
+from app.services.search_visibility import should_hide_game_from_search
 
 logger = logging.getLogger("agents.game_service")
 _TITLE_FIELDS = ("title", "title_ja", "title_en")
@@ -136,7 +137,8 @@ class GameService:
             local_db.init_db()
 
     async def search_games(self, query: str) -> list[dict[str, Any]]:
-        return await supabase.search(query)
+        rows = await supabase.search(query)
+        return [row for row in rows if not should_hide_game_from_search(str(row.get("slug") or ""))]
 
     async def get_game_by_slug(self, slug: str) -> dict[str, Any] | None:
         return await supabase.get_by_slug(slug)
