@@ -1,11 +1,11 @@
-# These records are known to mix fields from different game identities.
-# Keep them out of search indexing and block normal mutation until the
-# underlying records are repaired through an explicit reviewed workflow.
-EXCLUDED_GAME_SLUGS = frozenset({"game", "hack-clad"})
+# Public discovery must exclude records whose canonical identity is intentionally
+# retired or still known to mix multiple works. Keep this list limited to active
+# conflicts; repaired titles must return to normal search and mutation paths.
+EXCLUDED_GAME_SLUGS = frozenset({"game"})
 
 # `game` mixed two different games and has no single correct canonical target.
-# Its two source-backed works now exist separately, so public reads must not
-# continue serving the contaminated historical row.
+# Its two source-backed works exist separately, so public reads must not continue
+# serving the contaminated historical row.
 GONE_GAME_SLUGS = frozenset({"game"})
 
 
