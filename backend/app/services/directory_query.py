@@ -4,6 +4,7 @@ from typing import Any, Literal
 import anyio
 
 from app.core import local_db, supabase
+from app.services.search_visibility import EXCLUDED_GAME_SLUGS, should_hide_game_from_search
 
 DirectorySort = Literal["recent", "title", "year", "play_time"]
 DirectoryTime = Literal["30-", "30-60", "60-120", "120+"]
@@ -72,7 +73,8 @@ def _filter_rows(
     return [
         game
         for game in rows
-        if _matches_players(game, players)
+        if not should_hide_game_from_search(str(game.get("slug") or ""))
+        and _matches_players(game, players)
         and _matches_time(game, time_filter)
         and (not tier or game.get("strategy_tier") == tier)
     ]
@@ -110,7 +112,8 @@ def _query_local(
     filtered = [
         game
         for game in rows
-        if _matches_query(game, q or "")
+        if not should_hide_game_from_search(str(game.get("slug") or ""))
+        and _matches_query(game, q or "")
         and _matches_players(game, players)
         and _matches_time(game, time_filter)
         and (not tier or game.get("strategy_tier") == tier)
@@ -157,6 +160,9 @@ async def list_directory_games(
 
     def _q() -> dict[str, Any]:
         query = supabase._get_client().table("games").select("*", count="exact")
+
+        for excluded_slug in sorted(EXCLUDED_GAME_SLUGS):
+            query = query.neq("slug", excluded_slug)
 
         if players:
             if players == "5+":
