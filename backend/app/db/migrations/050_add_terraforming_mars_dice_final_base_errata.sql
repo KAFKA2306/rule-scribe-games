@@ -6,7 +6,7 @@ BEGIN;
 INSERT INTO public.source_locators (
   locator_id, source_id, page_number, section_heading, external_reference
 ) VALUES
-  ('tm-dice:errata:milestone-acquisition-timing','publisher:arclight:tm-dice:errata-2024',2,'ルール説明書 8ページ 最終得点計算','A milestone tile is acquired immediately when its condition is satisfied; the corrected text removes the restriction that this must happen during the player\'s own turn.'),
+  ('tm-dice:errata:milestone-acquisition-timing','publisher:arclight:tm-dice:errata-2024',2,'ルール説明書 8ページ 最終得点計算','A milestone tile is acquired immediately when its condition is satisfied; the corrected text removes any requirement that acquisition happen during a turn of the acquiring player.'),
   ('tm-dice:errata:solo-milestone-cost-icons','publisher:arclight:tm-dice:errata-2024',3,'ルール説明書 9ページ 1人ゲームのルール 2）称号（褒賞）','In solo play, milestone qualification counts cost icons on cards the player has played, not resource icons on cards in a play space.'),
   ('tm-dice:errata:solo-score-59-or-less','publisher:arclight:tm-dice:errata-2024',3,'ルール説明書 9ページ アナタの獲得勝利点は？','The corrected lowest solo score band is 59 points or fewer, not 60 points or fewer.')
 ON CONFLICT (locator_id) DO UPDATE SET
