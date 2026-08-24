@@ -7,10 +7,11 @@ from app.services.search_visibility import has_known_identity_conflict, should_h
 
 
 @pytest.mark.asyncio
-async def test_canonical_search_hides_retired_mixed_identity_but_keeps_repaired_game(monkeypatch) -> None:
+async def test_canonical_search_hides_retired_records_and_keeps_verified_hackclad(monkeypatch) -> None:
     async def _search(_query: str):
         return [
             {"slug": "game", "title": "mixed historical row"},
+            {"slug": "hackclad", "title": "legacy HacKClaD duplicate"},
             {"slug": "hack-clad", "title": "HacKClaD"},
         ]
 
@@ -21,12 +22,14 @@ async def test_canonical_search_hides_retired_mixed_identity_but_keeps_repaired_
 
     assert [row["slug"] for row in results] == ["hack-clad"]
     assert has_known_identity_conflict("game") is True
+    assert has_known_identity_conflict("hackclad") is True
     assert has_known_identity_conflict("hack-clad") is False
 
 
 def test_directory_filter_uses_same_identity_visibility_contract() -> None:
     rows = [
         {"slug": "game", "title": "mixed historical row"},
+        {"slug": "hackclad", "title": "legacy HacKClaD duplicate"},
         {"slug": "hack-clad", "title": "HacKClaD"},
     ]
 
@@ -34,4 +37,5 @@ def test_directory_filter_uses_same_identity_visibility_contract() -> None:
 
     assert [row["slug"] for row in filtered] == ["hack-clad"]
     assert should_hide_game_from_search("game") is True
+    assert should_hide_game_from_search("hackclad") is True
     assert should_hide_game_from_search("hack-clad") is False
