@@ -1,0 +1,39 @@
+name: Test RuleOps
+
+on:
+  pull_request:
+    paths:
+      - "backend/app/scripts/ruleops_*.py"
+      - "backend/tests/test_ruleops_*.py"
+      - ".github/workflows/test-ruleops.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "backend/app/scripts/ruleops_*.py"
+      - "backend/tests/test_ruleops_*.py"
+      - ".github/workflows/test-ruleops.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  ruleops:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+
+      - name: Install Python dependencies
+        run: uv sync --frozen --dev
+
+      - name: Compile RuleOps
+        run: uv run python -m compileall -q backend/app/scripts/ruleops_candidates.py
+
+      - name: Run RuleOps regression tests
+        env:
+          PYTHONPATH: backend
+        run: uv run pytest -q backend/tests/test_ruleops_candidates.py
