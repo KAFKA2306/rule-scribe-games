@@ -52,7 +52,7 @@ BEGIN
     rules='{}'::jsonb,rules_content=NULL,structured_data='{}'::jsonb,setup_summary=NULL,gameplay_summary=NULL,end_game_summary=NULL,
     identity_status='verified',identity_source='https://www.blueorangegames.com/games/king-domino',
     source_url='https://www.blueorangegames.com/games/king-domino',official_url='https://www.blueorangegames.com/games/king-domino',
-    source_trust='official_publisher',content_review_status='reviewed',is_official=true,
+    source_trust='official_publisher',content_review_status='human_reviewed',is_official=true,
     edition_label='Blue Orange Games US 2nd Edition / Item #03600',language_code='ja',publisher='Blue Orange Games',published_year=NULL,
     source_revision='Blue Orange Games Item #03600 + official US 2nd Edition rulebook; audited 2026-08-25',
     min_players=2,max_players=4,play_time=15,min_age=8,updated_at=now()
