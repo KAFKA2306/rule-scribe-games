@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - "backend/app/scripts/ruleops_*.py"
+      - "backend/app/ruleops/**"
       - "backend/tests/test_ruleops_*.py"
       - ".github/workflows/test-ruleops.yml"
   push:
@@ -11,6 +12,7 @@ on:
       - main
     paths:
       - "backend/app/scripts/ruleops_*.py"
+      - "backend/app/ruleops/**"
       - "backend/tests/test_ruleops_*.py"
       - ".github/workflows/test-ruleops.yml"
 
@@ -31,9 +33,12 @@ jobs:
         run: uv sync --frozen --dev
 
       - name: Compile RuleOps
-        run: uv run python -m compileall -q backend/app/scripts/ruleops_candidates.py
+        run: uv run python -m compileall -q backend/app/scripts/ruleops_candidates.py backend/app/scripts/ruleops_manifest.py
+
+      - name: Validate manifest schema JSON
+        run: uv run python -m json.tool backend/app/ruleops/source-manifest.schema.json > /dev/null
 
       - name: Run RuleOps regression tests
         env:
           PYTHONPATH: backend
-        run: uv run pytest -q backend/tests/test_ruleops_candidates.py
+        run: uv run pytest -q backend/tests/test_ruleops_*.py
