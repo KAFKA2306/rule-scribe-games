@@ -154,7 +154,4 @@ class GameService:
         await _validate_manual_title_update(game, merged, safe_updates)
         await _validate_manual_source_update(game, safe_updates)
         merged["updated_at"] = datetime.now(UTC).isoformat()
-        out = await supabase.upsert(merged)
-        if not out:
-            raise RuntimeError(f"Update failed for game: {slug}")
-        return out[0]
+        return await supabase.upsert_game(merged)

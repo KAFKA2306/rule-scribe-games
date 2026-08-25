@@ -243,11 +243,6 @@ async def increment_view_count(game_id: str) -> None:
     await anyio.to_thread.run_sync(_q)
 
 
-# Legacy alias
-async def upsert(data: dict[str, Any]) -> List[dict[str, Any]]:
-    return [await upsert_game(data)]
-
-
 async def list_for_sitemap() -> list[dict[str, Any]]:
     if is_local():
         res = local_db.list_recent(limit=50000)
