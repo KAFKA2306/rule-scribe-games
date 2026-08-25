@@ -75,7 +75,7 @@ BEGIN
   END IF;
 
   INSERT INTO public.rule_nodes(rule_set_id,rule_id,node_type,normalized_statement,sequence,verification_status,source_claim_ref,evidence_ref,source_url,source_locator,metadata) VALUES
-  (v_ruleset_id,'constraint.hand-order','constraint','ゲーム中、手札のカードの並び順を変えることはできない。',10,'source_bound','scout:rule:constraint.hand-order','scout:binding:constraint.hand-order','https://oinkgames.com/ja/games/analog/scout/','scout:2021:hand-order','{}'::jsonb),
+  (v_ruleset_id,'constraint.hand-order','condition','ゲーム中、手札のカードの並び順を変えることはできない。',10,'source_bound','scout:rule:constraint.hand-order','scout:binding:constraint.hand-order','https://oinkgames.com/ja/games/analog/scout/','scout:2021:hand-order','{}'::jsonb),
   (v_ruleset_id,'action.show','action','手番では、同じ数字または連続する数字を手札内で組み合わせ、ライバルより強い組み合わせとして「ショー」を行える。',20,'source_bound','scout:rule:action.show','scout:binding:action.show','https://oinkgames.com/ja/games/analog/scout/','scout:2021:show','{}'::jsonb),
   (v_ruleset_id,'action.scout','action','手番では、場に出ている札からカードを「スカウト」して手札に加えることもできる。カードには2つの数字があり、どちらの役割で手札に加えるかを選ぶ。',30,'source_bound','scout:rule:action.scout','scout:binding:action.scout','https://oinkgames.com/ja/games/analog/scout/','scout:2021:scout','{}'::jsonb)
   ON CONFLICT(rule_set_id,rule_id) DO UPDATE SET node_type=EXCLUDED.node_type,normalized_statement=EXCLUDED.normalized_statement,sequence=EXCLUDED.sequence,verification_status=EXCLUDED.verification_status,source_claim_ref=EXCLUDED.source_claim_ref,evidence_ref=EXCLUDED.evidence_ref,source_url=EXCLUDED.source_url,source_locator=EXCLUDED.source_locator,metadata=EXCLUDED.metadata,updated_at=now();
