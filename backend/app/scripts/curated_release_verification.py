@@ -12,9 +12,11 @@ from app.scripts.curated_game_fast_path_v2 import (
 )
 from app.scripts.curated_game_workflow import CuratedGameSpec, WorkflowError, load_all_specs
 
-# Curated specs still own product identity and provenance. Player-facing rule/editorial
-# content can move independently through the source-bound RuleSet pipeline and must not
-# become a second release authority here.
+# Curated specs still own product identity and stable catalog metadata. Player-facing
+# rule/editorial content and the legacy game.source_url can move independently through
+# the source-bound RuleSet pipeline and must not become a second release authority here.
+# Rulebook provenance belongs to RuleSet/EvidenceSource; product identity remains
+# fail-closed through identity_source and the other immutable catalog fields.
 MUTABLE_PLAYER_CONTENT_FIELDS = frozenset(
     {
         "description",
@@ -25,6 +27,7 @@ MUTABLE_PLAYER_CONTENT_FIELDS = frozenset(
         "end_game_summary",
         "structured_data",
         "content_review_status",
+        "source_url",
     }
 )
 
@@ -56,8 +59,6 @@ def verify_catalog_release_live(spec: CuratedGameSpec, base_url: str) -> None:
 
     if payload.get("slug") != spec.slug:
         raise WorkflowError(f"production API returned the wrong slug for {spec.slug}")
-    if payload.get("source_url") != spec.source.url:
-        raise WorkflowError(f"production API source provenance mismatch for {spec.slug}")
     if not payload.get("work_id"):
         raise WorkflowError(f"production API record has no canonical work_id for {spec.slug}")
     validate_release_catalog_fields(spec.game, payload)

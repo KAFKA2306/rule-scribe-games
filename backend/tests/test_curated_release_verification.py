@@ -7,12 +7,13 @@ from app.scripts.curated_release_verification import (
 )
 
 
-def test_release_contract_excludes_mutable_player_content():
+def test_release_contract_excludes_mutable_player_content_and_legacy_source_url():
     contract = release_catalog_contract(
         {
             "slug": "game",
             "title": "Game",
             "source_url": "https://publisher.example/rules",
+            "identity_source": "https://publisher.example/products/game",
             "identity_status": "verified",
             "description": "old description",
             "summary": "old summary",
@@ -28,16 +29,17 @@ def test_release_contract_excludes_mutable_player_content():
     assert contract == {
         "slug": "game",
         "title": "Game",
-        "source_url": "https://publisher.example/rules",
+        "identity_source": "https://publisher.example/products/game",
         "identity_status": "verified",
     }
 
 
-def test_mutable_source_bound_content_can_change_without_release_failure():
+def test_source_bound_rulebook_provenance_can_move_without_release_failure():
     expected = {
         "slug": "game",
         "title": "Game",
-        "source_url": "https://publisher.example/rules",
+        "source_url": "https://publisher.example/rules.pdf",
+        "identity_source": "https://publisher.example/products/game",
         "identity_status": "verified",
         "description": "curated description",
         "rules_content": "curated legacy rules",
@@ -46,7 +48,8 @@ def test_mutable_source_bound_content_can_change_without_release_failure():
     production = {
         "slug": "game",
         "title": "Game",
-        "source_url": "https://publisher.example/rules",
+        "source_url": "https://publisher.example/products/game",
+        "identity_source": "https://publisher.example/products/game",
         "identity_status": "verified",
         "description": "source-bound description",
         "rules_content": None,
@@ -60,15 +63,35 @@ def test_identity_drift_still_fails_release_verification():
     expected = {
         "slug": "game",
         "title": "Game",
-        "source_url": "https://publisher.example/rules",
+        "source_url": "https://publisher.example/rules.pdf",
+        "identity_source": "https://publisher.example/products/game",
         "identity_status": "verified",
     }
     production = {
         "slug": "game",
         "title": "Different Game",
-        "source_url": "https://publisher.example/rules",
+        "source_url": "https://publisher.example/products/game",
+        "identity_source": "https://publisher.example/products/game",
         "identity_status": "verified",
     }
 
     with pytest.raises(WorkflowError, match="game.title"):
+        validate_release_catalog_fields(expected, production)
+
+
+def test_identity_source_drift_still_fails_release_verification():
+    expected = {
+        "slug": "game",
+        "title": "Game",
+        "identity_source": "https://publisher.example/products/game",
+        "identity_status": "verified",
+    }
+    production = {
+        "slug": "game",
+        "title": "Game",
+        "identity_source": "https://other.example/game",
+        "identity_status": "verified",
+    }
+
+    with pytest.raises(WorkflowError, match="game.identity_source"):
         validate_release_catalog_fields(expected, production)
