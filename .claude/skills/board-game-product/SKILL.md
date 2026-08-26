@@ -42,13 +42,25 @@ For externally verifiable game facts:
 
 If primary authority is insufficient, mark the item blocked rather than filling gaps with guesses.
 
+## Anti-fabrication implementation constraints
+
+These constraints are mandatory because hidden recovery and multiple equivalent network paths allow false assumptions, stale behavior, and fabricated outputs to survive verification.
+
+- **One networking path**: do not add `httpx`, `requests`, `aiohttp`, `curl_cffi`, or another parallel HTTP client. Use the repository's established Playwright networking path unless current repository code has an explicitly approved replacement.
+- **Fail loudly**: do not add broad `try-except`, silent fallback, default substitution, or defensive branches whose effect is to turn missing/invalid evidence into plausible-looking success.
+- **No invented defaults**: absence, parsing failure, source mismatch, edition ambiguity, and invalid production state must remain observable failures or explicit blocked states.
+- **No manual shadow mappings** when the authoritative schema/runtime can validate the value directly. Duplicate mappings create a second truth that can drift.
+- Error handling is allowed only when it preserves the failure as an explicit typed/domain state, adds actionable context, or performs required cleanup; it must not convert an unknown into an accepted fact.
+
+The objective is not minimal code for its own sake. The objective is to make unsupported claims unable to pass through the pipeline as valid player-facing content.
+
 ## Implementation
 
 Use existing repository structures and `Taskfile.yml` before adding helpers, workflows, schemas, dependencies, or documents.
 
 Prefer generic structured data and shared validation over game-specific scripts or tests. For repeated migrations or publication work, batch multiple reviewed games through the existing shared pipeline when edition/source review remains independently verifiable.
 
-Do not impose implementation dogma such as a mandatory HTTP client, mandatory crash behavior, mandatory AI provider, or mandatory external content tool. Choose the smallest reliable implementation supported by current code and production requirements.
+Do not mandate a specific AI provider or external content-generation tool. Such tools are replaceable; evidence boundaries and fail-loud behavior are not.
 
 ## Verification loop
 
