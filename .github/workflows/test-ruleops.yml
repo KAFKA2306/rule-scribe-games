@@ -33,7 +33,7 @@ jobs:
         run: uv sync --frozen --dev
 
       - name: Compile RuleOps
-        run: uv run python -m compileall -q backend/app/scripts/ruleops_candidates.py backend/app/scripts/ruleops_manifest.py
+        run: uv run python -m compileall -q backend/app/scripts/ruleops_candidates.py backend/app/scripts/ruleops_manifest.py backend/app/scripts/ruleops_generate_migration.py
 
       - name: Validate manifest schema JSON
         run: uv run python -m json.tool backend/app/ruleops/source-manifest.schema.json > /dev/null
