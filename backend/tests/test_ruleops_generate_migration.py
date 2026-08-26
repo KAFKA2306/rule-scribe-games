@@ -104,9 +104,10 @@ def test_generated_sql_preserves_edition_boundary_and_removes_legacy_authority()
     sql, _ = generate_migration(manifest(game), "071")
 
     assert "edition_label='Second Edition'" in sql
+    assert "COALESCE(revision_label,'')='publisher-2026-gamma'" in sql
+    assert "'publisher-2026-gamma','physical'" in sql
     assert "rules_content=NULL" in sql
     assert "structured_data='{}'::jsonb" in sql
-    assert "revision_label,'publisher-2026-gamma'" in sql
 
 
 def test_sql_literals_escape_quotes_and_batch_name_is_filename_safe():
