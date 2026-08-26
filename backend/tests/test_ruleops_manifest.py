@@ -52,6 +52,19 @@ def test_valid_reviewed_manifest_is_ready():
     assert report["blocked_games"] == 0
 
 
+def test_publisher_rules_page_can_support_rule_claim():
+    game = valid_game()
+    game["sources"][0]["source_type"] = "publisher_rules_page"
+    game["sources"][0]["url"] = "https://publisher.example/game/rules"
+
+    report = validate_manifest(
+        {"schema_version": "1.0", "batch_id": "pilot-rules-page", "games": [game]}
+    )
+
+    assert report["status"] == "ready"
+    assert report["ready_games"] == 1
+
+
 def test_invalid_game_does_not_hide_ready_sibling():
     bad = valid_game("bad-game")
     bad["identity"]["revision"] = "other-revision"
