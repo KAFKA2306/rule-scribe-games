@@ -52,6 +52,9 @@ async def test_game_ssr_replaces_metadata_and_escapes_db_content(
             "image_url": "/images/game.webp",
         }
 
+    async def no_canonical_rules(_slug: str):
+        return None
+
     template_dir = tmp_path / "frontend" / "dist"
     template_dir.mkdir(parents=True)
     (template_dir / "index.html").write_text(
@@ -75,6 +78,7 @@ async def test_game_ssr_replaces_metadata_and_escapes_db_content(
     )
 
     monkeypatch.setattr(seo_renderer, "get_by_slug", game)
+    monkeypatch.setattr(seo_renderer, "_canonical_rule_text", no_canonical_rules)
     monkeypatch.setenv("LAMBDA_TASK_ROOT", str(tmp_path))
 
     rendered = await seo_renderer.generate_seo_html("safe-game")
@@ -111,6 +115,9 @@ async def test_known_mixed_game_record_is_noindex(
             "summary": "mixed identity fixture",
         }
 
+    async def no_canonical_rules(_slug: str):
+        return None
+
     template_dir = tmp_path / "frontend" / "dist"
     template_dir.mkdir(parents=True)
     (template_dir / "index.html").write_text(
@@ -120,6 +127,7 @@ async def test_known_mixed_game_record_is_noindex(
     )
 
     monkeypatch.setattr(seo_renderer, "get_by_slug", game)
+    monkeypatch.setattr(seo_renderer, "_canonical_rule_text", no_canonical_rules)
     monkeypatch.setenv("LAMBDA_TASK_ROOT", str(tmp_path))
 
     rendered = await seo_renderer.generate_seo_html("game")
