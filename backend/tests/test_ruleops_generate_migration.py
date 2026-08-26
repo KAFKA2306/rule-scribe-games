@@ -1,6 +1,6 @@
 import pytest
 
-from app.scripts.ruleops_generate_migration import generate_migration, safe_identifier
+from app.scripts.ruleops_generate_migration import generate_migration, safe_identifier, source_trust
 from app.scripts.ruleops_manifest import validate_manifest
 
 
@@ -47,6 +47,15 @@ def valid_game(slug: str, claim: str = "手番ではカードを1枚引く。"):
 
 def manifest(*games):
     return {"schema_version": "1.0", "batch_id": "pilot batch/001", "games": list(games)}
+
+
+def test_source_trust_mapping_uses_values_allowed_by_games_schema():
+    assert source_trust("publisher_rulebook") == "official_publisher"
+    assert source_trust("designer_rulebook") == "authorized_partner"
+    assert source_trust("creator_rulebook") == "authorized_partner"
+    assert source_trust("creator_listing") == "authorized_partner"
+    with pytest.raises(ValueError, match="unsupported primary source type"):
+        source_trust("community_wiki")
 
 
 def test_generator_emits_one_transaction_for_multiple_ready_games():

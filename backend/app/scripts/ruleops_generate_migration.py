@@ -27,9 +27,9 @@ def safe_identifier(value: str) -> str:
 def source_trust(source_type: str) -> str:
     if source_type.startswith("publisher_"):
         return "official_publisher"
-    if source_type.startswith("designer_"):
-        return "official_designer"
-    return "official_creator"
+    if source_type.startswith(("designer_", "creator_")):
+        return "authorized_partner"
+    raise ValueError(f"unsupported primary source type: {source_type}")
 
 
 def _render_source_rows(game: dict[str, Any]) -> str:
