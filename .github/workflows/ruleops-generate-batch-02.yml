@@ -1,0 +1,40 @@
+name: Generate RuleOps batch 02 migration
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'backend/app/ruleops/manifests/2026-08-26-batch-02.json'
+      - '.github/workflows/ruleops-generate-batch-02.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Generate reviewed migration
+        env:
+          PYTHONPATH: backend
+        run: |
+          python backend/app/scripts/ruleops_manifest.py backend/app/ruleops/manifests/2026-08-26-batch-02.json
+          python backend/app/scripts/ruleops_generate_migration.py backend/app/ruleops/manifests/2026-08-26-batch-02.json --migration-number 072
+      - name: Commit generated migration
+        run: |
+          git add backend/app/db/migrations/072_ruleops_2026_08_26_batch_02.sql
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git commit -m 'generate RuleOps batch 02 migration'
+          git push
