@@ -6,6 +6,7 @@ import re
 from pathlib import Path
 
 from app.core.supabase import get_by_slug
+from app.services.player_summary import project_player_summary
 from app.services.presentation_projection import PresentationProjectionReadError, PresentationProjectionService
 from app.services.rulesets import RuleSetService
 from app.services.search_visibility import should_hide_game_from_search
@@ -78,11 +79,7 @@ def _render_projection_rules(projection) -> str | None:
 
 
 async def _canonical_rule_text(slug: str) -> str | None:
-    try:
-        rulesets = await RuleSetService().get_by_slug(slug)
-    except Exception:
-        logger.exception("Canonical SSR RuleSet lookup failed for %s; using legacy fallback", slug)
-        return None
+    rulesets = await RuleSetService().get_by_slug(slug)
     if not rulesets or rulesets.status != "available":
         return None
 
@@ -100,7 +97,7 @@ async def _canonical_rule_text(slug: str) -> str | None:
             )
         except PresentationProjectionReadError:
             logger.exception("Canonical SSR projection failed for %s/%s", slug, ruleset.ruleset_id)
-            continue
+            raise
         if projection is None or projection.status != "available":
             continue
         rendered = _render_projection_rules(projection)
@@ -113,6 +110,9 @@ async def generate_seo_html(slug: str) -> str | None:
     game = await get_by_slug(slug)
     if not game:
         return None
+
+    canonical_rules = await _canonical_rule_text(slug)
+    game = project_player_summary(game, source_bound=canonical_rules is not None)
 
     title = str(game.get("title_ja") or game.get("title") or game.get("name") or "Untitled")
     description = str(game.get("summary") or game.get("description") or "")
@@ -220,7 +220,6 @@ async def generate_seo_html(slug: str) -> str | None:
 
     safe_title = html.escape(title)
     safe_summary = html.escape(str(game.get("summary") or ""))
-    canonical_rules = await _canonical_rule_text(slug)
     if canonical_rules:
         safe_rules = html.escape(canonical_rules)
         rules_heading = "出典付きルール要約"
