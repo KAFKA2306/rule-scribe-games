@@ -117,7 +117,9 @@ def _fetch_catalog(base_url: str, timeout_seconds: float, page_size: int = 100) 
     games: list[dict[str, Any]] = []
     offset = 0
     while True:
-        query = urlencode({"limit": page_size, "offset": offset, "sort": "popular"})
+        # The public catalog API does not expose a popularity sort. RuleOps ranks
+        # candidates locally from direct usage fields after fetching every page.
+        query = urlencode({"limit": page_size, "offset": offset})
         payload = _get_json(f"{base_url.rstrip('/')}/api/games?{query}", timeout_seconds)
         page = payload.get("games", [])
         if not isinstance(page, list):

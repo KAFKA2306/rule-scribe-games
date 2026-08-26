@@ -1,3 +1,4 @@
+from app.scripts import ruleops_candidates
 from app.scripts.ruleops_candidates import build_candidate, candidate_sort_key
 
 
@@ -141,3 +142,24 @@ def test_priority_uses_direct_usage_then_commerce_then_search():
     ranked = sorted([no_commerce, commerce, high_views], key=candidate_sort_key)
 
     assert [candidate.slug for candidate in ranked] == ["a", "b", "c"]
+
+
+def test_catalog_fetch_uses_only_supported_public_api_query(monkeypatch):
+    seen_urls: list[str] = []
+
+    def fake_get_json(url: str, timeout_seconds: float):
+        seen_urls.append(url)
+        if "offset=0" in url:
+            return {"games": [{"slug": "a"}], "total": 2}
+        return {"games": [{"slug": "b"}], "total": 2}
+
+    monkeypatch.setattr(ruleops_candidates, "_get_json", fake_get_json)
+
+    games = ruleops_candidates._fetch_catalog("https://example.test", 1.0, page_size=1)
+
+    assert [game["slug"] for game in games] == ["a", "b"]
+    assert seen_urls == [
+        "https://example.test/api/games?limit=1&offset=0",
+        "https://example.test/api/games?limit=1&offset=1",
+    ]
+    assert all("sort=" not in url for url in seen_urls)
