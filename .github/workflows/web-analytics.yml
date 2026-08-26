@@ -47,7 +47,10 @@ jobs:
         run: |
           mkdir -p data/analytics
           touch data/analytics/web-traffic.json
-          test "$(git check-ignore -v data/analytics/web-traffic.json || true)" = ""
+          if git check-ignore -q data/analytics/web-traffic.json; then
+            echo "data/analytics/web-traffic.json must remain trackable" >&2
+            exit 1
+          fi
 
   Snapshot-Production-Traffic:
     if: github.event_name != 'pull_request'
