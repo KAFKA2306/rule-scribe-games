@@ -35,7 +35,9 @@ function comparisonPlayTime(game) {
 
 function directoryTrustLabel(game) {
   if (game.identity_status !== 'verified') return '未検証'
-  if (['review_required', 'ai_draft', 'unknown'].includes(game.content_review_status)) return '内容要確認'
+  if (!['human_reviewed', 'publisher_reviewed'].includes(game.content_review_status)) return '内容要確認'
+  if (!game.source_trust || game.source_trust === 'unknown') return '出典未確認'
+  if (game.source_trust === 'third_party') return '第三者出典'
   return null
 }
 
