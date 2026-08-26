@@ -13,6 +13,8 @@ def _game(
     year: int,
     created_at: str,
     tier: str | None = None,
+    identity_status: str = "verified",
+    content_review_status: str = "human_reviewed",
 ):
     return {
         "id": game_id,
@@ -27,6 +29,8 @@ def _game(
         "published_year": year,
         "created_at": created_at,
         "strategy_tier": tier,
+        "identity_status": identity_status,
+        "content_review_status": content_review_status,
     }
 
 
@@ -112,6 +116,57 @@ def test_ranked_search_keeps_canonical_relevance_for_default_sort():
     )
 
     assert [game["id"] for game in result["data"]] == ["exact", "summary"]
+
+
+def test_directory_hides_unverified_and_unreviewed_prose(monkeypatch):
+    rows = [
+        _game(
+            "unverified",
+            title="Unverified",
+            minimum=2,
+            maximum=4,
+            play_time=30,
+            year=2026,
+            created_at="2026-01-03",
+            identity_status="unverified",
+            content_review_status="unknown",
+        ),
+        _game(
+            "needs-review",
+            title="Needs Review",
+            minimum=2,
+            maximum=4,
+            play_time=30,
+            year=2026,
+            created_at="2026-01-02",
+            content_review_status="review_required",
+        ),
+        _game(
+            "reviewed",
+            title="Reviewed",
+            minimum=2,
+            maximum=4,
+            play_time=30,
+            year=2026,
+            created_at="2026-01-01",
+        ),
+    ]
+    monkeypatch.setattr(directory_query.local_db, "list_recent", lambda limit, offset: {"data": rows, "total": len(rows)})
+
+    result = directory_query._query_local(
+        q=None,
+        players=None,
+        time_filter=None,
+        tier=None,
+        sort="recent",
+        limit=48,
+        offset=0,
+    )
+
+    projected = {game["id"]: game for game in result["data"]}
+    assert projected["unverified"]["summary"] == "概要は確認中です。"
+    assert projected["needs-review"]["summary"] == "概要は確認中です。"
+    assert projected["reviewed"]["summary"] == "Reviewed summary"
 
 
 @pytest.mark.asyncio
