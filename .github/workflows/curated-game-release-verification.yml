@@ -27,4 +27,4 @@ jobs:
       - name: Verify deployed curated registry revision
         env:
           PYTHONPATH: backend
-        run: uv run python backend/app/scripts/curated_game_fast_path_v2.py release-check
+        run: uv run python backend/app/scripts/curated_release_verification.py
