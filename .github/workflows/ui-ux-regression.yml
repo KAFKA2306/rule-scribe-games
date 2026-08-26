@@ -108,6 +108,7 @@ jobs:
           tests/source_links.spec.js
           tests/rule_ask.spec.js
           tests/pili_pili_ruleset_context.spec.js
+          tests/directory-source-trust.spec.js
           --project=chromium
 
       - name: Gate responsive geometry and pixel screenshot baselines
