@@ -1,0 +1,182 @@
+{
+  "schema_version": "1.0",
+  "batch_id": "2026-08-26-batch-03",
+  "games": [
+    {
+      "slug": "ito",
+      "identity": {
+        "title": "ito",
+        "edition": "アークライト ito 基本版（2019年8月8日）",
+        "language": "ja",
+        "platform": "physical",
+        "revision": "arclight-ito-base-2019-accessed-2026-08-26"
+      },
+      "scope": {
+        "included_product": "ito 基本版（アークライト、2019）— クモノイト / アカイイト",
+        "excluded_products": [
+          "ito クラシック",
+          "ito レインボー",
+          "ito (SPIEL Essen 2023 ver.)",
+          "house rules",
+          "unofficial variants"
+        ]
+      },
+      "review_status": "reviewed",
+      "remove_legacy_authority": true,
+      "sources": [
+        {
+          "source_id": "ito:arclight-product-rules",
+          "url": "https://arclightgames.jp/product/ito/",
+          "source_type": "publisher_product_page",
+          "revision_label": "current official base-product rules page accessed 2026-08-26",
+          "review_status": "reviewed",
+          "applies_to_revision": "arclight-ito-base-2019-accessed-2026-08-26",
+          "applies_to_platform": "physical"
+        }
+      ],
+      "rules": [
+        {
+          "rule_id": "kumonoito-setup",
+          "node_type": "setup",
+          "claim": "クモノイトではナンバーカードを混ぜて各プレイヤーに1枚ずつ配り、テーマカードを山札にし、共有ライフを3に設定してクモノシートを場にする。",
+          "source_id": "ito:arclight-product-rules",
+          "evidence_locator": "クモノイト > ゲームの概要 > ゲームの準備",
+          "review_status": "reviewed"
+        },
+        {
+          "rule_id": "kumonoito-theme",
+          "node_type": "action",
+          "claim": "クモノイトではテーマカードから候補を出して今回のテーマを決め、そのテーマに沿って自分のナンバーを数字そのものを言わずに表現する。",
+          "source_id": "ito:arclight-product-rules",
+          "evidence_locator": "クモノイト > テーマ決定 / ナンバーの表現",
+          "review_status": "reviewed"
+        },
+        {
+          "rule_id": "kumonoito-no-turn-order",
+          "node_type": "turn",
+          "claim": "クモノイトのナンバー表現には手番順がなく、全員の表現後は相談しながらカードを小さい順になるよう1枚ずつ場へ出す。",
+          "source_id": "ito:arclight-product-rules",
+          "evidence_locator": "クモノイト > ナンバーの表現 / カードを出す",
+          "review_status": "reviewed"
+        },
+        {
+          "rule_id": "kumonoito-failure-life",
+          "node_type": "effect",
+          "claim": "クモノイトで順番を誤った場合、その時点で正しく出せなくなったカードを脇へ置き、その枚数ぶん共有ライフを失う。",
+          "source_id": "ito:arclight-product-rules",
+          "evidence_locator": "クモノイト > カードを出す / 失敗時の処理",
+          "review_status": "reviewed"
+        },
+        {
+          "rule_id": "kumonoito-stage-clear",
+          "node_type": "condition",
+          "claim": "クモノイトでは全員の手札を出し切り、ライフが残っていればそのステージをクリアする。",
+          "source_id": "ito:arclight-product-rules",
+          "evidence_locator": "クモノイト > ステージクリア",
+          "review_status": "reviewed"
+        },
+        {
+          "rule_id": "kumonoito-stage-progression",
+          "node_type": "setup",
+          "claim": "次のステージでは共有ライフを最大3まで1回復し（2人プレイでは回復しない）、ナンバーカードを混ぜ直して第2ステージは2枚、第3ステージは3枚ずつ配る。",
+          "source_id": "ito:arclight-product-rules",
+          "evidence_locator": "クモノイト > 次のステージの準備",
+          "review_status": "reviewed"
+        },
+        {
+          "rule_id": "kumonoito-third-stage",
+          "node_type": "effect",
+          "claim": "クモノイトの第3ステージでは追加のナンバーカード1枚を表向きにする『モモちゃん』を加える。",
+          "source_id": "ito:arclight-product-rules",
+          "evidence_locator": "クモノイト > 第3ステージ / モモちゃん",
+          "review_status": "reviewed"
+        },
+        {
+          "rule_id": "kumonoito-victory",
+          "node_type": "victory",
+          "claim": "クモノイトは第3ステージをクリアすれば全員の勝利で、途中で共有ライフが0になれば全員の敗北となる。",
+          "source_id": "ito:arclight-product-rules",
+          "evidence_locator": "クモノイト > ゲーム終了",
+          "review_status": "reviewed"
+        },
+        {
+          "rule_id": "akaito-mode",
+          "node_type": "action",
+          "claim": "アカイイトでは手札は常に1枚で、スタートプレイヤーがテーマを決め、時計回りにナンバーを表現し、2人のナンバー合計が100になる相手を探す。",
+          "source_id": "ito:arclight-product-rules",
+          "evidence_locator": "アカイイト > クモノイトルールとの違い / 運命の相手",
+          "review_status": "reviewed"
+        }
+      ]
+    },
+    {
+      "slug": "scythe",
+      "identity": {
+        "title": "サイズ - 大鎌戦役 -",
+        "edition": "サイズ – 大鎌戦役 – 完全日本語版（2017年12月9日）",
+        "language": "ja",
+        "platform": "physical",
+        "revision": "arclight-scythe-ja-2017-errata-current-accessed-2026-08-26"
+      },
+      "scope": {
+        "included_product": "サイズ – 大鎌戦役 – 完全日本語版（Arclight / Stonemaier Games）",
+        "excluded_products": [
+          "Invaders from Afar / 彼方よりの侵攻",
+          "The Wind Gambit / フェンリス襲来を含む各拡張",
+          "モジュラーボード",
+          "My Little Scythe",
+          "digital implementations",
+          "Automa-only rules not directly supported here"
+        ]
+      },
+      "review_status": "reviewed",
+      "remove_legacy_authority": true,
+      "sources": [
+        {
+          "source_id": "scythe:arclight-product",
+          "url": "https://arclightgames.jp/product/%E3%82%B5%E3%82%A4%E3%82%BA-%E5%A4%A7%E9%8E%8C%E6%88%A6%E5%BD%B9/",
+          "source_type": "publisher_product_page",
+          "revision_label": "Japanese base product page accessed 2026-08-26",
+          "review_status": "reviewed",
+          "applies_to_revision": "arclight-scythe-ja-2017-errata-current-accessed-2026-08-26",
+          "applies_to_platform": "physical"
+        },
+        {
+          "source_id": "scythe:arclight-errata",
+          "url": "https://arclightgames.jp/%E3%80%90%E3%82%A8%E3%83%A9%E3%83%83%E3%82%BF%E3%80%91%E3%82%B5%E3%82%A4%E3%82%BA%E5%A4%A7%E9%8E%8C%E6%88%A6%E5%BD%B9/",
+          "source_type": "publisher_errata",
+          "revision_label": "current Japanese errata accessed 2026-08-26",
+          "review_status": "reviewed",
+          "applies_to_revision": "arclight-scythe-ja-2017-errata-current-accessed-2026-08-26",
+          "applies_to_platform": "physical"
+        }
+      ],
+      "rules": [
+        {
+          "rule_id": "action-row-correction",
+          "node_type": "action",
+          "claim": "プレイヤーマットの上段アクションは増強・生産・移動・交易、下段アクションは改良・展開・建設・徴兵である。",
+          "source_id": "scythe:arclight-errata",
+          "evidence_locator": "ルール説明書p.10『6.プレイ手順』訂正",
+          "review_status": "reviewed"
+        },
+        {
+          "rule_id": "worker-only-controlled-area",
+          "node_type": "effect",
+          "claim": "対戦相手の労働者だけが支配する区域へ戦闘ユニットが移動した場合、その区域で移動を止め、相手の労働者は退却し、その区域にあった資源は残る。",
+          "source_id": "scythe:arclight-errata",
+          "evidence_locator": "ルール説明書p.11 移動アクション訂正",
+          "review_status": "reviewed"
+        },
+        {
+          "rule_id": "trade-popularity",
+          "node_type": "effect",
+          "claim": "交易アクションで選べる支持の上昇量は1である。",
+          "source_id": "scythe:arclight-errata",
+          "evidence_locator": "ルール説明書p.12 交易アクション訂正",
+          "review_status": "reviewed"
+        }
+      ]
+    }
+  ]
+}
