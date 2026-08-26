@@ -48,6 +48,10 @@ class PublicReadService:
         }
 
 
+async def _no_canonical_rules(_slug: str):
+    return None
+
+
 def _app_with_service(service):
     app = FastAPI()
     app.include_router(games.router, prefix="/api")
@@ -63,7 +67,8 @@ def test_missing_game_slug_returns_404_instead_of_response_validation_500():
     assert response.json() == {"detail": "Game not found"}
 
 
-def test_game_detail_preserves_player_facing_rule_fields_without_bloating_search():
+def test_game_detail_preserves_player_facing_rule_fields_without_bloating_search(monkeypatch):
+    monkeypatch.setattr(games, "_canonical_rule_text", _no_canonical_rules)
     client = TestClient(_app_with_service(PublicReadService()))
 
     detail = client.get("/api/games/example")
@@ -171,6 +176,7 @@ def test_public_game_reads_use_standard_shared_cache_control(monkeypatch):
         }
 
     monkeypatch.setattr(games, "list_directory_games", fake_directory_query)
+    monkeypatch.setattr(games, "_canonical_rule_text", _no_canonical_rules)
     production_app.dependency_overrides[games.get_game_service] = lambda: PublicReadService()
     try:
         client = TestClient(production_app)
