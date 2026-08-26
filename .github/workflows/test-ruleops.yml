@@ -38,6 +38,14 @@ jobs:
       - name: Validate manifest schema JSON
         run: uv run python -m json.tool backend/app/ruleops/source-manifest.schema.json > /dev/null
 
+      - name: Validate versioned RuleOps manifests
+        env:
+          PYTHONPATH: backend
+        run: |
+          for manifest in backend/app/ruleops/manifests/*.json; do
+            uv run python backend/app/scripts/ruleops_manifest.py "$manifest" > /dev/null
+          done
+
       - name: Run RuleOps regression tests
         env:
           PYTHONPATH: backend
