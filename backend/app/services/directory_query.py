@@ -4,6 +4,7 @@ from typing import Any, Literal
 import anyio
 
 from app.core import local_db, supabase
+from app.services.player_summary import project_directory_summary
 from app.services.search_visibility import EXCLUDED_GAME_SLUGS, should_hide_game_from_search
 
 DirectorySort = Literal["recent", "title", "year", "play_time"]
@@ -63,6 +64,13 @@ def _sort_key(game: dict[str, Any], sort: DirectorySort):
     return str(game.get("created_at") or "")
 
 
+def _project_result(result: dict[str, Any]) -> dict[str, Any]:
+    return {
+        **result,
+        "data": [project_directory_summary(game) for game in result["data"]],
+    }
+
+
 def _filter_rows(
     rows: list[dict[str, Any]],
     *,
@@ -95,7 +103,7 @@ def _query_ranked_search_results(
     if sort != "recent":
         reverse = sort == "year"
         filtered.sort(key=lambda game: _sort_key(game, sort), reverse=reverse)
-    return {"data": filtered[offset : offset + limit], "total": len(filtered)}
+    return _project_result({"data": filtered[offset : offset + limit], "total": len(filtered)})
 
 
 def _query_local(
@@ -120,7 +128,7 @@ def _query_local(
     ]
     reverse = sort in {"recent", "year"}
     filtered.sort(key=lambda game: _sort_key(game, sort), reverse=reverse)
-    return {"data": filtered[offset : offset + limit], "total": len(filtered)}
+    return _project_result({"data": filtered[offset : offset + limit], "total": len(filtered)})
 
 
 async def list_directory_games(
@@ -193,6 +201,6 @@ async def list_directory_games(
             query = query.order("created_at", desc=True, nullsfirst=False)
 
         result = query.range(offset, offset + limit - 1).execute()
-        return {"data": result.data, "total": result.count or 0}
+        return _project_result({"data": result.data, "total": result.count or 0})
 
     return await anyio.to_thread.run_sync(_q)
