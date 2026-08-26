@@ -25,6 +25,7 @@ from app.services.concept_taxonomy import ConceptTaxonomyService
 from app.services.directory_query import DirectorySort, DirectoryTime, list_directory_games
 from app.services.evidence import EvidenceService
 from app.services.game_service import GameIdentityConflictError, GameService
+from app.services.player_summary import project_player_summary
 from app.services.rule_graph import RuleGraphService
 from app.services.rulesets import RuleSetService
 from app.services.search_visibility import has_known_identity_conflict, should_return_gone
@@ -254,7 +255,10 @@ async def get_game_details(slug: str, service: GameService = Depends(get_game_se
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Game not found")
     canonical_rules = await _canonical_rule_text(slug)
     if canonical_rules:
-        game = {**game, "rules_content": canonical_rules}
+        game = project_player_summary(
+            {**game, "rules_content": canonical_rules},
+            source_bound=True,
+        )
     return game
 
 
