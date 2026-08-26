@@ -25,9 +25,9 @@
       "remove_legacy_authority": true,
       "sources": [
         {
-          "source_id": "ito:arclight-product-rules",
+          "source_id": "ito:arclight-rules-page",
           "url": "https://arclightgames.jp/product/ito/",
-          "source_type": "publisher_product_page",
+          "source_type": "publisher_rules_page",
           "revision_label": "current official base-product rules page accessed 2026-08-26",
           "review_status": "reviewed",
           "applies_to_revision": "arclight-ito-base-2019-accessed-2026-08-26",
@@ -39,7 +39,7 @@
           "rule_id": "kumonoito-setup",
           "node_type": "setup",
           "claim": "クモノイトではナンバーカードを混ぜて各プレイヤーに1枚ずつ配り、テーマカードを山札にし、共有ライフを3に設定してクモノシートを場にする。",
-          "source_id": "ito:arclight-product-rules",
+          "source_id": "ito:arclight-rules-page",
           "evidence_locator": "クモノイト > ゲームの概要 > ゲームの準備",
           "review_status": "reviewed"
         },
@@ -47,7 +47,7 @@
           "rule_id": "kumonoito-theme",
           "node_type": "action",
           "claim": "クモノイトではテーマカードから候補を出して今回のテーマを決め、そのテーマに沿って自分のナンバーを数字そのものを言わずに表現する。",
-          "source_id": "ito:arclight-product-rules",
+          "source_id": "ito:arclight-rules-page",
           "evidence_locator": "クモノイト > テーマ決定 / ナンバーの表現",
           "review_status": "reviewed"
         },
@@ -55,7 +55,7 @@
           "rule_id": "kumonoito-no-turn-order",
           "node_type": "turn",
           "claim": "クモノイトのナンバー表現には手番順がなく、全員の表現後は相談しながらカードを小さい順になるよう1枚ずつ場へ出す。",
-          "source_id": "ito:arclight-product-rules",
+          "source_id": "ito:arclight-rules-page",
           "evidence_locator": "クモノイト > ナンバーの表現 / カードを出す",
           "review_status": "reviewed"
         },
@@ -63,7 +63,7 @@
           "rule_id": "kumonoito-failure-life",
           "node_type": "effect",
           "claim": "クモノイトで順番を誤った場合、その時点で正しく出せなくなったカードを脇へ置き、その枚数ぶん共有ライフを失う。",
-          "source_id": "ito:arclight-product-rules",
+          "source_id": "ito:arclight-rules-page",
           "evidence_locator": "クモノイト > カードを出す / 失敗時の処理",
           "review_status": "reviewed"
         },
@@ -71,7 +71,7 @@
           "rule_id": "kumonoito-stage-clear",
           "node_type": "condition",
           "claim": "クモノイトでは全員の手札を出し切り、ライフが残っていればそのステージをクリアする。",
-          "source_id": "ito:arclight-product-rules",
+          "source_id": "ito:arclight-rules-page",
           "evidence_locator": "クモノイト > ステージクリア",
           "review_status": "reviewed"
         },
@@ -79,7 +79,7 @@
           "rule_id": "kumonoito-stage-progression",
           "node_type": "setup",
           "claim": "次のステージでは共有ライフを最大3まで1回復し（2人プレイでは回復しない）、ナンバーカードを混ぜ直して第2ステージは2枚、第3ステージは3枚ずつ配る。",
-          "source_id": "ito:arclight-product-rules",
+          "source_id": "ito:arclight-rules-page",
           "evidence_locator": "クモノイト > 次のステージの準備",
           "review_status": "reviewed"
         },
@@ -87,7 +87,7 @@
           "rule_id": "kumonoito-third-stage",
           "node_type": "effect",
           "claim": "クモノイトの第3ステージでは追加のナンバーカード1枚を表向きにする『モモちゃん』を加える。",
-          "source_id": "ito:arclight-product-rules",
+          "source_id": "ito:arclight-rules-page",
           "evidence_locator": "クモノイト > 第3ステージ / モモちゃん",
           "review_status": "reviewed"
         },
@@ -95,7 +95,7 @@
           "rule_id": "kumonoito-victory",
           "node_type": "victory",
           "claim": "クモノイトは第3ステージをクリアすれば全員の勝利で、途中で共有ライフが0になれば全員の敗北となる。",
-          "source_id": "ito:arclight-product-rules",
+          "source_id": "ito:arclight-rules-page",
           "evidence_locator": "クモノイト > ゲーム終了",
           "review_status": "reviewed"
         },
@@ -103,7 +103,7 @@
           "rule_id": "akaito-mode",
           "node_type": "action",
           "claim": "アカイイトでは手札は常に1枚で、スタートプレイヤーがテーマを決め、時計回りにナンバーを表現し、2人のナンバー合計が100になる相手を探す。",
-          "source_id": "ito:arclight-product-rules",
+          "source_id": "ito:arclight-rules-page",
           "evidence_locator": "アカイイト > クモノイトルールとの違い / 運命の相手",
           "review_status": "reviewed"
         }

@@ -11,6 +11,7 @@ SCHEMA_VERSION = "1.0"
 REVIEWED = "reviewed"
 PRIMARY_SOURCE_TYPES = {
     "publisher_rulebook",
+    "publisher_rules_page",
     "publisher_faq",
     "publisher_errata",
     "publisher_product_page",
@@ -192,7 +193,7 @@ def validate_game_manifest(game: dict[str, Any]) -> list[ValidationError]:
                 slug,
                 "non_rule_source",
                 f"{path}.source_id",
-                "rule claims require a rulebook/FAQ/errata/creator rule source, not identity-only evidence",
+                "rule claims require a rulebook/rules page/FAQ/errata/creator rule source, not identity-only evidence",
             )
 
         locator = rule.get("evidence_locator")
