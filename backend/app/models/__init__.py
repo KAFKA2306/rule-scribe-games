@@ -70,6 +70,7 @@ class GameDetail(BaseSchema):
     summary: str | None = None
     image_url: str | None = None
     structured_data: StructuredData | None = None
+    metadata_evidence: dict[str, Any] | None = None
     source_url: str | None = None
     source_trust: SourceTrust = "unknown"
     content_review_status: ContentReviewStatus = "unknown"
