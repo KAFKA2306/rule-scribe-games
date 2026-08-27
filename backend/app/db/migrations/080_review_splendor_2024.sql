@@ -111,12 +111,29 @@ BEGIN
     RAISE EXCEPTION 'SPACE Cowboys Splendor 2024 refreshed rulebook source is required';
   END IF;
 
-  UPDATE public.games
-  SET content_review_status = 'human_reviewed',
-      published_year = 2024,
-      source_revision = 'Hobby Japan Japanese revised edition released 2024-07 + SPACE Cowboys 2024 refreshed base rulebook; older edition, Duel, and expansions excluded; human-reviewed 2026-08-28',
-      updated_at = now()
-  WHERE id = v_game_id;
+  -- The lightweight migration-replay fixture intentionally omits review-only columns.
+  -- Keep the production mutation idempotent without coupling that fixture to the full app schema.
+  IF EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'games'
+      AND column_name = 'content_review_status'
+  ) THEN
+    EXECUTE
+      'UPDATE public.games SET content_review_status = $1, published_year = $2, source_revision = $3, updated_at = now() WHERE id = $4'
+    USING
+      'human_reviewed',
+      2024,
+      'Hobby Japan Japanese revised edition released 2024-07 + SPACE Cowboys 2024 refreshed base rulebook; older edition, Duel, and expansions excluded; human-reviewed 2026-08-28',
+      v_game_id;
+  ELSE
+    UPDATE public.games
+    SET published_year = 2024,
+        source_revision = 'Hobby Japan Japanese revised edition released 2024-07 + SPACE Cowboys 2024 refreshed base rulebook; older edition, Duel, and expansions excluded; human-reviewed 2026-08-28',
+        updated_at = now()
+    WHERE id = v_game_id;
+  END IF;
 
   UPDATE public.rule_sets
   SET source_revision = 'Hobby Japan Japanese revised edition released 2024-07 + SPACE Cowboys 2024 refreshed base rulebook; older edition, Duel, and expansions excluded; human-reviewed 2026-08-28',
