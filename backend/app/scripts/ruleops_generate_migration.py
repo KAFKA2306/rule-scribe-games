@@ -8,6 +8,8 @@ from typing import Any
 
 from app.scripts.ruleops_manifest import validate_manifest
 
+MECHANICS_FIELD = "structured_data.mechanics"
+
 
 def sql_literal(value: str | None) -> str:
     if value is None:
@@ -125,15 +127,27 @@ def _metadata_payload(item: dict[str, Any]) -> dict[str, Any]:
     payload = {
         "value": item["value"],
         "display": item["display"],
-        "unit": item["unit"],
     }
+    if "unit" in item:
+        payload["unit"] = item["unit"]
     if "approximate" in item:
         payload["approximate"] = item["approximate"]
     return payload
 
 
 def _render_metadata_game_assignments(game: dict[str, Any]) -> str:
-    return "".join(f", {item['field']}={item['value']}" for item in game.get("metadata", []))
+    assignments = []
+    for item in game.get("metadata", []):
+        if item["field"] == MECHANICS_FIELD:
+            rendered = json.dumps(item["value"], ensure_ascii=False, separators=(",", ":"))
+            assignments.append(
+                ", structured_data=jsonb_set(COALESCE(structured_data,'{}'::jsonb), '{mechanics}', "
+                + sql_literal(rendered)
+                + "::jsonb, true)"
+            )
+        else:
+            assignments.append(f", {item['field']}={item['value']}")
+    return "".join(assignments)
 
 
 def _render_metadata_claim_rows(game: dict[str, Any], batch_id: str) -> str:
@@ -184,6 +198,19 @@ def _render_metadata_binding_rows(game: dict[str, Any], batch_id: str) -> str:
     return ",\n".join(rows)
 
 
+def _canonical_metadata_sql(field: str) -> str:
+    if field == MECHANICS_FIELD:
+        return "structured_data->'mechanics'"
+    return field
+
+
+def _expected_metadata_sql(item: dict[str, Any]) -> str:
+    if item["field"] == MECHANICS_FIELD:
+        rendered = json.dumps(item["value"], ensure_ascii=False, separators=(",", ":"))
+        return sql_literal(rendered) + "::jsonb"
+    return str(item["value"])
+
+
 def _render_metadata_sql(game: dict[str, Any], batch_id: str) -> str:
     metadata = game.get("metadata", [])
     if not metadata:
@@ -195,10 +222,11 @@ def _render_metadata_sql(game: dict[str, Any], batch_id: str) -> str:
     assertions = []
     for item in metadata:
         field = item["field"]
-        value = item["value"]
+        canonical_sql = _canonical_metadata_sql(field)
+        expected_sql = _expected_metadata_sql(item)
         assertions.append(
-            f"  IF (SELECT {field} FROM public.games WHERE id=v_game_id) IS DISTINCT FROM {value}\n"
-            f"    THEN RAISE EXCEPTION 'RuleOps {slug} canonical {field} must equal reviewed metadata value {value}'; END IF;"
+            f"  IF (SELECT {canonical_sql} FROM public.games WHERE id=v_game_id) IS DISTINCT FROM {expected_sql}\n"
+            f"    THEN RAISE EXCEPTION 'RuleOps {slug} canonical {field} must equal reviewed metadata value'; END IF;"
         )
         assertions.append(
             f"  IF (SELECT count(*) FROM public.claims WHERE claim_id={sql_literal(f'{slug}:metadata:{field}')} "
@@ -297,7 +325,7 @@ BEGIN
     source_url={sql_literal(first_source['url'])}, source_trust={sql_literal(trust)},
     content_review_status='review_required', is_official=true,
     edition_label={sql_literal(identity['edition'])}, language_code={sql_literal(identity['language'])},
-    source_revision={sql_literal(source_revision)}, updated_at=now(){metadata_assignments}{legacy_reset}
+    source_revision={sql_literal(source_revision)}, updated_at=now(){legacy_reset}{metadata_assignments}
   WHERE id=v_game_id;
 
   SELECT id INTO v_ruleset_id FROM public.rule_sets
