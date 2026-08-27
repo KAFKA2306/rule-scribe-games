@@ -2,7 +2,7 @@ import os
 import xml.etree.ElementTree as ET
 from datetime import datetime
 
-from app.core.supabase import list_for_sitemap
+from app.core.supabase import list_recent
 from app.services.search_visibility import should_hide_game_from_search
 
 NS_SITEMAP = "http://www.sitemaps.org/schemas/sitemap/0.9"
@@ -14,7 +14,7 @@ STATIC_LASTMOD = "2025-12-20"
 
 async def get_sitemap_xml() -> str:
     base_url = os.getenv("NEXT_PUBLIC_BASE_URL", "https://bodoge-no-mikata.vercel.app")
-    games = await list_for_sitemap()
+    games = (await list_recent(limit=50000))["data"]
     root = ET.Element(f"{{{NS_SITEMAP}}}urlset")
     static_pages = [
         {"loc": "/", "priority": "1.0", "changefreq": "daily"},
@@ -33,7 +33,7 @@ async def get_sitemap_xml() -> str:
 
     for game in games:
         slug = str(game.get("slug") or "").strip()
-        if not slug or should_hide_game_from_search(slug):
+        if not slug or should_hide_game_from_search(game):
             continue
 
         url_elem = ET.SubElement(root, f"{{{NS_SITEMAP}}}url")
