@@ -9,9 +9,11 @@ def _game(
     title: str,
     minimum: int,
     maximum: int,
-    play_time: int,
+    play_time: int | None,
     year: int,
     created_at: str,
+    play_time_min_minutes: int | None = None,
+    play_time_max_minutes: int | None = None,
     tier: str | None = None,
     identity_status: str = "verified",
     content_review_status: str = "human_reviewed",
@@ -26,6 +28,8 @@ def _game(
         "min_players": minimum,
         "max_players": maximum,
         "play_time": play_time,
+        "play_time_min_minutes": play_time_min_minutes,
+        "play_time_max_minutes": play_time_max_minutes,
         "published_year": year,
         "created_at": created_at,
         "strategy_tier": tier,
@@ -54,6 +58,60 @@ def test_local_directory_filters_before_pagination(monkeypatch):
 
     assert result["total"] == 1
     assert [game["id"] for game in result["data"]] == ["c"]
+
+
+def test_time_filter_uses_range_overlap_without_rounding():
+    skull_king = _game(
+        "skull-king",
+        title="Skull King",
+        minimum=2,
+        maximum=8,
+        play_time=None,
+        play_time_min_minutes=30,
+        play_time_max_minutes=45,
+        year=2013,
+        created_at="2020-01-01",
+    )
+
+    assert directory_query._matches_time(skull_king, "30-")
+    assert directory_query._matches_time(skull_king, "30-60")
+    assert not directory_query._matches_time(skull_king, "60-120")
+    assert not directory_query._matches_time(skull_king, "120+")
+
+
+def test_time_filter_boundary_overlap_is_inclusive():
+    exactly_60 = _game(
+        "sixty",
+        title="Sixty",
+        minimum=2,
+        maximum=4,
+        play_time=None,
+        play_time_min_minutes=60,
+        play_time_max_minutes=60,
+        year=2026,
+        created_at="2026-01-01",
+    )
+
+    assert directory_query._matches_time(exactly_60, "30-60")
+    assert directory_query._matches_time(exactly_60, "60-120")
+
+
+def test_time_filter_rejects_unknown_or_malformed_ranges():
+    unknown = _game("unknown", title="Unknown", minimum=2, maximum=4, play_time=None, year=2026, created_at="2026-01-01")
+    malformed = _game(
+        "bad",
+        title="Bad",
+        minimum=2,
+        maximum=4,
+        play_time=None,
+        play_time_min_minutes=60,
+        play_time_max_minutes=30,
+        year=2026,
+        created_at="2026-01-01",
+    )
+
+    assert not directory_query._matches_time(unknown, "30-60")
+    assert not directory_query._matches_time(malformed, "30-60")
 
 
 def test_local_directory_paginates_sorted_results(monkeypatch):
