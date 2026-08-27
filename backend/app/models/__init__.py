@@ -81,6 +81,8 @@ class GameDetail(BaseSchema):
     min_players: int | None = None
     max_players: int | None = None
     play_time: int | None = None
+    play_time_min_minutes: int | None = None
+    play_time_max_minutes: int | None = None
     min_age: int | None = None
     published_year: int | None = None
     bgg_url: str | None = None
@@ -113,6 +115,8 @@ class GameUpdate(BaseSchema):
     min_players: int | None = None
     max_players: int | None = None
     play_time: int | None = None
+    play_time_min_minutes: int | None = None
+    play_time_max_minutes: int | None = None
     min_age: int | None = None
     published_year: int | None = None
     image_url: str | None = None
