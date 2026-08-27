@@ -2,6 +2,7 @@ import { StrictMode, Suspense, lazy } from 'react'
 import { createRoot } from 'react-dom/client'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import { HelmetProvider } from 'react-helmet-async'
+import { inject } from '@vercel/analytics'
 import App from './App.jsx'
 import './index.css'
 import './layout.css'
@@ -20,6 +21,7 @@ import LoadingFallback from './components/LoadingFallback.jsx'
 import { installMobileFilterFocus } from './lib/mobileFilterFocus.js'
 
 installMobileFilterFocus()
+inject()
 
 const router = createBrowserRouter([
   {
