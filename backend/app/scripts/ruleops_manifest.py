@@ -31,6 +31,12 @@ CANONICAL_NODE_TYPES = {
     "victory",
 }
 PLATFORMS = {"physical", "digital", "vrchat"}
+METADATA_UNITS = {
+    "min_players": "players",
+    "max_players": "players",
+    "play_time": "minutes",
+    "published_year": "year",
+}
 
 
 @dataclass(frozen=True)
@@ -139,6 +145,84 @@ def validate_game_manifest(game: dict[str, Any]) -> list[ValidationError]:
                 f"{path}.applies_to_platform",
                 "source platform binding must exactly match identity.platform",
             )
+
+    metadata = game.get("metadata", [])
+    if not isinstance(metadata, list):
+        _error(errors, slug, "invalid_metadata", "metadata", "metadata must be a list")
+        metadata = []
+
+    metadata_fields: set[str] = set()
+    metadata_values: dict[str, int] = {}
+    for index, item in enumerate(metadata):
+        path = f"metadata[{index}]"
+        if not isinstance(item, dict):
+            _error(errors, slug, "invalid_metadata_item", path, "metadata item must be an object")
+            continue
+
+        field = item.get("field")
+        if field not in METADATA_UNITS:
+            _error(
+                errors,
+                slug,
+                "invalid_metadata_field",
+                f"{path}.field",
+                f"metadata field must be one of {sorted(METADATA_UNITS)}",
+            )
+            continue
+        if field in metadata_fields:
+            _error(errors, slug, "duplicate_metadata_field", f"{path}.field", f"duplicate metadata field {field}")
+        metadata_fields.add(field)
+
+        value = item.get("value")
+        if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
+            _error(errors, slug, "invalid_metadata_value", f"{path}.value", "metadata value must be a positive integer")
+        else:
+            metadata_values[field] = value
+
+        if not _nonempty(item.get("display")):
+            _error(errors, slug, "missing_metadata_display", f"{path}.display", "metadata display is required")
+
+        expected_unit = METADATA_UNITS[field]
+        if item.get("unit") != expected_unit:
+            _error(
+                errors,
+                slug,
+                "metadata_unit_mismatch",
+                f"{path}.unit",
+                f"{field} unit must be {expected_unit}",
+            )
+
+        if item.get("approximate") and field != "play_time":
+            _error(
+                errors,
+                slug,
+                "invalid_metadata_approximation",
+                f"{path}.approximate",
+                "approximate is only supported for play_time",
+            )
+
+        if item.get("review_status") != REVIEWED:
+            _error(errors, slug, "metadata_not_reviewed", f"{path}.review_status", "metadata must be reviewed")
+
+        source_id = item.get("source_id")
+        if source_by_id.get(str(source_id)) is None:
+            _error(errors, slug, "missing_metadata_source", f"{path}.source_id", "metadata must reference a declared source")
+
+        if not _nonempty(item.get("evidence_locator")):
+            _error(errors, slug, "missing_metadata_locator", f"{path}.evidence_locator", "metadata evidence locator is required")
+
+    if (
+        "min_players" in metadata_values
+        and "max_players" in metadata_values
+        and metadata_values["min_players"] > metadata_values["max_players"]
+    ):
+        _error(
+            errors,
+            slug,
+            "invalid_player_range",
+            "metadata",
+            "min_players cannot exceed max_players",
+        )
 
     rules = game.get("rules")
     if not isinstance(rules, list) or not rules:
