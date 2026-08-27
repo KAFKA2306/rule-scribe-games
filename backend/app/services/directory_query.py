@@ -4,6 +4,7 @@ from typing import Any, Literal
 import anyio
 
 from app.core import local_db, supabase
+from app.services.metadata_evidence_projection import project_metadata_evidence
 from app.services.player_summary import project_directory_summary
 from app.services.search_visibility import EXCLUDED_GAME_SLUGS, should_hide_game_from_search
 
@@ -69,6 +70,13 @@ def _project_result(result: dict[str, Any]) -> dict[str, Any]:
         **result,
         "data": [project_directory_summary(game) for game in result["data"]],
     }
+
+
+async def _project_evidence(result: dict[str, Any]) -> dict[str, Any]:
+    if supabase.is_local() or not result["data"]:
+        return result
+    projected = await anyio.to_thread.run_sync(project_metadata_evidence, result["data"])
+    return {**result, "data": projected}
 
 
 def _filter_rows(
@@ -144,7 +152,7 @@ async def list_directory_games(
     """Return one filtered directory page without loading the full catalog into the browser."""
     if q and q.strip():
         ranked = await supabase.search(q.strip())
-        return _query_ranked_search_results(
+        result = _query_ranked_search_results(
             ranked,
             players=players,
             time_filter=time_filter,
@@ -153,6 +161,7 @@ async def list_directory_games(
             limit=limit,
             offset=offset,
         )
+        return await _project_evidence(result)
 
     if supabase.is_local():
         local_db.init_db()
@@ -203,4 +212,5 @@ async def list_directory_games(
         result = query.range(offset, offset + limit - 1).execute()
         return _project_result({"data": result.data, "total": result.count or 0})
 
-    return await anyio.to_thread.run_sync(_q)
+    result = await anyio.to_thread.run_sync(_q)
+    return await _project_evidence(result)
