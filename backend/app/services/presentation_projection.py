@@ -246,16 +246,29 @@ class PresentationProjectionService:
             .execute()
             .data
         )
+        if not claims:
+            return {}
+
+        claim_ids = [claim["claim_id"] for claim in claims]
+        binding_rows = (
+            client.table("evidence_bindings")
+            .select("claim_id,source_id,relation")
+            .in_("claim_id", claim_ids)
+            .execute()
+            .data
+        )
+        bindings_by_claim: dict[str, list[dict]] = defaultdict(list)
+        for binding in binding_rows:
+            claim_id = binding.get("claim_id")
+            if claim_id:
+                bindings_by_claim[str(claim_id)].append(binding)
+
         eligible: dict[str, list[dict]] = defaultdict(list)
         for claim in claims:
-            bindings = (
-                client.table("evidence_bindings")
-                .select("source_id,relation")
-                .eq("claim_id", claim["claim_id"])
-                .execute()
-                .data
+            evidence = accepted_supported_claim(
+                claim,
+                bindings_by_claim.get(str(claim["claim_id"]), []),
             )
-            evidence = accepted_supported_claim(claim, bindings)
             rule_id = claim.get("rule_id")
             if evidence is not None and rule_id:
                 eligible[rule_id].append(evidence)
