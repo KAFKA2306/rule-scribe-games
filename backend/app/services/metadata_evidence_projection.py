@@ -6,6 +6,29 @@ from app.core import supabase
 SUPPORTED_METADATA_FIELDS = {"min_players", "max_players", "play_time", "structured_data.mechanics"}
 
 
+def _current_metadata_value(row: dict[str, Any], field_path: str) -> Any:
+    if field_path == "structured_data.mechanics":
+        structured_data = row.get("structured_data")
+        if not isinstance(structured_data, dict):
+            return None
+        return structured_data.get("mechanics")
+    return row.get(field_path)
+
+
+def _payload_matches_current_value(row: dict[str, Any], field_path: str, payload: Any) -> bool:
+    if not isinstance(payload, dict) or "value" not in payload:
+        return False
+    current_value = _current_metadata_value(row, field_path)
+    claimed_value = payload["value"]
+    if field_path == "structured_data.mechanics":
+        return (
+            isinstance(current_value, list)
+            and isinstance(claimed_value, list)
+            and current_value == claimed_value
+        )
+    return current_value is not None and current_value == claimed_value
+
+
 def project_metadata_evidence(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Attach field-level metadata evidence without inferring trust from game-level state."""
     if not rows or supabase.is_local():
@@ -109,6 +132,8 @@ def project_metadata_evidence(rows: list[dict[str, Any]]) -> list[dict[str, Any]
             if len(candidates) != 1:
                 continue
             candidate = candidates[0]
+            if not _payload_matches_current_value(row, field_path, candidate["payload"]):
+                continue
             source_ids = candidate["source_ids"]
             metadata_evidence[field_path] = {
                 "status": "supported",
