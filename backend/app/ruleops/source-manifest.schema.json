@@ -59,13 +59,13 @@
         "review_status": {"const": "reviewed"}
       }
     },
-    "metadata": {
+    "numeric_metadata": {
       "type": "object",
       "additionalProperties": false,
       "required": ["field", "value", "display", "unit", "source_id", "evidence_locator", "review_status"],
       "properties": {
         "field": {"enum": ["min_players", "max_players", "play_time", "published_year"]},
-        "value": {"type": "integer"},
+        "value": {"type": "integer", "minimum": 1},
         "display": {"type": "string", "minLength": 1},
         "unit": {"enum": ["players", "minutes", "year"]},
         "approximate": {"type": "boolean"},
@@ -73,6 +73,30 @@
         "evidence_locator": {"type": "string", "minLength": 1},
         "review_status": {"const": "reviewed"}
       }
+    },
+    "mechanics_metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["field", "value", "display", "source_id", "evidence_locator", "review_status"],
+      "properties": {
+        "field": {"const": "structured_data.mechanics"},
+        "value": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "display": {"type": "string", "minLength": 1},
+        "source_id": {"type": "string", "minLength": 1},
+        "evidence_locator": {"type": "string", "minLength": 1},
+        "review_status": {"const": "reviewed"}
+      }
+    },
+    "metadata": {
+      "oneOf": [
+        {"$ref": "#/$defs/numeric_metadata"},
+        {"$ref": "#/$defs/mechanics_metadata"}
+      ]
     },
     "game": {
       "type": "object",
