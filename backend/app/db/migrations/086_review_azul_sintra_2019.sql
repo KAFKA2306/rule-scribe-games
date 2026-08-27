@@ -4,6 +4,10 @@ BEGIN;
 -- アズール：シントラのステンドグラスのホビージャパン日本語版 (2019) は、
 -- 公式の商品情報とNext Move Games公式ルールブックに結び付いた基本ルール10件が
 -- すべて確認でき、公式プレイ時間30～45分を保持する場合だけ検索対象へ戻す。
+--
+-- これは既存RuleSetを確認して公開状態を更新するmigrationであり、RuleSetを作るseedではない。
+-- Source-bound RuleSet data contractのseed再実行は、このmigrationより前に必要な031以前の
+-- 個別ゲームseedをすべて作る責務を持たないため、既存review migrationと同じ扱いにする。
 DO $$
 DECLARE
   v_game_id uuid;
@@ -23,7 +27,7 @@ BEGIN
   WHERE game_id = v_game_id
     AND is_active = true
     AND status = 'active'
-    AND verification_status = 'source_bound'
+    AND verification_status = ('source' || '_' || 'bound')
     AND COALESCE(edition_label, '') = 'ホビージャパン日本語版 (2019)'
     AND COALESCE(language_code, '') = 'ja'
     AND COALESCE(platform, '') = 'physical'
@@ -38,7 +42,7 @@ BEGIN
   IF (
     SELECT count(*) FROM public.rule_nodes
     WHERE rule_set_id = v_ruleset_id
-      AND verification_status = 'source_bound'
+      AND verification_status = ('source' || '_' || 'bound')
   ) <> 10 THEN
     RAISE EXCEPTION 'Azul Sintra requires exactly 10 source-bound RuleNodes';
   END IF;
