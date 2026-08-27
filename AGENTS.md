@@ -9,6 +9,8 @@ Before changing anything:
 - inspect relevant CI, data, and production state;
 - continue existing work when it already covers the same task.
 
+If the repository has a public production site, keep its canonical production URL as a complete plain-text `https://...` URL at the very beginning of `README.md`, before headings, badges, images, or alternate deployment URLs.
+
 Use existing repository commands and structures before adding code, configuration, dependencies, or documentation. `Taskfile.yml` is the preferred command interface when it already provides the required operation.
 
 For externally verifiable game facts:
