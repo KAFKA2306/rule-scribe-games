@@ -79,6 +79,18 @@ def _render_locator_rows(game: dict[str, Any]) -> str:
                 ]
             ) + ")"
         )
+    for item in game.get("metadata", []):
+        locator_id = f"{slug}:locator:metadata:{item['field']}"
+        rows.append(
+            "(" + ",".join(
+                [
+                    sql_literal(locator_id),
+                    sql_literal(item["source_id"]),
+                    sql_literal(item["evidence_locator"]),
+                    sql_literal(item["display"]),
+                ]
+            ) + ")"
+        )
     return ",\n".join(rows)
 
 
@@ -107,6 +119,119 @@ def _render_rule_rows(game: dict[str, Any]) -> str:
             ) + ")"
         )
     return ",\n".join(rows)
+
+
+def _metadata_payload(item: dict[str, Any]) -> dict[str, Any]:
+    payload = {
+        "value": item["value"],
+        "display": item["display"],
+        "unit": item["unit"],
+    }
+    if "approximate" in item:
+        payload["approximate"] = item["approximate"]
+    return payload
+
+
+def _render_metadata_game_assignments(game: dict[str, Any]) -> str:
+    return "".join(f", {item['field']}={item['value']}" for item in game.get("metadata", []))
+
+
+def _render_metadata_claim_rows(game: dict[str, Any], batch_id: str) -> str:
+    slug = game["slug"]
+    rows = []
+    provenance = json.dumps(
+        {"method": "ruleops_reviewed_manifest", "batch_id": batch_id},
+        separators=(",", ":"),
+    )
+    for item in game.get("metadata", []):
+        payload = json.dumps(_metadata_payload(item), ensure_ascii=False, separators=(",", ":"))
+        rows.append(
+            "(" + ",".join(
+                [
+                    sql_literal(f"{slug}:metadata:{item['field']}"),
+                    "v_ruleset_id",
+                    sql_literal("game_metadata_value"),
+                    sql_literal(payload) + "::jsonb",
+                    sql_literal("game_metadata"),
+                    sql_literal(item["field"]),
+                    sql_literal("accepted"),
+                    sql_literal(provenance) + "::jsonb",
+                ]
+            ) + ")"
+        )
+    return ",\n".join(rows)
+
+
+def _render_metadata_binding_rows(game: dict[str, Any], batch_id: str) -> str:
+    slug = game["slug"]
+    rows = []
+    generator = json.dumps({"batch_id": batch_id}, separators=(",", ":"))
+    for item in game.get("metadata", []):
+        rows.append(
+            "(" + ",".join(
+                [
+                    sql_literal(f"{slug}:binding:metadata:{item['field']}"),
+                    sql_literal(f"{slug}:metadata:{item['field']}"),
+                    sql_literal(item["source_id"]),
+                    sql_literal(f"{slug}:locator:metadata:{item['field']}"),
+                    sql_literal("supports"),
+                    sql_literal('{"review":"ruleops_reviewed_manifest"}') + "::jsonb",
+                    sql_literal(generator) + "::jsonb",
+                    "now()",
+                ]
+            ) + ")"
+        )
+    return ",\n".join(rows)
+
+
+def _render_metadata_sql(game: dict[str, Any], batch_id: str) -> str:
+    metadata = game.get("metadata", [])
+    if not metadata:
+        return ""
+
+    slug = game["slug"]
+    claim_rows = _render_metadata_claim_rows(game, batch_id)
+    binding_rows = _render_metadata_binding_rows(game, batch_id)
+    assertions = []
+    for item in metadata:
+        field = item["field"]
+        value = item["value"]
+        assertions.append(
+            f"  IF (SELECT {field} FROM public.games WHERE id=v_game_id) IS DISTINCT FROM {value}\n"
+            f"    THEN RAISE EXCEPTION 'RuleOps {slug} canonical {field} must equal reviewed metadata value {value}'; END IF;"
+        )
+        assertions.append(
+            f"  IF (SELECT count(*) FROM public.claims WHERE claim_id={sql_literal(f'{slug}:metadata:{field}')} "
+            "AND rule_set_id=v_ruleset_id AND target_type='game_metadata' AND lifecycle_status='accepted') <> 1\n"
+            f"    THEN RAISE EXCEPTION 'RuleOps {slug} metadata claim {field} must exist exactly once'; END IF;"
+        )
+        assertions.append(
+            "  IF (SELECT count(*) FROM public.evidence_bindings eb "
+            f"WHERE eb.claim_id={sql_literal(f'{slug}:metadata:{field}')} AND eb.relation='supports') <> 1\n"
+            f"    THEN RAISE EXCEPTION 'RuleOps {slug} metadata evidence {field} must exist exactly once'; END IF;"
+        )
+
+    return f"""
+  INSERT INTO public.claims(
+    claim_id,rule_set_id,claim_type,normalized_payload,target_type,field_path,lifecycle_status,generator_provenance
+  ) VALUES
+{claim_rows}
+  ON CONFLICT(claim_id) DO UPDATE SET
+    rule_set_id=EXCLUDED.rule_set_id,claim_type=EXCLUDED.claim_type,normalized_payload=EXCLUDED.normalized_payload,
+    target_type=EXCLUDED.target_type,field_path=EXCLUDED.field_path,lifecycle_status=EXCLUDED.lifecycle_status,
+    generator_provenance=EXCLUDED.generator_provenance,updated_at=now();
+
+  INSERT INTO public.evidence_bindings(
+    binding_id,claim_id,source_id,locator_id,relation,reviewer_provenance,generator_provenance,verified_at
+  ) VALUES
+{binding_rows}
+  ON CONFLICT(binding_id) DO UPDATE SET
+    claim_id=EXCLUDED.claim_id,source_id=EXCLUDED.source_id,locator_id=EXCLUDED.locator_id,
+    relation=EXCLUDED.relation,reviewer_provenance=EXCLUDED.reviewer_provenance,
+    generator_provenance=EXCLUDED.generator_provenance,verified_at=EXCLUDED.verified_at;
+
+{chr(10).join(assertions)}
+""".rstrip()
 
 
 def render_game_sql(game: dict[str, Any], batch_id: str) -> str:
@@ -141,6 +266,8 @@ def render_game_sql(game: dict[str, Any], batch_id: str) -> str:
 
     source_revision = identity["revision"]
     trust = source_trust(first_source["source_type"])
+    metadata_assignments = _render_metadata_game_assignments(game)
+    metadata_sql = _render_metadata_sql(game, batch_id)
     return f"""
 -- RuleOps game: {slug} / {identity['edition']} / {identity['revision']}
 INSERT INTO public.evidence_sources (
@@ -170,7 +297,7 @@ BEGIN
     source_url={sql_literal(first_source['url'])}, source_trust={sql_literal(trust)},
     content_review_status='review_required', is_official=true,
     edition_label={sql_literal(identity['edition'])}, language_code={sql_literal(identity['language'])},
-    source_revision={sql_literal(source_revision)}, updated_at=now(){legacy_reset}
+    source_revision={sql_literal(source_revision)}, updated_at=now(){metadata_assignments}{legacy_reset}
   WHERE id=v_game_id;
 
   SELECT id INTO v_ruleset_id FROM public.rule_sets
@@ -228,11 +355,13 @@ BEGIN
     relation=EXCLUDED.relation,reviewer_provenance=EXCLUDED.reviewer_provenance,
     generator_provenance=EXCLUDED.generator_provenance,verified_at=EXCLUDED.verified_at;
 
+{metadata_sql}
+
   IF (SELECT count(*) FROM public.rule_nodes WHERE rule_set_id=v_ruleset_id AND verification_status='source_bound') <> {count}
     THEN RAISE EXCEPTION 'RuleOps {slug} RuleNode count must be {count}'; END IF;
   IF (SELECT count(*) FROM public.claims WHERE rule_set_id=v_ruleset_id AND target_type='rule_node' AND lifecycle_status='accepted') <> {count}
     THEN RAISE EXCEPTION 'RuleOps {slug} Claim count must be {count}'; END IF;
-  IF (SELECT count(*) FROM public.evidence_bindings eb JOIN public.claims c ON c.claim_id=eb.claim_id WHERE c.rule_set_id=v_ruleset_id AND eb.relation='supports') <> {count}
+  IF (SELECT count(*) FROM public.evidence_bindings eb JOIN public.claims c ON c.claim_id=eb.claim_id WHERE c.rule_set_id=v_ruleset_id AND eb.relation='supports' AND c.target_type='rule_node') <> {count}
     THEN RAISE EXCEPTION 'RuleOps {slug} EvidenceBinding count must be {count}'; END IF;
 END $$;
 """.strip()
