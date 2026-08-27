@@ -39,19 +39,31 @@ def _matches_players(game: dict[str, Any], players: str | None) -> bool:
     return minimum <= player_count <= maximum
 
 
+def _duration_range(game: dict[str, Any]) -> tuple[int, int] | None:
+    minimum = game.get("play_time_min_minutes")
+    maximum = game.get("play_time_max_minutes")
+    if isinstance(minimum, int) and isinstance(maximum, int) and minimum > 0 and maximum >= minimum:
+        return minimum, maximum
+    legacy = game.get("play_time")
+    if isinstance(legacy, int) and legacy > 0:
+        return legacy, legacy
+    return None
+
+
 def _matches_time(game: dict[str, Any], time_filter: DirectoryTime | None) -> bool:
     if not time_filter:
         return True
-    value = game.get("play_time")
-    if not isinstance(value, int) or value <= 0:
+    duration = _duration_range(game)
+    if duration is None:
         return False
+    minimum, maximum = duration
     if time_filter == "30-":
-        return value <= 30
+        return minimum <= 30 and maximum >= 1
     if time_filter == "30-60":
-        return 30 < value <= 60
+        return minimum <= 60 and maximum >= 30
     if time_filter == "60-120":
-        return 60 < value <= 120
-    return value > 120
+        return minimum <= 120 and maximum >= 60
+    return maximum >= 120
 
 
 def _sort_key(game: dict[str, Any], sort: DirectorySort):
@@ -60,8 +72,8 @@ def _sort_key(game: dict[str, Any], sort: DirectorySort):
     if sort == "year":
         return int(game.get("published_year") or 0)
     if sort == "play_time":
-        value = game.get("play_time")
-        return value if isinstance(value, int) and value > 0 else 10**9
+        duration = _duration_range(game)
+        return duration[0] if duration else 10**9
     return str(game.get("created_at") or "")
 
 
@@ -189,13 +201,13 @@ async def list_directory_games(
                 query = query.lte("min_players", player_count).gte("max_players", player_count)
 
         if time_filter == "30-":
-            query = query.gt("play_time", 0).lte("play_time", 30)
+            query = query.lte("play_time_min_minutes", 30).gte("play_time_max_minutes", 1)
         elif time_filter == "30-60":
-            query = query.gt("play_time", 30).lte("play_time", 60)
+            query = query.lte("play_time_min_minutes", 60).gte("play_time_max_minutes", 30)
         elif time_filter == "60-120":
-            query = query.gt("play_time", 60).lte("play_time", 120)
+            query = query.lte("play_time_min_minutes", 120).gte("play_time_max_minutes", 60)
         elif time_filter == "120+":
-            query = query.gt("play_time", 120)
+            query = query.gte("play_time_max_minutes", 120)
 
         if tier:
             query = query.eq("strategy_tier", tier)
@@ -205,7 +217,9 @@ async def list_directory_games(
         elif sort == "year":
             query = query.order("published_year", desc=True, nullsfirst=False)
         elif sort == "play_time":
-            query = query.order("play_time", desc=False, nullsfirst=False)
+            query = query.order("play_time_min_minutes", desc=False, nullsfirst=False).order(
+                "play_time_max_minutes", desc=False, nullsfirst=False
+            )
         else:
             query = query.order("created_at", desc=True, nullsfirst=False)
 
