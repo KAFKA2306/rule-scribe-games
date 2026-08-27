@@ -14,6 +14,23 @@ const GAMES = [
     max_players: 4,
     play_time: 30,
     structured_data: { mechanics: ['Set Collection'] },
+    metadata_evidence: {
+      min_players: {
+        status: 'supported',
+        payload: { value: 2 },
+        sources: [{ source_id: 'official-product', url: 'https://example.com/rules' }],
+      },
+      max_players: {
+        status: 'supported',
+        payload: { value: 4 },
+        sources: [{ source_id: 'official-product', url: 'https://example.com/rules' }],
+      },
+      play_time: {
+        status: 'supported',
+        payload: { value: 30 },
+        sources: [{ source_id: 'official-product', url: 'https://example.com/rules' }],
+      },
+    },
   },
   {
     id: '22222222-2222-4222-8222-222222222222',
@@ -74,5 +91,7 @@ test('source provenance remains visible in directory and comparison', async ({ p
   await expect(page.getByLabel('人数の根拠')).toHaveCount(2)
   await expect(page.getByLabel('時間の根拠')).toHaveCount(2)
   await expect(page.getByLabel('メカニクスの根拠')).toHaveCount(1)
-  await expect(page.getByText('根拠未登録', { exact: true })).toHaveCount(5)
+  await expect(page.getByText('根拠あり', { exact: true })).toHaveCount(2)
+  await expect(page.getByText('根拠未登録', { exact: true })).toHaveCount(3)
+  await expect(page.getByRole('link', { name: '人数の根拠' })).toHaveAttribute('href', 'https://example.com/rules')
 })
