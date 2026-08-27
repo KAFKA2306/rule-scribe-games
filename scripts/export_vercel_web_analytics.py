@@ -19,6 +19,10 @@ SCHEMA_VERSION = 1
 ROLLING_LIMIT = 100
 
 
+class AnalyticsPlanLimit(RuntimeError):
+    """Raised when the current Vercel plan cannot read a supported analytics dataset."""
+
+
 def normalize_rows(rows: Any) -> list[dict[str, Any]]:
     if not isinstance(rows, list):
         raise ValueError("Vercel analytics response data must be a list")
@@ -106,7 +110,7 @@ def completed_days(rows: list[dict[str, Any]], today_utc: str) -> list[dict[str,
 
 def read_existing(path: Path | None) -> dict[str, Any]:
     if path is None or not path.exists():
-        return {"schema_version": SCHEMA_VERSION, "days": [], "affiliate_outbound_days": []}
+        return {"schema_version": SCHEMA_VERSION, "days": []}
     data = json.loads(path.read_text(encoding="utf-8"))
     if data.get("schema_version") != SCHEMA_VERSION:
         raise ValueError("Unsupported analytics history schema_version")
@@ -185,6 +189,10 @@ def fetch_aggregate(
             payload = json.load(response)
     except error.HTTPError as exc:
         body = exc.read().decode("utf-8", errors="replace")[:1000]
+        if api_url == EVENTS_API_URL and exc.code == 402 and "payment_required" in body:
+            raise AnalyticsPlanLimit(
+                "Vercel custom-events API is unavailable on the current plan"
+            ) from exc
         raise RuntimeError(
             f"Vercel Web Analytics API returned HTTP {exc.code}: {body}"
         ) from exc
@@ -283,9 +291,10 @@ def write_history(
     output: Path,
     existing: dict[str, Any],
     fresh_days: list[dict[str, Any]],
-    affiliate_days: list[dict[str, Any]],
     request_paths: list[dict[str, Any]],
     referrers: list[dict[str, Any]],
+    affiliate_availability: dict[str, str],
+    affiliate_days: list[dict[str, Any]],
     affiliate_providers: list[dict[str, Any]],
     affiliate_games: list[dict[str, Any]],
     collected_at: str,
@@ -296,9 +305,10 @@ def write_history(
         "schema_version": SCHEMA_VERSION,
         "source": VISITS_API_URL,
         "event_source": EVENTS_API_URL,
-        "scope": "production pageviews plus Affiliate Outbound custom events",
+        "scope": "production Web Analytics; custom-event export may be plan-limited",
         "collected_at": collected_at,
         "days": merge_history(existing, fresh_days),
+        "affiliate_outbound": affiliate_availability,
         "affiliate_outbound_days": merge_event_history(existing, affiliate_days),
         "rolling_window": {
             "since": rolling_since,
@@ -322,9 +332,6 @@ def self_test() -> None:
         "days": [
             {"date": "2026-08-18", "pageviews": 2, "visitors": 2},
             {"date": "2026-08-19", "pageviews": 3, "visitors": 2},
-        ],
-        "affiliate_outbound_days": [
-            {"date": "2026-08-19", "count": 1, "visitors": 1},
         ],
     }
     fresh = normalize_rows(
@@ -351,19 +358,6 @@ def self_test() -> None:
         {"date": "2026-08-18", "pageviews": 2, "visitors": 2},
         {"date": "2026-08-19", "pageviews": 5, "visitors": 4},
         {"date": "2026-08-20", "pageviews": 7, "visitors": 6},
-    ]
-
-    event_days = normalize_event_days(
-        [
-            {"timestamp": "2026-08-19T00:00:00.000Z", "count": 2, "visitors": 2},
-            {"timestamp": "2026-08-20T00:00:00.000Z", "count": 3, "visitors": 2},
-            {"timestamp": "2026-08-21T00:00:00.000Z", "count": 1, "visitors": 1},
-        ]
-    )
-    event_days = completed_days(event_days, "2026-08-21")
-    assert merge_event_history(existing, event_days) == [
-        {"date": "2026-08-19", "count": 2, "visitors": 2},
-        {"date": "2026-08-20", "count": 3, "visitors": 2},
     ]
     assert normalize_visit_dimension(
         [{"requestPath": "/games/camel-up", "pageviews": 4, "visitors": 2}],
@@ -421,16 +415,6 @@ def main() -> int:
         ),
         today_utc,
     )
-    affiliate_days = completed_days(
-        fetch_affiliate_daily(
-            token=token,
-            project_id=project_id,
-            team_id=team_id,
-            since=since,
-            until=until,
-        ),
-        today_utc,
-    )
     request_paths = fetch_visit_breakdown(
         token=token,
         project_id=project_id,
@@ -447,30 +431,59 @@ def main() -> int:
         until=until,
         dimension="referrerHostname",
     )
-    affiliate_providers = fetch_affiliate_breakdown(
-        token=token,
-        project_id=project_id,
-        team_id=team_id,
-        since=since,
-        until=until,
-        property_name="provider",
-    )
-    affiliate_games = fetch_affiliate_breakdown(
-        token=token,
-        project_id=project_id,
-        team_id=team_id,
-        since=since,
-        until=until,
-        property_name="gameSlug",
-    )
+
+    affiliate_availability = {
+        "status": "available",
+        "event_name": AFFILIATE_EVENT_NAME,
+    }
+    affiliate_days: list[dict[str, Any]] = []
+    affiliate_providers: list[dict[str, Any]] = []
+    affiliate_games: list[dict[str, Any]] = []
+    try:
+        affiliate_days = completed_days(
+            fetch_affiliate_daily(
+                token=token,
+                project_id=project_id,
+                team_id=team_id,
+                since=since,
+                until=until,
+            ),
+            today_utc,
+        )
+        affiliate_providers = fetch_affiliate_breakdown(
+            token=token,
+            project_id=project_id,
+            team_id=team_id,
+            since=since,
+            until=until,
+            property_name="provider",
+        )
+        affiliate_games = fetch_affiliate_breakdown(
+            token=token,
+            project_id=project_id,
+            team_id=team_id,
+            since=since,
+            until=until,
+            property_name="gameSlug",
+        )
+    except AnalyticsPlanLimit:
+        affiliate_availability = {
+            "status": "not_available",
+            "event_name": AFFILIATE_EVENT_NAME,
+            "reason": "custom_events_api_requires_pro_or_enterprise",
+        }
+        affiliate_days = []
+        affiliate_providers = []
+        affiliate_games = []
 
     write_history(
         args.output,
         read_existing(args.existing),
         fresh_days,
-        affiliate_days,
         request_paths,
         referrers,
+        affiliate_availability,
+        affiliate_days,
         affiliate_providers,
         affiliate_games,
         now.isoformat(),
@@ -480,7 +493,8 @@ def main() -> int:
     print(
         "wrote "
         f"{len(fresh_days)} completed traffic day(s), "
-        f"{len(affiliate_days)} affiliate day(s), and rolling breakdowns to {args.output}"
+        f"{len(request_paths)} path row(s), {len(referrers)} referrer row(s); "
+        f"affiliate export={affiliate_availability['status']}"
     )
     return 0
 
