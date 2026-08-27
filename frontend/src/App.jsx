@@ -12,6 +12,7 @@ const TIME_FILTERS = [
 const SORT_OPTIONS = ['recent', 'title', 'year', 'play_time']
 const PAGE_SIZE = 48
 const NO_IMAGE_URL = '/assets/no-image.webp'
+const UNVERIFIED_COMPARISON_EVIDENCE = '根拠未登録'
 
 function gameImageUrl(game) {
   const configured = game.image_url?.trim()
@@ -302,14 +303,23 @@ function App() {
               <div className="battle-attr">
                 <div className="battle-attr-label">基本情報</div>
                 <div className="pro-stats-grid comparison-specs">
-                  <div className="pro-stat-card"><div className="pro-stat-label">人数</div><div className="pro-stat-value comparison-stat">{comparisonPlayers(game)}</div></div>
-                  <div className="pro-stat-card"><div className="pro-stat-label">時間</div><div className="pro-stat-value comparison-stat">{comparisonPlayTime(game)}</div></div>
+                  <div className="pro-stat-card">
+                    <div className="pro-stat-label">人数</div>
+                    <div className="pro-stat-value comparison-stat">{comparisonPlayers(game)}</div>
+                    <div className="meta-item" aria-label="人数の根拠">{UNVERIFIED_COMPARISON_EVIDENCE}</div>
+                  </div>
+                  <div className="pro-stat-card">
+                    <div className="pro-stat-label">時間</div>
+                    <div className="pro-stat-value comparison-stat">{comparisonPlayTime(game)}</div>
+                    <div className="meta-item" aria-label="時間の根拠">{UNVERIFIED_COMPARISON_EVIDENCE}</div>
+                  </div>
                 </div>
               </div>
 
               {game.structured_data?.mechanics && (
                 <div className="battle-attr">
                   <div className="battle-attr-label">メカニクス</div>
+                  <div className="meta-item" aria-label="メカニクスの根拠">{UNVERIFIED_COMPARISON_EVIDENCE}</div>
                   <div className="tag-list">
                     {game.structured_data.mechanics.slice(0, 5).map((mechanic) => <span key={mechanic} className="tag-item">{mechanic}</span>)}
                   </div>
