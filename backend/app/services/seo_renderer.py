@@ -143,7 +143,7 @@ async def generate_seo_html(slug: str) -> str | None:
     game_url = f"{BASE_URL}/games/{slug}"
     page_title = _page_title(game, title)
     seo_description = description or f"「{title}」の登録済みルール要約と出典情報を確認できます。"
-    hide_from_search = should_hide_game_from_search(slug)
+    hide_from_search = should_hide_game_from_search(game)
 
     structured_data: dict[str, object] = {
         "@context": "https://schema.org",
