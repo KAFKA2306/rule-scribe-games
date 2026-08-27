@@ -34,6 +34,27 @@ function comparisonPlayTime(game) {
   return Number.isFinite(game.play_time) && game.play_time > 0 ? `${game.play_time}分` : '不明'
 }
 
+function comparisonFieldEvidence(game, fieldPath, currentValue) {
+  const evidence = game.metadata_evidence?.[fieldPath]
+  if (evidence?.status !== 'supported') return null
+  if (evidence.payload?.value !== currentValue) return null
+  return evidence
+}
+
+function comparisonPlayersEvidence(game) {
+  const minimum = comparisonFieldEvidence(game, 'min_players', game.min_players)
+  const maximum = comparisonFieldEvidence(game, 'max_players', game.max_players)
+  if (!minimum || !maximum) return null
+  return minimum
+}
+
+function ComparisonEvidence({ evidence, ariaLabel }) {
+  if (!evidence) return <div className="meta-item" aria-label={ariaLabel}>{UNVERIFIED_COMPARISON_EVIDENCE}</div>
+  const sourceUrl = evidence.sources?.find((source) => source.url)?.url
+  if (!sourceUrl) return <div className="meta-item" aria-label={ariaLabel}>根拠あり</div>
+  return <a className="meta-item" aria-label={ariaLabel} href={sourceUrl} target="_blank" rel="noreferrer">根拠あり</a>
+}
+
 function directoryTrustLabel(game) {
   if (game.identity_status !== 'verified') return '未検証'
   if (!['human_reviewed', 'publisher_reviewed'].includes(game.content_review_status)) return '内容要確認'
@@ -286,49 +307,56 @@ function App() {
         </div>
 
         <div className="battle-grid">
-          {compareList.map((game) => (
-            <div key={game.id} className="battle-col">
-              <div className="pro-card comparison-game-card">
-                <img src={gameImageUrl(game)} onError={handleGameImageError} className="comparison-game-image" alt={game.title_ja || game.title || ''} />
-                <div className="pro-stat-value">{game.title_ja || game.title}</div>
-                {directoryTrustLabel(game) && <div className="meta-item">{directoryTrustLabel(game)}</div>}
-                {game.strategy_tier && <div className="tier-badge comparison-tier">戦略ティア {game.strategy_tier}</div>}
-              </div>
-
-              <div className="battle-attr">
-                <div className="battle-attr-label">概要</div>
-                <div className="comparison-summary">{game.summary || '概要はまだありません。'}</div>
-              </div>
-
-              <div className="battle-attr">
-                <div className="battle-attr-label">基本情報</div>
-                <div className="pro-stats-grid comparison-specs">
-                  <div className="pro-stat-card">
-                    <div className="pro-stat-label">人数</div>
-                    <div className="pro-stat-value comparison-stat">{comparisonPlayers(game)}</div>
-                    <div className="meta-item" aria-label="人数の根拠">{UNVERIFIED_COMPARISON_EVIDENCE}</div>
-                  </div>
-                  <div className="pro-stat-card">
-                    <div className="pro-stat-label">時間</div>
-                    <div className="pro-stat-value comparison-stat">{comparisonPlayTime(game)}</div>
-                    <div className="meta-item" aria-label="時間の根拠">{UNVERIFIED_COMPARISON_EVIDENCE}</div>
-                  </div>
+          {compareList.map((game) => {
+            const playersEvidence = comparisonPlayersEvidence(game)
+            const playTimeEvidence = comparisonFieldEvidence(game, 'play_time', game.play_time)
+            const mechanicsEvidence = game.metadata_evidence?.['structured_data.mechanics']?.status === 'supported'
+              ? game.metadata_evidence['structured_data.mechanics']
+              : null
+            return (
+              <div key={game.id} className="battle-col">
+                <div className="pro-card comparison-game-card">
+                  <img src={gameImageUrl(game)} onError={handleGameImageError} className="comparison-game-image" alt={game.title_ja || game.title || ''} />
+                  <div className="pro-stat-value">{game.title_ja || game.title}</div>
+                  {directoryTrustLabel(game) && <div className="meta-item">{directoryTrustLabel(game)}</div>}
+                  {game.strategy_tier && <div className="tier-badge comparison-tier">戦略ティア {game.strategy_tier}</div>}
                 </div>
-              </div>
 
-              {game.structured_data?.mechanics && (
                 <div className="battle-attr">
-                  <div className="battle-attr-label">メカニクス</div>
-                  <div className="meta-item" aria-label="メカニクスの根拠">{UNVERIFIED_COMPARISON_EVIDENCE}</div>
-                  <div className="tag-list">
-                    {game.structured_data.mechanics.slice(0, 5).map((mechanic) => <span key={mechanic} className="tag-item">{mechanic}</span>)}
+                  <div className="battle-attr-label">概要</div>
+                  <div className="comparison-summary">{game.summary || '概要はまだありません。'}</div>
+                </div>
+
+                <div className="battle-attr">
+                  <div className="battle-attr-label">基本情報</div>
+                  <div className="pro-stats-grid comparison-specs">
+                    <div className="pro-stat-card">
+                      <div className="pro-stat-label">人数</div>
+                      <div className="pro-stat-value comparison-stat">{comparisonPlayers(game)}</div>
+                      <ComparisonEvidence evidence={playersEvidence} ariaLabel="人数の根拠" />
+                    </div>
+                    <div className="pro-stat-card">
+                      <div className="pro-stat-label">時間</div>
+                      <div className="pro-stat-value comparison-stat">{comparisonPlayTime(game)}</div>
+                      <ComparisonEvidence evidence={playTimeEvidence} ariaLabel="時間の根拠" />
+                    </div>
                   </div>
                 </div>
-              )}
 
-              <Link to={`/games/${game.slug}`} className="filter-btn comparison-detail-link">詳しい情報を見る</Link>
-            </div>
-          ))}
+                {game.structured_data?.mechanics && (
+                  <div className="battle-attr">
+                    <div className="battle-attr-label">メカニクス</div>
+                    <ComparisonEvidence evidence={mechanicsEvidence} ariaLabel="メカニクスの根拠" />
+                    <div className="tag-list">
+                      {game.structured_data.mechanics.slice(0, 5).map((mechanic) => <span key={mechanic} className="tag-item">{mechanic}</span>)}
+                    </div>
+                  </div>
+                )}
+
+                <Link to={`/games/${game.slug}`} className="filter-btn comparison-detail-link">詳しい情報を見る</Link>
+              </div>
+            )
+          })}
         </div>
       </div>
     )
