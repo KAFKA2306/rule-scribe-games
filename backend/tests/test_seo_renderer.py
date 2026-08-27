@@ -24,6 +24,31 @@ def test_open_ended_player_count_does_not_invent_maximum() -> None:
     assert label == "3人以上"
 
 
+def test_play_time_range_is_preserved_without_inventing_schema_duration() -> None:
+    duration, label = seo_renderer._play_time_projection(
+        {"play_time_min_minutes": 90, "play_time_max_minutes": 120, "play_time": None}
+    )
+
+    assert duration is None
+    assert label == "90-120分"
+
+
+def test_exact_play_time_keeps_schema_duration() -> None:
+    duration, label = seo_renderer._play_time_projection(
+        {"play_time_min_minutes": 30, "play_time_max_minutes": 30, "play_time": None}
+    )
+
+    assert duration == "PT30M"
+    assert label == "30分"
+
+
+def test_legacy_play_time_remains_supported_as_exact_value() -> None:
+    duration, label = seo_renderer._play_time_projection({"play_time": 45})
+
+    assert duration == "PT45M"
+    assert label == "45分"
+
+
 @pytest.mark.asyncio
 async def test_missing_game_returns_none(monkeypatch: pytest.MonkeyPatch) -> None:
     async def missing(_slug: str):
@@ -48,7 +73,9 @@ async def test_game_ssr_replaces_metadata_and_escapes_db_content(
             "rules_content": '</pre><script>alert("rules")</script>',
             "min_players": 2,
             "max_players": 4,
-            "play_time": 30,
+            "play_time": None,
+            "play_time_min_minutes": 90,
+            "play_time_max_minutes": 120,
             "image_url": "/images/game.webp",
         }
 
@@ -95,6 +122,8 @@ async def test_game_ssr_replaces_metadata_and_escapes_db_content(
     assert '<nav aria-label="パンくずリスト">' in rendered
     assert '<a href="/">ゲーム一覧</a>' in rendered
     assert 'aria-current="page"' in rendered
+    assert '<strong>プレイ時間:</strong> 90-120分' in rendered
+    assert '"timeRequired"' not in rendered
     assert '<script>alert("title")</script>' not in rendered
     assert '<script>alert("rules")</script>' not in rendered
     assert '<img src=x onerror=alert("summary")>' not in rendered
