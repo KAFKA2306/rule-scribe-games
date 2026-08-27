@@ -63,6 +63,26 @@ def _player_count_projection(game: dict) -> tuple[dict[str, object] | None, str]
     return quantitative_value, label
 
 
+def _play_time_projection(game: dict) -> tuple[str | None, str]:
+    min_minutes = game.get("play_time_min_minutes")
+    max_minutes = game.get("play_time_max_minutes")
+    legacy_minutes = game.get("play_time")
+
+    if min_minutes is None and max_minutes is None and legacy_minutes is not None:
+        min_minutes = legacy_minutes
+        max_minutes = legacy_minutes
+
+    if min_minutes is not None and max_minutes is not None:
+        if min_minutes == max_minutes:
+            return f"PT{min_minutes}M", f"{min_minutes}分"
+        return None, f"{min_minutes}-{max_minutes}分"
+    if min_minutes is not None:
+        return None, f"{min_minutes}分以上"
+    if max_minutes is not None:
+        return None, f"最大{max_minutes}分"
+    return None, ""
+
+
 def _render_projection_rules(projection) -> str | None:
     sections = (
         ("セットアップ", projection.setup),
@@ -141,8 +161,9 @@ async def generate_seo_html(slug: str) -> str | None:
             "@type": "PeopleAudience",
             "suggestedMinAge": game.get("min_age"),
         }
-    if game.get("play_time"):
-        structured_data["timeRequired"] = f"PT{game.get('play_time')}M"
+    time_required, play_time_label = _play_time_projection(game)
+    if time_required:
+        structured_data["timeRequired"] = time_required
 
     breadcrumb_data = {
         "@context": "https://schema.org",
@@ -230,8 +251,8 @@ async def generate_seo_html(slug: str) -> str | None:
     if player_count_label:
         players_info = f"<p><strong>プレイ人数:</strong> {html.escape(player_count_label)}</p>"
     time_info = ""
-    if game.get("play_time"):
-        time_info = f"<p><strong>プレイ時間:</strong> {html.escape(str(game.get('play_time')))}分</p>"
+    if play_time_label:
+        time_info = f"<p><strong>プレイ時間:</strong> {html.escape(play_time_label)}</p>"
 
     ssr_content = f"""<div id="root">
   <article itemscope itemtype="https://schema.org/Game" data-ssr-game="true">
