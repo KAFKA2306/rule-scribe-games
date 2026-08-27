@@ -1,8 +1,9 @@
 {
   "schema_version": 1,
   "source": "https://api.vercel.com/v1/query/web-analytics/visits/aggregate",
-  "scope": "production pageviews grouped by completed UTC day",
-  "collected_at": "2026-08-27T10:00:17.342623+00:00",
+  "event_source": "https://api.vercel.com/v1/query/web-analytics/events/aggregate",
+  "scope": "production Web Analytics; custom-event export may be plan-limited",
+  "collected_at": "2026-08-27T11:31:36.552219+00:00",
   "days": [
     {
       "date": "2026-07-26",
@@ -164,5 +165,57 @@
       "pageviews": 6,
       "visitors": 2
     }
-  ]
+  ],
+  "affiliate_outbound": {
+    "status": "not_available",
+    "event_name": "Affiliate Outbound",
+    "reason": "custom_events_api_requires_pro_or_enterprise"
+  },
+  "affiliate_outbound_days": [],
+  "rolling_window": {
+    "since": "2026-07-27",
+    "until": "2026-08-27",
+    "limit_per_breakdown": 100,
+    "request_paths": [
+      {
+        "requestPath": "/",
+        "pageviews": 3,
+        "visitors": 1
+      },
+      {
+        "requestPath": "/games/hack-clad",
+        "pageviews": 1,
+        "visitors": 1
+      },
+      {
+        "requestPath": "/games/minna-de-ponkotsu-paint",
+        "pageviews": 1,
+        "visitors": 1
+      },
+      {
+        "requestPath": "/games/pili-pili",
+        "pageviews": 1,
+        "visitors": 1
+      },
+      {
+        "requestPath": "/games/yokohama-duel",
+        "pageviews": 1,
+        "visitors": 1
+      }
+    ],
+    "referrers": [
+      {
+        "referrerHostname": "",
+        "pageviews": 6,
+        "visitors": 2
+      },
+      {
+        "referrerHostname": "bing.com",
+        "pageviews": 1,
+        "visitors": 1
+      }
+    ],
+    "affiliate_by_provider": [],
+    "affiliate_by_game": []
+  }
 }
