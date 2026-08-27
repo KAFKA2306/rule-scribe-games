@@ -91,6 +91,17 @@ def game_with_metadata():
     }
 
 
+def mechanics_metadata():
+    return {
+        "field": "structured_data.mechanics",
+        "value": ["Hand Management", "Set Collection"],
+        "display": "Hand Management / Set Collection",
+        "source_id": "publisher:example:rulebook",
+        "evidence_locator": "p.2-p.4 Turn and scoring procedures",
+        "review_status": "reviewed",
+    }
+
+
 def manifest(game):
     return {"schema_version": "1.0", "batch_id": "metadata-pilot", "games": [game]}
 
@@ -142,8 +153,43 @@ def test_generator_updates_canonical_metadata_and_writes_matching_evidence():
     assert "'game_metadata_value'" in sql
     assert "'game_metadata'" in sql
     assert '"approximate":true' in sql
-    assert "canonical max_players must equal reviewed metadata value 10" in sql
+    assert "canonical max_players must equal reviewed metadata value" in sql
     assert "metadata evidence published_year must exist exactly once" in sql
+
+
+def test_mechanics_metadata_generates_canonical_array_claim_and_evidence():
+    game = game_with_metadata()
+    game["metadata"].append(mechanics_metadata())
+
+    sql, report = generate_migration(manifest(game), "076")
+
+    assert report["status"] == "generated"
+    assert "structured_data='{}'::jsonb, setup_summary=NULL" in sql
+    assert "structured_data=jsonb_set(COALESCE(structured_data,'{}'::jsonb), '{mechanics}'" in sql
+    assert sql.index("structured_data='{}'::jsonb") < sql.index("structured_data=jsonb_set")
+    assert '[\"Hand Management\",\"Set Collection\"]' in sql
+    assert "example-game:metadata:structured_data.mechanics" in sql
+    assert "example-game:binding:metadata:structured_data.mechanics" in sql
+    assert "structured_data->'mechanics'" in sql
+    assert "canonical structured_data.mechanics must equal reviewed metadata value" in sql
+
+
+def test_mechanics_metadata_blocks_empty_duplicate_or_unit_bearing_values():
+    for value, extra, expected_code in [
+        ([], {}, "invalid_mechanics_value"),
+        (["Drafting", "Drafting"], {}, "invalid_mechanics_value"),
+        (["Drafting"], {"unit": "players"}, "invalid_mechanics_unit"),
+    ]:
+        game = game_with_metadata()
+        item = mechanics_metadata()
+        item["value"] = value
+        item.update(extra)
+        game["metadata"].append(item)
+
+        report = validate_manifest(manifest(game))
+        codes = {error["code"] for error in report["games"][0]["errors"]}
+
+        assert expected_code in codes
 
 
 def test_manifest_without_metadata_keeps_existing_ruleops_behavior():

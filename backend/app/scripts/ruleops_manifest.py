@@ -37,6 +37,8 @@ METADATA_UNITS = {
     "play_time": "minutes",
     "published_year": "year",
 }
+MECHANICS_FIELD = "structured_data.mechanics"
+SUPPORTED_METADATA_FIELDS = set(METADATA_UNITS) | {MECHANICS_FIELD}
 
 
 @dataclass(frozen=True)
@@ -160,13 +162,13 @@ def validate_game_manifest(game: dict[str, Any]) -> list[ValidationError]:
             continue
 
         field = item.get("field")
-        if field not in METADATA_UNITS:
+        if field not in SUPPORTED_METADATA_FIELDS:
             _error(
                 errors,
                 slug,
                 "invalid_metadata_field",
                 f"{path}.field",
-                f"metadata field must be one of {sorted(METADATA_UNITS)}",
+                f"metadata field must be one of {sorted(SUPPORTED_METADATA_FIELDS)}",
             )
             continue
         if field in metadata_fields:
@@ -174,32 +176,57 @@ def validate_game_manifest(game: dict[str, Any]) -> list[ValidationError]:
         metadata_fields.add(field)
 
         value = item.get("value")
-        if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
-            _error(errors, slug, "invalid_metadata_value", f"{path}.value", "metadata value must be a positive integer")
+        if field == MECHANICS_FIELD:
+            if (
+                not isinstance(value, list)
+                or not value
+                or any(not _nonempty(mechanic) for mechanic in value)
+                or len(set(value)) != len(value)
+            ):
+                _error(
+                    errors,
+                    slug,
+                    "invalid_mechanics_value",
+                    f"{path}.value",
+                    "mechanics value must be a non-empty list of unique non-empty strings",
+                )
+            if "unit" in item:
+                _error(errors, slug, "invalid_mechanics_unit", f"{path}.unit", "mechanics metadata must not define unit")
+            if "approximate" in item:
+                _error(
+                    errors,
+                    slug,
+                    "invalid_mechanics_approximation",
+                    f"{path}.approximate",
+                    "mechanics metadata must not define approximate",
+                )
         else:
-            metadata_values[field] = value
+            if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
+                _error(errors, slug, "invalid_metadata_value", f"{path}.value", "metadata value must be a positive integer")
+            else:
+                metadata_values[str(field)] = value
+
+            expected_unit = METADATA_UNITS[str(field)]
+            if item.get("unit") != expected_unit:
+                _error(
+                    errors,
+                    slug,
+                    "metadata_unit_mismatch",
+                    f"{path}.unit",
+                    f"{field} unit must be {expected_unit}",
+                )
+
+            if item.get("approximate") and field != "play_time":
+                _error(
+                    errors,
+                    slug,
+                    "invalid_metadata_approximation",
+                    f"{path}.approximate",
+                    "approximate is only supported for play_time",
+                )
 
         if not _nonempty(item.get("display")):
             _error(errors, slug, "missing_metadata_display", f"{path}.display", "metadata display is required")
-
-        expected_unit = METADATA_UNITS[field]
-        if item.get("unit") != expected_unit:
-            _error(
-                errors,
-                slug,
-                "metadata_unit_mismatch",
-                f"{path}.unit",
-                f"{field} unit must be {expected_unit}",
-            )
-
-        if item.get("approximate") and field != "play_time":
-            _error(
-                errors,
-                slug,
-                "invalid_metadata_approximation",
-                f"{path}.approximate",
-                "approximate is only supported for play_time",
-            )
 
         if item.get("review_status") != REVIEWED:
             _error(errors, slug, "metadata_not_reviewed", f"{path}.review_status", "metadata must be reviewed")
