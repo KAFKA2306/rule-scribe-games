@@ -31,12 +31,14 @@ BEGIN
   SELECT id INTO v_game_id FROM public.games WHERE slug='ito' LIMIT 1;
   IF v_game_id IS NULL THEN RAISE EXCEPTION 'Canonical game ito is required'; END IF;
 
-  SELECT count(*), min(id) INTO v_ruleset_count, v_ruleset_id
+  SELECT count(*) INTO v_ruleset_count
   FROM public.rule_sets
   WHERE game_id=v_game_id AND is_active=true AND verification_status='source_bound';
   IF v_ruleset_count <> 1 THEN
     RAISE EXCEPTION 'ito requires exactly one active source-bound RuleSet, found %', v_ruleset_count;
   END IF;
+  SELECT id INTO v_ruleset_id FROM public.rule_sets
+  WHERE game_id=v_game_id AND is_active=true AND verification_status='source_bound' LIMIT 1;
 
   INSERT INTO public.claims(
     claim_id,rule_set_id,claim_type,normalized_payload,target_type,field_path,lifecycle_status,generator_provenance
@@ -70,12 +72,14 @@ BEGIN
   SELECT id INTO v_game_id FROM public.games WHERE slug='scythe' LIMIT 1;
   IF v_game_id IS NULL THEN RAISE EXCEPTION 'Canonical game scythe is required'; END IF;
 
-  SELECT count(*), min(id) INTO v_ruleset_count, v_ruleset_id
+  SELECT count(*) INTO v_ruleset_count
   FROM public.rule_sets
   WHERE game_id=v_game_id AND is_active=true AND verification_status='source_bound';
   IF v_ruleset_count <> 1 THEN
     RAISE EXCEPTION 'scythe requires exactly one active source-bound RuleSet, found %', v_ruleset_count;
   END IF;
+  SELECT id INTO v_ruleset_id FROM public.rule_sets
+  WHERE game_id=v_game_id AND is_active=true AND verification_status='source_bound' LIMIT 1;
 
   INSERT INTO public.claims(
     claim_id,rule_set_id,claim_type,normalized_payload,target_type,field_path,lifecycle_status,generator_provenance
