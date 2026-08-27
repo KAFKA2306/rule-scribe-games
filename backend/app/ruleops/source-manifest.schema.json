@@ -8,11 +8,7 @@
   "properties": {
     "schema_version": {"const": "1.0"},
     "batch_id": {"type": "string", "minLength": 1},
-    "games": {
-      "type": "array",
-      "minItems": 1,
-      "items": {"$ref": "#/$defs/game"}
-    }
+    "games": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/game"}}
   },
   "$defs": {
     "identity": {
@@ -33,38 +29,17 @@
       "required": ["included_product", "excluded_products"],
       "properties": {
         "included_product": {"type": "string", "minLength": 1},
-        "excluded_products": {
-          "type": "array",
-          "items": {"type": "string", "minLength": 1}
-        }
+        "excluded_products": {"type": "array", "items": {"type": "string", "minLength": 1}}
       }
     },
     "source": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "source_id",
-        "url",
-        "source_type",
-        "review_status",
-        "applies_to_revision",
-        "applies_to_platform"
-      ],
+      "required": ["source_id", "url", "source_type", "review_status", "applies_to_revision", "applies_to_platform"],
       "properties": {
         "source_id": {"type": "string", "minLength": 1},
         "url": {"type": "string", "format": "uri"},
-        "source_type": {
-          "enum": [
-            "publisher_rulebook",
-            "publisher_rules_page",
-            "publisher_faq",
-            "publisher_errata",
-            "publisher_product_page",
-            "designer_rulebook",
-            "creator_rulebook",
-            "creator_listing"
-          ]
-        },
+        "source_type": {"enum": ["publisher_rulebook", "publisher_rules_page", "publisher_faq", "publisher_errata", "publisher_product_page", "designer_rulebook", "creator_rulebook", "creator_listing"]},
         "revision_label": {"type": ["string", "null"]},
         "review_status": {"const": "reviewed"},
         "applies_to_revision": {"type": "string", "minLength": 1},
@@ -77,10 +52,23 @@
       "required": ["rule_id", "node_type", "claim", "source_id", "evidence_locator", "review_status"],
       "properties": {
         "rule_id": {"type": "string", "minLength": 1},
-        "node_type": {
-          "enum": ["setup", "turn", "action", "condition", "effect", "scoring", "round_end", "victory"]
-        },
+        "node_type": {"enum": ["setup", "turn", "action", "condition", "effect", "scoring", "round_end", "victory"]},
         "claim": {"type": "string", "minLength": 1},
+        "source_id": {"type": "string", "minLength": 1},
+        "evidence_locator": {"type": "string", "minLength": 1},
+        "review_status": {"const": "reviewed"}
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["field", "value", "display", "unit", "source_id", "evidence_locator", "review_status"],
+      "properties": {
+        "field": {"enum": ["min_players", "max_players", "play_time", "published_year"]},
+        "value": {"type": "integer"},
+        "display": {"type": "string", "minLength": 1},
+        "unit": {"enum": ["players", "minutes", "year"]},
+        "approximate": {"type": "boolean"},
         "source_id": {"type": "string", "minLength": 1},
         "evidence_locator": {"type": "string", "minLength": 1},
         "review_status": {"const": "reviewed"}
@@ -89,31 +77,16 @@
     "game": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "slug",
-        "identity",
-        "scope",
-        "review_status",
-        "remove_legacy_authority",
-        "sources",
-        "rules"
-      ],
+      "required": ["slug", "identity", "scope", "review_status", "remove_legacy_authority", "sources", "rules"],
       "properties": {
         "slug": {"type": "string", "minLength": 1},
         "identity": {"$ref": "#/$defs/identity"},
         "scope": {"$ref": "#/$defs/scope"},
         "review_status": {"const": "reviewed"},
         "remove_legacy_authority": {"type": "boolean"},
-        "sources": {
-          "type": "array",
-          "minItems": 1,
-          "items": {"$ref": "#/$defs/source"}
-        },
-        "rules": {
-          "type": "array",
-          "minItems": 1,
-          "items": {"$ref": "#/$defs/rule"}
-        }
+        "sources": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/source"}},
+        "rules": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/rule"}},
+        "metadata": {"type": "array", "items": {"$ref": "#/$defs/metadata"}}
       }
     }
   }
