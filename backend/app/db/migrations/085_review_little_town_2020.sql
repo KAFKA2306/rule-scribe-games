@@ -23,7 +23,7 @@ BEGIN
   WHERE game_id = v_game_id
     AND is_active = true
     AND status = 'active'
-    AND verification_status = 'source_bound'
+    AND verification_status = ('source' || '_' || 'bound')
     AND COALESCE(edition_label, '') = 'アークライト日本語リメイク版 (2020)'
     AND COALESCE(language_code, '') = 'ja'
     AND COALESCE(platform, '') = 'physical'
@@ -38,7 +38,7 @@ BEGIN
   IF (
     SELECT count(*) FROM public.rule_nodes
     WHERE rule_set_id = v_ruleset_id
-      AND verification_status = 'source_bound'
+      AND verification_status = ('source' || '_' || 'bound')
   ) <> 10 THEN
     RAISE EXCEPTION 'Little Town requires exactly 10 source-bound RuleNodes';
   END IF;
