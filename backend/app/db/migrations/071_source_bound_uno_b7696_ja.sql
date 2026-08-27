@@ -53,7 +53,7 @@ BEGIN
   WHERE id=v_game_id;
 
   UPDATE public.rule_sets
-  SET is_active=false,updated_at=now()
+  SET is_active=false,status='superseded',updated_at=now()
   WHERE game_id=v_game_id AND is_active=true
     AND NOT (COALESCE(edition_label,'')='ウノ B7696（日本語版・シャッフルワイルド）'
       AND COALESCE(revision_label,'')='B7696-ZZ70-G2_JJ2-2017');
