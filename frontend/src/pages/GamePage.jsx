@@ -34,6 +34,15 @@ const REVIEW_LABELS = {
   unknown: 'REVIEW UNKNOWN',
 }
 
+function formatPlayTime(game) {
+  const min = game.play_time_min_minutes
+  const max = game.play_time_max_minutes
+  if (min != null && max != null) return min === max ? `${min}m` : `${min}-${max}m`
+  if (min != null) return `${min}m+`
+  if (max != null) return `≤${max}m`
+  return game.play_time != null ? `${game.play_time}m` : 'N/A'
+}
+
 export default function GamePage({ slug: propSlug, initialGame }) {
   const { slug: urlSlug } = useParams()
   const slug = propSlug || urlSlug
@@ -171,7 +180,7 @@ export default function GamePage({ slug: propSlug, initialGame }) {
             </div>
             <div className="pro-stat-card">
               <div className="pro-stat-label">TIME</div>
-              <div className="pro-stat-value">{game.play_time != null ? `${game.play_time}m` : 'N/A'}</div>
+              <div className="pro-stat-value">{formatPlayTime(game)}</div>
             </div>
             <div className="pro-stat-card">
               <div className="pro-stat-label">AGE</div>
