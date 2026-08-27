@@ -2,7 +2,7 @@
   "schema_version": 1,
   "source": "https://api.vercel.com/v1/query/web-analytics/visits/aggregate",
   "scope": "production pageviews grouped by completed UTC day",
-  "collected_at": "2026-08-26T03:31:19.848321+00:00",
+  "collected_at": "2026-08-27T10:00:17.342623+00:00",
   "days": [
     {
       "date": "2026-07-26",
@@ -158,6 +158,11 @@
       "date": "2026-08-25",
       "pageviews": 0,
       "visitors": 0
+    },
+    {
+      "date": "2026-08-26",
+      "pageviews": 6,
+      "visitors": 2
     }
   ]
 }
