@@ -86,6 +86,21 @@
         "review_status": {"const": "reviewed"}
       }
     },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["field", "value", "display", "source_id", "evidence_locator", "review_status"],
+      "properties": {
+        "field": {"enum": ["min_players", "max_players", "play_time", "published_year"]},
+        "value": {"type": "integer"},
+        "display": {"type": "string", "minLength": 1},
+        "unit": {"enum": ["players", "minutes", "year"]},
+        "approximate": {"type": "boolean"},
+        "source_id": {"type": "string", "minLength": 1},
+        "evidence_locator": {"type": "string", "minLength": 1},
+        "review_status": {"const": "reviewed"}
+      }
+    },
     "game": {
       "type": "object",
       "additionalProperties": false,
@@ -113,6 +128,10 @@
           "type": "array",
           "minItems": 1,
           "items": {"$ref": "#/$defs/rule"}
+        },
+        "metadata": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/metadata"}
         }
       }
     }
