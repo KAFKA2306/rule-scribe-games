@@ -13,6 +13,7 @@ const GAMES = [
     min_players: 2,
     max_players: 4,
     play_time: 30,
+    structured_data: { mechanics: ['Set Collection'] },
   },
   {
     id: '22222222-2222-4222-8222-222222222222',
@@ -65,10 +66,13 @@ test('source provenance remains visible in directory and comparison', async ({ p
   await expect(unknownCard.getByText('出典未確認', { exact: true })).toBeVisible()
   await expect(thirdPartyCard.getByText('第三者出典', { exact: true })).toBeVisible()
 
+  await page.getByRole('button', { name: '公式ゲームを比較に追加' }).click()
   await page.getByRole('button', { name: '出典未確認ゲームを比較に追加' }).click()
-  await page.getByRole('button', { name: '第三者出典ゲームを比較に追加' }).click()
   await page.getByRole('button', { name: '比較する' }).click()
 
   await expect(page.getByText('出典未確認', { exact: true })).toBeVisible()
-  await expect(page.getByText('第三者出典', { exact: true })).toBeVisible()
+  await expect(page.getByLabel('人数の根拠')).toHaveCount(2)
+  await expect(page.getByLabel('時間の根拠')).toHaveCount(2)
+  await expect(page.getByLabel('メカニクスの根拠')).toHaveCount(1)
+  await expect(page.getByText('根拠未登録', { exact: true })).toHaveCount(5)
 })
