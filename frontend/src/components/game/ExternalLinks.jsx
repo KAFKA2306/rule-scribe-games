@@ -11,11 +11,34 @@ const isValidUrl = (url) => {
   }
 }
 
+const hasAmazonAffiliateTag = (url) => {
+  if (!isValidUrl(url)) return false
+
+  try {
+    const parsed = new URL(url)
+    return parsed.hostname.toLowerCase().includes('amazon.') && Boolean(parsed.searchParams.get('tag'))
+  } catch {
+    return false
+  }
+}
+
 const sourceLabel = (sourceTrust) => {
   if (sourceTrust === 'official_publisher') return '出版社のページ'
   if (sourceTrust === 'authorized_partner') return '認定パートナーのページ'
   if (sourceTrust === 'third_party') return '第三者の出典'
   return '登録済み出典（未検証）'
+}
+
+const trackAffiliateOutbound = (gameSlug, provider) => {
+  if (typeof window === 'undefined' || typeof window.va !== 'function') return
+
+  window.va('event', {
+    name: 'Affiliate Outbound',
+    data: {
+      gameSlug,
+      provider,
+    },
+  })
 }
 
 export const ExternalLinks = ({ game }) => {
@@ -28,7 +51,12 @@ export const ExternalLinks = ({ game }) => {
     ? { url: source_url, label: sourceLabel(source_trust), class: 'source', sponsored: false }
     : null
   const links = [
-    { url: amazon, label: 'Amazon', class: 'amazon', sponsored: Boolean(affiliateAmazon) },
+    {
+      url: amazon,
+      label: 'Amazon',
+      class: 'amazon',
+      sponsored: Boolean(affiliateAmazon) || hasAmazonAffiliateTag(amazon_url),
+    },
     { url: rakuten, label: '楽天で見る', class: 'rakuten', sponsored: true },
     { url: yahoo, label: 'Yahoo!で見る', class: 'yahoo', sponsored: true },
     { url: bgg_url, label: 'BoardGameGeek', class: 'bgg', sponsored: false },
@@ -66,6 +94,7 @@ export const ExternalLinks = ({ game }) => {
                 target="_blank"
                 rel={link.sponsored ? 'noopener noreferrer sponsored' : 'noopener noreferrer'}
                 className={`link-button ${link.class}`}
+                onClick={link.sponsored ? () => trackAffiliateOutbound(game.slug, link.class) : undefined}
               >
                 {link.label}
               </a>
