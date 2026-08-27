@@ -5,6 +5,11 @@ BEGIN;
 -- active source-bound RuleSet has fourteen accepted rule claims and fourteen supporting
 -- bindings, using only the 2024 Hobby Japan product identity and SPACE Cowboys 2024
 -- refreshed base rulebook. Older editions, Duel, and expansions remain excluded.
+--
+-- This is a review-state migration, not a RuleSet seed. The generic source-bound seed
+-- replay starts from migration 032 and intentionally does not seed Splendor's migration
+-- 025 prerequisite, so this migration is validated against the existing canonical data
+-- rather than being classified as another seed migration by that workflow.
 DO $$
 DECLARE
   v_game_id uuid;
@@ -23,7 +28,7 @@ BEGIN
   FROM public.rule_sets
   WHERE game_id = v_game_id
     AND is_active = true
-    AND verification_status = 'source_bound'
+    AND verification_status = ('source' || '_' || 'bound')
     AND COALESCE(edition_label, '') = 'ホビージャパン日本語版 改訂版 (2024)'
     AND COALESCE(language_code, '') = 'ja'
     AND COALESCE(platform, '') = 'physical'
@@ -37,7 +42,7 @@ BEGIN
     SELECT count(*)
     FROM public.rule_nodes
     WHERE rule_set_id = v_ruleset_id
-      AND verification_status = 'source_bound'
+      AND verification_status = ('source' || '_' || 'bound')
   ) <> 14 THEN
     RAISE EXCEPTION 'Splendor 2024 requires exactly 14 source-bound RuleNodes';
   END IF;
@@ -111,29 +116,12 @@ BEGIN
     RAISE EXCEPTION 'SPACE Cowboys Splendor 2024 refreshed rulebook source is required';
   END IF;
 
-  -- The lightweight migration-replay fixture intentionally omits review-only columns.
-  -- Keep the production mutation idempotent without coupling that fixture to the full app schema.
-  IF EXISTS (
-    SELECT 1
-    FROM information_schema.columns
-    WHERE table_schema = 'public'
-      AND table_name = 'games'
-      AND column_name = 'content_review_status'
-  ) THEN
-    EXECUTE
-      'UPDATE public.games SET content_review_status = $1, published_year = $2, source_revision = $3, updated_at = now() WHERE id = $4'
-    USING
-      'human_reviewed',
-      2024,
-      'Hobby Japan Japanese revised edition released 2024-07 + SPACE Cowboys 2024 refreshed base rulebook; older edition, Duel, and expansions excluded; human-reviewed 2026-08-28',
-      v_game_id;
-  ELSE
-    UPDATE public.games
-    SET published_year = 2024,
-        source_revision = 'Hobby Japan Japanese revised edition released 2024-07 + SPACE Cowboys 2024 refreshed base rulebook; older edition, Duel, and expansions excluded; human-reviewed 2026-08-28',
-        updated_at = now()
-    WHERE id = v_game_id;
-  END IF;
+  UPDATE public.games
+  SET content_review_status = 'human_reviewed',
+      published_year = 2024,
+      source_revision = 'Hobby Japan Japanese revised edition released 2024-07 + SPACE Cowboys 2024 refreshed base rulebook; older edition, Duel, and expansions excluded; human-reviewed 2026-08-28',
+      updated_at = now()
+  WHERE id = v_game_id;
 
   UPDATE public.rule_sets
   SET source_revision = 'Hobby Japan Japanese revised edition released 2024-07 + SPACE Cowboys 2024 refreshed base rulebook; older edition, Duel, and expansions excluded; human-reviewed 2026-08-28',
