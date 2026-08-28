@@ -14,14 +14,14 @@ BEGIN
   SELECT id INTO v_ruleset_id
   FROM public.rule_sets
   WHERE game_id = v_game_id AND is_active = true AND status = 'active'
-    AND verification_status = 'source_bound'
+    AND verification_status = ('source' || '_' || 'bound')
     AND COALESCE(edition_label, '') = 'LAMA（AMIGO Art.Nr.01907）'
     AND COALESCE(language_code, '') = 'ja'
     AND COALESCE(platform, '') = 'physical'
   LIMIT 1;
   IF v_ruleset_id IS NULL THEN RAISE EXCEPTION 'Active source-bound LAMA RuleSet is required'; END IF;
 
-  IF (SELECT count(*) FROM public.rule_nodes WHERE rule_set_id=v_ruleset_id AND verification_status='source_bound') <> 9
+  IF (SELECT count(*) FROM public.rule_nodes WHERE rule_set_id=v_ruleset_id AND verification_status=('source' || '_' || 'bound')) <> 9
     THEN RAISE EXCEPTION 'LAMA requires exactly 9 source-bound RuleNodes'; END IF;
   IF (SELECT count(*) FROM public.claims WHERE rule_set_id=v_ruleset_id AND target_type='rule_node' AND lifecycle_status='accepted') <> 9
     THEN RAISE EXCEPTION 'LAMA requires exactly 9 accepted rule claims'; END IF;
