@@ -45,22 +45,24 @@ BEGIN
   INSERT INTO public.source_locators
     (locator_id,source_id,page_number,section_heading,external_reference)
   VALUES
-    ('lama:rules:setup','publisher:amigo:lama:rules-v1.8-de',1,'Spielvorbereitung','deal six cards; draw pile; first discard; chips ready'),
-    ('lama:rules:turn','publisher:amigo:lama:rules-v1.8-de',1,'Spielablauf','choose exactly one action: Karte ablegen, Karte nachziehen, or Aussteigen'),
-    ('lama:rules:play','publisher:amigo:lama:rules-v1.8-de',1,'Karte ablegen','same value or exactly one higher; llama follows 6 or llama; llama or 1 follows llama'),
-    ('lama:rules:draw','publisher:amigo:lama:rules-v1.8-de',1,'Karte nachziehen','draw one and end turn; exhausted draw pile is not rebuilt'),
-    ('lama:rules:quit','publisher:amigo:lama:rules-v1.8-de',1,'Aussteigen','leave the current round and place remaining cards face down'),
-    ('lama:rules:round-end','publisher:amigo:lama:rules-v1.8-de',2,'Ende eines Durchgangs','round ends when one player empties hand or all players quit; lone remaining player cannot draw'),
-    ('lama:rules:scoring','publisher:amigo:lama:rules-v1.8-de',2,'Abrechnung','remaining numeric values count once per distinct value; llamas total 10 points'),
-    ('lama:rules:return-token','publisher:amigo:lama:rules-v1.8-de',2,'Chips abgeben','a player who empties hand may return one 1-point or 10-point token'),
-    ('lama:rules:game-end','publisher:amigo:lama:rules-v1.8-de',2,'Ende des Spiels','game ends once someone has 40 or more points; fewest points wins; ties share victory')
-  ON CONFLICT (source_id, locator_id) DO UPDATE SET
+    ('lama:v1.8:rules:setup','publisher:amigo:lama:rules-v1.8-de',1,'Spielvorbereitung','deal six cards; draw pile; first discard; chips ready'),
+    ('lama:v1.8:rules:turn','publisher:amigo:lama:rules-v1.8-de',1,'Spielablauf','choose exactly one action: Karte ablegen, Karte nachziehen, or Aussteigen'),
+    ('lama:v1.8:rules:play','publisher:amigo:lama:rules-v1.8-de',1,'Karte ablegen','same value or exactly one higher; llama follows 6 or llama; llama or 1 follows llama'),
+    ('lama:v1.8:rules:draw','publisher:amigo:lama:rules-v1.8-de',1,'Karte nachziehen','draw one and end turn; exhausted draw pile is not rebuilt'),
+    ('lama:v1.8:rules:quit','publisher:amigo:lama:rules-v1.8-de',1,'Aussteigen','leave the current round and place remaining cards face down'),
+    ('lama:v1.8:rules:round-end','publisher:amigo:lama:rules-v1.8-de',2,'Ende eines Durchgangs','round ends when one player empties hand or all players quit; lone remaining player cannot draw'),
+    ('lama:v1.8:rules:scoring','publisher:amigo:lama:rules-v1.8-de',2,'Abrechnung','remaining numeric values count once per distinct value; llamas total 10 points'),
+    ('lama:v1.8:rules:return-token','publisher:amigo:lama:rules-v1.8-de',2,'Chips abgeben','a player who empties hand may return one 1-point or 10-point token'),
+    ('lama:v1.8:rules:game-end','publisher:amigo:lama:rules-v1.8-de',2,'Ende des Spiels','game ends once someone has 40 or more points; fewest points wins; ties share victory')
+  ON CONFLICT (locator_id) DO UPDATE SET
+    source_id=EXCLUDED.source_id,
     page_number=EXCLUDED.page_number,
     section_heading=EXCLUDED.section_heading,
     external_reference=EXCLUDED.external_reference;
 
   UPDATE public.evidence_bindings eb
-  SET source_id='publisher:amigo:lama:rules-v1.8-de'
+  SET source_id='publisher:amigo:lama:rules-v1.8-de',
+      locator_id=replace(eb.locator_id, 'lama:rules:', 'lama:v1.8:rules:')
   FROM public.claims c
   WHERE c.claim_id=eb.claim_id AND c.rule_set_id=v_ruleset_id
     AND c.target_type='rule_node' AND c.lifecycle_status='accepted' AND eb.relation='supports';
@@ -79,8 +81,9 @@ BEGIN
   IF EXISTS (
     SELECT 1 FROM public.rule_nodes rn
     JOIN public.evidence_bindings eb ON eb.binding_id=rn.evidence_ref
-    WHERE rn.rule_set_id=v_ruleset_id AND eb.source_id <> 'publisher:amigo:lama:rules-v1.8-de'
-  ) THEN RAISE EXCEPTION 'Every LAMA rule must use the current AMIGO Version 1.8 rulebook'; END IF;
+    WHERE rn.rule_set_id=v_ruleset_id
+      AND (eb.source_id <> 'publisher:amigo:lama:rules-v1.8-de' OR eb.locator_id NOT LIKE 'lama:v1.8:rules:%')
+  ) THEN RAISE EXCEPTION 'Every LAMA rule must use the current AMIGO Version 1.8 rulebook and locator'; END IF;
 
   UPDATE public.games
   SET content_review_status='human_reviewed', title_ja='ラマ', edition_label='LAMA（AMIGO Art.Nr.01907）',
