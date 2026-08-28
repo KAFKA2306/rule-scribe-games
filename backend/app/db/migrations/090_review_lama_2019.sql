@@ -43,7 +43,7 @@ BEGIN
     trust_metadata=EXCLUDED.trust_metadata, updated_at=now();
 
   UPDATE public.evidence_bindings eb
-  SET source_id='publisher:amigo:lama:rules-v1.8-de', updated_at=now()
+  SET source_id='publisher:amigo:lama:rules-v1.8-de'
   FROM public.claims c
   WHERE c.claim_id=eb.claim_id AND c.rule_set_id=v_ruleset_id
     AND c.target_type='rule_node' AND c.lifecycle_status='accepted' AND eb.relation='supports';
