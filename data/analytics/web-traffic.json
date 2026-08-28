@@ -3,7 +3,7 @@
   "source": "https://api.vercel.com/v1/query/web-analytics/visits/aggregate",
   "event_source": "https://api.vercel.com/v1/query/web-analytics/events/aggregate",
   "scope": "production Web Analytics; custom-event export may be plan-limited",
-  "collected_at": "2026-08-27T11:31:36.552219+00:00",
+  "collected_at": "2026-08-28T11:32:04.649968+00:00",
   "days": [
     {
       "date": "2026-07-26",
@@ -164,6 +164,11 @@
       "date": "2026-08-26",
       "pageviews": 6,
       "visitors": 2
+    },
+    {
+      "date": "2026-08-27",
+      "pageviews": 3,
+      "visitors": 1
     }
   ],
   "affiliate_outbound": {
@@ -173,22 +178,22 @@
   },
   "affiliate_outbound_days": [],
   "rolling_window": {
-    "since": "2026-07-27",
-    "until": "2026-08-27",
+    "since": "2026-07-28",
+    "until": "2026-08-28",
     "limit_per_breakdown": 100,
     "request_paths": [
       {
         "requestPath": "/",
-        "pageviews": 3,
-        "visitors": 1
-      },
-      {
-        "requestPath": "/games/hack-clad",
-        "pageviews": 1,
-        "visitors": 1
+        "pageviews": 5,
+        "visitors": 2
       },
       {
         "requestPath": "/games/minna-de-ponkotsu-paint",
+        "pageviews": 2,
+        "visitors": 2
+      },
+      {
+        "requestPath": "/games/hack-clad",
         "pageviews": 1,
         "visitors": 1
       },
@@ -206,8 +211,8 @@
     "referrers": [
       {
         "referrerHostname": "",
-        "pageviews": 6,
-        "visitors": 2
+        "pageviews": 9,
+        "visitors": 3
       },
       {
         "referrerHostname": "bing.com",
