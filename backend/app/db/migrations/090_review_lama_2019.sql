@@ -42,6 +42,23 @@ BEGIN
     revision_label=EXCLUDED.revision_label, retrieved_at=EXCLUDED.retrieved_at,
     trust_metadata=EXCLUDED.trust_metadata, updated_at=now();
 
+  INSERT INTO public.source_locators
+    (locator_id,source_id,page_number,section_heading,external_reference)
+  VALUES
+    ('lama:rules:setup','publisher:amigo:lama:rules-v1.8-de',1,'Spielvorbereitung','deal six cards; draw pile; first discard; chips ready'),
+    ('lama:rules:turn','publisher:amigo:lama:rules-v1.8-de',1,'Spielablauf','choose exactly one action: Karte ablegen, Karte nachziehen, or Aussteigen'),
+    ('lama:rules:play','publisher:amigo:lama:rules-v1.8-de',1,'Karte ablegen','same value or exactly one higher; llama follows 6 or llama; llama or 1 follows llama'),
+    ('lama:rules:draw','publisher:amigo:lama:rules-v1.8-de',1,'Karte nachziehen','draw one and end turn; exhausted draw pile is not rebuilt'),
+    ('lama:rules:quit','publisher:amigo:lama:rules-v1.8-de',1,'Aussteigen','leave the current round and place remaining cards face down'),
+    ('lama:rules:round-end','publisher:amigo:lama:rules-v1.8-de',2,'Ende eines Durchgangs','round ends when one player empties hand or all players quit; lone remaining player cannot draw'),
+    ('lama:rules:scoring','publisher:amigo:lama:rules-v1.8-de',2,'Abrechnung','remaining numeric values count once per distinct value; llamas total 10 points'),
+    ('lama:rules:return-token','publisher:amigo:lama:rules-v1.8-de',2,'Chips abgeben','a player who empties hand may return one 1-point or 10-point token'),
+    ('lama:rules:game-end','publisher:amigo:lama:rules-v1.8-de',2,'Ende des Spiels','game ends once someone has 40 or more points; fewest points wins; ties share victory')
+  ON CONFLICT (source_id, locator_id) DO UPDATE SET
+    page_number=EXCLUDED.page_number,
+    section_heading=EXCLUDED.section_heading,
+    external_reference=EXCLUDED.external_reference;
+
   UPDATE public.evidence_bindings eb
   SET source_id='publisher:amigo:lama:rules-v1.8-de'
   FROM public.claims c
