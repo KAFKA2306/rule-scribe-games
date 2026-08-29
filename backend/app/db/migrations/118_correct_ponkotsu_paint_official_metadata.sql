@@ -2,7 +2,7 @@ BEGIN;
 
 -- プレイヤー向け成功条件:
 -- 「みんなでぽんこつペイント」の商品情報をホビージャパン公式ページに一致させ、
--- 一次資料で裏付けられない旧ルール本文は、確認済みRuleSetができるまで公開しない。
+-- 一次資料へ結び付いたRuleSetがない間は、ルール本文を確定情報として公開しない。
 DO $$
 DECLARE
   v_game_id uuid;
@@ -28,15 +28,18 @@ BEGIN
       AND identity_status = 'verified'
       AND source_trust = 'official_publisher'
       AND source_url = 'https://hobbyjapan.games/ponkotsu_paint/'
-      AND min_players = 3
       AND max_players = 12
       AND play_time = 10
       AND play_time_min_minutes = 10
       AND play_time_max_minutes = 10
       AND min_age = 6
-      AND published_year = 2020
       AND rules_content IS NOT NULL
       AND btrim(rules_content) <> ''
+      AND (
+        (min_players = 3 AND published_year = 2020)
+        OR
+        (min_players = 2 AND published_year = 2018)
+      )
   ) THEN
     RAISE EXCEPTION 'Minna de Ponkotsu Paint canonical state changed; re-audit before migration';
   END IF;
@@ -62,7 +65,7 @@ BEGIN
       rules_content = NULL,
       content_review_status = 'review_required',
       summary = 'サイコロで決めたお題を「直線」と「正円」だけで描き、画数が少ない絵から回答者に見せるお絵かきゲームです。',
-      description = 'ホビージャパンの2018年新装版。2～12人、約10分、6歳以上。基本のお絵かきに加え、7人までの「ぽんこつ紅白チーム戦」と2人用協力戦「ぽんこつデュエット」が収録されています。詳細ルールは一次資料との照合が完了するまで掲載しません。',
+      description = 'ホビージャパンの2018年新装版。2～12人、約10分、6歳以上。7人まで遊べる「ぽんこつ紅白チーム戦」と2人用協力戦「ぽんこつデュエット」が追加されています。詳細ルールは一次資料へ結び付いたRuleSetを確認できるまで掲載しません。',
       updated_at = now()
   WHERE id = v_game_id;
 
