@@ -10,6 +10,12 @@ from app.services.search_visibility import should_hide_game_from_search
 
 logger = logging.getLogger("agents.game_service")
 _TITLE_FIELDS = ("title", "title_ja", "title_en")
+_LEGACY_PLAYER_RULE_FIELDS = (
+    "rules_content",
+    "setup_summary",
+    "gameplay_summary",
+    "end_game_summary",
+)
 
 
 class GameIdentityConflictError(ValueError):
@@ -141,7 +147,10 @@ class GameService:
         return [row for row in rows if not should_hide_game_from_search(str(row.get("slug") or ""))]
 
     async def get_game_by_slug(self, slug: str) -> dict[str, Any] | None:
-        return await supabase.get_by_slug(slug)
+        game = await supabase.get_by_slug(slug)
+        if game is None:
+            return None
+        return {**game, **{field: None for field in _LEGACY_PLAYER_RULE_FIELDS}}
 
     async def update_game_manual(self, slug: str, updates: dict[str, Any]) -> dict[str, Any]:
         game = await supabase.get_by_slug(slug)
