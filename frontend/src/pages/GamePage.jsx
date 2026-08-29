@@ -122,7 +122,7 @@ export default function GamePage({ slug: propSlug, initialGame }) {
   const identityLabel = IDENTITY_LABELS[game.identity_status] || IDENTITY_LABELS.unverified
   const sourceTrustLabel = SOURCE_TRUST_LABELS[game.source_trust] || SOURCE_TRUST_LABELS.unknown
   const reviewLabel = REVIEW_LABELS[game.content_review_status] || REVIEW_LABELS.unknown
-  const ruleGuide = getCuratedRuleGuide(slug)
+  const ruleGuide = rules ? getCuratedRuleGuide(slug) : null
   const legacyInfographicsSourceUrl = game.infographics_source_url || coachSourceUrl
   const legacyInfographicsVerified = Boolean(
     game.infographics &&
