@@ -1,7 +1,11 @@
+import json
+
 import pytest
 
+import app.scripts.verify_production_contract as production_contract
 from app.scripts.verify_production_contract import (
     build_indexability_report,
+    fetch_public_games,
     indexability_reasons,
     validate_anonymous_catalog_patch_status,
     validate_mechanical_dna_payload,
@@ -65,6 +69,41 @@ def test_anonymous_catalog_patch_accepts_auth_rejection(status_code):
 def test_anonymous_catalog_patch_rejects_other_statuses(status_code):
     with pytest.raises(ValueError, match="anonymous catalog PATCH must fail"):
         validate_anonymous_catalog_patch_status(status_code)
+
+
+def test_fetch_public_games_paginates_within_api_limit(monkeypatch):
+    requested_paths = []
+
+    def fake_request(base_url, path, timeout_seconds, accept):
+        requested_paths.append(path)
+        offset = int(path.split("offset=")[1])
+        total = 185
+        size = min(100, total - offset)
+        body = json.dumps({"total": total, "games": [{"slug": f"game-{i}"} for i in range(offset, offset + size)]}).encode()
+        return 200, body
+
+    monkeypatch.setattr(production_contract, "_request", fake_request)
+
+    games = fetch_public_games("https://example.test")
+
+    assert len(games) == 185
+    assert requested_paths == [
+        "/api/games?limit=100&offset=0",
+        "/api/games?limit=100&offset=100",
+    ]
+
+
+def test_fetch_public_games_fails_if_pagination_ends_early(monkeypatch):
+    def fake_request(base_url, path, timeout_seconds, accept):
+        offset = int(path.split("offset=")[1])
+        if offset == 0:
+            return 200, json.dumps({"total": 185, "games": [{"slug": f"game-{i}"} for i in range(100)]}).encode()
+        return 200, json.dumps({"total": 185, "games": []}).encode()
+
+    monkeypatch.setattr(production_contract, "_request", fake_request)
+
+    with pytest.raises(ValueError, match="ended before total rows"):
+        fetch_public_games("https://example.test")
 
 
 def test_indexability_reasons_keep_unreviewed_games_out_of_search():
