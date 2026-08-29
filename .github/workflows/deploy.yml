@@ -10,6 +10,7 @@ on:
 
 permissions:
   contents: read
+  actions: read
 
 concurrency:
   group: vercel-${{ github.workflow }}-${{ github.ref }}
@@ -136,14 +137,61 @@ jobs:
         run: |
           echo "Production still does not match the exact main SHA after verification/fallback." >> "$GITHUB_STEP_SUMMARY"
           exit 1
+      - name: Download previous production indexability state
+        id: previous_indexability
+        if: >-
+          steps.budget.outputs.state == 'current' ||
+          steps.git_verification.outcome == 'success' ||
+          steps.push_fallback.outputs.deployed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/previous-indexability
+          artifact_id="$(gh api --paginate "repos/${GITHUB_REPOSITORY}/actions/artifacts?per_page=100" --jq '.artifacts[] | select(.name == "production-indexability" and (.expired | not)) | [.created_at, (.id | tostring)] | @tsv' | sort -r | head -n 1 | cut -f 2)"
+          if [ -z "$artifact_id" ]; then
+            echo "found=false" >> "$GITHUB_OUTPUT"
+            echo "No previous verified production indexability artifact; this release establishes the baseline and reports the comparison as UNVERIFIED." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          gh api "repos/${GITHUB_REPOSITORY}/actions/artifacts/${artifact_id}/zip" > /tmp/previous-indexability.zip
+          unzip -q /tmp/previous-indexability.zip -d /tmp/previous-indexability
+          test -f /tmp/previous-indexability/indexability.json
+          echo "found=true" >> "$GITHUB_OUTPUT"
       - name: Verify Mechanical DNA production contract
         if: >-
           steps.budget.outputs.state == 'current' ||
           steps.git_verification.outcome == 'success' ||
           steps.push_fallback.outputs.deployed == 'true'
-        run: >-
-          python backend/app/scripts/verify_production_contract.py
-          --base-url https://bodoge-no-mikata.vercel.app
+        shell: bash
+        run: |
+          set -euo pipefail
+          args=(
+            --base-url https://bodoge-no-mikata.vercel.app
+            --indexability-state-output /tmp/current-indexability/indexability.json
+          )
+          if [ "${{ steps.previous_indexability.outputs.found }}" = "true" ]; then
+            args+=(--previous-indexability-state /tmp/previous-indexability/indexability.json)
+          fi
+          python backend/app/scripts/verify_production_contract.py "${args[@]}" | tee /tmp/production-contract.txt
+          {
+            echo "### Production search indexability"
+            echo '```text'
+            cat /tmp/production-contract.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Save verified production indexability state
+        if: >-
+          steps.budget.outputs.state == 'current' ||
+          steps.git_verification.outcome == 'success' ||
+          steps.push_fallback.outputs.deployed == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-indexability
+          path: /tmp/current-indexability/indexability.json
+          if-no-files-found: error
+          retention-days: 90
       - name: Notify IndexNow after verified production release
         if: >-
           steps.budget.outputs.state == 'current' ||
@@ -220,8 +268,49 @@ jobs:
           --team-id "${VERCEL_ORG_ID}"
           --timeout-seconds 180
           --poll-seconds 5
+      - name: Download previous production indexability state
+        id: previous_indexability
+        if: steps.budget.outputs.state == 'current' || steps.catchup.outputs.deployed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/previous-indexability
+          artifact_id="$(gh api --paginate "repos/${GITHUB_REPOSITORY}/actions/artifacts?per_page=100" --jq '.artifacts[] | select(.name == "production-indexability" and (.expired | not)) | [.created_at, (.id | tostring)] | @tsv' | sort -r | head -n 1 | cut -f 2)"
+          if [ -z "$artifact_id" ]; then
+            echo "found=false" >> "$GITHUB_OUTPUT"
+            echo "No previous verified production indexability artifact; this run establishes the baseline and reports the comparison as UNVERIFIED." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          gh api "repos/${GITHUB_REPOSITORY}/actions/artifacts/${artifact_id}/zip" > /tmp/previous-indexability.zip
+          unzip -q /tmp/previous-indexability.zip -d /tmp/previous-indexability
+          test -f /tmp/previous-indexability/indexability.json
+          echo "found=true" >> "$GITHUB_OUTPUT"
       - name: Verify Mechanical DNA production contract
         if: steps.budget.outputs.state == 'current' || steps.catchup.outputs.deployed == 'true'
-        run: >-
-          python backend/app/scripts/verify_production_contract.py
-          --base-url https://bodoge-no-mikata.vercel.app
+        shell: bash
+        run: |
+          set -euo pipefail
+          args=(
+            --base-url https://bodoge-no-mikata.vercel.app
+            --indexability-state-output /tmp/current-indexability/indexability.json
+          )
+          if [ "${{ steps.previous_indexability.outputs.found }}" = "true" ]; then
+            args+=(--previous-indexability-state /tmp/previous-indexability/indexability.json)
+          fi
+          python backend/app/scripts/verify_production_contract.py "${args[@]}" | tee /tmp/production-contract.txt
+          {
+            echo "### Production search indexability"
+            echo '```text'
+            cat /tmp/production-contract.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Save verified production indexability state
+        if: steps.budget.outputs.state == 'current' || steps.catchup.outputs.deployed == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-indexability
+          path: /tmp/current-indexability/indexability.json
+          if-no-files-found: error
+          retention-days: 90
