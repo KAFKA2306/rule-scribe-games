@@ -3,7 +3,7 @@
   "source": "https://api.vercel.com/v1/query/web-analytics/visits/aggregate",
   "event_source": "https://api.vercel.com/v1/query/web-analytics/events/aggregate",
   "scope": "production Web Analytics; custom-event export may be plan-limited",
-  "collected_at": "2026-08-28T11:32:04.649968+00:00",
+  "collected_at": "2026-08-29T07:11:37.498911+00:00",
   "days": [
     {
       "date": "2026-07-26",
@@ -169,6 +169,11 @@
       "date": "2026-08-27",
       "pageviews": 3,
       "visitors": 1
+    },
+    {
+      "date": "2026-08-28",
+      "pageviews": 1,
+      "visitors": 1
     }
   ],
   "affiliate_outbound": {
@@ -178,8 +183,8 @@
   },
   "affiliate_outbound_days": [],
   "rolling_window": {
-    "since": "2026-07-28",
-    "until": "2026-08-28",
+    "since": "2026-07-29",
+    "until": "2026-08-29",
     "limit_per_breakdown": 100,
     "request_paths": [
       {
@@ -203,6 +208,11 @@
         "visitors": 1
       },
       {
+        "requestPath": "/games/splendor",
+        "pageviews": 1,
+        "visitors": 1
+      },
+      {
         "requestPath": "/games/yokohama-duel",
         "pageviews": 1,
         "visitors": 1
@@ -216,6 +226,11 @@
       },
       {
         "referrerHostname": "bing.com",
+        "pageviews": 1,
+        "visitors": 1
+      },
+      {
+        "referrerHostname": "note.com",
         "pageviews": 1,
         "visitors": 1
       }
