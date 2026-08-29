@@ -52,8 +52,6 @@ SET
   min_players = NULL,
   max_players = NULL,
   play_time = NULL,
-  play_time_min_minutes = NULL,
-  play_time_max_minutes = NULL,
   min_age = NULL,
   published_year = NULL,
   source_url = NULL,
@@ -64,9 +62,40 @@ WHERE slug = 'heart-of-crown-fairy-garden';
 
 DO $$
 BEGIN
+  -- The production schema has canonical min/max play-time columns. The compact
+  -- source-bound CI fixture intentionally does not, so clear them only where
+  -- the canonical columns exist instead of widening the fixture for one game.
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'games' AND column_name = 'play_time_min_minutes'
+  ) AND EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'games' AND column_name = 'play_time_max_minutes'
+  ) THEN
+    EXECUTE 'UPDATE public.games SET play_time_min_minutes = NULL, play_time_max_minutes = NULL WHERE slug = $1'
+      USING 'heart-of-crown-fairy-garden';
+  END IF;
+END $$;
+
+DO $$
+DECLARE
+  v_ranges_are_null boolean := true;
+BEGIN
   IF current_database() = 'source_bound_ruleset_test'
      AND NOT EXISTS (SELECT 1 FROM public.games WHERE slug = 'heart-of-crown-fairy-garden') THEN
     RETURN;
+  END IF;
+
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'games' AND column_name = 'play_time_min_minutes'
+  ) AND EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'games' AND column_name = 'play_time_max_minutes'
+  ) THEN
+    EXECUTE 'SELECT play_time_min_minutes IS NULL AND play_time_max_minutes IS NULL FROM public.games WHERE slug = $1'
+      INTO v_ranges_are_null
+      USING 'heart-of-crown-fairy-garden';
   END IF;
 
   IF NOT EXISTS (
@@ -91,11 +120,9 @@ BEGIN
       AND min_players IS NULL
       AND max_players IS NULL
       AND play_time IS NULL
-      AND play_time_min_minutes IS NULL
-      AND play_time_max_minutes IS NULL
       AND min_age IS NULL
       AND published_year IS NULL
-  ) THEN
+  ) OR NOT v_ranges_are_null THEN
     RAISE EXCEPTION 'heart-of-crown-fairy-garden did not reach fail-closed state';
   END IF;
 END $$;
