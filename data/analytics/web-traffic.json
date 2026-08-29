@@ -3,7 +3,7 @@
   "source": "https://api.vercel.com/v1/query/web-analytics/visits/aggregate",
   "event_source": "https://api.vercel.com/v1/query/web-analytics/events/aggregate",
   "scope": "production Web Analytics; custom-event export may be plan-limited",
-  "collected_at": "2026-08-29T07:11:37.498911+00:00",
+  "collected_at": "2026-08-29T08:29:19.173842+00:00",
   "days": [
     {
       "date": "2026-07-26",
@@ -233,6 +233,68 @@
         "referrerHostname": "note.com",
         "pageviews": 1,
         "visitors": 1
+      }
+    ],
+    "game_page_referrers": [
+      {
+        "requestPath": "/games/minna-de-ponkotsu-paint",
+        "pageviews": 2,
+        "visitors": 2,
+        "referrers": [
+          {
+            "referrerHostname": "",
+            "pageviews": 2,
+            "visitors": 2
+          }
+        ]
+      },
+      {
+        "requestPath": "/games/hack-clad",
+        "pageviews": 1,
+        "visitors": 1,
+        "referrers": [
+          {
+            "referrerHostname": "",
+            "pageviews": 1,
+            "visitors": 1
+          }
+        ]
+      },
+      {
+        "requestPath": "/games/pili-pili",
+        "pageviews": 1,
+        "visitors": 1,
+        "referrers": [
+          {
+            "referrerHostname": "",
+            "pageviews": 1,
+            "visitors": 1
+          }
+        ]
+      },
+      {
+        "requestPath": "/games/splendor",
+        "pageviews": 1,
+        "visitors": 1,
+        "referrers": [
+          {
+            "referrerHostname": "note.com",
+            "pageviews": 1,
+            "visitors": 1
+          }
+        ]
+      },
+      {
+        "requestPath": "/games/yokohama-duel",
+        "pageviews": 1,
+        "visitors": 1,
+        "referrers": [
+          {
+            "referrerHostname": "bing.com",
+            "pageviews": 1,
+            "visitors": 1
+          }
+        ]
       }
     ],
     "affiliate_by_provider": [],
