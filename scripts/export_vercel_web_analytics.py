@@ -89,7 +89,7 @@ def normalize_event_dimension(rows: Any, output_key: str) -> list[dict[str, Any]
     normalized: list[dict[str, Any]] = []
     for row in rows:
         if not isinstance(row, dict):
-            raise ValueError("Vercel event breakdown rows must be objects")
+            raise ValueError("Vercel event rows must be objects")
         value = row.get("eventData")
         if value is None:
             value = ""
@@ -104,7 +104,6 @@ def normalize_event_dimension(rows: Any, output_key: str) -> list[dict[str, Any]
 
 
 def completed_days(rows: list[dict[str, Any]], today_utc: str) -> list[dict[str, Any]]:
-    """Exclude the in-progress UTC day so persisted daily values are final."""
     return [row for row in rows if row["date"] < today_utc]
 
 
@@ -121,9 +120,7 @@ def read_existing(path: Path | None) -> dict[str, Any]:
     return data
 
 
-def merge_history(
-    existing: dict[str, Any], fresh_days: list[dict[str, Any]]
-) -> list[dict[str, Any]]:
+def merge_history(existing: dict[str, Any], fresh_days: list[dict[str, Any]]) -> list[dict[str, Any]]:
     by_date: dict[str, dict[str, Any]] = {}
     for row in existing.get("days", []):
         if isinstance(row, dict) and isinstance(row.get("date"), str):
@@ -137,9 +134,7 @@ def merge_history(
     return [by_date[key] for key in sorted(by_date)]
 
 
-def merge_event_history(
-    existing: dict[str, Any], fresh_days: list[dict[str, Any]]
-) -> list[dict[str, Any]]:
+def merge_event_history(existing: dict[str, Any], fresh_days: list[dict[str, Any]]) -> list[dict[str, Any]]:
     by_date: dict[str, dict[str, Any]] = {}
     for row in existing.get("affiliate_outbound_days", []):
         if isinstance(row, dict) and isinstance(row.get("date"), str):
@@ -151,6 +146,15 @@ def merge_event_history(
     for row in fresh_days:
         by_date[row["date"]] = row
     return [by_date[key] for key in sorted(by_date)]
+
+
+def odata_string(value: str) -> str:
+    return "'" + value.replace("'", "''") + "'"
+
+
+def production_filter(extra: str | None = None) -> str:
+    base = "environment eq 'production'"
+    return f"{base} and {extra}" if extra else base
 
 
 def fetch_aggregate(
@@ -181,7 +185,7 @@ def fetch_aggregate(
         headers={
             "Authorization": f"Bearer {token}",
             "Accept": "application/json",
-            "User-Agent": "rule-scribe-games-web-analytics/2",
+            "User-Agent": "rule-scribe-games-web-analytics/3",
         },
     )
     try:
@@ -193,21 +197,15 @@ def fetch_aggregate(
             raise AnalyticsPlanLimit(
                 "Vercel custom-events API is unavailable on the current plan"
             ) from exc
-        raise RuntimeError(
-            f"Vercel Web Analytics API returned HTTP {exc.code}: {body}"
-        ) from exc
+        raise RuntimeError(f"Vercel Web Analytics API returned HTTP {exc.code}: {body}") from exc
     except error.URLError as exc:
-        raise RuntimeError(
-            f"Vercel Web Analytics API request failed: {exc.reason}"
-        ) from exc
+        raise RuntimeError(f"Vercel Web Analytics API request failed: {exc.reason}") from exc
     if not isinstance(payload, dict):
         raise ValueError("Vercel analytics response must be an object")
     return payload.get("data")
 
 
-def fetch_daily(
-    *, token: str, project_id: str, team_id: str, since: str, until: str
-) -> list[dict[str, Any]]:
+def fetch_daily(*, token: str, project_id: str, team_id: str, since: str, until: str) -> list[dict[str, Any]]:
     return normalize_rows(
         fetch_aggregate(
             api_url=VISITS_API_URL,
@@ -217,24 +215,7 @@ def fetch_daily(
             since=since,
             until=until,
             by="day",
-            filter_expression="environment eq 'production'",
-        )
-    )
-
-
-def fetch_affiliate_daily(
-    *, token: str, project_id: str, team_id: str, since: str, until: str
-) -> list[dict[str, Any]]:
-    return normalize_event_days(
-        fetch_aggregate(
-            api_url=EVENTS_API_URL,
-            token=token,
-            project_id=project_id,
-            team_id=team_id,
-            since=since,
-            until=until,
-            by="day",
-            filter_expression=f"eventName eq '{AFFILIATE_EVENT_NAME}'",
+            filter_expression=production_filter(),
         )
     )
 
@@ -247,6 +228,7 @@ def fetch_visit_breakdown(
     since: str,
     until: str,
     dimension: str,
+    extra_filter: str | None = None,
 ) -> list[dict[str, Any]]:
     return normalize_visit_dimension(
         fetch_aggregate(
@@ -257,9 +239,58 @@ def fetch_visit_breakdown(
             since=since,
             until=until,
             by=dimension,
-            filter_expression="environment eq 'production'",
+            filter_expression=production_filter(extra_filter),
         ),
         dimension,
+    )
+
+
+def fetch_game_referrers(
+    *,
+    token: str,
+    project_id: str,
+    team_id: str,
+    since: str,
+    until: str,
+    request_paths: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    result: list[dict[str, Any]] = []
+    for row in request_paths:
+        path = str(row.get("requestPath", ""))
+        if not path.startswith("/games/"):
+            continue
+        referrers = fetch_visit_breakdown(
+            token=token,
+            project_id=project_id,
+            team_id=team_id,
+            since=since,
+            until=until,
+            dimension="referrerHostname",
+            extra_filter=f"requestPath eq {odata_string(path)}",
+        )
+        result.append(
+            {
+                "requestPath": path,
+                "pageviews": int(row.get("pageviews", 0)),
+                "visitors": int(row.get("visitors", 0)),
+                "referrers": referrers,
+            }
+        )
+    return result
+
+
+def fetch_affiliate_daily(*, token: str, project_id: str, team_id: str, since: str, until: str) -> list[dict[str, Any]]:
+    return normalize_event_days(
+        fetch_aggregate(
+            api_url=EVENTS_API_URL,
+            token=token,
+            project_id=project_id,
+            team_id=team_id,
+            since=since,
+            until=until,
+            by="day",
+            filter_expression=f"eventName eq {odata_string(AFFILIATE_EVENT_NAME)}",
+        )
     )
 
 
@@ -281,7 +312,7 @@ def fetch_affiliate_breakdown(
             since=since,
             until=until,
             by=f"eventData/{property_name}",
-            filter_expression=f"eventName eq '{AFFILIATE_EVENT_NAME}'",
+            filter_expression=f"eventName eq {odata_string(AFFILIATE_EVENT_NAME)}",
         ),
         property_name,
     )
@@ -293,6 +324,7 @@ def write_history(
     fresh_days: list[dict[str, Any]],
     request_paths: list[dict[str, Any]],
     referrers: list[dict[str, Any]],
+    game_referrers: list[dict[str, Any]],
     affiliate_availability: dict[str, str],
     affiliate_days: list[dict[str, Any]],
     affiliate_providers: list[dict[str, Any]],
@@ -316,14 +348,13 @@ def write_history(
             "limit_per_breakdown": ROLLING_LIMIT,
             "request_paths": request_paths,
             "referrers": referrers,
+            "game_page_referrers": game_referrers,
             "affiliate_by_provider": affiliate_providers,
             "affiliate_by_game": affiliate_games,
         },
     }
     output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(
-        json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
-    )
+    output.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
 def self_test() -> None:
@@ -334,26 +365,16 @@ def self_test() -> None:
             {"date": "2026-08-19", "pageviews": 3, "visitors": 2},
         ],
     }
-    fresh = normalize_rows(
-        [
-            {
-                "timestamp": "2026-08-19T00:00:00.000Z",
-                "pageviews": 5,
-                "visitors": 4,
-            },
-            {
-                "timestamp": "2026-08-20T00:00:00.000Z",
-                "pageviews": 7,
-                "visitors": 6,
-            },
-            {
-                "timestamp": "2026-08-21T00:00:00.000Z",
-                "pageviews": 1,
-                "visitors": 1,
-            },
-        ]
+    fresh = completed_days(
+        normalize_rows(
+            [
+                {"timestamp": "2026-08-19T00:00:00.000Z", "pageviews": 5, "visitors": 4},
+                {"timestamp": "2026-08-20T00:00:00.000Z", "pageviews": 7, "visitors": 6},
+                {"timestamp": "2026-08-21T00:00:00.000Z", "pageviews": 1, "visitors": 1},
+            ]
+        ),
+        "2026-08-21",
     )
-    fresh = completed_days(fresh, "2026-08-21")
     assert merge_history(existing, fresh) == [
         {"date": "2026-08-18", "pageviews": 2, "visitors": 2},
         {"date": "2026-08-19", "pageviews": 5, "visitors": 4},
@@ -366,14 +387,16 @@ def self_test() -> None:
     assert normalize_event_dimension(
         [{"eventData": "amazon", "count": 2, "visitors": 2}], "provider"
     ) == [{"provider": "amazon", "count": 2, "visitors": 2}]
+    assert odata_string("/games/king's-gambit") == "'/games/king''s-gambit'"
+    assert production_filter("requestPath eq '/games/splendor'") == (
+        "environment eq 'production' and requestPath eq '/games/splendor'"
+    )
     print("web analytics exporter self-test: OK")
 
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--output", type=Path, default=Path("data/analytics/web-traffic.json")
-    )
+    parser.add_argument("--output", type=Path, default=Path("data/analytics/web-traffic.json"))
     parser.add_argument("--existing", type=Path)
     parser.add_argument("--since-days", type=int, default=31)
     parser.add_argument("--self-test", action="store_true")
@@ -406,13 +429,7 @@ def main() -> int:
     until = today_utc
 
     fresh_days = completed_days(
-        fetch_daily(
-            token=token,
-            project_id=project_id,
-            team_id=team_id,
-            since=since,
-            until=until,
-        ),
+        fetch_daily(token=token, project_id=project_id, team_id=team_id, since=since, until=until),
         today_utc,
     )
     request_paths = fetch_visit_breakdown(
@@ -431,11 +448,16 @@ def main() -> int:
         until=until,
         dimension="referrerHostname",
     )
+    game_referrers = fetch_game_referrers(
+        token=token,
+        project_id=project_id,
+        team_id=team_id,
+        since=since,
+        until=until,
+        request_paths=request_paths,
+    )
 
-    affiliate_availability = {
-        "status": "available",
-        "event_name": AFFILIATE_EVENT_NAME,
-    }
+    affiliate_availability = {"status": "available", "event_name": AFFILIATE_EVENT_NAME}
     affiliate_days: list[dict[str, Any]] = []
     affiliate_providers: list[dict[str, Any]] = []
     affiliate_games: list[dict[str, Any]] = []
@@ -472,9 +494,6 @@ def main() -> int:
             "event_name": AFFILIATE_EVENT_NAME,
             "reason": "custom_events_api_requires_pro_or_enterprise",
         }
-        affiliate_days = []
-        affiliate_providers = []
-        affiliate_games = []
 
     write_history(
         args.output,
@@ -482,6 +501,7 @@ def main() -> int:
         fresh_days,
         request_paths,
         referrers,
+        game_referrers,
         affiliate_availability,
         affiliate_days,
         affiliate_providers,
@@ -493,7 +513,8 @@ def main() -> int:
     print(
         "wrote "
         f"{len(fresh_days)} completed traffic day(s), "
-        f"{len(request_paths)} path row(s), {len(referrers)} referrer row(s); "
+        f"{len(request_paths)} path row(s), {len(referrers)} referrer row(s), "
+        f"{len(game_referrers)} game path/referrer row(s); "
         f"affiliate export={affiliate_availability['status']}"
     )
     return 0
