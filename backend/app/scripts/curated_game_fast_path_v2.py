@@ -25,6 +25,12 @@ from app.scripts.curated_game_workflow import (
 DEFAULT_BASE_URL = "https://bodoge-no-mikata.vercel.app"
 CURATED_GENERATOR_PATH = REPO_ROOT / "frontend" / "scripts" / "generate-curated-game-artifacts.mjs"
 DEPLOYMENT_MANIFEST_PATH = REPO_ROOT / "frontend" / "public" / "curated-guides-manifest.json"
+LEGACY_RULE_FIELDS = (
+    "rules_content",
+    "setup_summary",
+    "gameplay_summary",
+    "end_game_summary",
+)
 
 
 def resolve_spec_path(game: str) -> Path:
@@ -106,6 +112,14 @@ def preflight_catalog(spec: CuratedGameSpec) -> tuple[Any, IdentityPlan]:
     return client, plan
 
 
+def catalog_write_payload(spec: CuratedGameSpec, work_id: str | None) -> dict[str, Any]:
+    payload = dict(spec.game)
+    for field in LEGACY_RULE_FIELDS:
+        payload[field] = None
+    payload["work_id"] = work_id
+    return payload
+
+
 def write_catalog_with_plan(client: Any, spec: CuratedGameSpec, plan: IdentityPlan) -> dict[str, Any]:
     created_work_id: str | None = None
     work_id = plan.work_id
@@ -127,8 +141,7 @@ def write_catalog_with_plan(client: Any, spec: CuratedGameSpec, plan: IdentityPl
         created_work_id = str(rows[0]["id"])
         work_id = created_work_id
 
-    payload = dict(spec.game)
-    payload["work_id"] = work_id
+    payload = catalog_write_payload(spec, work_id)
 
     try:
         if plan.game_id:
