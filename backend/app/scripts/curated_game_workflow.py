@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import argparse
 import json
 import re
 import subprocess
@@ -255,7 +254,13 @@ def preflight_identity(client: Any, spec: CuratedGameSpec) -> IdentityPlan:
     if slug_rows and not work_rows:
         slug_work_id = slug_rows[0].get("work_id")
         if slug_work_id:
-            actual_work = client.table("game_works").select("id,canonical_title,identity_status").eq("id", slug_work_id).execute().data
+            actual_work = (
+                client.table("game_works")
+                .select("id,canonical_title,identity_status")
+                .eq("id", slug_work_id)
+                .execute()
+                .data
+            )
             if not actual_work or actual_work[0].get("canonical_title") != spec.work.canonical_title:
                 raise WorkflowError(f"slug {spec.slug} resolves to a different canonical work")
             work_rows = actual_work
@@ -271,47 +276,6 @@ def preflight_identity(client: Any, spec: CuratedGameSpec) -> IdentityPlan:
         )
 
     return plan_identity(spec, slug_rows, work_rows, edition_rows)
-
-
-def write_catalog(spec: CuratedGameSpec) -> dict[str, Any]:
-    from app.core import supabase
-
-    client = supabase._get_client()
-    plan = preflight_identity(client, spec)
-    created_work_id: str | None = None
-    work_id = plan.work_id
-
-    if plan.create_work:
-        rows = (
-            client.table("game_works")
-            .insert({"canonical_title": spec.work.canonical_title, "identity_status": spec.work.identity_status})
-            .execute()
-            .data
-        )
-        if not rows:
-            raise WorkflowError("failed to create canonical game work")
-        created_work_id = str(rows[0]["id"])
-        work_id = created_work_id
-
-    payload = dict(spec.game)
-    payload["work_id"] = work_id
-
-    try:
-        if plan.game_id:
-            rows = client.table("games").update(payload).eq("id", plan.game_id).execute().data
-        else:
-            rows = client.table("games").insert(payload).execute().data
-    except Exception:
-        if created_work_id:
-            client.table("game_works").delete().eq("id", created_work_id).execute()
-        raise
-
-    if not rows:
-        raise WorkflowError("catalog write returned no game row")
-    row = rows[0]
-    if row.get("slug") != spec.slug:
-        raise WorkflowError("catalog write returned unexpected slug")
-    return row
 
 
 def verify_production(spec: CuratedGameSpec, base_url: str) -> None:
@@ -361,46 +325,3 @@ def print_pr_ready_files() -> None:
     print("PR-ready changed files:")
     for path in sorted(set(paths)):
         print(f"- {path}")
-
-
-def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--file")
-    parser.add_argument("--all", action="store_true")
-    parser.add_argument("--expected-slug")
-    parser.add_argument("--expected-source-url")
-    parser.add_argument("--offline", action="store_true")
-    parser.add_argument("--check-materialization", action="store_true")
-    parser.add_argument("--write", action="store_true")
-    parser.add_argument("--verify-production", action="store_true")
-    parser.add_argument("--base-url", default=DEFAULT_BASE_URL)
-    return parser.parse_args()
-
-
-def main() -> None:
-    args = parse_args()
-    if args.all == bool(args.file):
-        raise WorkflowError("provide exactly one of --file or --all")
-
-    specs = load_all_specs() if args.all else [load_spec(Path(args.file).resolve())]
-    all_specs = load_all_specs()
-
-    for spec in specs:
-        validate_expectations(spec, args.expected_slug, args.expected_source_url)
-        validate_assertions(spec)
-        if not args.offline:
-            verify_source_reachable(spec)
-
-    materialize_registry(all_specs, args.check_materialization)
-    for spec in specs:
-        validate_runtime_guide(spec)
-        if args.write:
-            write_catalog(spec)
-        if args.verify_production:
-            verify_production(spec, args.base_url)
-
-    print_pr_ready_files()
-
-
-if __name__ == "__main__":
-    main()
