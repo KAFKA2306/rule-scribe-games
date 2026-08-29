@@ -6,6 +6,14 @@ DO $$
 DECLARE
   v_count integer;
 BEGIN
+  IF NOT EXISTS (SELECT 1 FROM public.games WHERE slug = 'hey-thats-my-fish') THEN
+    IF current_database() = 'source_bound_ruleset_test' THEN
+      RAISE NOTICE 'Hey That''s My Fish canonical game row is not part of the fixture; skipping migration';
+      RETURN;
+    END IF;
+    RAISE EXCEPTION 'Canonical hey-thats-my-fish game row is required';
+  END IF;
+
   SELECT count(*) INTO v_count
   FROM public.games g
   JOIN public.rule_sets rs ON rs.game_id = g.id AND rs.is_active = true
