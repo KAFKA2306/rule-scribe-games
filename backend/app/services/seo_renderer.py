@@ -241,16 +241,11 @@ async def generate_seo_html(slug: str) -> str | None:
 
     safe_title = html.escape(title)
     safe_summary = html.escape(str(game.get("summary") or ""))
-    if canonical_rules:
-        safe_rules = html.escape(canonical_rules)
-        rules_heading = "出典付きルール要約"
-    else:
-        safe_rules = html.escape(str(game.get("rules_content") or "")[:2000])
-        rules_heading = "ルール"
+    safe_rules = html.escape(canonical_rules) if canonical_rules else ""
     rules_section = ""
     if safe_rules:
         rules_section = f"""    <section>
-      <h2>{rules_heading}</h2>
+      <h2>出典付きルール要約</h2>
       <pre itemprop="text">{safe_rules}</pre>
     </section>
 """
