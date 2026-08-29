@@ -23,6 +23,8 @@ BEGIN
     RAISE EXCEPTION 'Canonical Pili Pili game row is required';
   END IF;
 
+  -- 旧game rowのルール欄は移行履歴としてDBに残っているが、public projectionでは
+  -- #547/#548により利用されない。公開APIのnullをDB上のnullと誤認しない。
   IF NOT EXISTS (
     SELECT 1
     FROM public.games
@@ -32,13 +34,15 @@ BEGIN
       AND source_trust = 'authorized_partner'
       AND source_url = 'https://ja.boardgamearena.com/gamepanel?game=pilipili'
       AND content_review_status = 'review_required'
-      AND rules_content IS NULL
-      AND setup_summary IS NULL
-      AND gameplay_summary IS NULL
-      AND end_game_summary IS NULL
+      AND rules_content IS NOT NULL
+      AND btrim(rules_content) <> ''
+      AND setup_summary IS NOT NULL
+      AND gameplay_summary IS NOT NULL
+      AND end_game_summary IS NOT NULL
       AND summary = '取るトリック数を先にベットし、実際の獲得数をぴったり合わせる予想型トリックテイキング。BGA版では毎ラウンドのミッションで条件が変わり、ベットとの差だけピリを受け取ります。誰かが6ピリに達すると終了し、最少ピリが勝利です。'
+      AND COALESCE(structured_data, '{}'::jsonb) ?| ARRAY['keywords', 'pro_tips', 'rule_mistakes', 'strategy_analysis']
   ) THEN
-    RAISE EXCEPTION 'Pili Pili canonical public state changed; re-audit before migration';
+    RAISE EXCEPTION 'Pili Pili canonical stored state changed; re-audit before migration';
   END IF;
 
   SELECT count(*) INTO v_ruleset_count
@@ -89,7 +93,6 @@ BEGIN
     FROM public.games
     WHERE id = v_game_id
       AND content_review_status = 'review_required'
-      AND rules_content IS NULL
       AND summary = '物理版とBoard Game Arena版では構成物と一部ルールが異なります。版を混ぜず、利用するRuleSetの版・プラットフォームを確認して参照してください。'
       AND description = '取るトリック数を先に予想するトリックテイキングです。物理版とBoard Game Arena版は別のRuleSetとして管理しており、構成物と一部ルールの差を混在させません。'
       AND NOT (COALESCE(structured_data, '{}'::jsonb) ?| ARRAY['keywords', 'pro_tips', 'rule_mistakes', 'strategy_analysis'])
