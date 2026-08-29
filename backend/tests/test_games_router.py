@@ -67,17 +67,17 @@ def test_missing_game_slug_returns_404_instead_of_response_validation_500():
     assert response.json() == {"detail": "Game not found"}
 
 
-def test_game_detail_preserves_player_facing_rule_fields_without_bloating_search(monkeypatch):
+def test_game_detail_does_not_publish_legacy_rule_fields_without_canonical_rules(monkeypatch):
     monkeypatch.setattr(games, "_canonical_rule_text", _no_canonical_rules)
     client = TestClient(_app_with_service(PublicReadService()))
 
     detail = client.get("/api/games/example")
     assert detail.status_code == 200
     payload = detail.json()
-    assert payload["rules_content"] == "# Example\n\nDetailed player-facing rules."
-    assert payload["setup_summary"] == "Set up the example."
-    assert payload["gameplay_summary"] == "Take turns."
-    assert payload["end_game_summary"] == "Finish the example."
+    assert payload["rules_content"] is None
+    assert payload["setup_summary"] is None
+    assert payload["gameplay_summary"] is None
+    assert payload["end_game_summary"] is None
     assert payload["structured_data"]["strategy_analysis"] == "Example strategy."
     assert payload["structured_data"]["persona_reviews"][0]["persona"] == "planner"
 

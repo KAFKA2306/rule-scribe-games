@@ -254,12 +254,8 @@ async def get_game_details(slug: str, service: GameService = Depends(get_game_se
     if not game:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Game not found")
     canonical_rules = await _canonical_rule_text(slug)
-    if canonical_rules:
-        game = project_player_summary(
-            {**game, "rules_content": canonical_rules},
-            source_bound=True,
-        )
-    return game
+    projected = {**game, "rules_content": canonical_rules} if canonical_rules else game
+    return project_player_summary(projected, source_bound=canonical_rules is not None)
 
 
 @router.patch("/games/{slug}")

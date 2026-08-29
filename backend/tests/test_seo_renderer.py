@@ -60,7 +60,7 @@ async def test_missing_game_returns_none(monkeypatch: pytest.MonkeyPatch) -> Non
 
 
 @pytest.mark.asyncio
-async def test_game_ssr_replaces_metadata_and_escapes_db_content(
+async def test_game_ssr_replaces_metadata_escapes_content_and_omits_legacy_rules(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
@@ -127,7 +127,8 @@ async def test_game_ssr_replaces_metadata_and_escapes_db_content(
     assert '<script>alert("title")</script>' not in rendered
     assert '<script>alert("rules")</script>' not in rendered
     assert '<img src=x onerror=alert("summary")>' not in rendered
-    assert '&lt;script&gt;alert(&quot;rules&quot;)&lt;/script&gt;' in rendered
+    assert '&lt;script&gt;alert(&quot;rules&quot;)&lt;/script&gt;' not in rendered
+    assert '<h2>ルール</h2>' not in rendered
     assert "\\u003cscript" in rendered
 
 
