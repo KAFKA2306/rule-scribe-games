@@ -247,6 +247,13 @@ async def generate_seo_html(slug: str) -> str | None:
     else:
         safe_rules = html.escape(str(game.get("rules_content") or "")[:2000])
         rules_heading = "ルール"
+    rules_section = ""
+    if safe_rules:
+        rules_section = f"""    <section>
+      <h2>{rules_heading}</h2>
+      <pre itemprop="text">{safe_rules}</pre>
+    </section>
+"""
     players_info = ""
     if player_count_label:
         players_info = f"<p><strong>プレイ人数:</strong> {html.escape(player_count_label)}</p>"
@@ -272,10 +279,6 @@ async def generate_seo_html(slug: str) -> str | None:
       {players_info}
       {time_info}
     </section>
-    <section>
-      <h2>{rules_heading}</h2>
-      <pre itemprop="text">{safe_rules}</pre>
-    </section>
-  </article>
+{rules_section}  </article>
 </div>"""
     return html_content.replace('<div id="root"></div>', ssr_content, 1)
