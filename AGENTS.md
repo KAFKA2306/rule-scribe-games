@@ -1,41 +1,48 @@
 # AGENTS.md
 
-Improve **ボドゲのミカタ** with small, evidence-backed changes that preserve production behavior unless the task requires a product change.
+このrepositoryでは、過去チャットや長いIssue履歴を前提にしない。短いコンテキストでも、current stateから安全に再開できることを優先する。
 
-Before changing anything:
+## 最初に確認する順序
 
-- fetch the current `main` branch;
-- read open Issues and pull requests related to the task;
-- inspect relevant CI, data, and production state;
-- continue existing work when it already covers the same task.
+1. current `main` のSHAとopen PRを確認する。
+2. 同じ問題を扱うopen Issue/PRがあれば本文だけ先に読む。全コメント履歴は、現在状態を確定できない場合だけ読む。
+3. ユーザーが実際に見るcanonical productionとreal dataを確認する。
+4. ゲームの事実が必要ならpublisher/designer等の公式一次資料を確認する。PDFは必要なページを実際に読む。
+5. 変更対象のcode/data/workflowだけを読む。
+6. 変更前に、観測可能なユーザー向け成功条件を1つ書く。
 
-If the repository has a public production site, keep its canonical production URL as a complete plain-text `https://...` URL at the very beginning of `README.md`, before headings, badges, images, or alternate deployment URLs.
+状態の正本は用途ごとに分ける。
 
-Use existing repository commands and structures before adding code, configuration, dependencies, or documentation. `Taskfile.yml` is the preferred command interface when it already provides the required operation.
+- code/schema/workflow: current `main`
+- 実ユーザー向け状態・利用実績: canonical production / real data
+- ゲームのルール・版・商品情報: 公式一次資料
+- 作業の調整: current open Issue/PR
 
-For externally verifiable game facts:
+過去チャット、closed Issue、古いPR、古いコメントは正本ではない。上記と矛盾する場合は現在状態を優先する。
 
-- prefer current publisher or designer sources;
-- record the source URL and revision or version evidence in structured data;
-- inspect relevant PDF pages when the source is a PDF;
-- do not infer missing facts or substitute community summaries when suitable primary sources exist;
-- keep generated summaries, translations, interpretations, and recommendations distinct from verified facts.
+## 必須ルール
 
-For curated game data:
+- public Web siteがある場合、`README.md` の先頭行にcanonical production URLを完全な `https://...` の平文で置く。
+- 公式ルールと、要約・翻訳・解釈・推薦・生成文を分離する。
+- product / edition / language / platform / revision / expansion / FAQ / errataを混ぜない。不明なら推測せず `UNVERIFIED` またはblockedにする。
+- fixture/synthetic dataはtest専用。本番の問題数、品質、利用実績の代用にしない。
+- 既存実装と標準機能を優先し、`DELETE > MERGE > REPLACE > ADD`。重複helper/workflow/docs、個別ゲーム専用one-off script、生成可能な成果物を増やさない。
+- networking pathを増やさない。既存の正準経路を使う。
+- broad `try-except`、silent fallback、根拠のないdefault、壊れたデータを成功扱いするretryを追加しない。失敗は明示する。
+- 同じ意味のshadow mappingや第二のtruth storeを作らない。
 
-- store game-specific source data in `data/curated-games/<slug>.json` when the existing schema supports it;
-- use `task game:add GAME=<slug>` and the existing validation commands;
-- keep the filename, `GAME`, and canonical slug consistent;
-- put game-specific regression facts in the structured `assertions` data instead of adding a game-specific importer or test when the generic schema can express them;
-- do not hand-edit or commit generated curated-game output;
-- do not write production data from a pull request.
+## 実装と検証
 
-Prefer the smallest coherent change. Do not redesign unrelated schemas or UI, create duplicate helpers or workflows, commit reproducible generated output, or silently delete production data because a source file is absent.
+`Taskfile.yml` と既存schema/validator/generatorを優先する。ゲーム固有の事実は既存schemaで表現できる限りstructured dataへ入れ、専用処理を作らない。
 
-Run the narrowest meaningful tests first, then the broader checks required by the affected code or repository CI. Do not weaken or skip checks to make a change pass.
+変更は可能な範囲で次まで完了する。
 
-Treat **PR merge** and **product release** as separate decisions. Merge checks run on the pull request and must not require production credentials, production writes, or production deployment. Release checks run only after the change reaches `main` and cover production publication, deployment, exact-main-SHA verification, and production read-back. A release failure means the merged change is not yet released; do not retroactively redefine a passed PR merge check as failed.
+`validation/test → PR → exact-head CI → merge → main read-back → production release → public read-back`
 
-When safe, complete work through implementation, tests, pull request, exact-head merge checks, merge, post-merge release, cleanup, and production verification. Do not claim CI, deployment, production state, or cleanup unless directly verified. If release is blocked after merge, report the product as **UNRELEASED/UNVERIFIED** and preserve the successful merge evidence separately.
+PRのCI成功とproduction成功は別物。merge後にproductionを直接確認できなければ `UNRELEASED/UNVERIFIED` とする。CIを弱めたりskipして通さない。
 
-After merge, remove temporary files and superseded work when the available GitHub operations allow it. Report the repository, Issue or PR, commit, measurable change, merge-check evidence, release evidence, files and lines changed, dependency or configuration changes, production verification, and remaining unverified items.
+## コンテキスト節約
+
+最初からrepository全体、全Issue、全履歴を読まない。上の開始順序で必要最小限を取得し、未解決の曖昧さがある場合だけ範囲を広げる。
+
+同じ修正が繰り返される原因を見つけたら、その場のpatchではなく既存の `AGENTS.md`、CI、schema、test、canonical docsの最小authorityへ統合する。新しい管理層は作らない。
