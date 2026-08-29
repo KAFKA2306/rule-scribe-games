@@ -1,7 +1,7 @@
 from typing import Any, Literal
 from urllib.parse import urlparse
 
-from pydantic import BaseModel, ConfigDict, field_validator
+from pydantic import BaseModel, ConfigDict, field_validator, model_validator
 
 IdentityStatus = Literal["unverified", "verified", "needs_review"]
 SourceTrust = Literal["unknown", "official_publisher", "authorized_partner", "third_party"]
@@ -128,6 +128,19 @@ class GameUpdate(BaseSchema):
     amazon_url: str | None = None
 
     _validate_bga_url = field_validator("bga_url")(validate_bga_url)
+
+    @model_validator(mode="before")
+    @classmethod
+    def reject_legacy_rule_row_fields(cls, value: Any) -> Any:
+        if isinstance(value, dict):
+            deprecated = {"rules_content", "setup_summary", "gameplay_summary", "end_game_summary"}
+            supplied = sorted(deprecated.intersection(value))
+            if supplied:
+                raise ValueError(
+                    "Deprecated game-row rule fields are read-only history; use source-bound RuleSet data: "
+                    + ", ".join(supplied)
+                )
+        return value
 
 
 SEARCH_RESULT = GameDetail

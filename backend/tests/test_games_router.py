@@ -97,6 +97,21 @@ def test_catalog_patch_requires_authentication_before_mutation():
     assert service.updated is False
 
 
+def test_catalog_patch_rejects_deprecated_rule_row_fields_before_mutation():
+    service = MutableGameService()
+    app = _app_with_service(service)
+    app.dependency_overrides[games.require_catalog_editor] = lambda: {
+        "id": "editor-1",
+        "catalog_role": "editor",
+    }
+    client = TestClient(app)
+
+    response = client.patch("/api/games/example", json={"rules_content": "unverified legacy rule"})
+
+    assert response.status_code == 422
+    assert service.updated is False
+
+
 def test_read_only_search_remains_and_legacy_post_search_is_removed():
     client = TestClient(_app_with_service(PublicReadService()))
 
