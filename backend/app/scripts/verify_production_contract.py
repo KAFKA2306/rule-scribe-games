@@ -10,7 +10,7 @@ from urllib.request import Request, urlopen
 
 MECHANICAL_DNA_PATH = "/api/games/skull-king/connections?limit=8"
 CATALOG_AUTH_PATH = "/api/games/splendor"
-PUBLIC_GAMES_PATH = "/api/games?limit=500&offset=0"
+PUBLIC_GAMES_PAGE_SIZE = 100
 SITEMAP_PATH = "/sitemap.xml"
 MISSING_GAME_PATH = "/games/this-game-does-not-exist"
 SITEMAP_NS = {"sm": "http://www.sitemaps.org/schemas/sitemap/0.9"}
@@ -104,6 +104,48 @@ def _request(base_url: str, path: str, timeout_seconds: float, accept: str) -> t
         return exc.code, exc.read()
 
 
+def fetch_public_games(base_url: str, timeout_seconds: float = 20.0) -> list[dict[str, Any]]:
+    games: list[dict[str, Any]] = []
+    expected_total: int | None = None
+    offset = 0
+
+    while expected_total is None or offset < expected_total:
+        path = f"/api/games?limit={PUBLIC_GAMES_PAGE_SIZE}&offset={offset}"
+        status, body = _request(base_url, path, timeout_seconds, "application/json")
+        if status != 200:
+            raise RuntimeError(f"public games endpoint returned HTTP {status} at offset={offset}")
+
+        payload = json.loads(body)
+        page = payload.get("games")
+        total = payload.get("total")
+        if not isinstance(page, list):
+            raise ValueError("public games response must contain a games array")
+        if not isinstance(total, int) or total < 0:
+            raise ValueError(f"public games response must contain a non-negative integer total; received {total!r}")
+        if expected_total is None:
+            expected_total = total
+        elif total != expected_total:
+            raise ValueError(
+                "public games total changed while paginating: "
+                f"expected={expected_total}, received={total}, offset={offset}"
+            )
+        if not page and offset < expected_total:
+            raise ValueError(
+                "public games pagination ended before total rows were collected: "
+                f"expected={expected_total}, collected={len(games)}, offset={offset}"
+            )
+
+        games.extend(page)
+        offset += len(page)
+
+    if expected_total is None or len(games) != expected_total:
+        raise ValueError(
+            "production indexability audit requires the full public catalog: "
+            f"expected={expected_total!r}, collected={len(games)}"
+        )
+    return games
+
+
 def verify_anonymous_catalog_patch(base_url: str, timeout_seconds: float = 20.0) -> int:
     """Verify the production catalog mutation boundary without changing data."""
 
@@ -130,18 +172,7 @@ def verify_anonymous_catalog_patch(base_url: str, timeout_seconds: float = 20.0)
 
 
 def verify_search_indexability(base_url: str, timeout_seconds: float = 20.0) -> dict[str, Any]:
-    games_status, games_body = _request(base_url, PUBLIC_GAMES_PATH, timeout_seconds, "application/json")
-    if games_status != 200:
-        raise RuntimeError(f"public games endpoint returned HTTP {games_status}")
-    payload = json.loads(games_body)
-    games = payload.get("games")
-    if not isinstance(games, list):
-        raise ValueError("public games response must contain a games array")
-    if payload.get("total") != len(games):
-        raise ValueError(
-            "production indexability audit requires the full public catalog in one response; "
-            f"received total={payload.get('total')!r}, rows={len(games)}"
-        )
+    games = fetch_public_games(base_url, timeout_seconds)
 
     sitemap_status, sitemap_body = _request(base_url, SITEMAP_PATH, timeout_seconds, "application/xml")
     if sitemap_status != 200:
