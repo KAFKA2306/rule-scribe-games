@@ -7,6 +7,7 @@ on:
       - "backend/app/models/**"
       - "backend/app/routers/auth.py"
       - "backend/app/routers/games.py"
+      - "backend/app/scripts/verify_production_contract.py"
       - "backend/app/services/catalog_access.py"
       - "backend/app/services/game_service.py"
       - "backend/app/services/identity_coherence.py"
@@ -18,6 +19,7 @@ on:
       - "backend/tests/test_game_identity_conflict_guard.py"
       - "backend/tests/test_games_router.py"
       - "backend/tests/test_identity_duplicate_audit.py"
+      - "backend/tests/test_production_contract.py"
       - "backend/tests/test_seo_renderer.py"
       - "backend/tests/test_sitemap.py"
       - "frontend/src/components/game/ExternalLinks.jsx"
@@ -36,6 +38,7 @@ on:
       - "backend/app/models/**"
       - "backend/app/routers/auth.py"
       - "backend/app/routers/games.py"
+      - "backend/app/scripts/verify_production_contract.py"
       - "backend/app/services/catalog_access.py"
       - "backend/app/services/game_service.py"
       - "backend/app/services/identity_coherence.py"
@@ -47,6 +50,7 @@ on:
       - "backend/tests/test_game_identity_conflict_guard.py"
       - "backend/tests/test_games_router.py"
       - "backend/tests/test_identity_duplicate_audit.py"
+      - "backend/tests/test_production_contract.py"
       - "backend/tests/test_seo_renderer.py"
       - "backend/tests/test_sitemap.py"
       - "frontend/src/components/game/ExternalLinks.jsx"
@@ -103,6 +107,7 @@ jobs:
           backend/tests/test_game_identity_conflict_guard.py
           backend/tests/test_games_router.py
           backend/tests/test_identity_duplicate_audit.py
+          backend/tests/test_production_contract.py
           backend/tests/test_seo_renderer.py
           backend/tests/test_sitemap.py
 
