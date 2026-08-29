@@ -26,6 +26,8 @@ jobs:
       VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
     steps:
       - uses: actions/checkout@v5
+        with:
+          fetch-depth: 2
       - name: Install uv
         uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
       - name: Install Vercel CLI
@@ -60,6 +62,11 @@ jobs:
           PY
       - name: Verify Google OAuth provider redirect
         run: python scripts/check_google_oauth.py .vercel/.env.production.local
+      - name: Verify IndexNow release selection
+        run: python scripts/submit_indexnow.py --self-test
+      - name: Record changed files for IndexNow
+        shell: bash
+        run: git diff --name-status "${{ github.event.before }}" "${GITHUB_SHA}" > /tmp/indexnow-changed-files.tsv
       - name: Build Production with Vercel
         run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
       - name: Inspect Vercel deployment budget
@@ -137,6 +144,15 @@ jobs:
         run: >-
           python backend/app/scripts/verify_production_contract.py
           --base-url https://bodoge-no-mikata.vercel.app
+      - name: Notify IndexNow after verified production release
+        if: >-
+          steps.budget.outputs.state == 'current' ||
+          steps.git_verification.outcome == 'success' ||
+          steps.push_fallback.outputs.deployed == 'true'
+        run: >-
+          python scripts/submit_indexnow.py
+          --base-url https://bodoge-no-mikata.vercel.app
+          --changed-files-file /tmp/indexnow-changed-files.tsv
 
   Production-Catch-Up:
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
