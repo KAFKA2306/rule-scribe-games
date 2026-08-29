@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from app.scripts import curated_game_workflow
 from app.scripts.curated_game_fast_path_v2 import LEGACY_RULE_FIELDS, catalog_write_payload
 from app.scripts.curated_game_workflow import load_spec
 
@@ -17,3 +18,8 @@ def test_curated_release_does_not_publish_legacy_rule_fields():
     assert payload["source_url"] == spec.source.url
     for field in LEGACY_RULE_FIELDS:
         assert payload[field] is None
+
+
+def test_legacy_curated_workflow_has_no_direct_catalog_write_entrypoint():
+    assert not hasattr(curated_game_workflow, "write_catalog")
+    assert not hasattr(curated_game_workflow, "main")
