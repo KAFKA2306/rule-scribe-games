@@ -38,6 +38,7 @@ BEGIN
   UPDATE public.rule_sets
   SET
     is_active = false,
+    status = 'superseded',
     updated_at = now()
   WHERE game_id = v_game_id
     AND id <> v_current_ruleset_id
@@ -50,6 +51,7 @@ BEGIN
   UPDATE public.rule_sets
   SET
     is_active = true,
+    status = 'active',
     updated_at = now()
   WHERE id = v_current_ruleset_id;
 
@@ -58,6 +60,7 @@ BEGIN
   FROM public.rule_sets
   WHERE game_id = v_game_id
     AND is_active
+    AND status = 'active'
     AND language_code = 'en'
     AND edition_label = 'Grandpa Beck''s Games current edition'
     AND platform = 'physical'
