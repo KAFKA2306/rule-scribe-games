@@ -1,5 +1,3 @@
-import { GENERATED_CURATED_RULE_GUIDES } from './generatedCuratedRuleGuides.js'
-
 const GUIDES = {
   ipso: {
     reviewed: true,
@@ -30,22 +28,10 @@ const GUIDES = {
     scoring: {
       summary: '各段を個別に判定する。昇順でない段は0点。昇順の混色段は1点/枚、単色段は2点/枚。得点対象の数字カード上の星は1個につき+1点。頂点の星カードを残していればさらに+3点。',
       rules: [
-        {
-          label: '1. 昇順か確認',
-          detail: '左から右へ数字が昇順でなければ、その段は丸ごと0点。',
-        },
-        {
-          label: '2. 色で基本点を決める',
-          detail: '昇順の段が複数色なら1点/枚、すべて同色なら2点/枚。',
-        },
-        {
-          label: '3. 星を加える',
-          detail: '得点対象の段にある数字カード上の星は1個につき+1点。頂点の星カードを残していれば最後に+3点。',
-        },
-        {
-          label: '同点処理',
-          detail: '同点なら数字カード上の星が多いプレイヤーが勝利。それでも同点なら再戦。',
-        },
+        { label: '1. 昇順か確認', detail: '左から右へ数字が昇順でなければ、その段は丸ごと0点。' },
+        { label: '2. 色で基本点を決める', detail: '昇順の段が複数色なら1点/枚、すべて同色なら2点/枚。' },
+        { label: '3. 星を加える', detail: '得点対象の段にある数字カード上の星は1個につき+1点。頂点の星カードを残していれば最後に+3点。' },
+        { label: '同点処理', detail: '同点なら数字カード上の星が多いプレイヤーが勝利。それでも同点なら再戦。' },
       ],
       example: {
         label: '公式ルールブックの得点例',
@@ -132,7 +118,6 @@ const GUIDES = {
       { id: 'end', kind: 'condition', label: '手番終了時に15点以上？', branches: [{ label: 'はい', detail: '全員の手番回数を揃えて終了' }, { label: 'いいえ', detail: '次のプレイヤーへ' }] },
     ],
   },
-  ...GENERATED_CURATED_RULE_GUIDES,
 }
 
 export function validateRuleGuide(guide) {
