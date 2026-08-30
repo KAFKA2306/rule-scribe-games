@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - "backend/app/models/vrchat_readiness.py"
+      - "backend/app/services/game_service.py"
       - "backend/app/services/vrchat_readiness_audit.py"
       - "backend/app/services/vrchat_readiness_policy.py"
       - "backend/tests/test_vrchat_readiness.py"
@@ -17,6 +18,7 @@ on:
       - main
     paths:
       - "backend/app/models/vrchat_readiness.py"
+      - "backend/app/services/game_service.py"
       - "backend/app/services/vrchat_readiness_audit.py"
       - "backend/app/services/vrchat_readiness_policy.py"
       - "backend/tests/test_vrchat_readiness.py"
@@ -44,6 +46,17 @@ jobs:
 
       - name: Install Python dependencies
         run: uv sync --frozen --dev
+
+      - name: Verify production game catalog interface
+        env:
+          PYTHONPATH: backend
+        run: |
+          uv run python - <<'PY'
+          from app.services.game_service import GameService
+
+          if not callable(getattr(GameService, "list_recent_games", None)):
+              raise SystemExit("VRChat readiness audit requires GameService.list_recent_games")
+          PY
 
       - name: Compile readiness modules
         run: >-
