@@ -12,7 +12,6 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 CURATED_DIR = REPO_ROOT / "data" / "curated-games"
-GENERATED_GUIDES_PATH = REPO_ROOT / "frontend" / "src" / "lib" / "generatedCuratedRuleGuides.js"
 CURATED_GUIDES_PATH = REPO_ROOT / "frontend" / "src" / "lib" / "curatedRuleGuides.js"
 DEFAULT_BASE_URL = "https://bodoge-no-mikata.vercel.app"
 SLUG_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
@@ -156,23 +155,6 @@ def validate_assertions(spec: CuratedGameSpec) -> None:
                 raise WorkflowError(f"assertion failed: {assertion.path} does not contain {expected!r}")
 
 
-def render_generated_registry(specs: list[CuratedGameSpec]) -> str:
-    registry = {spec.slug: spec.guide for spec in sorted(specs, key=lambda item: item.slug)}
-    rendered = json.dumps(registry, ensure_ascii=False, indent=2)
-    return f"export const GENERATED_CURATED_RULE_GUIDES = {rendered}\n"
-
-
-def materialize_registry(specs: list[CuratedGameSpec], check_only: bool) -> None:
-    expected = render_generated_registry(specs)
-    current = GENERATED_GUIDES_PATH.read_text(encoding="utf-8") if GENERATED_GUIDES_PATH.exists() else ""
-    if check_only:
-        if current != expected:
-            raise WorkflowError("generatedCuratedRuleGuides.js is stale; run task game:add or materialize the registry")
-        return
-    if current != expected:
-        GENERATED_GUIDES_PATH.write_text(expected, encoding="utf-8")
-
-
 def validate_runtime_guide(spec: CuratedGameSpec) -> None:
     module_uri = CURATED_GUIDES_PATH.resolve().as_uri()
     expression = (
@@ -187,8 +169,8 @@ def validate_runtime_guide(spec: CuratedGameSpec) -> None:
         text=True,
     )
     runtime_guide = json.loads(result.stdout or "null")
-    if runtime_guide != spec.guide:
-        raise WorkflowError(f"runtime curated guide differs from structured input: {spec.slug}")
+    if runtime_guide is not None:
+        raise WorkflowError(f"structured curated guide must not be exposed at runtime: {spec.slug}")
 
 
 def verify_source_reachable(spec: CuratedGameSpec) -> None:
