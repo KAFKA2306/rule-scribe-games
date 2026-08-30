@@ -16,11 +16,7 @@
     "title_ja": "フリップ7:ウィズ・ア・ベンジェンス",
     "title_en": "Flip 7: With A Vengeance",
     "description": "同じ数字の重複によるバーストを避けながら得点を伸ばし、異なる数字カード7枚のFlip 7を狙うプレス・ユア・ラック。Steal・Swap・Discard・Flip Fourなど、相手へ直接干渉するカードを追加した独立型続編。",
-    "summary": "HitかStayを選び、同じ数字の重複を避けながら得点を伸ばします。異なるNumber cardを7枚集めると即座にラウンド終了。200点以上のプレイヤーが出たラウンド終了時に最多得点を競います。",
-    "rules_content": "# Flip 7: With A Vengeance\n\n## 目的\n複数ラウンドで得点を蓄積し、200点を目指します。各ラウンドでは同じ数字カードを2枚受け取るとバーストしてそのラウンドは0点です。異なる数字カードを7枚集める「Flip 7」を達成すると、その場でラウンドが終了し、通常ルールでは15点のボーナスを得ます。\n\n## 準備とラウンド開始\nデッキを十分にシャッフルし、そのラウンドのDealerを1人決めます。Dealerの左隣から時計回りに、各プレイヤーへ表向きで1枚ずつ配ります。ActionまたはModifierが出た場合は、そのカードのルールに従って処理します。\n\n## ラウンドの進行\nDealerはアクティブな各プレイヤーにHitかStayを選ばせます。\n\n- **Hit**: カードを1枚受け取る。\n- **Stay**: 自分からはそれ以上カードを受け取らない。左端のカードを横向きにする。Stay後もそのラウンドに残り、ActionやModifierの対象になり得る。\n- **Bust**: すでに持つ数字と同じNumber cardを受け取るとバーストし、そのラウンドの得点は0点。\n\nラウンドは、全員がBustまたはStayするか、誰かが異なるNumber cardを7枚集めてFlip 7を達成した時点で終了します。\n\n## 得点\nラウンド終了時に次の順で計算します。\n\n1. Number cardの値を合計する。\n2. ÷2 Modifierがあれば半分にして端数を切り捨てる。\n3. その他の減点Modifierを引く。通常ルールでは0点未満にはならない。\n4. Flip 7を達成していれば15点を加える。\n\nラウンドで使ったカードは脇へ置き、残りのデッキを左隣へ渡してそのプレイヤーが次のDealerになります。デッキが尽きたら捨て札をシャッフルして新しいデッキを作ります。\n\n## ゲーム終了\nラウンド終了時に1人以上が200点以上ならゲーム終了です。その時点で合計得点が最も高いプレイヤーが勝ちます。\n\n## Special Number cards\n- **The Zero**: Flip 7を達成しない限りラウンド得点が0点になり、Flip 7またはBustまでHitを続けます。Flip 7の7枚には数えます。\n- **Unlucky 7**: 受け取ると、それまでのNumber cardとModifierを捨て、Unlucky 7を残します。公式FAQではこの効果が通常の「同じ7によるBust」より先に処理されます。その後さらに7を受け取ればBustです。\n- **Lucky 13**: 13を2枚までBustせず保持でき、両方とも得点とFlip 7の枚数に数えます。3枚目の13でBustします。\n\n## Action cards\nAction cardは公開されたら処理し、有効な対象がある場合は使用します。Bustしていないプレイヤーなら、自分やStay済みのプレイヤーも対象にできます。Stay済みのプレイヤーがActionを処理しても、そのラウンドへ再参加はしません。\n\n- **Just One More!**: 対象に次の1枚を受け取らせ、その後Stayさせます。\n- **Swap**: 場の表向きカード2枚を交換します。\n- **Steal**: 場の表向きカード1枚を奪って自分の列へ加えます。\n- **Discard**: 対象の表向きカード1枚を捨てます。\n- **Flip Four!**: 対象に最大4枚を1枚ずつ受け取らせます。途中でFlip 7またはBustした時点で停止します。\n\n### Flip Fourの公式FAQ補足\nFlip Fourで4枚を受け切る前に同じ数字を引いてBustした場合、そのFlip Four中に公開されたActionでBustを救済することはできません。4枚をBustせず受け切った場合、公開された特殊カードを提示順に処理します。Stay済みプレイヤーへFlip Fourを使い、Bustしなかった場合も、Actionを処理した後はStay状態のままです。\n\n公式FAQはさらに、Swapによって1回の交換で2人が同時にBustする場合があること、Actionは有効な対象がある限り使用必須であることを明示しています。有効な対象がないSwap・Steal・Discardは捨てます。\n\n## Modifier cards\nModifierはNumber cardではなくFlip 7の枚数に数えず、ModifierだけではBustしません。通常ルールではラウンド得点を0未満にしません。÷2はNumber card合計を半分にして端数を切り捨て、その後に他の減点Modifierを適用します。\n\n## 任意ルール: Brutal Mode\n公式RulebookのBrutal Modeでは通常ルールから次の点が変わります。\n\n- ラウンド得点が0未満になり得る。\n- Modifierを、すでにBustしたプレイヤーにも与えられる。\n- Flip 7達成時、自分に15点を加える代わりに、別プレイヤーから15点を引くことを選べる。\n\nBrutal ModeはThe Op公式Rulebookに記載された任意ルールであり、Board Game Arena固有ルールとして扱いません。\n\n## 出典\n- The Op Games公式Rulebook（RULESET EDITION 1）\n- The Op Games公式FAQ\n- The Op Games公式商品ページ\n",
-    "setup_summary": "デッキを十分にシャッフルしてDealerを決め、Dealerの左隣から時計回りに各プレイヤーへ表向きで1枚ずつ配ります。ActionまたはModifierが出た場合はそのカードを処理します。",
-    "gameplay_summary": "Dealerが各アクティブプレイヤーにHitかStayを選ばせます。同じ数字を2枚受け取るとBust。全員がBust/Stayするか、誰かが異なるNumber card 7枚でFlip 7を達成するとラウンド終了です。",
-    "end_game_summary": "ラウンド終了時に1人以上が200点以上ならゲーム終了。その時点で合計得点が最も高いプレイヤーが勝ちます。",
+    "summary": "HitかStayを選び、同じ数字の重複を避けながら得点を伸ばします。異なるNumber cardを7枚集めるとFlip 7となり、複数ラウンドの合計得点を競います。",
     "min_players": 3,
     "max_players": null,
     "play_time": null,
@@ -36,88 +32,6 @@
     "identity_status": "verified",
     "identity_source": "https://theop.games/products/flip-7-with-a-vengeance",
     "content_review_status": "ai_draft",
-    "bga_url": "https://ja.boardgamearena.com/gamepanel?game=flipsevenwithavengeance",
-    "structured_data": {
-      "keywords": [
-        {"term": "Hit", "description": "カードを1枚受け取る。"},
-        {"term": "Stay", "description": "自分からそれ以上カードを受け取らない。Action/Modifierの対象にはなり得る。"},
-        {"term": "Bust", "description": "同じ数字のNumber cardを2枚受け取ると通常そのラウンド0点。"},
-        {"term": "Flip 7", "description": "異なるNumber cardを7枚集めると即ラウンド終了し、通常15点ボーナス。"},
-        {"term": "Brutal Mode", "description": "公式Rulebookに記載された任意ルール。"}
-      ],
-      "key_elements": [],
-      "mechanics": [],
-      "best_player_count": null,
-      "pro_tips": [],
-      "rule_mistakes": [
-        "Brutal ModeはBoard Game Arena固有ルールではなく、The Op公式Rulebookに記載された任意ルールです。",
-        "200点到達の瞬間ではなく、ラウンド終了時にゲーム終了を判定します。",
-        "StayしたプレイヤーもAction/Modifierの対象になり得ます。",
-        "Flip Fourで途中Bustした場合、そのFlip Four中に公開されたActionでBustを救済できません。"
-      ],
-      "strategy_analysis": null,
-      "persona_reviews": [],
-      "generation_provenance": null
-    }
-  },
-  "guide": {
-    "reviewed": true,
-    "ruleVersion": "the-op-ruleset-edition-1",
-    "source": {
-      "label": "The Op Games official Flip 7: With A Vengeance Rules — RULESET EDITION 1",
-      "url": "https://cdn.shopify.com/s/files/1/0611/3958/3198/files/26_FLIP_7_VENGEANCE_RULES_C.pdf?v=1770853610",
-      "ruleVersion": "the-op-ruleset-edition-1"
-    },
-    "facts": {
-      "targetScore": 200,
-      "flip7DifferentNumbers": 7,
-      "flip7Bonus": 15,
-      "playersMinimum": 3,
-      "ageMinimum": 8,
-      "cardCount": 108
-    },
-    "quick": {
-      "win": "ラウンドごとに得点を蓄積し、ラウンド終了時に1人以上が200点以上ならゲーム終了。その時点の最多得点を取る。",
-      "actions": [
-        "Hitで1枚受け取るか、Stayして自分からの追加ドローを止める。",
-        "同じ数字を2枚受け取るとBustし、通常はそのラウンド0点。",
-        "異なるNumber cardを7枚集めるとFlip 7でラウンド即終了し、通常15点ボーナス。"
-      ],
-      "turnSteps": [
-        "Dealerが左隣から時計回りに各プレイヤーへ最初の表向きカードを配る。",
-        "アクティブなプレイヤーはHitかStayを選ぶ。",
-        "Action/Modifierが公開された場合はルールに従って処理する。"
-      ],
-      "turnEndChecks": [
-        "同じ数字のNumber cardを2枚持ったらBust。",
-        "異なるNumber cardが7枚になったらFlip 7でラウンド即終了。",
-        "全員がBustまたはStayしたらラウンド終了。"
-      ],
-      "end": "ラウンド終了時に1人以上が200点以上ならゲーム終了し、その時点の合計得点が最も高いプレイヤーが勝つ。"
-    },
-    "scoring": {
-      "summary": "Number card合計→÷2→その他の減点→Flip 7なら+15点の順。通常ルールでは減点後も0未満にならない。",
-      "rules": [
-        {"label": "Number cards", "detail": "Number cardの値を合計する。"},
-        {"label": "÷2", "detail": "Number card合計を半分にし、端数を切り捨てる。"},
-        {"label": "減点Modifier", "detail": "その他のModifierを引く。通常ルールでは0点未満にならない。"},
-        {"label": "Flip 7", "detail": "達成していれば最後に15点を加える。"}
-      ]
-    },
-    "flow": [
-      {"id": "deal", "kind": "step", "label": "Dealerが表向きカードを配る"},
-      {"id": "choose", "kind": "decision", "label": "アクティブプレイヤーがHitかStayを選ぶ", "branches": [{"label": "Hit", "detail": "1枚受け取る"}, {"label": "Stay", "detail": "自分からの追加ドローを止める"}]},
-      {"id": "resolve", "kind": "step", "label": "公開カードとAction/Modifierを処理する"},
-      {"id": "round-end", "kind": "check", "label": "全員Bust/StayまたはFlip 7ならラウンド終了"},
-      {"id": "game-end", "kind": "end", "label": "ラウンド終了時に200点以上がいれば最多得点で勝者を決める"}
-    ]
-  },
-  "assertions": [
-    {"path": "facts.targetScore", "equals": 200},
-    {"path": "facts.flip7Bonus", "equals": 15},
-    {"path": "quick.turnSteps", "contains": "HitかStay"},
-    {"path": "quick.turnEndChecks", "contains": "7枚"},
-    {"path": "quick.end", "contains": "ラウンド終了時"},
-    {"path": "scoring.summary", "contains": "÷2"}
-  ]
+    "bga_url": "https://ja.boardgamearena.com/gamepanel?game=flipsevenwithavengeance"
+  }
 }
