@@ -4,7 +4,7 @@
   "title": "ボドゲのミカタ curated game input v1",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_version", "slug", "work", "source", "game", "guide", "assertions"],
+  "required": ["schema_version", "slug", "work", "source", "game"],
   "properties": {
     "schema_version": {"const": "1"},
     "slug": {"type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"},
@@ -29,55 +29,18 @@
     },
     "game": {
       "type": "object",
-      "required": ["slug", "title", "summary", "rules_content", "source_url", "source_revision", "generated_from_source_revision"],
+      "required": ["slug", "title", "summary", "source_url", "source_revision", "generated_from_source_revision"],
       "properties": {
         "slug": {"type": "string"},
         "title": {"type": "string", "minLength": 1},
         "summary": {"type": "string", "minLength": 1},
-        "rules_content": {"type": "string", "minLength": 1},
         "source_url": {"type": "string", "pattern": "^https://"},
         "source_revision": {"type": "string", "minLength": 1},
-        "generated_from_source_revision": {"type": "string", "minLength": 1}
-      }
-    },
-    "guide": {
-      "type": "object",
-      "required": ["reviewed", "ruleVersion", "source", "facts", "quick", "scoring", "flow"],
-      "properties": {
-        "reviewed": {"const": true},
-        "ruleVersion": {"type": "string", "minLength": 1},
-        "source": {
-          "type": "object",
-          "required": ["label", "url", "ruleVersion"],
-          "properties": {
-            "label": {"type": "string", "minLength": 1},
-            "url": {"type": "string", "pattern": "^https://"},
-            "ruleVersion": {"type": "string", "minLength": 1}
-          }
-        },
-        "quick": {
-          "type": "object",
-          "required": ["win", "turnSteps", "turnEndChecks", "end"]
-        },
-        "flow": {"type": "array", "minItems": 2}
-      }
-    },
-    "assertions": {
-      "type": "array",
-      "minItems": 1,
-      "items": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": ["path"],
-        "properties": {
-          "path": {"type": "string", "minLength": 1},
-          "equals": {},
-          "contains": {"type": "string", "minLength": 1}
-        },
-        "oneOf": [
-          {"required": ["equals"], "not": {"required": ["contains"]}},
-          {"required": ["contains"], "not": {"required": ["equals"]}}
-        ]
+        "generated_from_source_revision": {"type": "string", "minLength": 1},
+        "rules_content": false,
+        "setup_summary": false,
+        "gameplay_summary": false,
+        "end_game_summary": false
       }
     }
   }
