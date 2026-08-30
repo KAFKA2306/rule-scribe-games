@@ -7,7 +7,6 @@ const scriptDir = path.dirname(fileURLToPath(import.meta.url))
 const frontendRoot = path.resolve(scriptDir, '..')
 const repoRoot = path.resolve(frontendRoot, '..')
 const curatedDir = path.join(repoRoot, 'data', 'curated-games')
-const generatedGuidePath = path.join(frontendRoot, 'src', 'lib', 'generatedCuratedRuleGuides.js')
 const deploymentManifestPath = path.join(frontendRoot, 'public', 'curated-guides-manifest.json')
 
 async function writeIfChanged(filePath, content) {
@@ -35,20 +34,12 @@ async function loadSpecs() {
     if (!spec.slug || stem !== spec.slug) {
       throw new Error(`curated spec filename/slug mismatch: ${name}`)
     }
-    if (!spec.guide || spec.guide.reviewed !== true) {
-      throw new Error(`curated guide must be reviewed: ${name}`)
-    }
     if (!spec.source?.rule_version || !spec.source?.revision) {
       throw new Error(`curated source revision contract missing: ${name}`)
     }
     specs.push(spec)
   }
   return specs
-}
-
-function renderRegistry(specs) {
-  const registry = Object.fromEntries(specs.map((spec) => [spec.slug, spec.guide]))
-  return `export const GENERATED_CURATED_RULE_GUIDES = ${JSON.stringify(registry, null, 2)}\n`
 }
 
 function renderManifest(specs) {
@@ -75,6 +66,5 @@ function renderManifest(specs) {
 }
 
 const specs = await loadSpecs()
-await writeIfChanged(generatedGuidePath, renderRegistry(specs))
 await writeIfChanged(deploymentManifestPath, renderManifest(specs))
-console.log(`curated artifacts generated: ${specs.length} game(s)`)
+console.log(`curated manifest generated: ${specs.length} game(s)`)
