@@ -44,9 +44,10 @@ test('RuleSetが公開されていないゲームではcurated guideを表示し
   await expect(page.getByText('30秒でわかる「みんなでぽんこつペイント」', { exact: true })).toHaveCount(0)
   await expect(page.locator('.quick-rules-panel')).toHaveCount(0)
   await expect(page.getByRole('button', { name: '図で見る', exact: true })).toHaveCount(0)
+  await expect(page.getByText('ルールを質問', { exact: true })).toHaveCount(0)
 })
 
-test('公開RuleSetがあるゲームではcurated guideを維持する', async ({ page }) => {
+test('公開RuleSetがあってもcurated guideを別authorityとして表示しない', async ({ page }) => {
   await mockGameApi(page, {
     slug: 'skull-king',
     title: 'Skull King',
@@ -69,7 +70,9 @@ test('公開RuleSetがあるゲームではcurated guideを維持する', async 
 
   await page.goto('/games/skull-king')
 
-  await expect(page.getByText('30秒でわかる「スカルキング」', { exact: true })).toBeVisible()
-  await expect(page.locator('.quick-rules-panel')).toHaveCount(1)
-  await expect(page.getByRole('button', { name: '図で見る', exact: true })).toHaveCount(1)
+  await expect(page.getByText('「スカルキング」のゲーム概要', { exact: true })).toBeVisible()
+  await expect(page.getByText('公開RuleSetに基づくルール。', { exact: true })).toBeVisible()
+  await expect(page.getByText('30秒でわかる「スカルキング」', { exact: true })).toHaveCount(0)
+  await expect(page.locator('.quick-rules-panel')).toHaveCount(0)
+  await expect(page.getByRole('button', { name: '図で見る', exact: true })).toHaveCount(0)
 })
