@@ -280,7 +280,7 @@ BEGIN
     'rule_node',
     rn.rule_id,
     'accepted',
-    '{"seed":"032_seed_skull_king_current_ruleset","audit_date":"2026-08-31","method":"manual_primary_source_normalization"}'::jsonb
+    '{"seed":"120_seed_skull_king_current_ruleset","audit_date":"2026-08-31","method":"manual_primary_source_normalization"}'::jsonb
   FROM public.rule_nodes rn
   WHERE rn.rule_set_id = v_ruleset_id
     AND rn.source_claim_ref LIKE 'skull-king:current:%'
@@ -309,7 +309,7 @@ BEGIN
     rn.source_locator,
     'supports',
     '{"audit_date":"2026-08-31","method":"manual_primary_source_verification"}'::jsonb,
-    '{"seed":"032_seed_skull_king_current_ruleset"}'::jsonb,
+    '{"seed":"120_seed_skull_king_current_ruleset"}'::jsonb,
     now()
   FROM public.rule_nodes rn
   WHERE rn.rule_set_id = v_ruleset_id
