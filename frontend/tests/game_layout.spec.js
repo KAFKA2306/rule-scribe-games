@@ -122,35 +122,28 @@ test('game page title only advertises strategy when strategy content exists', as
   await expect(page).toHaveTitle('「戦略なしゲーム」のルール・インスト要約 | ボドゲのミカタ')
 })
 
-test('quick rules flatten to one row on wide desktop inside the single-column page', async ({ page }) => {
+test('canonical rules remain readable without a duplicate curated quick-rule layer', async ({ page }) => {
   const skullKing = {
     ...bigShot,
     id: 269,
     slug: 'skull-king',
     title: 'Skull King',
     title_ja: 'スカルキング',
+    rules_content: '# スカルキング\n\n公開RuleSetに基づくルール本文。',
   }
 
   await mockGameApi(page, skullKing)
   await page.setViewportSize({ width: 1280, height: 900 })
   await page.goto('/games/skull-king')
 
-  await expect(page.getByText('30秒でわかる「スカルキング」', { exact: true })).toBeVisible()
-  const cards = page.locator('.quick-rule-card')
-  await expect(cards).toHaveCount(4)
-
-  const boxes = await cards.evaluateAll(nodes => nodes.map(node => {
-    const rect = node.getBoundingClientRect()
-    return { x: rect.x, y: rect.y, width: rect.width }
-  }))
-
-  const ys = boxes.map(box => box.y)
-  expect(Math.max(...ys) - Math.min(...ys)).toBeLessThan(2)
-  expect(boxes.every(box => box.width > 0)).toBe(true)
+  await expect(page.getByText('「スカルキング」のゲーム概要', { exact: true })).toBeVisible()
+  await expect(page.getByText('公開RuleSetに基づくルール本文。', { exact: true })).toBeVisible()
+  await expect(page.locator('.quick-rule-card')).toHaveCount(0)
+  await expect(page.locator('.quick-rules-panel')).toHaveCount(0)
   expectSinglePrimaryFlow(await readLayout(page))
 })
 
-test('game detail uses one native button group after quick rules', async ({ page }) => {
+test('game detail uses one native button group without duplicate curated flow controls', async ({ page }) => {
   const skullKing = {
     ...bigShot,
     id: 269,
@@ -172,12 +165,12 @@ test('game detail uses one native button group after quick rules', async ({ page
   const flowButton = page.getByRole('button', { name: '準備・流れ・終了', exact: true })
   await expect(rulesButton).toHaveAttribute('aria-pressed', 'true')
   await expect(flowButton).toHaveAttribute('aria-pressed', 'false')
-  await expect(page.getByRole('button', { name: '図で見る', exact: true })).toHaveCount(1)
+  await expect(page.getByRole('button', { name: '図で見る', exact: true })).toHaveCount(0)
 
   await flowButton.click()
   await expect(rulesButton).toHaveAttribute('aria-pressed', 'false')
   await expect(flowButton).toHaveAttribute('aria-pressed', 'true')
-  await expect(page.getByRole('link', { name: /公式出典:/ })).toHaveCount(1)
+  await expect(page.getByRole('link', { name: '出典を確認' })).toHaveCount(1)
 })
 
 test('preparation flow only appears when at least one game-specific summary exists', async ({ page }) => {
