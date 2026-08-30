@@ -1,7 +1,9 @@
 import { test, expect } from '@playwright/test'
 
+const officialRuleUrl = 'https://publisher.example/splendor-rules.pdf'
+
 const splendor = {
-  id: 1,
+  id: 'game-splendor',
   slug: 'splendor',
   title: 'Splendor',
   title_ja: '宝石の煌き',
@@ -18,11 +20,69 @@ const splendor = {
   structured_data: {},
 }
 
+const ruleGraph = {
+  schema_version: '1.0',
+  status: 'available',
+  game_id: splendor.id,
+  slug: splendor.slug,
+  work_id: 'work-splendor',
+  rule_set_id: 'splendor-current',
+  source_revision: 'official-rules-v1',
+  nodes: [
+    {
+      rule_id: 'action.take-three',
+      node_type: 'action',
+      normalized_statement: '異なる色の宝石トークンを3個取る。',
+      sequence: 1,
+      verification_status: 'source_bound',
+      source_url: officialRuleUrl,
+      source_locator: 'p.2 action',
+    },
+    {
+      rule_id: 'game-end.15',
+      node_type: 'game_end',
+      normalized_statement: '15点以上のプレイヤーが出たラウンドの終了時にゲームが終わる。',
+      verification_status: 'source_bound',
+      source_url: officialRuleUrl,
+      source_locator: 'p.3 end',
+    },
+    {
+      rule_id: 'score.prestige',
+      node_type: 'scoring',
+      normalized_statement: '発展カードと貴族タイルの威信ポイントを合計する。',
+      verification_status: 'verified',
+      source_url: officialRuleUrl,
+      source_locator: 'p.3 scoring',
+    },
+    {
+      rule_id: 'tie.cards',
+      node_type: 'conflict_resolution',
+      normalized_statement: '同点なら購入した発展カード枚数が少ない方を上位とする。',
+      verification_status: 'source_bound',
+      source_url: officialRuleUrl,
+      source_locator: 'p.3 tie',
+    },
+    {
+      rule_id: 'limit.tokens',
+      node_type: 'condition',
+      normalized_statement: '手番終了時のトークン上限は10個。',
+      verification_status: 'source_bound',
+      source_url: officialRuleUrl,
+      source_locator: 'p.2 token limit',
+    },
+  ],
+  edges: [],
+}
+
 async function mockSplendor(page) {
   await page.route('**/api/games**', async route => {
     const url = new URL(route.request().url())
     if (url.pathname === '/api/games/splendor') {
       await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ game: splendor }) })
+      return
+    }
+    if (url.pathname === '/api/games/splendor/rule-graph') {
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(ruleGraph) })
       return
     }
     await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ games: [] }) })
@@ -35,20 +95,20 @@ async function ask(page, question) {
   await page.getByRole('button', { name: '根拠付きで確認' }).click()
 }
 
-test('answers turn action from the current game official guide', async ({ page }) => {
+test('answers turn action from the current canonical RuleGraph', async ({ page }) => {
   await mockSplendor(page)
   await page.goto('/games/splendor')
+  await expect(page.getByText('ルールを質問', { exact: true })).toBeVisible()
   await ask(page, '手番では何ができる？')
 
   const answer = page.getByRole('status').filter({ hasText: '異なる色の宝石トークンを3個取る' })
   await expect(answer).toBeVisible()
-  await expect(answer).toContainText('供給に異なる3色を取れるだけ残っていない場合は、異なる2色または1色だけ取ってよい')
   const evidence = page.getByRole('link', { name: '公式ルールを確認' })
-  await expect(evidence).toHaveAttribute('href', 'https://cdn.svc.asmodee.net/production-spacecowboys/uploads/2025/12/FR_SPLENDOR_Rules.pdf')
-  await expect(page.getByText(/quick:actions/)).toBeVisible()
+  await expect(evidence).toHaveAttribute('href', officialRuleUrl)
+  await expect(page.getByText(/p\.2 action/)).toBeVisible()
 })
 
-test('answers end, scoring, tie and token-limit questions with evidence', async ({ page }) => {
+test('answers end, scoring, tie and token-limit questions from verified nodes', async ({ page }) => {
   await mockSplendor(page)
   await page.goto('/games/splendor')
 
@@ -65,16 +125,15 @@ test('answers end, scoring, tie and token-limit questions with evidence', async 
   await expect(page.getByRole('status').filter({ hasText: '10個' })).toBeVisible()
 })
 
-test('fails closed when reviewed setup evidence is unavailable', async ({ page }) => {
+test('fails closed when verified setup evidence is unavailable', async ({ page }) => {
   await mockSplendor(page)
   await page.goto('/games/splendor')
   await ask(page, 'セットアップはどうする？')
 
-  await expect(page.getByText('この質問に答えられる確認済み根拠がありません。公式ルール本文を確認してください。')).toBeVisible()
-  await expect(page.getByRole('link', { name: '公式ルールを確認' })).toHaveCount(0)
+  await expect(page.getByText('この質問に答えられる確認済みRuleGraph根拠がありません。公式ルール本文を確認してください。')).toBeVisible()
 })
 
-test('does not reuse another game guide', async ({ page }) => {
+test('does not show rule questions when canonical RuleGraph is unavailable', async ({ page }) => {
   const otherGame = { ...splendor, slug: 'unknown-game', title_ja: '別ゲーム' }
   await page.route('**/api/games**', async route => {
     const url = new URL(route.request().url())
@@ -82,17 +141,22 @@ test('does not reuse another game guide', async ({ page }) => {
       await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ game: otherGame }) })
       return
     }
+    if (url.pathname === '/api/games/unknown-game/rule-graph') {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ schema_version: '1.0', status: 'not_available', game_id: 'other', slug: 'unknown-game', nodes: [], edges: [] }),
+      })
+      return
+    }
     await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ games: [] }) })
   })
 
   await page.goto('/games/unknown-game')
-  await ask(page, '同点ならどうなる？')
-
-  await expect(page.getByText('この質問に答えられる確認済み根拠がありません。公式ルール本文を確認してください。')).toBeVisible()
-  await expect(page.getByText(/購入した発展カード枚数が少ない方/)).toHaveCount(0)
+  await expect(page.getByText('ルールを質問', { exact: true })).toHaveCount(0)
 })
 
-test('critical path works at mobile width', async ({ page }) => {
+test('canonical RuleGraph question flow works at mobile width', async ({ page }) => {
   await mockSplendor(page)
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/games/splendor')
