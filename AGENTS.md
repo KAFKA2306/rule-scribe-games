@@ -31,6 +31,17 @@
 - broad `try-except`、silent fallback、根拠のないdefault、壊れたデータを成功扱いするretryを追加しない。失敗は明示する。
 - 同じ意味のshadow mappingや第二のtruth storeを作らない。
 
+## 個別ゲームの画像
+
+個別ゲームを追加・更新する場合、ユーザーがそのゲームを直感的に理解するための「アイキャッチ」と「サマリーシート」をWebPで用意し、GamePageへ埋め込む。運用報告や作業サマリー用の画像には使わない。
+
+- 画像の内容は、選択中のRuleSetと公式一次資料で確認できた事実だけから作る。版・言語・platform・人数別variantを混ぜない。
+- アイキャッチは、ゲームのテーマ、主要なコンポーネント、基本的なプレイヤー行動が一目で分かる構成にする。
+- サマリーシートは、確認済みの人数・時間・対象年齢・目的・基本の流れ・終了・勝利条件を、存在する項目だけで図解する。不明な項目を補完しない。
+- 権利やprovenanceが不明な公式画像・箱絵をそのまま再配布せず、正準データから作る独自図解を優先する。
+- 既存の画像保存・配信経路を使い、ゲーム固有のone-off生成scriptや別の画像truth storeを作らない。
+- `og:image` 等の代表画像へ使う場合は、既存の画像品質・rights/provenance・indexability contractを満たすものだけにする。
+
 ## 実装と検証
 
 `Taskfile.yml` と既存schema/validator/generatorを優先する。ゲーム固有の事実は既存schemaで表現できる限りstructured dataへ入れ、専用処理を作らない。
