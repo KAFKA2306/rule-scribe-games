@@ -54,8 +54,9 @@ export function RuleAskPanel() {
   const [result, setResult] = useState(null)
   const [ruleSetContext, setRuleSetContext] = useState(null)
   const [selectedRuleSetId, setSelectedRuleSetId] = useState(null)
-  const [ruleGraph, setRuleGraph] = useState(null)
+  const [hasVisibleRules, setHasVisibleRules] = useState(false)
   const [ready, setReady] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -65,29 +66,26 @@ export function RuleAskPanel() {
       setResult(null)
       setRuleSetContext(null)
       setSelectedRuleSetId(null)
-      setRuleGraph(null)
+      setHasVisibleRules(false)
 
       try {
         const gameResponse = await api.get(`/api/games/${slug}`)
         const game = Array.isArray(gameResponse) ? gameResponse[0] : gameResponse?.game || gameResponse
         if (cancelled || !visibleRuleText(game)) return
+        setHasVisibleRules(true)
 
-        let displayedRuleSetId = null
-        if (hasEditionBoundary(game)) {
-          const rulesetResponse = await api.get(`/api/games/${slug}/rule-sets`)
-          if (cancelled || rulesetResponse?.status !== 'available' || !rulesetResponse.rulesets?.length) return
+        if (!hasEditionBoundary(game)) return
 
-          const displayed = findDisplayedRuleSet(game, rulesetResponse.rulesets)
-          setRuleSetContext({ displayed, rulesets: rulesetResponse.rulesets })
-          setSelectedRuleSetId(displayed?.ruleset_id || rulesetResponse.rulesets[0].ruleset_id)
-          if (!displayed) return
-          displayedRuleSetId = displayed.ruleset_id
+        const rulesetResponse = await api.get(`/api/games/${slug}/rule-sets`)
+        if (cancelled || rulesetResponse?.status !== 'available' || !rulesetResponse.rulesets?.length) {
+          setHasVisibleRules(false)
+          return
         }
 
-        const graphResponse = await api.get(ruleGraphUrl(slug, displayedRuleSetId))
-        if (!cancelled && graphResponse?.status === 'available' && graphResponse.rule_set_id) {
-          setRuleGraph(graphResponse)
-        }
+        const displayed = findDisplayedRuleSet(game, rulesetResponse.rulesets)
+        setRuleSetContext({ displayed, rulesets: rulesetResponse.rulesets })
+        setSelectedRuleSetId(displayed?.ruleset_id || rulesetResponse.rulesets[0].ruleset_id)
+        if (!displayed) setHasVisibleRules(false)
       } finally {
         if (!cancelled) setReady(true)
       }
@@ -95,7 +93,7 @@ export function RuleAskPanel() {
 
     load().catch(() => {
       if (!cancelled) {
-        setRuleGraph(null)
+        setHasVisibleRules(false)
         setReady(true)
       }
     })
@@ -110,12 +108,26 @@ export function RuleAskPanel() {
     !ruleSetContext?.displayed || selectedRuleSetId === ruleSetContext.displayed.ruleset_id,
   )
 
-  if (!ready || !ruleGraph) return null
+  if (!ready || !hasVisibleRules) return null
 
-  const submit = (event) => {
+  const submit = async (event) => {
     event.preventDefault()
-    if (!selectedUsesDisplayedProjection) return
-    setResult(askRule(ruleGraph, question))
+    if (!selectedUsesDisplayedProjection || !question.trim() || submitting) return
+
+    setSubmitting(true)
+    setResult(null)
+    try {
+      const graph = await api.get(ruleGraphUrl(slug, ruleSetContext?.displayed?.ruleset_id || null))
+      if (graph?.status !== 'available' || !graph.rule_set_id) {
+        setResult({ status: 'unresolved' })
+        return
+      }
+      setResult(askRule(graph, question))
+    } catch {
+      setResult({ status: 'unresolved' })
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -164,15 +176,15 @@ export function RuleAskPanel() {
           maxLength={200}
           placeholder="例: 同点ならどうなる？"
           onChange={(event) => setQuestion(event.target.value)}
-          disabled={!selectedUsesDisplayedProjection}
+          disabled={!selectedUsesDisplayedProjection || submitting}
         />
         <button
           type="submit"
           className="filter-btn"
-          disabled={!question.trim() || !selectedUsesDisplayedProjection}
+          disabled={!question.trim() || !selectedUsesDisplayedProjection || submitting}
           style={{ marginTop: '0.75rem' }}
         >
-          根拠付きで確認
+          {submitting ? '確認中…' : '根拠付きで確認'}
         </button>
       </form>
 
