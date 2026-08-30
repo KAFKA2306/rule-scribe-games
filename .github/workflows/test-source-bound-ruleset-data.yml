@@ -148,6 +148,12 @@ jobs:
                  '鉄道会社を発展させるワーカープレイスメントゲーム','線路・機関車・工業化を発展させて得点する',2,4,120,13,2013,
                  'https://www.amazon.co.jp/s?k=Russian%20Railroads&tag=bodogemikata-22'
           FROM w;
+
+          WITH w AS (INSERT INTO public.game_works DEFAULT VALUES RETURNING id)
+          INSERT INTO public.games(slug,title,title_ja,title_en,work_id,identity_status,source_url,source_trust,min_players,max_players,play_time,min_age)
+          SELECT 'skull-king','Skull King','スカルキング','Skull King',id,'unverified',
+                 'https://www.grandpabecksgames.com/pages/skull-king','unknown',2,8,45,8
+          FROM w;
           SQL
 
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/010_rule_graph.sql
@@ -292,3 +298,18 @@ jobs:
           test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_nodes rn join public.claims c on c.rule_set_id=rn.rule_set_id and c.rule_id=rn.rule_id where rn.rule_set_id=(select rs.id from public.rule_sets rs join public.games g on g.id=rs.game_id where g.slug='russian-railroads') and c.normalized_payload->>'statement'=rn.normalized_statement;")" = "9"
           test "$(psql "$DATABASE_URL" -Atc "select position('Ultimate Railroads' in source_revision)>0 from public.games where slug='russian-railroads';")" = "t"
           test "$(psql "$DATABASE_URL" -Atc "select position('7ラウンド' in normalized_statement)>0 and position('6ラウンド' in normalized_statement)>0 from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='russian-railroads' and rn.rule_id='game.round-count';")" = "t"
+
+      - name: Verify Skull King current base and player-count contract
+        shell: bash
+        run: |
+          test "$(psql "$DATABASE_URL" -Atc "select identity_status from public.games where slug='skull-king';")" = "verified"
+          test "$(psql "$DATABASE_URL" -Atc "select edition_label||':'||language_code from public.games where slug='skull-king';")" = "Grandpa Beck's Games current edition:en"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_sets rs join public.games g on g.id=rs.game_id where g.slug='skull-king' and rs.platform='physical' and rs.language_code='en' and rs.edition_label='Grandpa Beck''s Games current edition' and rs.revision_label='current-web-rulebook-1764178570' and rs.verification_status='source_bound' and rs.is_active;")" = "1"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='skull-king' and rn.verification_status='source_bound';")" = "19"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.claims c join public.rule_sets rs on rs.id=c.rule_set_id join public.games g on g.id=rs.game_id where g.slug='skull-king' and c.target_type='rule_node' and c.lifecycle_status='accepted';")" = "19"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.evidence_bindings eb join public.claims c on c.claim_id=eb.claim_id join public.rule_sets rs on rs.id=c.rule_set_id join public.games g on g.id=rs.game_id where g.slug='skull-king' and eb.relation='supports';")" = "19"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='skull-king' and rn.metadata->'condition'->>'player_count'='2';")" = "4"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='skull-king' and rn.metadata->'condition'->>'player_count'='8';")" = "1"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='skull-king' and rn.metadata->>'scope'='advanced';")" = "0"
+          test "$(psql "$DATABASE_URL" -Atc "select source_locator from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='skull-king' and rn.rule_id='resolution.mermaid-triad';")" = "skull-king:faq:mermaid-triad"
+          test "$(psql "$DATABASE_URL" -Atc "select source_locator from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='skull-king' and rn.rule_id='faq.pirate-power-timing';")" = "skull-king:faq:pirate-powers"
