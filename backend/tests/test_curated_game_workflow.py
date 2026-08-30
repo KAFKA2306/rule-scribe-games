@@ -3,25 +3,25 @@ from pathlib import Path
 import pytest
 
 from app.scripts.curated_game_workflow import (
+    LEGACY_RULE_FIELDS,
     WorkflowError,
     load_spec,
     plan_identity,
-    validate_assertions,
 )
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SKULL_KING = REPO_ROOT / "data" / "curated-games" / "skull-king.json"
 
 
-def test_skull_king_replays_from_structured_input_without_semantic_diff():
+def test_skull_king_replays_from_structured_catalog_input_without_rule_authority():
     spec = load_spec(SKULL_KING)
-    validate_assertions(spec)
 
     assert spec.slug == "skull-king"
     assert spec.source.url == "https://www.grandpabecksgames.com/pages/skull-king"
     assert spec.source.revision == "grandpa-becks-current-en-rulebook-faq-accessed-2026-08-22"
-    assert spec.guide["facts"]["rounds"] == 10
-    assert spec.guide["scoring"]["summary"].find("配札枚数×10点") >= 0
+    assert all(field not in spec.game for field in LEGACY_RULE_FIELDS)
+    assert "guide" not in spec.model_fields
+    assert "assertions" not in spec.model_fields
 
 
 def test_existing_slug_for_same_work_is_idempotent_update():
