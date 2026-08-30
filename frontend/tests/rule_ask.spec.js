@@ -133,7 +133,7 @@ test('fails closed when verified setup evidence is unavailable', async ({ page }
   await expect(page.getByText('この質問に答えられる確認済みRuleGraph根拠がありません。公式ルール本文を確認してください。')).toBeVisible()
 })
 
-test('does not show rule questions when canonical RuleGraph is unavailable', async ({ page }) => {
+test('fails closed when canonical RuleGraph is unavailable', async ({ page }) => {
   const otherGame = { ...splendor, slug: 'unknown-game', title_ja: '別ゲーム' }
   await page.route('**/api/games**', async route => {
     const url = new URL(route.request().url())
@@ -153,7 +153,9 @@ test('does not show rule questions when canonical RuleGraph is unavailable', asy
   })
 
   await page.goto('/games/unknown-game')
-  await expect(page.getByText('ルールを質問', { exact: true })).toHaveCount(0)
+  await expect(page.getByText('ルールを質問', { exact: true })).toBeVisible()
+  await ask(page, '同点なら？')
+  await expect(page.getByText('この質問に答えられる確認済みRuleGraph根拠がありません。公式ルール本文を確認してください。')).toBeVisible()
 })
 
 test('canonical RuleGraph question flow works at mobile width', async ({ page }) => {
