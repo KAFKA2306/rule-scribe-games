@@ -140,6 +140,9 @@ class GameService:
         rows = await supabase.search(query)
         return [row for row in rows if not should_hide_game_from_search(str(row.get("slug") or ""))]
 
+    async def list_recent_games(self, limit: int = 100, offset: int = 0) -> dict[str, Any]:
+        return await supabase.list_recent(limit=limit, offset=offset)
+
     async def get_game_by_slug(self, slug: str) -> dict[str, Any] | None:
         return await supabase.get_by_slug(slug)
 
