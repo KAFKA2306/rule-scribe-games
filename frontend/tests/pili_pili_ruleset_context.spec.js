@@ -57,11 +57,35 @@ const ruleSets = {
   ],
 }
 
+const bgaRuleGraph = {
+  schema_version: '1.0',
+  status: 'available',
+  game_id: piliPili.id,
+  slug: piliPili.slug,
+  work_id: 'work-pili-pili',
+  rule_set_id: 'bga-ruleset',
+  source_revision: 'Board Game Arena Release 260623-1715',
+  nodes: [{
+    rule_id: 'game-end.six-pili',
+    node_type: 'game_end',
+    normalized_statement: 'Board Game Arena版では登録済み終了条件を使う。',
+    verification_status: 'source_bound',
+    source_url: 'https://ja.boardgamearena.com/gamepanel?game=pilipili',
+    source_locator: 'BGA rules',
+  }],
+  edges: [],
+}
+
 test('Pili Pili rule questions stay inside the selected RuleSet', async ({ page }) => {
   await page.route('**/api/games/pili-pili/rule-sets', route => route.fulfill({
     status: 200,
     contentType: 'application/json',
     body: JSON.stringify(ruleSets),
+  }))
+  await page.route('**/api/games/pili-pili/rule-graph**', route => route.fulfill({
+    status: 200,
+    contentType: 'application/json',
+    body: JSON.stringify(bgaRuleGraph),
   }))
   await page.route('**/api/games/pili-pili', route => route.fulfill({
     status: 200,
