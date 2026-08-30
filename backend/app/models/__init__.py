@@ -105,6 +105,8 @@ class GamePageDetail(GameDetail):
     end_game_summary: str | None = None
     structured_data: GamePageStructuredData | None = None
     infographics: dict[str, str] | None = None
+    infographics_reviewed: bool = False
+    infographics_source_url: str | None = None
 
 
 class GameUpdate(BaseSchema):
