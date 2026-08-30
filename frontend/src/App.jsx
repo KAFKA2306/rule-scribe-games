@@ -31,6 +31,11 @@ function comparisonPlayers(game) {
 }
 
 function comparisonPlayTime(game) {
+  const minimum = game.play_time_min_minutes
+  const maximum = game.play_time_max_minutes
+  if (Number.isFinite(minimum) && minimum > 0 && Number.isFinite(maximum) && maximum >= minimum) {
+    return minimum === maximum ? `${minimum}分` : `${minimum}-${maximum}分`
+  }
   return Number.isFinite(game.play_time) && game.play_time > 0 ? `${game.play_time}分` : '不明'
 }
 
@@ -46,6 +51,13 @@ function comparisonPlayersEvidence(game) {
   const maximum = comparisonFieldEvidence(game, 'max_players', game.max_players)
   if (!minimum || !maximum) return null
   return minimum
+}
+
+function comparisonPlayTimeEvidence(game) {
+  const minimum = comparisonFieldEvidence(game, 'play_time_min_minutes', game.play_time_min_minutes)
+  const maximum = comparisonFieldEvidence(game, 'play_time_max_minutes', game.play_time_max_minutes)
+  if (minimum && maximum) return minimum
+  return comparisonFieldEvidence(game, 'play_time', game.play_time)
 }
 
 function ComparisonEvidence({ evidence, ariaLabel }) {
@@ -309,7 +321,7 @@ function App() {
         <div className="battle-grid">
           {compareList.map((game) => {
             const playersEvidence = comparisonPlayersEvidence(game)
-            const playTimeEvidence = comparisonFieldEvidence(game, 'play_time', game.play_time)
+            const playTimeEvidence = comparisonPlayTimeEvidence(game)
             const mechanicsEvidence = game.metadata_evidence?.['structured_data.mechanics']?.status === 'supported'
               ? game.metadata_evidence['structured_data.mechanics']
               : null
@@ -483,7 +495,7 @@ function App() {
                       <div className="asset-meta">
                         {trustLabel && <span className="meta-item">{trustLabel}</span>}
                         {game.min_players && <span className="meta-item">👥 {game.min_players}{game.max_players && game.max_players !== game.min_players ? `-${game.max_players}` : ''}</span>}
-                        {game.play_time && <span className="meta-item">⏳ {game.play_time}分</span>}
+                        <span className="meta-item">⏳ {comparisonPlayTime(game)}</span>
                         {game.published_year && <span className="meta-item">📅 {game.published_year}</span>}
                       </div>
                       <div className="asset-summary">{game.summary || game.description}</div>
