@@ -43,34 +43,62 @@ function ruleSetOptionLabel(ruleset) {
   ].filter(Boolean).join(' · ')
 }
 
+function ruleGraphUrl(slug, ruleSetId) {
+  const base = `/api/games/${slug}/rule-graph`
+  return ruleSetId ? `${base}?rule_set_id=${encodeURIComponent(ruleSetId)}` : base
+}
+
 export function RuleAskPanel() {
   const { slug } = useParams()
   const [question, setQuestion] = useState('')
   const [result, setResult] = useState(null)
   const [ruleSetContext, setRuleSetContext] = useState(null)
   const [selectedRuleSetId, setSelectedRuleSetId] = useState(null)
+  const [ruleGraph, setRuleGraph] = useState(null)
+  const [ready, setReady] = useState(false)
 
   useEffect(() => {
     let cancelled = false
 
-    api.get(`/api/games/${slug}`)
-      .then(async (gameResponse) => {
+    const load = async () => {
+      setReady(false)
+      setResult(null)
+      setRuleSetContext(null)
+      setSelectedRuleSetId(null)
+      setRuleGraph(null)
+
+      try {
+        const gameResponse = await api.get(`/api/games/${slug}`)
         const game = Array.isArray(gameResponse) ? gameResponse[0] : gameResponse?.game || gameResponse
-        if (cancelled || !hasEditionBoundary(game)) return
+        if (cancelled || !visibleRuleText(game)) return
 
-        const rulesetResponse = await api.get(`/api/games/${slug}/rule-sets`)
-        if (cancelled || rulesetResponse?.status !== 'available' || !rulesetResponse.rulesets?.length) return
+        let displayedRuleSetId = null
+        if (hasEditionBoundary(game)) {
+          const rulesetResponse = await api.get(`/api/games/${slug}/rule-sets`)
+          if (cancelled || rulesetResponse?.status !== 'available' || !rulesetResponse.rulesets?.length) return
 
-        const displayed = findDisplayedRuleSet(game, rulesetResponse.rulesets)
-        setRuleSetContext({ displayed, rulesets: rulesetResponse.rulesets })
-        setSelectedRuleSetId(displayed?.ruleset_id || rulesetResponse.rulesets[0].ruleset_id)
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setRuleSetContext(null)
-          setSelectedRuleSetId(null)
+          const displayed = findDisplayedRuleSet(game, rulesetResponse.rulesets)
+          setRuleSetContext({ displayed, rulesets: rulesetResponse.rulesets })
+          setSelectedRuleSetId(displayed?.ruleset_id || rulesetResponse.rulesets[0].ruleset_id)
+          if (!displayed) return
+          displayedRuleSetId = displayed.ruleset_id
         }
-      })
+
+        const graphResponse = await api.get(ruleGraphUrl(slug, displayedRuleSetId))
+        if (!cancelled && graphResponse?.status === 'available' && graphResponse.rule_set_id) {
+          setRuleGraph(graphResponse)
+        }
+      } finally {
+        if (!cancelled) setReady(true)
+      }
+    }
+
+    load().catch(() => {
+      if (!cancelled) {
+        setRuleGraph(null)
+        setReady(true)
+      }
+    })
 
     return () => { cancelled = true }
   }, [slug])
@@ -82,10 +110,12 @@ export function RuleAskPanel() {
     !ruleSetContext?.displayed || selectedRuleSetId === ruleSetContext.displayed.ruleset_id,
   )
 
+  if (!ready || !ruleGraph) return null
+
   const submit = (event) => {
     event.preventDefault()
     if (!selectedUsesDisplayedProjection) return
-    setResult(askRule(slug, question))
+    setResult(askRule(ruleGraph, question))
   }
 
   return (
@@ -122,7 +152,7 @@ export function RuleAskPanel() {
 
       <div className="pro-card-title" id="rule-ask-title">ルールを質問</div>
       <p className="summary-text">
-        確認済みの登録済みルール根拠だけから回答します。回答は要約で、公式本文そのものではありません。
+        現在のRuleSetに結び付いた確認済みRuleGraphだけから回答します。回答は要約で、公式本文そのものではありません。
       </p>
       <form onSubmit={submit}>
         <label htmlFor="rule-question" className="sr-only">ルールの質問</label>
@@ -160,7 +190,7 @@ export function RuleAskPanel() {
 
       {result?.status === 'unresolved' && (
         <div className="game-empty-state" role="status" style={{ marginTop: '1rem' }}>
-          この質問に答えられる確認済み根拠がありません。公式ルール本文を確認してください。
+          この質問に答えられる確認済みRuleGraph根拠がありません。公式ルール本文を確認してください。
         </div>
       )}
     </section>
