@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 import re
 import subprocess
 from dataclasses import dataclass
@@ -12,10 +11,14 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 CURATED_DIR = REPO_ROOT / "data" / "curated-games"
-GENERATED_GUIDES_PATH = REPO_ROOT / "frontend" / "src" / "lib" / "generatedCuratedRuleGuides.js"
-CURATED_GUIDES_PATH = REPO_ROOT / "frontend" / "src" / "lib" / "curatedRuleGuides.js"
 DEFAULT_BASE_URL = "https://bodoge-no-mikata.vercel.app"
 SLUG_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+LEGACY_RULE_FIELDS = (
+    "rules_content",
+    "setup_summary",
+    "gameplay_summary",
+    "end_game_summary",
+)
 
 
 class WorkflowError(RuntimeError):
@@ -37,24 +40,6 @@ class SourceSpec(BaseModel):
     revision: str = Field(min_length=1)
 
 
-class AssertionSpec(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    path: str = Field(min_length=1)
-    equals: Any | None = None
-    contains: str | None = None
-
-    @model_validator(mode="after")
-    def require_one_operator(self):
-        has_equals = "equals" in self.model_fields_set
-        has_contains = "contains" in self.model_fields_set
-        if has_equals == has_contains:
-            raise ValueError("assertion requires exactly one of equals or contains")
-        if has_contains and not self.contains:
-            raise ValueError("contains must be non-empty")
-        return self
-
-
 class CuratedGameSpec(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -63,8 +48,6 @@ class CuratedGameSpec(BaseModel):
     work: WorkSpec
     source: SourceSpec
     game: dict[str, Any]
-    guide: dict[str, Any]
-    assertions: list[AssertionSpec] = Field(min_length=1)
 
     @model_validator(mode="after")
     def validate_contract(self):
@@ -76,7 +59,6 @@ class CuratedGameSpec(BaseModel):
             "slug",
             "title",
             "summary",
-            "rules_content",
             "source_url",
             "source_revision",
             "generated_from_source_revision",
@@ -84,6 +66,11 @@ class CuratedGameSpec(BaseModel):
         missing = sorted(key for key in required_game if not self.game.get(key))
         if missing:
             raise ValueError(f"game fields missing: {', '.join(missing)}")
+        forbidden = sorted(field for field in LEGACY_RULE_FIELDS if field in self.game)
+        if forbidden:
+            raise ValueError(
+                "curated input must not contain RuleSet-owned fields: " + ", ".join(forbidden)
+            )
         if self.game["slug"] != self.slug:
             raise ValueError("game.slug must match slug")
         if self.game["source_url"] != self.source.url:
@@ -92,22 +79,6 @@ class CuratedGameSpec(BaseModel):
             raise ValueError("game.source_revision must match source.revision")
         if self.game["generated_from_source_revision"] != self.source.revision:
             raise ValueError("generated_from_source_revision must match source.revision")
-        if self.guide.get("reviewed") is not True:
-            raise ValueError("guide.reviewed must be true")
-        if self.guide.get("ruleVersion") != self.source.rule_version:
-            raise ValueError("guide.ruleVersion must match source.rule_version")
-        guide_source = self.guide.get("source") or {}
-        if guide_source.get("url") != self.source.url:
-            raise ValueError("guide.source.url must match source.url")
-        if guide_source.get("ruleVersion") != self.source.rule_version:
-            raise ValueError("guide.source.ruleVersion must match source.rule_version")
-        quick = self.guide.get("quick") or {}
-        if not quick.get("win") or not quick.get("end"):
-            raise ValueError("guide quick win/end are required")
-        if not quick.get("turnSteps") or not quick.get("turnEndChecks"):
-            raise ValueError("guide turnSteps/turnEndChecks are required")
-        if len(self.guide.get("flow") or []) < 2:
-            raise ValueError("guide flow requires at least two nodes")
         return self
 
 
@@ -129,66 +100,6 @@ def load_all_specs() -> list[CuratedGameSpec]:
     if len(slugs) != len(set(slugs)):
         raise WorkflowError("duplicate slug in structured curated inputs")
     return specs
-
-
-def get_path(value: Any, path: str) -> Any:
-    current = value
-    for segment in path.split("."):
-        if isinstance(current, dict) and segment in current:
-            current = current[segment]
-            continue
-        raise WorkflowError(f"assertion path not found: {path}")
-    return current
-
-
-def validate_assertions(spec: CuratedGameSpec) -> None:
-    for assertion in spec.assertions:
-        actual = get_path(spec.guide, assertion.path)
-        if "equals" in assertion.model_fields_set and actual != assertion.equals:
-            raise WorkflowError(f"assertion failed: {assertion.path} != {assertion.equals!r}")
-        if "contains" in assertion.model_fields_set:
-            expected = assertion.contains or ""
-            if isinstance(actual, list):
-                matched = any(expected in str(item) for item in actual)
-            else:
-                matched = expected in str(actual)
-            if not matched:
-                raise WorkflowError(f"assertion failed: {assertion.path} does not contain {expected!r}")
-
-
-def render_generated_registry(specs: list[CuratedGameSpec]) -> str:
-    registry = {spec.slug: spec.guide for spec in sorted(specs, key=lambda item: item.slug)}
-    rendered = json.dumps(registry, ensure_ascii=False, indent=2)
-    return f"export const GENERATED_CURATED_RULE_GUIDES = {rendered}\n"
-
-
-def materialize_registry(specs: list[CuratedGameSpec], check_only: bool) -> None:
-    expected = render_generated_registry(specs)
-    current = GENERATED_GUIDES_PATH.read_text(encoding="utf-8") if GENERATED_GUIDES_PATH.exists() else ""
-    if check_only:
-        if current != expected:
-            raise WorkflowError("generatedCuratedRuleGuides.js is stale; run task game:add or materialize the registry")
-        return
-    if current != expected:
-        GENERATED_GUIDES_PATH.write_text(expected, encoding="utf-8")
-
-
-def validate_runtime_guide(spec: CuratedGameSpec) -> None:
-    module_uri = CURATED_GUIDES_PATH.resolve().as_uri()
-    expression = (
-        f"import {{ getCuratedRuleGuide }} from {json.dumps(module_uri)}; "
-        f"process.stdout.write(JSON.stringify(getCuratedRuleGuide({json.dumps(spec.slug)})));"
-    )
-    result = subprocess.run(
-        ["node", "--input-type=module", "-e", expression],
-        cwd=REPO_ROOT,
-        check=True,
-        capture_output=True,
-        text=True,
-    )
-    runtime_guide = json.loads(result.stdout or "null")
-    if runtime_guide != spec.guide:
-        raise WorkflowError(f"runtime curated guide differs from structured input: {spec.slug}")
 
 
 def verify_source_reachable(spec: CuratedGameSpec) -> None:
