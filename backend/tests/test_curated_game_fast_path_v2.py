@@ -9,7 +9,6 @@ from app.scripts.curated_game_workflow import WorkflowError, load_all_specs, loa
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SKULL_KING = REPO_ROOT / "data" / "curated-games" / "skull-king.json"
-GENERATED_GUIDES = REPO_ROOT / "frontend" / "src" / "lib" / "generatedCuratedRuleGuides.js"
 PACKAGE_JSON = REPO_ROOT / "frontend" / "package.json"
 FAST_PATH_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "curated-game-fast-path.yml"
 
@@ -47,16 +46,15 @@ def test_deployment_manifest_is_deterministic_and_revision_bound():
     }
 
 
-def test_node_generator_matches_python_contract_from_source():
+def test_node_generator_matches_python_manifest_contract_from_source():
     specs = load_all_specs()
 
     v2.generate_artifacts(specs)
 
     assert v2.DEPLOYMENT_MANIFEST_PATH.read_text(encoding="utf-8") == v2.render_deployment_manifest(specs)
-    assert GENERATED_GUIDES.is_file()
 
 
-def test_npm_dev_and_build_generate_curated_artifacts():
+def test_npm_dev_and_build_generate_curated_manifest():
     scripts = json.loads(PACKAGE_JSON.read_text(encoding="utf-8"))["scripts"]
 
     assert scripts["curated:generate"] == "node scripts/generate-curated-game-artifacts.mjs"
@@ -64,14 +62,9 @@ def test_npm_dev_and_build_generate_curated_artifacts():
     assert scripts["prebuild"] == "npm run curated:generate"
 
 
-def test_git_tracks_curated_sources_but_ignores_generated_artifacts():
+def test_git_tracks_curated_sources_and_ignores_generated_manifest():
     future_source = subprocess.run(
         ["git", "check-ignore", "--no-index", "-q", "data/curated-games/future-game.json"],
-        cwd=REPO_ROOT,
-        check=False,
-    )
-    generated_guide = subprocess.run(
-        ["git", "check-ignore", "--no-index", "-q", "frontend/src/lib/generatedCuratedRuleGuides.js"],
         cwd=REPO_ROOT,
         check=False,
     )
@@ -82,18 +75,16 @@ def test_git_tracks_curated_sources_but_ignores_generated_artifacts():
     )
 
     assert future_source.returncode == 1
-    assert generated_guide.returncode == 0
     assert generated_manifest.returncode == 0
 
 
-def test_prepare_preflights_before_generation(monkeypatch):
+def test_prepare_preflights_before_manifest_generation(monkeypatch):
     spec = load_spec(SKULL_KING)
     specs = [spec]
     events = []
     plan = object()
     client = object()
 
-    monkeypatch.setattr(v2, "validate_assertions", lambda value: events.append("assertions"))
     monkeypatch.setattr(v2, "verify_source_reachable_streamed", lambda value: events.append("source"))
 
     def fake_preflight(value):
@@ -102,13 +93,12 @@ def test_prepare_preflights_before_generation(monkeypatch):
 
     monkeypatch.setattr(v2, "preflight_catalog", fake_preflight)
     monkeypatch.setattr(v2, "generate_artifacts", lambda values: events.append("generate"))
-    monkeypatch.setattr(v2, "validate_runtime_guide", lambda value: events.append("runtime"))
 
     actual_client, actual_plan = v2.prepare_game(spec, specs)
 
     assert actual_client is client
     assert actual_plan is plan
-    assert events == ["assertions", "source", "preflight", "generate", "runtime"]
+    assert events == ["source", "preflight", "generate"]
 
 
 def test_game_add_is_prepare_only_and_never_writes(monkeypatch):
@@ -171,40 +161,24 @@ def test_release_manifest_digest_mismatch_fails():
 
 def test_exposed_catalog_field_mismatch_fails():
     expected = {
-        "rules_content": "current rules",
         "identity_source": "https://publisher.example/game",
-        "structured_data": {
-            "rule_mistakes": ["current clarification"],
-            "source_documents": [{"url": "https://publisher.example/rules"}],
-        },
+        "publisher": "Publisher",
     }
     deployed = {
-        "rules_content": "old rules",
         "identity_source": None,
-        "structured_data": {
-            "rule_mistakes": ["old clarification"],
-        },
+        "publisher": "Publisher",
     }
 
-    with pytest.raises(WorkflowError, match="game.rules_content"):
+    with pytest.raises(WorkflowError, match="game.identity_source"):
         v2.validate_exposed_catalog_fields(expected, deployed)
 
 
 def test_unexposed_storage_fields_do_not_fail_catalog_comparison():
     expected = {
-        "rules_content": "current rules",
-        "structured_data": {
-            "rule_mistakes": ["current clarification"],
-            "source_documents": [{"url": "https://publisher.example/rules"}],
-        },
+        "identity_source": "https://publisher.example/game",
         "publisher": "Publisher",
     }
-    deployed = {
-        "rules_content": "current rules",
-        "structured_data": {
-            "rule_mistakes": ["current clarification"],
-        },
-    }
+    deployed = {"publisher": "Publisher"}
 
     v2.validate_exposed_catalog_fields(expected, deployed)
 
