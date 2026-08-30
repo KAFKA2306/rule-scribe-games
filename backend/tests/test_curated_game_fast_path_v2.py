@@ -53,7 +53,7 @@ def test_node_generator_matches_python_contract_from_source():
     v2.generate_artifacts(specs)
 
     assert v2.DEPLOYMENT_MANIFEST_PATH.read_text(encoding="utf-8") == v2.render_deployment_manifest(specs)
-    assert GENERATED_GUIDES.is_file()
+    assert not GENERATED_GUIDES.exists()
 
 
 def test_npm_dev_and_build_generate_curated_artifacts():

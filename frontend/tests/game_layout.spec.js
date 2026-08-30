@@ -123,19 +123,19 @@ test('game page title only advertises strategy when strategy content exists', as
 })
 
 test('quick rules flatten to one row on wide desktop inside the single-column page', async ({ page }) => {
-  const skullKing = {
+  const splendor = {
     ...bigShot,
-    id: 269,
-    slug: 'skull-king',
-    title: 'Skull King',
-    title_ja: 'スカルキング',
+    id: 1,
+    slug: 'splendor',
+    title: 'Splendor',
+    title_ja: '宝石の煌き',
   }
 
-  await mockGameApi(page, skullKing)
+  await mockGameApi(page, splendor)
   await page.setViewportSize({ width: 1280, height: 900 })
-  await page.goto('/games/skull-king')
+  await page.goto('/games/splendor')
 
-  await expect(page.getByText('30秒でわかる「スカルキング」', { exact: true })).toBeVisible()
+  await expect(page.getByText('30秒でわかる「宝石の煌き」', { exact: true })).toBeVisible()
   const cards = page.locator('.quick-rule-card')
   await expect(cards).toHaveCount(4)
 
@@ -151,17 +151,17 @@ test('quick rules flatten to one row on wide desktop inside the single-column pa
 })
 
 test('game detail uses one native button group after quick rules', async ({ page }) => {
-  const skullKing = {
+  const splendor = {
     ...bigShot,
-    id: 269,
-    slug: 'skull-king',
-    title: 'Skull King',
-    title_ja: 'スカルキング',
+    id: 1,
+    slug: 'splendor',
+    title: 'Splendor',
+    title_ja: '宝石の煌き',
   }
 
-  await mockGameApi(page, skullKing)
+  await mockGameApi(page, splendor)
   await page.setViewportSize({ width: 1280, height: 900 })
-  await page.goto('/games/skull-king')
+  await page.goto('/games/splendor')
 
   await expect(page.locator('.quick-rules-actions')).toHaveCount(0)
   await expect(page.getByRole('tablist')).toHaveCount(0)

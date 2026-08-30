@@ -46,30 +46,30 @@ test('RuleSetが公開されていないゲームではcurated guideを表示し
   await expect(page.getByRole('button', { name: '図で見る', exact: true })).toHaveCount(0)
 })
 
-test('公開RuleSetがあるゲームではcurated guideを維持する', async ({ page }) => {
+test('公開RuleSetがあり、独立確認済みguideもあるゲームではquick rulesを表示する', async ({ page }) => {
   await mockGameApi(page, {
-    slug: 'skull-king',
-    title: 'Skull King',
-    title_ja: 'スカルキング',
-    summary: 'トリックテイキングゲーム。',
-    rules_content: '# スカルキング\n\n公開RuleSetに基づくルール。',
+    slug: 'splendor',
+    title: 'Splendor',
+    title_ja: '宝石の煌き',
+    summary: '宝石商となって威信ポイントを競うゲーム。',
+    rules_content: '# 宝石の煌き\n\n公開RuleSetに基づくルール。',
     setup_summary: null,
     gameplay_summary: null,
     end_game_summary: null,
     min_players: 2,
-    max_players: 8,
+    max_players: 4,
     play_time: 30,
-    min_age: 8,
-    source_url: 'https://www.grandpabecksgames.com/pages/skull-king',
+    min_age: 10,
+    source_url: 'https://www.spacecowboys.fr/splendor',
     source_trust: 'official_publisher',
     identity_status: 'verified',
     content_review_status: 'human_reviewed',
     structured_data: {},
   })
 
-  await page.goto('/games/skull-king')
+  await page.goto('/games/splendor')
 
-  await expect(page.getByText('30秒でわかる「スカルキング」', { exact: true })).toBeVisible()
+  await expect(page.getByText('30秒でわかる「宝石の煌き」', { exact: true })).toBeVisible()
   await expect(page.locator('.quick-rules-panel')).toHaveCount(1)
   await expect(page.getByRole('button', { name: '図で見る', exact: true })).toHaveCount(1)
 })

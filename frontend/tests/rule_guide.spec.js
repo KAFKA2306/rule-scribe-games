@@ -5,45 +5,6 @@ import {
   validateRuleGuide,
 } from '../src/lib/curatedRuleGuides.js'
 
-const ipso = {
-  id: 'ipso-0000-4000-8000-000000000001',
-  slug: 'ipso',
-  title: 'IPSO',
-  title_ja: 'イプソ (IPSO)',
-  min_players: 2,
-  max_players: 6,
-  play_time: 15,
-  min_age: 7,
-  published_year: 2025,
-  summary: '数字カードを昇順に並べ、色と星を活かして得点するカードゲーム。',
-  description: 'IPSO description',
-  setup_summary: '14枚で5・4・3・2枚の4段ピラミッドを作り、頂点に星カードを置く。',
-  gameplay_summary: '中央2枚から1枚を選び、裏向きカード1枚と交換する。',
-  end_game_summary: '全員が14枚を表向きにした後、星カードの最終処理を行い、全員終了で得点計算する。',
-  official_url: 'https://en.gigamic.com/index.php?controller=attachment&id_attachment=668',
-  rules_content: '# IPSO\n\n## 手番\n中央2枚から1枚選び、裏向きカードと交換します。\n\n## 終了\n全員の最終処理後に終了します。',
-  structured_data: {},
-  infographics: {
-    turn_flow: '/assets/legacy-unverified-ipso.svg',
-  },
-  infographics_reviewed: false,
-}
-
-async function mockIpsoApi(page) {
-  await page.route('**/api/**', async (route) => {
-    const url = new URL(route.request().url())
-    if (url.pathname === '/api/games/ipso') {
-      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ game: ipso }) })
-      return
-    }
-    if (url.pathname === '/api/games') {
-      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ games: [ipso], total: 1 }) })
-      return
-    }
-    await route.fulfill({ status: 404, contentType: 'application/json', body: JSON.stringify({ detail: 'not found' }) })
-  })
-}
-
 test('all production curated guides satisfy evidence and semantic contracts', () => {
   for (const { slug, guide } of listCuratedRuleGuides()) {
     const result = validateRuleGuide(guide)
@@ -52,17 +13,10 @@ test('all production curated guides satisfy evidence and semantic contracts', ()
   }
 })
 
-test('Skull King guide locks current bidding, scoring and three-character exception', () => {
-  const skullKing = getCuratedRuleGuide('skull-king')
-  expect(skullKing).not.toBeNull()
-  expect(skullKing.facts.rounds).toBe(10)
-  expect(skullKing.quick.end).toContain('10ラウンド')
-  expect(skullKing.quick.actions).toHaveLength(3)
-  expect(skullKing.quick.actions.join(' ')).toContain('Pirate・Skull King・Mermaid')
-  expect(skullKing.quick.actions.join(' ')).toContain('Mermaidが勝つ')
-  expect(skullKing.scoring.summary).toContain('1トリック20点')
-  expect(skullKing.scoring.summary).toContain('配札枚数×10点')
-  expect(skullKing.source.url).toBe('https://www.grandpabecksgames.com/pages/skull-king')
+test('structured curated games are not exposed as runtime quick-rule guides', () => {
+  expect(getCuratedRuleGuide('skull-king')).toBeNull()
+  expect(getCuratedRuleGuide('ipso')).toBeNull()
+  expect(getCuratedRuleGuide('minna-de-ponkotsu-paint')).toBeNull()
 })
 
 test('accuracy gate rejects action-count and stale-version mismatches', () => {
@@ -95,54 +49,4 @@ test('unreviewed guide fails closed instead of producing quick rules', () => {
   })
   expect(result.valid).toBe(false)
   expect(result.errors).toContain('guide is not reviewed')
-})
-
-test('new user can search IPSO and reach quick rules, scoring, diagram and source', async ({ page }, testInfo) => {
-  await mockIpsoApi(page)
-
-  await page.goto('/')
-  await expect(page.getByText('イプソ (IPSO)', { exact: true }).first()).toBeVisible()
-  await page.getByLabel('ゲームを検索').fill('IPSO')
-  await expect(page.getByText('1件', { exact: true })).toBeVisible()
-  await page.screenshot({ path: testInfo.outputPath(`new-user-home-${testInfo.project.name}.png`), animations: 'disabled' })
-
-  await page.getByRole('link', { name: /イプソ \(IPSO\)/ }).first().click()
-  await expect(page).toHaveURL(/\/games\/ipso$/)
-
-  const quick = page.getByTestId('quick-rules-panel')
-  await expect(quick).toBeVisible()
-  await expect(quick.getByText('今の手番ですること')).toBeVisible()
-  await expect(quick.getByText('中央の表向き2枚から1枚を選ぶ。')).toBeVisible()
-  await expect(quick.getByText(/全員のピラミッドが表向き/)).toBeVisible()
-  await expect(quick.getByText('公式ルール確認済み')).toBeVisible()
-  await quick.scrollIntoViewIfNeeded()
-  await page.screenshot({ path: testInfo.outputPath(`ipso-quick-rules-${testInfo.project.name}.png`), animations: 'disabled' })
-
-  const scoring = page.getByTestId('scoring-breakdown')
-  await scoring.locator('summary').first().click()
-  await expect(scoring.getByText(/昇順になっていない列は得点しない/)).toBeVisible()
-  await expect(scoring.getByText(/複数色ならカード1枚につき1点/)).toBeVisible()
-  await expect(scoring.getByText(/同じ色だけならカード1枚につき2点/)).toBeVisible()
-  await scoring.scrollIntoViewIfNeeded()
-  await page.screenshot({ path: testInfo.outputPath(`ipso-scoring-${testInfo.project.name}.png`), animations: 'disabled' })
-
-  const ipsoGuide = getCuratedRuleGuide('ipso')
-  expect(ipsoGuide).not.toBeNull()
-  await page.getByRole('button', { name: '図で見る', exact: true }).click()
-  const flow = page.getByTestId('rule-flow-diagram')
-  await expect(flow).toBeVisible()
-  await expect(flow.getByText(ipsoGuide.flow[2].label)).toBeVisible()
-  await expect(flow.getByText(ipsoGuide.flow[3].label)).toBeVisible()
-  await expect(flow.getByRole('link', { name: ipsoGuide.source.label })).toHaveAttribute('href', ipsoGuide.source.url)
-  await expect(page.locator('.infographics-gallery')).toHaveCount(0)
-  await flow.scrollIntoViewIfNeeded()
-  await page.screenshot({ path: testInfo.outputPath(`ipso-turn-flow-${testInfo.project.name}.png`), animations: 'disabled' })
-
-  const geometry = await page.evaluate(() => ({
-    clientWidth: document.documentElement.clientWidth,
-    scrollWidth: document.documentElement.scrollWidth,
-    quickWidth: document.querySelector('[data-testid="quick-rules-panel"]')?.getBoundingClientRect().width || 0,
-  }))
-  expect(geometry.scrollWidth).toBeLessThanOrEqual(geometry.clientWidth + 1)
-  expect(geometry.quickWidth).toBeLessThanOrEqual(geometry.clientWidth)
 })
