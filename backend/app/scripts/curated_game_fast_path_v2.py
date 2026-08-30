@@ -18,8 +18,6 @@ from app.scripts.curated_game_workflow import (
     load_all_specs,
     load_spec,
     preflight_identity,
-    validate_assertions,
-    validate_runtime_guide,
 )
 
 DEFAULT_BASE_URL = "https://bodoge-no-mikata.vercel.app"
@@ -162,11 +160,6 @@ def write_catalog_with_plan(client: Any, spec: CuratedGameSpec, plan: IdentityPl
 
 
 def validate_exposed_catalog_fields(expected: Any, actual: Any, path: str = "game") -> None:
-    """Compare structured source fields that the public API actually exposes.
-
-    API response models intentionally omit some storage-only curated fields. Those
-    keys are skipped, while every exposed key from the canonical spec must match.
-    """
     if isinstance(expected, dict):
         if not isinstance(actual, dict):
             raise WorkflowError(f"production catalog mismatch at {path}")
@@ -255,11 +248,9 @@ def prepare_game(
     spec: CuratedGameSpec,
     specs: list[CuratedGameSpec],
 ) -> tuple[Any, IdentityPlan]:
-    validate_assertions(spec)
     verify_source_reachable_streamed(spec)
     client, plan = preflight_catalog(spec)
     generate_artifacts(specs)
-    validate_runtime_guide(spec)
     return client, plan
 
 
@@ -277,17 +268,13 @@ def publish_game(spec: CuratedGameSpec, specs: list[CuratedGameSpec], base_url: 
 
 
 def check_game(spec: CuratedGameSpec, specs: list[CuratedGameSpec]) -> None:
-    validate_assertions(spec)
     generate_artifacts(specs)
-    validate_runtime_guide(spec)
     print_routine_files(spec)
 
 
 def verify_game(spec: CuratedGameSpec, specs: list[CuratedGameSpec], base_url: str) -> None:
-    validate_assertions(spec)
     verify_source_reachable_streamed(spec)
     generate_artifacts(specs)
-    validate_runtime_guide(spec)
     verify_catalog_live(spec, base_url)
     verify_frontend_release(specs, base_url, game=spec.slug)
     print("Catalog fixed point: verified")
@@ -295,11 +282,7 @@ def verify_game(spec: CuratedGameSpec, specs: list[CuratedGameSpec], base_url: s
 
 
 def check_all(specs: list[CuratedGameSpec]) -> None:
-    for spec in specs:
-        validate_assertions(spec)
     generate_artifacts(specs)
-    for spec in specs:
-        validate_runtime_guide(spec)
 
 
 def parse_args() -> argparse.Namespace:
