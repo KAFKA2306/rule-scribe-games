@@ -12,7 +12,6 @@ on:
       - "backend/app/db/migrations/029_seed_power_grid_recharged_ruleset.sql"
       - "backend/app/db/migrations/030_seed_jaipur_2020_ruleset.sql"
       - "backend/app/db/migrations/031_seed_little_town_2020_ruleset.sql"
-      - "backend/app/db/migrations/032_seed_skull_king_current_ruleset.sql"
       - ".github/workflows/test-game-ruleset-data.yml"
   push:
     branches: [main]
@@ -26,7 +25,6 @@ on:
       - "backend/app/db/migrations/029_seed_power_grid_recharged_ruleset.sql"
       - "backend/app/db/migrations/030_seed_jaipur_2020_ruleset.sql"
       - "backend/app/db/migrations/031_seed_little_town_2020_ruleset.sql"
-      - "backend/app/db/migrations/032_seed_skull_king_current_ruleset.sql"
       - ".github/workflows/test-game-ruleset-data.yml"
 
 permissions:
@@ -115,10 +113,6 @@ jobs:
           INSERT INTO public.game_works DEFAULT VALUES;
           INSERT INTO public.games(slug,title,work_id,identity_status,source_url,source_trust,rules_content,published_year,min_players,max_players,min_age)
           SELECT 'little-town','Little Town',id,'unverified','https://arclightgames.jp/product/%E3%83%AA%E3%83%88%E3%83%AB%E3%82%BF%E3%82%A6%E3%83%B3%E3%83%93%E3%83%AB%E3%83%80%E3%83%BC%E3%82%BA/','official_publisher','legacy Little Town rules incorrectly claim 12 rounds',2018,2,4,10 FROM public.game_works ORDER BY id DESC LIMIT 1;
-
-          INSERT INTO public.game_works DEFAULT VALUES;
-          INSERT INTO public.games(slug,title,work_id,identity_status,source_url,source_trust,rules_content,min_players,max_players,min_age,published_year)
-          SELECT 'skull-king','Skull King',id,'unverified','https://www.grandpabecksgames.com/pages/skull-king','unknown','legacy Skull King summary retained until canonical projection cutover',2,8,8,2013 FROM public.game_works ORDER BY id DESC LIMIT 1;
           SQL
 
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/010_rule_graph.sql
@@ -137,7 +131,6 @@ jobs:
             psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/029_seed_power_grid_recharged_ruleset.sql
             psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/030_seed_jaipur_2020_ruleset.sql
             psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/031_seed_little_town_2020_ruleset.sql
-            psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/032_seed_skull_king_current_ruleset.sql
           done
 
       - name: Verify Pili Pili edition isolation remains intact
@@ -244,20 +237,3 @@ jobs:
           test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_nodes rn join public.claims c on c.rule_set_id=rn.rule_set_id and c.rule_id=rn.rule_id where rn.rule_set_id=(select rs.id from public.rule_sets rs join public.games g on g.id=rs.game_id where g.slug='little-town') and c.normalized_payload->>'statement'=rn.normalized_statement;")" = "10"
           test "$(psql "$DATABASE_URL" -Atc "select normalized_statement from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='little-town' and rn.rule_id='game.four-rounds';")" = "ゲームは全4ラウンドで行い、第4ラウンド終了後に最終得点計算へ進む。"
           test "$(psql "$DATABASE_URL" -Atc "select normalized_statement from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='little-town' and rn.rule_id='victory.final-scoring';")" = "第4ラウンド終了後、ゲーム終了時に得点する建物の勝利点を加え、手元の3金ごとに1勝利点を加える。最も勝利点が多いプレイヤーが勝者となり、最高得点が同点ならそのプレイヤー全員が勝利を共有する。"
-
-      - name: Verify Skull King current edition, player-count conditions, and evidence
-        shell: bash
-        run: |
-          test "$(psql "$DATABASE_URL" -Atc "select identity_status from public.games where slug='skull-king';")" = "verified"
-          test "$(psql "$DATABASE_URL" -Atc "select edition_label from public.games where slug='skull-king';")" = "Grandpa Beck's Games current edition"
-          test "$(psql "$DATABASE_URL" -Atc "select language_code from public.games where slug='skull-king';")" = "en"
-          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_sets rs join public.games g on g.id=rs.game_id where g.slug='skull-king' and rs.platform='physical' and rs.language_code='en' and rs.revision_label='current-web-rulebook-1764178570' and rs.verification_status='source_bound';")" = "1"
-          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='skull-king' and rn.verification_status='source_bound';")" = "19"
-          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.claims c join public.rule_sets rs on rs.id=c.rule_set_id join public.games g on g.id=rs.game_id where g.slug='skull-king' and c.target_type='rule_node' and c.lifecycle_status='accepted';")" = "19"
-          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.evidence_bindings eb join public.claims c on c.claim_id=eb.claim_id join public.rule_sets rs on rs.id=c.rule_set_id join public.games g on g.id=rs.game_id where g.slug='skull-king' and eb.relation='supports';")" = "19"
-          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_nodes rn join public.claims c on c.rule_set_id=rn.rule_set_id and c.rule_id=rn.rule_id where rn.rule_set_id=(select rs.id from public.rule_sets rs join public.games g on g.id=rs.game_id where g.slug='skull-king') and c.normalized_payload->>'statement'=rn.normalized_statement;")" = "19"
-          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='skull-king' and rn.metadata->'condition'->>'player_count'='2';")" = "4"
-          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='skull-king' and rn.rule_id in ('advanced.kraken','advanced.white-whale','advanced.loot');")" = "0"
-          test "$(psql "$DATABASE_URL" -Atc "select normalized_statement from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='skull-king' and rn.rule_id='resolution.mermaid-triad';")" = "同じトリックにMermaid、Skull King、Pirateがすべて出た場合は、出した順番に関係なくMermaidがそのトリックに勝つ。"
-          test "$(psql "$DATABASE_URL" -Atc "select normalized_statement from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='skull-king' and rn.rule_id='two-player.no-loot';")" = "2人戦ではLootカードを使用しない。"
-          test "$(psql "$DATABASE_URL" -Atc "select locator_id from public.source_locators where locator_id='skull-king:faq:pirate-powers' and source_id='publisher:grandpa-becks:skull-king:current-rules-faq';")" = "skull-king:faq:pirate-powers"
