@@ -8,6 +8,8 @@ export function InfographicsGallery({ infographics, verified = false, sourceUrl 
   }
 
   const infographicTypes = [
+    { key: 'eyecatch', title: 'このゲームをひと目で', icon: '🃏' },
+    { key: 'summary_sheet', title: 'サマリーシート', icon: '📋' },
     { key: 'turn_flow', title: '手番の流れ', icon: '🔄' },
     { key: 'setup', title: 'セットアップ', icon: '⚙️' },
     { key: 'actions', title: 'アクション一覧', icon: '🎲' },

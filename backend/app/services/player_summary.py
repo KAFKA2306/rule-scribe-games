@@ -1,6 +1,7 @@
 from typing import Any
 
 REVIEWED_SUMMARY_STATUSES = {"human_reviewed", "publisher_reviewed"}
+TRUSTED_INFOGRAPHICS_SOURCES = {"official_publisher", "authorized_partner"}
 DIRECTORY_UNVERIFIED_SUMMARY = "概要は確認中です。"
 _LEGACY_RULE_SUMMARY_FIELDS = ("setup_summary", "gameplay_summary", "end_game_summary")
 
@@ -8,6 +9,18 @@ _LEGACY_RULE_SUMMARY_FIELDS = ("setup_summary", "gameplay_summary", "end_game_su
 def project_player_summary(game: dict[str, Any], *, source_bound: bool) -> dict[str, Any]:
     """Project player-facing fields without treating legacy game-row rules as authority."""
     projected = {**game, **{field: None for field in _LEGACY_RULE_SUMMARY_FIELDS}}
+    infographics_verified = bool(
+        source_bound
+        and projected.get("infographics")
+        and projected.get("source_url")
+        and projected.get("source_trust") in TRUSTED_INFOGRAPHICS_SOURCES
+    )
+    projected = {
+        **projected,
+        "infographics_reviewed": infographics_verified,
+        "infographics_source_url": projected.get("source_url") if infographics_verified else None,
+    }
+
     if not source_bound:
         return {**projected, "rules_content": None}
 

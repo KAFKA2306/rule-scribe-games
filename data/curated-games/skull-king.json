@@ -31,6 +31,11 @@
     "generated_from_source_revision": "grandpa-becks-current-en-rulebook-faq-accessed-2026-08-22",
     "source_trust": "official_publisher",
     "identity_status": "verified",
-    "identity_source": "https://www.grandpabecksgames.com/products/copy-of-skull-king%C2%AE"
+    "identity_source": "https://www.grandpabecksgames.com/products/copy-of-skull-king%C2%AE",
+    "image_url": "/assets/games/skull-king/eyecatch.webp",
+    "infographics": {
+      "eyecatch": "/assets/games/skull-king/eyecatch.webp",
+      "summary_sheet": "/assets/games/skull-king/summary-sheet.webp"
+    }
   }
 }
