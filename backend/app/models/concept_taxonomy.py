@@ -141,6 +141,7 @@ class RuleConceptReference(TaxonomyModel):
     reference_kind: RuleConceptReferenceKind
     verification_status: ConceptVerificationStatus = ConceptVerificationStatus.UNKNOWN
     rule_set_id: str | None = None
+    player_count: int | None = Field(default=None, ge=1)
     source_url: str | None = None
     source_locator: str | None = None
 
