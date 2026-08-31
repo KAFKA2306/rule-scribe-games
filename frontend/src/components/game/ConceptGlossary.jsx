@@ -21,8 +21,7 @@ export function ConceptGlossary({ slug }) {
         setFetchStatus(available ? 'available' : 'unavailable')
         setLoadedSlug(slug)
       })
-      .catch((err) => {
-        console.error('Failed to fetch canonical glossary:', err)
+      .catch(() => {
         if (cancelled) return
         setEntries([])
         setFetchStatus('error')
@@ -50,8 +49,7 @@ export function ConceptGlossary({ slug }) {
     try {
       const response = await api.get(`/api/concepts/${encodeURIComponent(conceptId)}`)
       setDetail(response)
-    } catch (err) {
-      console.error('Failed to fetch canonical concept detail:', err)
+    } catch {
       setDetailError(true)
     }
   }
@@ -69,7 +67,7 @@ export function ConceptGlossary({ slug }) {
     return (
       <div className="pro-card" aria-label="用語集">
         <div className="pro-card-title">GLOSSARY</div>
-        <div className="game-empty-state" role="status">用語集の正準データを取得できませんでした。</div>
+        <div className="game-empty-state" role="alert">用語集の正準データを取得できませんでした。</div>
       </div>
     )
   }
@@ -78,7 +76,7 @@ export function ConceptGlossary({ slug }) {
     return (
       <div className="pro-card" aria-label="用語集">
         <div className="pro-card-title">GLOSSARY</div>
-        <div className="game-empty-state" role="status">用語集の正準データは未整備です。</div>
+        <div className="game-empty-state">用語集の正準データは未整備です。</div>
       </div>
     )
   }
@@ -135,7 +133,7 @@ export function ConceptGlossary({ slug }) {
             </div>
           )}
           {detailError && (
-            <div className="game-empty-note" role="status" style={{ marginTop: '0.75rem' }}>
+            <div className="game-empty-note" role="alert" style={{ marginTop: '0.75rem' }}>
               この用語の関連ゲーム情報を取得できませんでした。
             </div>
           )}
