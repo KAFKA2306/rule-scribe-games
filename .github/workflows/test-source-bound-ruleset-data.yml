@@ -158,6 +158,7 @@ jobs:
 
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/010_rule_graph.sql
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/011_concept_taxonomy.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/012_seed_skull_king_glossary_concepts.sql
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/013_ruleset_identity.sql
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/014_component_catalog.sql
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f backend/app/db/migrations/015_claim_evidence.sql
@@ -308,6 +309,9 @@ jobs:
           test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='skull-king' and rn.verification_status='source_bound';")" = "19"
           test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.claims c join public.rule_sets rs on rs.id=c.rule_set_id join public.games g on g.id=rs.game_id where g.slug='skull-king' and c.target_type='rule_node' and c.lifecycle_status='accepted';")" = "19"
           test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.evidence_bindings eb join public.claims c on c.claim_id=eb.claim_id join public.rule_sets rs on rs.id=c.rule_set_id join public.games g on g.id=rs.game_id where g.slug='skull-king' and eb.relation='supports';")" = "19"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_node_concepts rnc join public.rule_sets rs on rs.id=rnc.rule_set_id join public.games g on g.id=rs.game_id where g.slug='skull-king' and rs.is_active and rnc.verification_status='source_bound';")" = "6"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_node_concepts rnc join public.rule_sets rs on rs.id=rnc.rule_set_id join public.games g on g.id=rs.game_id where g.slug='skull-king' and rs.is_active and rnc.rule_id='two-player.tigress' and rnc.concept_id='component.special-card' and rnc.metadata->'condition'->>'player_count'='2';")" = "1"
+          test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_node_concepts rnc join public.rule_sets rs on rs.id=rnc.rule_set_id join public.games g on g.id=rs.game_id where g.slug='skull-king' and rs.is_active and rnc.concept_id='rule-pattern.trump-suit';")" = "0"
           test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='skull-king' and rn.metadata->'condition'->>'player_count'='2';")" = "4"
           test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='skull-king' and rn.metadata->'condition'->>'player_count'='8';")" = "1"
           test "$(psql "$DATABASE_URL" -Atc "select count(*) from public.rule_nodes rn join public.rule_sets rs on rs.id=rn.rule_set_id join public.games g on g.id=rs.game_id where g.slug='skull-king' and rn.metadata->>'scope'='advanced';")" = "0"
