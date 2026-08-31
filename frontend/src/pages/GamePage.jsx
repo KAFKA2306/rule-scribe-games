@@ -8,7 +8,7 @@ import { TextToSpeech } from '../components/game/TextToSpeech'
 import { ExternalLinks } from '../components/game/ExternalLinks'
 import { InfographicsGallery } from '../components/game/InfographicsGallery'
 import { ConceptGlossary } from '../components/game/ConceptGlossary'
-import { RuleMarkdown } from '../components/game/RuleMarkdown'
+import RuleMarkdown from '../components/game/RuleMarkdown'
 
 const IDENTITY_LABELS = {
   verified: 'IDENTITY VERIFIED',
