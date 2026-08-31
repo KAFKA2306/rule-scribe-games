@@ -156,11 +156,12 @@ test('ルール本文を検索し、結果からcanonical fragmentへ移動で�
   await mockGameApi(page)
   await page.goto('/games/big-shot#rules')
 
-  const search = page.getByRole('searchbox', { name: '裁定・用語を入力' })
+  const lookup = page.getByRole('region', { name: 'ルール内を検索' })
+  const search = lookup.getByRole('searchbox', { name: '裁定・用語を入力' })
   await search.fill('Mermaid Pirate')
 
-  await expect(page.getByRole('status')).toContainText('1件見つかりました')
-  const result = page.getByRole('link', { name: '特殊カード', exact: true }).first()
+  await expect(lookup.getByRole('status')).toContainText('1件見つかりました')
+  const result = lookup.getByRole('link', { name: '特殊カード', exact: true })
   await expect(result).toBeVisible()
   await result.click()
 
@@ -172,16 +173,17 @@ test('0ビッドと2人の検索は対応sectionだけを返し、検索語をUR
   await mockGameApi(page)
   await page.goto('/games/big-shot#rules')
 
-  const search = page.getByRole('searchbox', { name: '裁定・用語を入力' })
+  const lookup = page.getByRole('region', { name: 'ルール内を検索' })
+  const search = lookup.getByRole('searchbox', { name: '裁定・用語を入力' })
   await search.fill('0ビッド')
-  await expect(page.getByRole('status')).toContainText('1件見つかりました')
-  await expect(page.getByRole('link', { name: '得点', exact: true }).first()).toBeVisible()
+  await expect(lookup.getByRole('status')).toContainText('1件見つかりました')
+  await expect(lookup.getByRole('link', { name: '得点', exact: true })).toBeVisible()
   await expect(page).toHaveURL(/#rules$/)
 
   await search.fill('2人')
-  await expect(page.getByRole('status')).toContainText('1件見つかりました')
-  await expect(page.getByRole('link', { name: '2人プレイ', exact: true }).first()).toBeVisible()
-  await expect(page.getByRole('link', { name: '得点', exact: true }).first()).toHaveCount(0)
+  await expect(lookup.getByRole('status')).toContainText('1件見つかりました')
+  await expect(lookup.getByRole('link', { name: '2人プレイ', exact: true })).toBeVisible()
+  await expect(lookup.getByRole('link', { name: '得点', exact: true })).toHaveCount(0)
 })
 
 test('該当ルールがない検索は明示的な0件状態になる', async ({ page }) => {
@@ -189,6 +191,7 @@ test('該当ルールがない検索は明示的な0件状態になる', async (
   await mockGameApi(page)
   await page.goto('/games/big-shot#rules')
 
-  await page.getByRole('searchbox', { name: '裁定・用語を入力' }).fill('存在しない裁定')
-  await expect(page.getByRole('status')).toHaveText('該当するルールは見つかりませんでした')
+  const lookup = page.getByRole('region', { name: 'ルール内を検索' })
+  await lookup.getByRole('searchbox', { name: '裁定・用語を入力' }).fill('存在しない裁定')
+  await expect(lookup.getByRole('status')).toHaveText('該当するルールは見つかりませんでした')
 })
