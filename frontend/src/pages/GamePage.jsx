@@ -67,6 +67,7 @@ export default function GamePage({ slug: propSlug, initialGame }) {
   const [connections, setConnections] = useState(null)
   const [connectionsLoading, setConnectionsLoading] = useState(false)
   const [connectionsError, setConnectionsError] = useState(false)
+  const [ruleNodes, setRuleNodes] = useState([])
 
   const BASE_URL = 'https://bodoge-no-mikata.vercel.app'
   const infographicsSourceUrl = game?.infographics_source_url || game?.source_url || null
@@ -99,6 +100,10 @@ export default function GamePage({ slug: propSlug, initialGame }) {
     }
     fetchData()
   }, [slug, initialGame])
+
+  useEffect(() => {
+    setRuleNodes([])
+  }, [slug])
 
   useEffect(() => {
     if (!game || typeof window === 'undefined') return undefined
@@ -264,7 +269,7 @@ export default function GamePage({ slug: propSlug, initialGame }) {
           </div>
 
           <div className="pro-main-col">
-            {activeTab === 'rules' && <RuleMarkdown markdown={rules} />}
+            {activeTab === 'rules' && <RuleMarkdown markdown={rules} ruleNodes={ruleNodes} />}
 
             {activeTab === 'coach' && (
               <div className="coach-mode">
@@ -389,7 +394,7 @@ export default function GamePage({ slug: propSlug, initialGame }) {
             <div className="game-empty-note">{reviewLabel}</div>
           </div>
 
-          <ConceptGlossary slug={slug} />
+          <ConceptGlossary slug={slug} onRuleNodesLoaded={setRuleNodes} />
 
           <div className="pro-card">
             <div className="pro-card-title">LINKS</div>
