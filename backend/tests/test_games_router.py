@@ -183,7 +183,7 @@ def test_directory_query_parameters_are_forwarded(monkeypatch):
     }
 
 
-def test_public_game_reads_use_browser_and_vercel_cdn_cache_control(monkeypatch):
+def test_public_game_reads_use_browser_and_shared_cdn_cache_control(monkeypatch):
     async def fake_directory_query(**kwargs):
         return {
             "data": [{"id": "game-1", "slug": "example", "title": "Example", "work_id": "work-1"}],
@@ -201,8 +201,10 @@ def test_public_game_reads_use_browser_and_vercel_cdn_cache_control(monkeypatch)
 
         for response in (detail, listing):
             assert response.status_code == 200
-            assert response.headers["cache-control"] == "public, max-age=0, must-revalidate"
-            assert response.headers["vercel-cdn-cache-control"] == "public, s-maxage=60, stale-while-revalidate=300"
+            assert response.headers["cache-control"] == (
+                "public, max-age=0, s-maxage=60, stale-while-revalidate=300"
+            )
+            assert "vercel-cdn-cache-control" not in response.headers
             assert "cdn-cache-control" not in response.headers
     finally:
         production_app.dependency_overrides.clear()
