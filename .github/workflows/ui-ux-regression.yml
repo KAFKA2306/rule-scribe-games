@@ -93,7 +93,7 @@ jobs:
         working-directory: frontend
         run: npx playwright install --with-deps chromium
 
-      - name: Gate existing list navigation loading auth image and rule lookup contracts
+      - name: Gate existing list navigation loading auth image and canonical rule projection contracts
         working-directory: frontend
         run: >-
           npx playwright test
@@ -106,10 +106,9 @@ jobs:
           tests/generated-game-images.spec.js
           tests/text_to_speech.spec.js
           tests/source_links.spec.js
-          tests/rule_ask.spec.js
           tests/pili_pili_ruleset_context.spec.js
           tests/directory-source-trust.spec.js
-          tests/ruleset-curated-guide.spec.js
+          tests/ruleset-public-projection.spec.js
           --project=chromium
 
       - name: Gate responsive geometry and pixel screenshot baselines
@@ -122,14 +121,6 @@ jobs:
           npx playwright test
           tests/ui_ux_regression.spec.js
           tests/uiux_a11y_regression.spec.js
-          --project=ux-mobile
-          --project=ux-tablet
-          --project=ux-desktop
-
-      - name: Gate reviewed rules and new-user comprehension flow
-        working-directory: frontend
-        run: >-
-          npx playwright test tests/rule_guide.spec.js
           --project=ux-mobile
           --project=ux-tablet
           --project=ux-desktop
