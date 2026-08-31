@@ -93,7 +93,7 @@ function decodedHash() {
   }
 }
 
-export default function RuleMarkdown({ markdown = '' }) {
+export function RuleMarkdown({ markdown = '' }) {
   const sections = getRuleSections(markdown)
   const headingComponents = createHeadingComponents()
 
@@ -139,3 +139,5 @@ export default function RuleMarkdown({ markdown = '' }) {
     </>
   )
 }
+
+export default RuleMarkdown
