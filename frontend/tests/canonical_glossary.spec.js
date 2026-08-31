@@ -39,7 +39,7 @@ test('正準用語集が未整備なら旧keywordsへ戻らず未整備を明示
   await mockGameAndGlossary(page, { status: 'not_available', entries: [] })
   await page.goto('/games/glossary-test#rules')
 
-  const glossary = page.getByRole('complementary', { name: '補足情報' }).getByLabel('用語集')
+  const glossary = page.locator('[aria-label="用語集"]')
   await expect(glossary.getByRole('status')).toHaveText('用語集の正準データは未整備です。')
   await expect(page.getByText('旧データの用語')).toHaveCount(0)
 })
@@ -71,6 +71,6 @@ test('旧keywordsがなくても正準用語集がavailableなら表示する', 
   })
 
   await page.goto('/games/glossary-test#rules')
-  const glossary = page.getByRole('complementary', { name: '補足情報' }).getByLabel('用語集')
+  const glossary = page.locator('[aria-label="用語集"]')
   await expect(glossary.getByRole('button', { name: '得点', exact: true })).toBeVisible()
 })
