@@ -7,7 +7,6 @@ import { ShareButton, TwitterShareButton } from '../components/game/ShareButtons
 import { TextToSpeech } from '../components/game/TextToSpeech'
 import { ExternalLinks } from '../components/game/ExternalLinks'
 import { InfographicsGallery } from '../components/game/InfographicsGallery'
-import { RuleAskPanel } from '../components/game/RuleAskPanel'
 import { ConceptGlossary } from '../components/game/ConceptGlossary'
 
 const IDENTITY_LABELS = {
@@ -191,8 +190,6 @@ export default function GamePage({ slug: propSlug, initialGame }) {
             <div className="pro-card-title">「{title}」のゲーム概要</div>
             <div className="summary-text">{game.summary || game.description}</div>
           </div>
-
-          <RuleAskPanel />
 
           <div className="rules-tabs" role="group" aria-label="ゲーム詳細表示">
             <button type="button" aria-pressed={activeTab === 'rules'} className={activeTab === 'rules' ? 'active' : ''} onClick={() => setActiveTab('rules')}>
