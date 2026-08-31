@@ -213,7 +213,7 @@ test('関連ルールが未確認だけなら未確認文を隠して状態を�
   await expect(glossary.getByText('確認済みの関連ルールはありません。', { exact: true })).toBeVisible()
 })
 
-test('確認済みRuleNodeを同じRuleSetの正準Presentation Projectionから詳細ルールsectionへ移動できる', async ({ page }) => {
+test('確認済みRuleNodeを同じRuleSetの正準Presentation ProjectionからRuleNode単位で直接確認できる', async ({ page }) => {
   await page.route('**/api/games**', async route => {
     const url = new URL(route.request().url())
     if (url.pathname === '/api/games/glossary-test') {
@@ -274,9 +274,11 @@ test('確認済みRuleNodeを同じRuleSetの正準Presentation Projectionから
   await glossary.getByRole('button', { name: '得点', exact: true }).click()
 
   const localLink = glossary.getByRole('link', { name: '詳しいルールで確認', exact: true })
-  await expect(localLink).toHaveAttribute('href', '#rule-得点')
+  await expect(localLink).toHaveAttribute('href', '#rule-node-rule-verified')
   await localLink.click()
 
-  await expect(page).toHaveURL(/#rule-%E5%BE%97%E7%82%B9$/)
-  await expect(page.getByRole('heading', { name: '得点', exact: true })).toBeFocused()
+  await expect(page).toHaveURL(/#rule-node-rule-verified$/)
+  const ruleNode = page.locator('#rule-node-rule-verified')
+  await expect(ruleNode).toContainText('確認済みの得点ルールです。')
+  await expect(ruleNode).toBeFocused()
 })
