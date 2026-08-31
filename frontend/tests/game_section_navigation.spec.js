@@ -17,7 +17,7 @@ const game = {
   source_url: 'https://example.com/big-shot-source',
   source_trust: 'third_party',
   content_review_status: 'review_required',
-  rules_content: '# Big Shot Rules\n\n## 準備\n\n開始資金を受け取ります。\n\n## ゲームの流れ\n\n競りを行い、土地を獲得します。\n\n## 得点\n\n獲得した土地から得点を計算します。\n\n## 2人プレイ\n\n2人用の条件を確認します。',
+  rules_content: '# Big Shot Rules\n\n## 準備\n\n開始資金を受け取ります。\n\n## ゲームの流れ\n\n競りを行い、土地を獲得します。\n\n## 得点\n\n獲得した土地から得点を計算します。0ビッドの場合は得点計算が変わります。\n\n## 2人プレイ\n\n2人用の条件を確認します。\n\n## 特殊カード\n\nMermaid、Skull King、Pirateが同じトリックに出た場合の裁定を確認します。',
   structured_data: {
     strategy_analysis: '## Strategy\n\n資金効率を優先します。',
     persona_reviews: [{ persona: '慎重派', rating: 8, review_text: '資金管理が重要です。' }],
@@ -150,4 +150,45 @@ test('375pxでも詳細ルール見出しへ1回のsection link操作で移動�
   await sectionNav.getByRole('link', { name: 'ゲームの流れ', exact: true }).click()
 
   await expect(page.getByRole('heading', { name: 'ゲームの流れ', exact: true })).toBeFocused()
+})
+
+test('ルール本文を検索し、結果からcanonical fragmentへ移動できる', async ({ page }) => {
+  await mockGameApi(page)
+  await page.goto('/games/big-shot#rules')
+
+  const search = page.getByRole('searchbox', { name: '裁定・用語を入力' })
+  await search.fill('Mermaid Pirate')
+
+  await expect(page.getByRole('status')).toContainText('1件見つかりました')
+  const result = page.getByRole('link', { name: '特殊カード', exact: true }).first()
+  await expect(result).toBeVisible()
+  await result.click()
+
+  await expect(page).toHaveURL(/#rule-%E7%89%B9%E6%AE%8A%E3%82%AB%E3%83%BC%E3%83%89$/)
+  await expect(page.getByRole('heading', { name: '特殊カード', exact: true })).toBeFocused()
+})
+
+test('0ビッドと2人の検索は対応sectionだけを返し、検索語をURLへ保存しない', async ({ page }) => {
+  await mockGameApi(page)
+  await page.goto('/games/big-shot#rules')
+
+  const search = page.getByRole('searchbox', { name: '裁定・用語を入力' })
+  await search.fill('0ビッド')
+  await expect(page.getByRole('status')).toContainText('1件見つかりました')
+  await expect(page.getByRole('link', { name: '得点', exact: true }).first()).toBeVisible()
+  await expect(page).toHaveURL(/#rules$/)
+
+  await search.fill('2人')
+  await expect(page.getByRole('status')).toContainText('1件見つかりました')
+  await expect(page.getByRole('link', { name: '2人プレイ', exact: true }).first()).toBeVisible()
+  await expect(page.getByRole('link', { name: '得点', exact: true }).first()).toHaveCount(0)
+})
+
+test('該当ルールがない検索は明示的な0件状態になる', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 812 })
+  await mockGameApi(page)
+  await page.goto('/games/big-shot#rules')
+
+  await page.getByRole('searchbox', { name: '裁定・用語を入力' }).fill('存在しない裁定')
+  await expect(page.getByRole('status')).toHaveText('該当するルールは見つかりませんでした')
 })
