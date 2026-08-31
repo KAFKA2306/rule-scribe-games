@@ -102,26 +102,10 @@ test('game detail keeps one primary flow and readable long-form measure', async 
   await expect(page.locator('.quick-rules-panel')).toHaveCount(0)
 })
 
-test('game page title advertises strategy only when strategy content exists', async ({ page }) => {
+test('legacy strategy content does not change the public page title', async ({ page }) => {
   await mockGameApi(page)
   await page.goto('/games/big-shot')
-  await expect(page).toHaveTitle('「ビッグショット」のルール・戦略・インスト要約 | ボドゲのミカタ')
-})
-
-test('game page title omits strategy when strategy content is absent', async ({ page }) => {
-  const withoutStrategy = {
-    ...bigShot,
-    slug: 'no-strategy',
-    title_ja: '戦略なしゲーム',
-    structured_data: {
-      ...bigShot.structured_data,
-      strategy_analysis: null,
-    },
-  }
-
-  await mockGameApi(page, withoutStrategy)
-  await page.goto('/games/no-strategy')
-  await expect(page).toHaveTitle('「戦略なしゲーム」のルール・インスト要約 | ボドゲのミカタ')
+  await expect(page).toHaveTitle('「ビッグショット」のルール・インスト要約 | ボドゲのミカタ')
 })
 
 test('game detail uses one native button group for canonical game detail views', async ({ page }) => {
@@ -186,25 +170,24 @@ test('preparation flow only appears when at least one game-specific summary exis
   await expect(page.getByText(bigShot.end_game_summary)).toBeVisible()
 })
 
-test('empty strategy and review states are not exposed as detail destinations', async ({ page }) => {
-  const withoutOptionalContent = {
+test('legacy strategy and AI reviews are not exposed as detail destinations', async ({ page }) => {
+  const withLegacyOptionalContent = {
     ...bigShot,
-    slug: 'empty-optional-content',
+    slug: 'legacy-optional-content',
     structured_data: {
       ...bigShot.structured_data,
-      strategy_analysis: null,
-      persona_reviews: [],
+      persona_reviews: [{ persona: '旧AIレビュー', rating: 10, review_text: '旧データの未確認評価' }],
     },
   }
 
-  await mockGameApi(page, withoutOptionalContent)
-  await page.goto('/games/empty-optional-content')
+  await mockGameApi(page, withLegacyOptionalContent)
+  await page.goto('/games/legacy-optional-content')
 
   await expect(page.getByRole('button', { name: '戦略', exact: true })).toHaveCount(0)
   await expect(page.getByRole('button', { name: 'レビュー', exact: true })).toHaveCount(0)
-  await expect(page.getByText('戦略解説はまだ登録されていません。', { exact: true })).toHaveCount(0)
-  await expect(page.getByText('レビューはまだ登録されていません。', { exact: true })).toHaveCount(0)
-  await expect(page.getByText(/再生成してください/)).toHaveCount(0)
+  await expect(page.getByText('資金効率を優先します。')).toHaveCount(0)
+  await expect(page.getByText('旧AIレビュー')).toHaveCount(0)
+  await expect(page.getByText('旧データの未確認評価')).toHaveCount(0)
 })
 
 test('game share uses Web Share when available', async ({ page }) => {
@@ -220,7 +203,7 @@ test('game share uses Web Share when available', async ({ page }) => {
 
   await page.getByRole('button', { name: '共有', exact: true }).click()
   expect(await page.evaluate(() => window.__shared)).toEqual({
-    title: '「ビッグショット」のルール・戦略・インスト要約 | ボドゲのミカタ',
+    title: '「ビッグショット」のルール・インスト要約 | ボドゲのミカタ',
     url: 'https://bodoge-no-mikata.vercel.app/games/big-shot',
   })
   await expect(page.getByRole('button', { name: '共有しました' })).toBeVisible()
