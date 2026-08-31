@@ -443,28 +443,7 @@ export default function GamePage({ slug: propSlug, initialGame }) {
             <div className="game-empty-note">{reviewLabel}</div>
           </div>
 
-          {sd.pro_tips?.length > 0 && (
-            <div className="pro-card">
-              <div className="pro-card-title">💡 PRO TIPS</div>
-              {sd.pro_tips.map((tip, i) => (
-                <div key={i} className="tip-item">
-                  <span className="tip-bullet">»</span>
-                  <span>{tip}</span>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {sd.rule_mistakes?.length > 0 && (
-            <div className="pro-card">
-              <div className="pro-card-title">⚠️ COMMON ERRORS</div>
-              {sd.rule_mistakes.map((err, i) => (
-                <div key={i} className="mistake-item">{err}</div>
-              ))}
-            </div>
-          )}
-
-          <ConceptGlossary slug={slug} legacyKeywords={sd.keywords || []} />
+          <ConceptGlossary slug={slug} />
 
           <div className="pro-card">
             <div className="pro-card-title">LINKS</div>

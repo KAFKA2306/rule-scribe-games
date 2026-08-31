@@ -17,6 +17,8 @@ const game = {
   rules_content: '# Rules\n\n## 得点\n\n得点を計算します。',
   structured_data: {
     keywords: [{ term: '旧データの用語', description: '正準用語集ではない旧データ' }],
+    pro_tips: ['旧データの未確認ヒント'],
+    rule_mistakes: ['旧データの未確認ルール誤り'],
   },
 }
 
@@ -35,13 +37,15 @@ async function mockGameAndGlossary(page, glossaryResponse) {
   })
 }
 
-test('正準用語集が未整備なら旧keywordsへ戻らず未整備を明示する', async ({ page }) => {
+test('正準用語集が未整備なら旧structured_dataを公開表示へ戻さない', async ({ page }) => {
   await mockGameAndGlossary(page, { status: 'not_available', entries: [] })
   await page.goto('/games/glossary-test#rules')
 
   const glossary = page.locator('[aria-label="用語集"]')
   await expect(glossary.getByText('用語集の正準データは未整備です。', { exact: true })).toBeVisible()
   await expect(page.getByText('旧データの用語')).toHaveCount(0)
+  await expect(page.getByText('旧データの未確認ヒント')).toHaveCount(0)
+  await expect(page.getByText('旧データの未確認ルール誤り')).toHaveCount(0)
 })
 
 test('正準用語集の取得失敗を旧keywordsで隠さず明示する', async ({ page }) => {
