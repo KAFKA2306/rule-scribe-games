@@ -132,10 +132,6 @@ function RuleMarkdown({ markdown = '' }) {
   const hasQuery = normalizeSearchText(query).length > 0
 
   useEffect(() => {
-    setQuery('')
-  }, [markdown])
-
-  useEffect(() => {
     const focusCurrentSection = () => {
       const id = decodedHash()
       if (!id.startsWith('rule-')) return
