@@ -244,7 +244,7 @@ class ConceptTaxonomyService:
         for link in links:
             nodes = (
                 client.table("rule_nodes")
-                .select("rule_id,node_type,normalized_statement,source_url,source_locator")
+                .select("rule_id,node_type,normalized_statement,source_url,source_locator,metadata")
                 .eq("rule_set_id", rule_set_id)
                 .eq("rule_id", link["rule_id"])
                 .limit(1)
@@ -254,6 +254,9 @@ class ConceptTaxonomyService:
             if not nodes:
                 continue
             node = nodes[0]
+            metadata = node.get("metadata") or {}
+            condition = metadata.get("condition") if isinstance(metadata, dict) else None
+            player_count = condition.get("player_count") if isinstance(condition, dict) else None
             references.append(
                 RuleConceptReference(
                     rule_id=node["rule_id"],
@@ -262,6 +265,7 @@ class ConceptTaxonomyService:
                     reference_kind=link["reference_kind"],
                     verification_status=link.get("verification_status", "unknown"),
                     rule_set_id=str(rule_set_id),
+                    player_count=player_count if isinstance(player_count, int) and not isinstance(player_count, bool) else None,
                     source_url=node.get("source_url"),
                     source_locator=node.get("source_locator"),
                 )
