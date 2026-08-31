@@ -24,7 +24,7 @@ function sectionId(label, occurrence = 1) {
   return occurrence === 1 ? base : `${base}-${occurrence}`
 }
 
-export function getRuleSections(markdown = '') {
+function getRuleSections(markdown = '') {
   const occurrences = new Map()
   const sections = []
 
@@ -93,7 +93,7 @@ function decodedHash() {
   }
 }
 
-export function RuleMarkdown({ markdown = '' }) {
+function RuleMarkdown({ markdown = '' }) {
   const sections = getRuleSections(markdown)
   const headingComponents = createHeadingComponents()
 
