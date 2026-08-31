@@ -8,7 +8,6 @@ BEGIN;
 DO $$
 DECLARE
   v_ruleset_id uuid;
-  v_inserted integer;
 BEGIN
   SELECT rs.id
     INTO v_ruleset_id
@@ -32,12 +31,22 @@ BEGIN
   IF NOT EXISTS (
     SELECT 1
     FROM public.rule_nodes rn
+    JOIN public.claims c
+      ON c.claim_id = rn.source_claim_ref
+     AND c.rule_set_id = rn.rule_set_id
+     AND c.lifecycle_status = 'accepted'
+    JOIN public.evidence_bindings eb
+      ON eb.binding_id = rn.evidence_ref
+     AND eb.claim_id = c.claim_id
+     AND eb.relation = 'supports'
     WHERE rn.rule_set_id = v_ruleset_id
       AND rn.rule_id = 'resolution.mermaid-triad'
       AND rn.source_claim_ref = 'skull-king:current:rule:resolution.mermaid-triad'
       AND rn.evidence_ref = 'skull-king:current:binding:resolution.mermaid-triad'
       AND rn.source_locator = 'skull-king:faq:mermaid-triad'
       AND rn.verification_status IN ('source_bound', 'verified')
+      AND eb.source_id = 'publisher:grandpa-becks:skull-king:current-rules-faq'
+      AND eb.locator_id = 'skull-king:faq:mermaid-triad'
   ) THEN
     RAISE EXCEPTION 'Current Skull King Mermaid FAQ claim/evidence binding is required';
   END IF;
@@ -45,6 +54,14 @@ BEGIN
   IF NOT EXISTS (
     SELECT 1
     FROM public.rule_nodes rn
+    JOIN public.claims c
+      ON c.claim_id = rn.source_claim_ref
+     AND c.rule_set_id = rn.rule_set_id
+     AND c.lifecycle_status = 'accepted'
+    JOIN public.evidence_bindings eb
+      ON eb.binding_id = rn.evidence_ref
+     AND eb.claim_id = c.claim_id
+     AND eb.relation = 'supports'
     WHERE rn.rule_set_id = v_ruleset_id
       AND rn.rule_id = 'two-player.tigress'
       AND rn.source_claim_ref = 'skull-king:current:rule:two-player.tigress'
@@ -53,6 +70,8 @@ BEGIN
       AND rn.metadata->>'scope' = 'two_player'
       AND rn.metadata->'condition'->>'player_count' = '2'
       AND rn.verification_status IN ('source_bound', 'verified')
+      AND eb.source_id = 'publisher:grandpa-becks:skull-king:current-rules-faq'
+      AND eb.locator_id = 'skull-king:faq:graybeard-tigress'
   ) THEN
     RAISE EXCEPTION 'Current Skull King two-player Tigress FAQ claim/evidence binding is required';
   END IF;
@@ -87,6 +106,14 @@ BEGIN
      AND rn.rule_id = links.rule_id
     JOIN public.concepts c
       ON c.concept_id = links.concept_id
+    JOIN public.claims claim
+      ON claim.claim_id = rn.source_claim_ref
+     AND claim.rule_set_id = rn.rule_set_id
+     AND claim.lifecycle_status = 'accepted'
+    JOIN public.evidence_bindings binding
+      ON binding.binding_id = rn.evidence_ref
+     AND binding.claim_id = claim.claim_id
+     AND binding.relation = 'supports'
     WHERE rn.verification_status IN ('source_bound', 'verified')
       AND rn.source_claim_ref IS NOT NULL
       AND rn.evidence_ref IS NOT NULL
@@ -116,8 +143,6 @@ BEGIN
     source_url = EXCLUDED.source_url,
     source_locator = EXCLUDED.source_locator,
     metadata = EXCLUDED.metadata;
-
-  GET DIAGNOSTICS v_inserted = ROW_COUNT;
 
   IF (
     SELECT count(*)
