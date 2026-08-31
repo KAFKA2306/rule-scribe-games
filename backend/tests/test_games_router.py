@@ -183,7 +183,7 @@ def test_directory_query_parameters_are_forwarded(monkeypatch):
     }
 
 
-def test_public_game_reads_use_standard_shared_cache_control(monkeypatch):
+def test_public_game_reads_use_browser_and_cdn_cache_control(monkeypatch):
     async def fake_directory_query(**kwargs):
         return {
             "data": [{"id": "game-1", "slug": "example", "title": "Example", "work_id": "work-1"}],
@@ -201,21 +201,22 @@ def test_public_game_reads_use_standard_shared_cache_control(monkeypatch):
 
         for response in (detail, listing):
             assert response.status_code == 200
-            assert response.headers["cache-control"] == "public, max-age=0, s-maxage=60, must-revalidate"
-            assert "vercel-cdn-cache-control" not in response.headers
+            assert response.headers["cache-control"] == "public, max-age=0, must-revalidate"
+            assert response.headers["cdn-cache-control"] == "public, max-age=60, stale-while-revalidate=300"
     finally:
         production_app.dependency_overrides.clear()
 
 
-def test_cache_headers_do_not_apply_to_health_or_mutation_requests():
-    production_app.dependency_overrides[games.get_game_service] = lambda: MutableGameService()
+def test_cache_headers_do_not_apply_to_health_mutation_or_missing_game():
+    production_app.dependency_overrides[games.get_game_service] = lambda: MissingGameService()
     try:
         client = TestClient(production_app)
 
         health = client.get("/api/health")
         patch = client.patch("/api/games/example", json={"title": "Updated"})
+        missing = client.get("/api/games/not-found")
 
-        assert "s-maxage" not in health.headers.get("cache-control", "")
-        assert "s-maxage" not in patch.headers.get("cache-control", "")
+        for response in (health, patch, missing):
+            assert "cdn-cache-control" not in response.headers
     finally:
         production_app.dependency_overrides.clear()

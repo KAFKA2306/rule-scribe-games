@@ -12,7 +12,8 @@ from app.services.sitemap import get_sitemap_xml
 setup_logging()
 app = FastAPI(title="RuleScribe Minimal", version="1.0.0")
 
-PUBLIC_GAME_READ_CACHE = "public, max-age=0, s-maxage=60, must-revalidate"
+PUBLIC_GAME_BROWSER_CACHE = "public, max-age=0, must-revalidate"
+PUBLIC_GAME_CDN_CACHE = "public, max-age=60, stale-while-revalidate=300"
 
 
 def is_public_game_read_path(path: str) -> bool:
@@ -29,7 +30,8 @@ def is_public_game_read_path(path: str) -> bool:
 async def cache_public_game_reads(request: Request, call_next):
     response = await call_next(request)
     if request.method == "GET" and response.status_code == 200 and is_public_game_read_path(request.url.path):
-        response.headers["Cache-Control"] = PUBLIC_GAME_READ_CACHE
+        response.headers["Cache-Control"] = PUBLIC_GAME_BROWSER_CACHE
+        response.headers["CDN-Cache-Control"] = PUBLIC_GAME_CDN_CACHE
     return response
 
 
