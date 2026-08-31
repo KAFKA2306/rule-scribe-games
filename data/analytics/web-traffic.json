@@ -3,7 +3,7 @@
   "source": "https://api.vercel.com/v1/query/web-analytics/visits/aggregate",
   "event_source": "https://api.vercel.com/v1/query/web-analytics/events/aggregate",
   "scope": "production Web Analytics; custom-event export may be plan-limited",
-  "collected_at": "2026-08-30T05:32:55.171267+00:00",
+  "collected_at": "2026-08-31T05:47:48.335898+00:00",
   "days": [
     {
       "date": "2026-07-26",
@@ -179,6 +179,11 @@
       "date": "2026-08-29",
       "pageviews": 0,
       "visitors": 0
+    },
+    {
+      "date": "2026-08-30",
+      "pageviews": 11,
+      "visitors": 10
     }
   ],
   "affiliate_outbound": {
@@ -188,19 +193,24 @@
   },
   "affiliate_outbound_days": [],
   "rolling_window": {
-    "since": "2026-07-30",
-    "until": "2026-08-30",
+    "since": "2026-07-31",
+    "until": "2026-08-31",
     "limit_per_breakdown": 100,
     "request_paths": [
       {
         "requestPath": "/",
-        "pageviews": 5,
-        "visitors": 2
+        "pageviews": 15,
+        "visitors": 11
       },
       {
         "requestPath": "/games/minna-de-ponkotsu-paint",
         "pageviews": 2,
         "visitors": 2
+      },
+      {
+        "requestPath": "/games/age-of-steam",
+        "pageviews": 1,
+        "visitors": 1
       },
       {
         "requestPath": "/games/hack-clad",
@@ -226,11 +236,21 @@
     "referrers": [
       {
         "referrerHostname": "",
-        "pageviews": 9,
-        "visitors": 3
+        "pageviews": 16,
+        "visitors": 9
       },
       {
         "referrerHostname": "bing.com",
+        "pageviews": 3,
+        "visitors": 3
+      },
+      {
+        "referrerHostname": "github.com",
+        "pageviews": 1,
+        "visitors": 1
+      },
+      {
+        "referrerHostname": "google.com",
         "pageviews": 1,
         "visitors": 1
       },
@@ -250,6 +270,18 @@
             "referrerHostname": "",
             "pageviews": 2,
             "visitors": 2
+          }
+        ]
+      },
+      {
+        "requestPath": "/games/age-of-steam",
+        "pageviews": 1,
+        "visitors": 1,
+        "referrers": [
+          {
+            "referrerHostname": "google.com",
+            "pageviews": 1,
+            "visitors": 1
           }
         ]
       },
