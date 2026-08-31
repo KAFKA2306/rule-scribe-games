@@ -140,7 +140,7 @@ test('正準用語集を日本語名と英語別名のどちらからでも検�
   await expect(glossary.getByRole('button', { name: 'Mermaid', exact: true })).toBeVisible()
 })
 
-test('未確認の関連ルールは表示せず、確認済みの参照だけ表示する', async ({ page }) => {
+test('未確認の関連ルールは表示せず、確認済みの参照と登録済み出典だけ表示する', async ({ page }) => {
   await mockGameAndGlossary(page, {
     status: 'available',
     entries: [
@@ -156,6 +156,7 @@ test('未確認の関連ルールは表示せず、確認済みの参照だけ�
             normalized_statement: '未確認の得点ルールです。',
             reference_kind: 'mentions',
             verification_status: 'unknown',
+            source_url: 'https://example.com/unverified-source',
           },
           {
             rule_id: 'rule-verified',
@@ -163,6 +164,9 @@ test('未確認の関連ルールは表示せず、確認済みの参照だけ�
             normalized_statement: '確認済みの得点ルールです。',
             reference_kind: 'defines',
             verification_status: 'verified',
+            rule_set_id: 'ruleset-current',
+            source_url: 'https://example.com/official-rulebook',
+            source_locator: 'rules:scoring',
           },
         ],
       },
@@ -175,6 +179,8 @@ test('未確認の関連ルールは表示せず、確認済みの参照だけ�
 
   await expect(glossary.getByText('確認済みの得点ルールです。', { exact: true })).toBeVisible()
   await expect(glossary.getByText('未確認の得点ルールです。', { exact: true })).toHaveCount(0)
+  await expect(glossary.getByRole('link', { name: '出典を確認', exact: true })).toHaveAttribute('href', 'https://example.com/official-rulebook')
+  await expect(glossary.locator('a[href="https://example.com/unverified-source"]')).toHaveCount(0)
 })
 
 test('関連ルールが未確認だけなら未確認文を隠して状態を明示する', async ({ page }) => {
