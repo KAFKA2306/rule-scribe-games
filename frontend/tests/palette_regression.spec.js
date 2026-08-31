@@ -150,6 +150,7 @@ test('every available game-detail view avoids legacy dark surfaces', async ({ pa
   await expect(page.getByRole('button', { name: 'レビュー', exact: true })).toHaveCount(0)
 
   await page.getByRole('button', { name: '関連ゲーム', exact: true }).click()
+  await expect(page.getByText('正準Concept上の関連ゲームはまだ登録されていません。')).toBeVisible()
   await expectLightSurface(page.locator('.graph-perspective .game-empty-state'), 'related games empty state')
   await page.screenshot({ path: testInfo.outputPath('related-games-light-state.png'), fullPage: true, animations: 'disabled' })
 
