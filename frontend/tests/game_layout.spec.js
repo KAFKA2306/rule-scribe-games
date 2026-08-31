@@ -225,3 +225,55 @@ test('game share uses Web Share when available', async ({ page }) => {
   })
   await expect(page.getByRole('button', { name: '共有しました' })).toBeVisible()
 })
+
+test('game share copies canonical URL when Web Share is unavailable', async ({ page }) => {
+  await page.addInitScript(() => {
+    window.__copied = null
+    Object.defineProperty(navigator, 'share', { configurable: true, value: undefined })
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: { writeText: async text => { window.__copied = text } },
+    })
+  })
+  await mockGameApi(page)
+  await page.goto('/games/big-shot')
+
+  await page.getByRole('button', { name: 'リンクをコピー' }).click()
+  expect(await page.evaluate(() => window.__copied)).toBe(
+    'https://bodoge-no-mikata.vercel.app/games/big-shot',
+  )
+  await expect(page.getByRole('button', { name: 'コピーしました' })).toBeVisible()
+})
+
+test('X share copy stays factual and uses the canonical game URL', async ({ page }) => {
+  await page.addInitScript(() => {
+    window.__openedShareUrl = null
+    window.open = (url) => {
+      window.__openedShareUrl = url
+      return null
+    }
+  })
+  await mockGameApi(page)
+  await page.goto('/games/big-shot')
+
+  await page.getByRole('button', { name: 'Xで共有' }).click()
+  const shareUrl = await page.evaluate(() => window.__openedShareUrl)
+  const parsed = new URL(shareUrl)
+  expect(parsed.searchParams.get('text')).toBe('ボードゲーム「ビッグショット」のルールを見る')
+  expect(parsed.searchParams.get('url')).toBe('https://bodoge-no-mikata.vercel.app/games/big-shot')
+  expect(parsed.searchParams.get('text')).not.toContain('3分')
+})
+
+test('text-to-speech control identifies that it reads page highlights', async ({ page }) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(window, 'speechSynthesis', {
+      configurable: true,
+      value: { cancel() {}, speak() {} },
+    })
+  })
+  await mockGameApi(page)
+  await page.goto('/games/big-shot')
+
+  await expect(page.getByRole('button', { name: 'ページの要点を読み上げ' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Text to speech' })).toHaveCount(0)
+})
