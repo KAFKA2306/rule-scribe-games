@@ -8,6 +8,7 @@ import { TextToSpeech } from '../components/game/TextToSpeech'
 import { ExternalLinks } from '../components/game/ExternalLinks'
 import { InfographicsGallery } from '../components/game/InfographicsGallery'
 import { ConceptGlossary } from '../components/game/ConceptGlossary'
+import { RuleMarkdown } from '../components/game/RuleMarkdown'
 
 const IDENTITY_LABELS = {
   verified: 'IDENTITY VERIFIED',
@@ -282,11 +283,7 @@ export default function GamePage({ slug: propSlug, initialGame }) {
           </div>
 
           <div className="pro-main-col">
-            {activeTab === 'rules' && (
-              <div className="markdown-content">
-                <ReactMarkdown>{rules}</ReactMarkdown>
-              </div>
-            )}
+            {activeTab === 'rules' && <RuleMarkdown markdown={rules} />}
 
             {activeTab === 'coach' && (
               <div className="coach-mode">
