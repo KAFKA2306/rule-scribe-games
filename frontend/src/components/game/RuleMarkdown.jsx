@@ -41,6 +41,10 @@ function sectionId(label, occurrence = 1) {
   return occurrence === 1 ? base : `${base}-${occurrence}`
 }
 
+function ruleNodeId(ruleId) {
+  return `rule-node-${ruleId}`
+}
+
 function getRuleSections(markdown = '') {
   const lines = markdown.split('\n')
   const occurrences = new Map()
@@ -136,7 +140,7 @@ function resultSnippet(section, query) {
   return section.body.length > 140 ? `${section.body.slice(0, 140)}…` : section.body
 }
 
-function RuleMarkdown({ markdown = '' }) {
+function RuleMarkdown({ markdown = '', ruleNodes = [] }) {
   const [query, setQuery] = useState('')
   const sections = useMemo(() => getRuleSections(markdown), [markdown])
   const results = useMemo(() => searchSections(sections, query), [sections, query])
@@ -163,10 +167,31 @@ function RuleMarkdown({ markdown = '' }) {
       window.removeEventListener('hashchange', focusCurrentSection)
       window.removeEventListener('popstate', focusCurrentSection)
     }
-  }, [markdown])
+  }, [markdown, ruleNodes])
 
   return (
     <>
+      {ruleNodes.length > 0 && (
+        <section className="pro-card" aria-labelledby="canonical-rule-nodes-title" style={{ marginBottom: '1rem' }}>
+          <div id="canonical-rule-nodes-title" className="pro-card-title">確認済みルール</div>
+          <div className="game-empty-note" style={{ marginBottom: '0.6rem' }}>
+            選択した用語に関連する、現在のRuleSetの確認済みルールです。
+          </div>
+          <ul style={{ margin: 0, paddingInlineStart: '1.25rem' }}>
+            {ruleNodes.map((ruleNode) => (
+              <li
+                key={`${ruleNode.rule_set_id}:${ruleNode.rule_id}`}
+                id={ruleNodeId(ruleNode.rule_id)}
+                tabIndex={-1}
+                style={{ marginBlock: '0.6rem', scrollMarginTop: '1rem' }}
+              >
+                <div>{ruleNode.text}</div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       {sections.length > 0 && (
         <>
           <section className="pro-card" aria-labelledby="rule-lookup-title" style={{ marginBottom: '1rem' }}>
