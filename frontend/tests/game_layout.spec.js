@@ -188,7 +188,7 @@ test('preparation flow only appears when at least one game-specific summary exis
   await expect(page.getByText(bigShot.end_game_summary)).toBeVisible()
 })
 
-test('empty strategy and review states do not suggest unavailable regeneration actions', async ({ page }) => {
+test('empty strategy and review states are not exposed as detail destinations', async ({ page }) => {
   const withoutOptionalContent = {
     ...bigShot,
     slug: 'empty-optional-content',
@@ -202,12 +202,10 @@ test('empty strategy and review states do not suggest unavailable regeneration a
   await mockGameApi(page, withoutOptionalContent)
   await page.goto('/games/empty-optional-content')
 
-  await page.getByRole('button', { name: '戦略', exact: true }).click()
-  await expect(page.getByText('戦略解説はまだ登録されていません。', { exact: true })).toBeVisible()
-  await expect(page.getByText(/再生成してください/)).toHaveCount(0)
-
-  await page.getByRole('button', { name: 'レビュー', exact: true }).click()
-  await expect(page.getByText('レビューはまだ登録されていません。', { exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: '戦略', exact: true })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'レビュー', exact: true })).toHaveCount(0)
+  await expect(page.getByText('戦略解説はまだ登録されていません。', { exact: true })).toHaveCount(0)
+  await expect(page.getByText('レビューはまだ登録されていません。', { exact: true })).toHaveCount(0)
   await expect(page.getByText(/再生成してください/)).toHaveCount(0)
 })
 
