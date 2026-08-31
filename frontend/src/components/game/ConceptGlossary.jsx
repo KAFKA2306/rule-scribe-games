@@ -2,8 +2,17 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '../../lib/api'
 
+function normalizeSearchText(value) {
+  return String(value || '')
+    .normalize('NFKC')
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
 export function ConceptGlossary({ slug }) {
   const [entries, setEntries] = useState([])
+  const [query, setQuery] = useState('')
   const [selectedId, setSelectedId] = useState(null)
   const [detail, setDetail] = useState(null)
   const [fetchStatus, setFetchStatus] = useState('loading')
@@ -30,6 +39,19 @@ export function ConceptGlossary({ slug }) {
 
     return () => { cancelled = true }
   }, [slug])
+
+  const normalizedQuery = normalizeSearchText(query)
+  const filteredEntries = useMemo(() => {
+    if (!normalizedQuery) return entries
+    const tokens = normalizedQuery.split(' ').filter(Boolean)
+    return entries.filter((entry) => {
+      const searchable = normalizeSearchText([
+        entry.label,
+        ...(entry.aliases || []),
+      ].join(' '))
+      return tokens.every((token) => searchable.includes(token))
+    })
+  }, [entries, normalizedQuery])
 
   const selected = useMemo(
     () => entries.find((entry) => entry.concept_id === selectedId) || null,
@@ -84,20 +106,41 @@ export function ConceptGlossary({ slug }) {
   return (
     <div className="pro-card" aria-label="用語集">
       <div className="pro-card-title">GLOSSARY · LINKED VIEW</div>
-      <div className="tag-list">
-        {entries.map((entry) => (
-          <button
-            key={entry.concept_id}
-            type="button"
-            className="tag-item"
-            aria-expanded={selectedId === entry.concept_id}
-            onClick={() => selectConcept(entry.concept_id)}
-            style={{ cursor: 'pointer', font: 'inherit' }}
-          >
-            {entry.label}
-          </button>
-        ))}
-      </div>
+      <label htmlFor={`glossary-search-${slug}`} style={{ display: 'block', marginBottom: '0.4rem' }}>
+        用語集を検索
+      </label>
+      <input
+        id={`glossary-search-${slug}`}
+        type="search"
+        value={query}
+        onChange={(event) => setQuery(event.target.value)}
+        placeholder="用語・別名を入力"
+        autoComplete="off"
+        style={{ width: '100%', marginBottom: '0.75rem' }}
+      />
+      {normalizedQuery && (
+        <div role="status" aria-live="polite" className="game-empty-note" style={{ marginBottom: '0.75rem' }}>
+          {filteredEntries.length > 0
+            ? `${filteredEntries.length}件の用語が見つかりました`
+            : '該当する用語は見つかりませんでした'}
+        </div>
+      )}
+      {filteredEntries.length > 0 && (
+        <div className="tag-list">
+          {filteredEntries.map((entry) => (
+            <button
+              key={entry.concept_id}
+              type="button"
+              className="tag-item"
+              aria-expanded={selectedId === entry.concept_id}
+              onClick={() => selectConcept(entry.concept_id)}
+              style={{ cursor: 'pointer', font: 'inherit' }}
+            >
+              {entry.label}
+            </button>
+          ))}
+        </div>
+      )}
 
       {selected && (
         <div

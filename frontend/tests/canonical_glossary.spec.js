@@ -106,3 +106,36 @@ test('旧keywordsがなくても正準用語集がavailableなら表示する', 
   const glossary = page.locator('[aria-label="用語集"]')
   await expect(glossary.getByRole('button', { name: '得点', exact: true })).toBeVisible()
 })
+
+test('正準用語集を日本語名と英語別名のどちらからでも検索できる', async ({ page }) => {
+  await mockGameAndGlossary(page, {
+    status: 'available',
+    entries: [
+      {
+        concept_id: 'zero-bid',
+        label: '0ビッド',
+        definition: '0を宣言したビッドです。',
+        aliases: ['0 bid', 'zero bid'],
+      },
+      {
+        concept_id: 'mermaid',
+        label: 'Mermaid',
+        definition: '特殊カードです。',
+        aliases: ['人魚'],
+      },
+    ],
+  })
+  await page.goto('/games/glossary-test#rules')
+
+  const glossary = page.locator('[aria-label="用語集"]')
+  const search = glossary.getByRole('searchbox', { name: '用語集を検索' })
+
+  await search.fill('0 bid')
+  await expect(glossary.getByRole('status')).toHaveText('1件の用語が見つかりました')
+  await expect(glossary.getByRole('button', { name: '0ビッド', exact: true })).toBeVisible()
+  await expect(glossary.getByRole('button', { name: 'Mermaid', exact: true })).toHaveCount(0)
+
+  await search.fill('人魚')
+  await expect(glossary.getByRole('status')).toHaveText('1件の用語が見つかりました')
+  await expect(glossary.getByRole('button', { name: 'Mermaid', exact: true })).toBeVisible()
+})
