@@ -157,6 +157,17 @@ async function mockApi(page, state) {
       return
     }
 
+    const glossaryMatch = path.match(/^\/api\/games\/([^/]+)\/glossary$/)
+    if (glossaryMatch && method === 'GET') {
+      const game = games.find((candidate) => candidate.slug === decodeURIComponent(glossaryMatch[1]))
+      await route.fulfill({
+        status: game ? 200 : 404,
+        contentType: 'application/json',
+        body: JSON.stringify(game ? { status: 'not_available', entries: [] } : { detail: 'not found' }),
+      })
+      return
+    }
+
     if (path === '/api/lists') {
       if (method === 'GET') {
         await delay(120)
@@ -308,7 +319,7 @@ test('authenticated list lifecycle survives navigation, reload, reorder, and des
   expect(await page.evaluate(() => window.__uiUxDocumentMarker)).toBe('alive')
 
   await page.getByRole('button', { name: 'リストに保存' }).click()
-  await expect(page.getByRole('status')).toContainText('保存しました')
+  await expect(page.getByText('保存しました', { exact: true })).toBeVisible()
   await page.goBack()
   await expect(page.getByText('ゲーム2', { exact: true }).first()).toBeVisible()
   await page.getByRole('link', { name: /ゲーム2/ }).first().click()
@@ -316,7 +327,7 @@ test('authenticated list lifecycle survives navigation, reload, reorder, and des
   expect(await page.evaluate(() => window.__uiUxDocumentMarker)).toBe('alive')
 
   await page.getByRole('button', { name: 'リストに保存' }).click()
-  await expect(page.getByRole('status')).toContainText('保存しました')
+  await expect(page.getByText('保存しました', { exact: true })).toBeVisible()
   await page.getByRole('link', { name: '一覧で確認' }).click()
   await expect(page).toHaveURL(new RegExp(`/lists\\?list=${LIST_ID}`))
   await expect(page.locator('.lists-item')).toHaveCount(2)
