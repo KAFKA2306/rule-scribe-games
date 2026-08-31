@@ -19,6 +19,8 @@ const game = {
     keywords: [{ term: '旧データの用語', description: '正準用語集ではない旧データ' }],
     pro_tips: ['旧データの未確認ヒント'],
     rule_mistakes: ['旧データの未確認ルール誤り'],
+    strategy_analysis: '旧データの未確認戦略',
+    persona_reviews: [{ persona: '旧AIレビュー', rating: 10, review_text: '旧データの未確認評価' }],
   },
 }
 
@@ -46,6 +48,12 @@ test('正準用語集が未整備なら旧structured_dataを公開表示へ戻�
   await expect(page.getByText('旧データの用語')).toHaveCount(0)
   await expect(page.getByText('旧データの未確認ヒント')).toHaveCount(0)
   await expect(page.getByText('旧データの未確認ルール誤り')).toHaveCount(0)
+  await expect(page.getByText('旧データの未確認戦略')).toHaveCount(0)
+  await expect(page.getByText('旧AIレビュー')).toHaveCount(0)
+  await expect(page.getByText('旧データの未確認評価')).toHaveCount(0)
+  await expect(page.getByRole('button', { name: '戦略', exact: true })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'レビュー', exact: true })).toHaveCount(0)
+  await expect(page).toHaveTitle(/「用語集テスト」のルール・インスト要約/)
 })
 
 test('正準用語集の取得失敗を旧keywordsで隠さず明示する', async ({ page }) => {
