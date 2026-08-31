@@ -15,7 +15,7 @@ async function mockGameApi(page, game) {
   })
 }
 
-test('RuleSetが公開されていないゲームではcurated guideを表示しない', async ({ page }) => {
+test('RuleSetがないゲームでは未確認ルールを補完しない', async ({ page }) => {
   await mockGameApi(page, {
     slug: 'minna-de-ponkotsu-paint',
     title: 'みんなでぽんこつペイント',
@@ -39,14 +39,13 @@ test('RuleSetが公開されていないゲームではcurated guideを表示し
 
   await page.goto('/games/minna-de-ponkotsu-paint')
 
-  await expect(page.getByRole('heading', { name: 'みんなでぽんこつペイント' })).toBeVisible()
+  await expect(page.locator('h1.game-title')).toHaveText('みんなでぽんこつペイント')
   await expect(page.getByText('「みんなでぽんこつペイント」のゲーム概要', { exact: true })).toBeVisible()
-  await expect(page.getByText('30秒でわかる「みんなでぽんこつペイント」', { exact: true })).toHaveCount(0)
-  await expect(page.locator('.quick-rules-panel')).toHaveCount(0)
-  await expect(page.getByRole('button', { name: '図で見る', exact: true })).toHaveCount(0)
+  await expect(page.getByText('公式ルール確認済み', { exact: true })).toHaveCount(0)
+  await expect(page.getByText('ルールを質問', { exact: true })).toHaveCount(0)
 })
 
-test('公開RuleSetがあり、独立確認済みguideもあるゲームではquick rulesを表示する', async ({ page }) => {
+test('RuleSetがあるゲームでもfrontend独自ルールを重ねない', async ({ page }) => {
   await mockGameApi(page, {
     slug: 'splendor',
     title: 'Splendor',
@@ -69,7 +68,9 @@ test('公開RuleSetがあり、独立確認済みguideもあるゲームではqu
 
   await page.goto('/games/splendor')
 
-  await expect(page.getByText('30秒でわかる「宝石の煌き」', { exact: true })).toBeVisible()
-  await expect(page.locator('.quick-rules-panel')).toHaveCount(1)
-  await expect(page.getByRole('button', { name: '図で見る', exact: true })).toHaveCount(1)
+  await expect(page.locator('h1.game-title')).toHaveText('宝石の煌き')
+  await expect(page.getByText('公開RuleSetに基づくルール。', { exact: true })).toBeVisible()
+  await expect(page.getByText('30秒でわかる「宝石の煌き」', { exact: true })).toHaveCount(0)
+  await expect(page.getByText('公式ルール確認済み', { exact: true })).toHaveCount(0)
+  await expect(page.getByText('ルールを質問', { exact: true })).toHaveCount(0)
 })

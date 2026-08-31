@@ -3,14 +3,10 @@ import { useParams, Link } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
 import ReactMarkdown from 'react-markdown'
 import { api } from '../lib/api'
-import { getCuratedRuleGuide } from '../lib/curatedRuleGuides'
 import { ShareButton, TwitterShareButton } from '../components/game/ShareButtons'
 import { TextToSpeech } from '../components/game/TextToSpeech'
 import { ExternalLinks } from '../components/game/ExternalLinks'
 import { InfographicsGallery } from '../components/game/InfographicsGallery'
-import { QuickRulesPanel } from '../components/game/QuickRulesPanel'
-import { RuleAskPanel } from '../components/game/RuleAskPanel'
-import { RuleFlowDiagram } from '../components/game/RuleFlowDiagram'
 import { ConceptGlossary } from '../components/game/ConceptGlossary'
 
 const IDENTITY_LABELS = {
@@ -122,15 +118,13 @@ export default function GamePage({ slug: propSlug, initialGame }) {
   const identityLabel = IDENTITY_LABELS[game.identity_status] || IDENTITY_LABELS.unverified
   const sourceTrustLabel = SOURCE_TRUST_LABELS[game.source_trust] || SOURCE_TRUST_LABELS.unknown
   const reviewLabel = REVIEW_LABELS[game.content_review_status] || REVIEW_LABELS.unknown
-  const ruleGuide = rules ? getCuratedRuleGuide(slug) : null
   const legacyInfographicsSourceUrl = game.infographics_source_url || coachSourceUrl
   const legacyInfographicsVerified = Boolean(
     game.infographics &&
     game.infographics_reviewed === true &&
     legacyInfographicsSourceUrl,
   )
-  const hasRuleFlow = Boolean(ruleGuide?.flow?.length)
-  const hasInfographics = hasRuleFlow || legacyInfographicsVerified
+  const hasInfographics = legacyInfographicsVerified
   const hasCoachSummary = Boolean(
     game.setup_summary || game.gameplay_summary || game.end_game_summary,
   )
@@ -152,7 +146,7 @@ export default function GamePage({ slug: propSlug, initialGame }) {
       <div className="game-page-toolbar">
         <Link to="/" className="back-link" style={{ margin: 0 }}>← DIRECTORY</Link>
         <div className="header-actions">
-          <TextToSpeech text={`${title}. ${ruleGuide?.quick?.turnSteps?.join(' ') || description}`} />
+          <TextToSpeech text={`${title}. ${description}`} />
           <TwitterShareButton slug={slug} title={title} />
           <ShareButton slug={slug} />
         </div>
@@ -193,19 +187,9 @@ export default function GamePage({ slug: propSlug, initialGame }) {
           </div>
 
           <div className="pro-card pro-card--synopsis">
-            <div className="pro-card-title">
-              {ruleGuide?.quick ? `30秒でわかる「${title}」` : `「${title}」のゲーム概要`}
-            </div>
+            <div className="pro-card-title">「{title}」のゲーム概要</div>
             <div className="summary-text">{game.summary || game.description}</div>
           </div>
-
-          <QuickRulesPanel
-            guide={ruleGuide}
-            onShowFlow={hasInfographics ? () => setActiveTab('infographics') : null}
-            onShowRules={() => setActiveTab('rules')}
-          />
-
-          <RuleAskPanel />
 
           <div className="rules-tabs" role="group" aria-label="ゲーム詳細表示">
             <button type="button" aria-pressed={activeTab === 'rules'} className={activeTab === 'rules' ? 'active' : ''} onClick={() => setActiveTab('rules')}>
@@ -377,17 +361,12 @@ export default function GamePage({ slug: propSlug, initialGame }) {
               </div>
             )}
 
-            {activeTab === 'infographics' && (
-              <div style={{ display: 'grid', gap: '1rem' }}>
-                {hasRuleFlow && <RuleFlowDiagram guide={ruleGuide} />}
-                {legacyInfographicsVerified && (
-                  <InfographicsGallery
-                    infographics={game.infographics}
-                    verified={legacyInfographicsVerified}
-                    sourceUrl={legacyInfographicsSourceUrl}
-                  />
-                )}
-              </div>
+            {activeTab === 'infographics' && legacyInfographicsVerified && (
+              <InfographicsGallery
+                infographics={game.infographics}
+                verified={legacyInfographicsVerified}
+                sourceUrl={legacyInfographicsSourceUrl}
+              />
             )}
 
             {activeTab === 'data' && <pre className="game-data-dump">{JSON.stringify(game, null, 2)}</pre>}
