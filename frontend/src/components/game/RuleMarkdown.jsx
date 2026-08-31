@@ -28,13 +28,13 @@ function getRuleSections(markdown = '') {
   const occurrences = new Map()
   const sections = []
 
-  for (const line of markdown.split('\n')) {
+  markdown.split('\n').forEach((line, index) => {
     const match = /^(#{2,4})\s+(.+?)\s*#*\s*$/.exec(line)
-    if (!match) continue
+    if (!match) return
 
     const level = match[1].length
     const label = headingLabel(match[2])
-    if (!label) continue
+    if (!label) return
 
     const key = `${level}:${label.normalize('NFKC').toLowerCase()}`
     const occurrence = (occurrences.get(key) || 0) + 1
@@ -44,33 +44,23 @@ function getRuleSections(markdown = '') {
       id: sectionId(label, occurrence),
       label,
       level,
+      line: index + 1,
     })
-  }
+  })
 
   return sections
 }
 
-function textFromChildren(children) {
-  if (typeof children === 'string' || typeof children === 'number') return String(children)
-  if (Array.isArray(children)) return children.map(textFromChildren).join('')
-  if (children?.props?.children != null) return textFromChildren(children.props.children)
-  return ''
-}
-
-function createHeadingComponents() {
-  const occurrences = new Map()
-
+function createHeadingComponents(sections) {
   const renderHeading = (level) => {
     const Tag = `h${level}`
-    return function RuleHeading({ children }) {
-      const label = textFromChildren(children).trim()
-      const key = `${level}:${label.normalize('NFKC').toLowerCase()}`
-      const occurrence = (occurrences.get(key) || 0) + 1
-      occurrences.set(key, occurrence)
-      const id = sectionId(label, occurrence)
+    return function RuleHeading({ children, node }) {
+      const line = node?.position?.start?.line
+      const section = sections.find((item) => item.level === level && item.line === line)
+      const id = section?.id
 
       return (
-        <Tag id={id} tabIndex={-1} style={{ scrollMarginTop: '1rem' }}>
+        <Tag id={id} tabIndex={id ? -1 : undefined} style={id ? { scrollMarginTop: '1rem' } : undefined}>
           {children}
         </Tag>
       )
@@ -95,7 +85,7 @@ function decodedHash() {
 
 function RuleMarkdown({ markdown = '' }) {
   const sections = getRuleSections(markdown)
-  const headingComponents = createHeadingComponents()
+  const headingComponents = createHeadingComponents(sections)
 
   useEffect(() => {
     const focusCurrentSection = () => {
