@@ -44,6 +44,26 @@ test('正準用語集が未整備なら旧keywordsへ戻らず未整備を明示
   await expect(page.getByText('旧データの用語')).toHaveCount(0)
 })
 
+test('正準用語集の取得失敗を旧keywordsで隠さず明示する', async ({ page }) => {
+  await page.route('**/api/games**', async route => {
+    const url = new URL(route.request().url())
+    if (url.pathname === '/api/games/glossary-test') {
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ game }) })
+      return
+    }
+    if (url.pathname === '/api/games/glossary-test/glossary') {
+      await route.fulfill({ status: 503, contentType: 'application/json', body: JSON.stringify({ detail: 'unavailable' }) })
+      return
+    }
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ games: [] }) })
+  })
+
+  await page.goto('/games/glossary-test#rules')
+  const glossary = page.locator('[aria-label="用語集"]')
+  await expect(glossary.getByRole('status')).toHaveText('用語集の正準データを取得できませんでした。')
+  await expect(page.getByText('旧データの用語')).toHaveCount(0)
+})
+
 test('旧keywordsがなくても正準用語集がavailableなら表示する', async ({ page }) => {
   const gameWithoutLegacyKeywords = {
     ...game,
