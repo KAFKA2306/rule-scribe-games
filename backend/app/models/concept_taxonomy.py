@@ -140,6 +140,9 @@ class RuleConceptReference(TaxonomyModel):
     normalized_statement: str
     reference_kind: RuleConceptReferenceKind
     verification_status: ConceptVerificationStatus = ConceptVerificationStatus.UNKNOWN
+    rule_set_id: str | None = None
+    source_url: str | None = None
+    source_locator: str | None = None
 
 
 class ConceptGameBacklink(TaxonomyModel):
