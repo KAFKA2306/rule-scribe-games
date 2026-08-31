@@ -73,5 +73,4 @@ test('RuleSetがあるゲームでもfrontend独自ルールを重ねない', as
   await expect(page.getByText('30秒でわかる「宝石の煌き」', { exact: true })).toHaveCount(0)
   await expect(page.getByText('公式ルール確認済み', { exact: true })).toHaveCount(0)
   await expect(page.getByText('ルールを質問', { exact: true })).toHaveCount(0)
-}
-)
+})
