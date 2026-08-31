@@ -30,6 +30,19 @@ const REVIEW_LABELS = {
   unknown: 'REVIEW UNKNOWN',
 }
 
+const TAB_HASHES = {
+  rules: '#rules',
+  coach: '#setup',
+  strategy: '#strategy',
+  reviews: '#reviews',
+  graph: '#connections',
+  infographics: '#visual',
+}
+
+const HASH_TABS = Object.fromEntries(
+  Object.entries(TAB_HASHES).map(([tab, hash]) => [hash, tab]),
+)
+
 function formatPlayTime(game) {
   const min = game.play_time_min_minutes
   const max = game.play_time_max_minutes
@@ -37,6 +50,14 @@ function formatPlayTime(game) {
   if (min != null) return `${min}m+`
   if (max != null) return `≤${max}m`
   return game.play_time != null ? `${game.play_time}m` : 'N/A'
+}
+
+function isTabAvailable(tab, { hasCoachSummary, hasStrategy, hasReviews, hasInfographics }) {
+  if (tab === 'coach') return hasCoachSummary
+  if (tab === 'strategy') return hasStrategy
+  if (tab === 'reviews') return hasReviews
+  if (tab === 'infographics') return hasInfographics
+  return tab === 'rules' || tab === 'graph'
 }
 
 export default function GamePage({ slug: propSlug, initialGame }) {
@@ -52,6 +73,19 @@ export default function GamePage({ slug: propSlug, initialGame }) {
   const [connectionsError, setConnectionsError] = useState(false)
 
   const BASE_URL = 'https://bodoge-no-mikata.vercel.app'
+  const structuredData = game?.structured_data || {}
+  const infographicsSourceUrl = game?.infographics_source_url || game?.source_url || null
+  const hasInfographics = Boolean(
+    game?.infographics &&
+    game.infographics_reviewed === true &&
+    infographicsSourceUrl,
+  )
+  const hasCoachSummary = Boolean(
+    game?.setup_summary || game?.gameplay_summary || game?.end_game_summary,
+  )
+  const hasStrategy = Boolean(structuredData.strategy_analysis)
+  const hasReviews = Boolean(structuredData.persona_reviews?.length)
+  const tabAvailability = { hasCoachSummary, hasStrategy, hasReviews, hasInfographics }
 
   useEffect(() => {
     const fetchData = async () => {
@@ -72,6 +106,27 @@ export default function GamePage({ slug: propSlug, initialGame }) {
     }
     fetchData()
   }, [slug, initialGame])
+
+  useEffect(() => {
+    if (!game || typeof window === 'undefined') return undefined
+
+    const syncFromLocation = () => {
+      const requestedTab = HASH_TABS[window.location.hash]
+      if (requestedTab && isTabAvailable(requestedTab, tabAvailability)) {
+        setActiveTab(requestedTab)
+        return
+      }
+      setActiveTab('rules')
+    }
+
+    syncFromLocation()
+    window.addEventListener('popstate', syncFromLocation)
+    window.addEventListener('hashchange', syncFromLocation)
+    return () => {
+      window.removeEventListener('popstate', syncFromLocation)
+      window.removeEventListener('hashchange', syncFromLocation)
+    }
+  }, [game, hasCoachSummary, hasStrategy, hasReviews, hasInfographics])
 
   useEffect(() => {
     if (activeTab !== 'graph') return undefined
@@ -95,6 +150,16 @@ export default function GamePage({ slug: propSlug, initialGame }) {
 
     return () => { cancelled = true }
   }, [activeTab, slug])
+
+  const navigateToTab = (tab) => {
+    if (!isTabAvailable(tab, tabAvailability)) return
+    setActiveTab(tab)
+
+    if (typeof window === 'undefined') return
+    const hash = TAB_HASHES[tab]
+    if (!hash || window.location.hash === hash) return
+    window.history.pushState(null, '', `${window.location.pathname}${window.location.search}${hash}`)
+  }
 
   if (loading) {
     return <div className="page-state page-state--loading" role="status">ARCHIVE LOADING...</div>
@@ -123,10 +188,6 @@ export default function GamePage({ slug: propSlug, initialGame }) {
     game.infographics &&
     game.infographics_reviewed === true &&
     legacyInfographicsSourceUrl,
-  )
-  const hasInfographics = legacyInfographicsVerified
-  const hasCoachSummary = Boolean(
-    game.setup_summary || game.gameplay_summary || game.end_game_summary,
   )
 
   const pageTitle = `「${title}」のルール${sd.strategy_analysis ? '・戦略' : ''}・インスト要約 | ボドゲのミカタ`
@@ -192,25 +253,29 @@ export default function GamePage({ slug: propSlug, initialGame }) {
           </div>
 
           <div className="rules-tabs" role="group" aria-label="ゲーム詳細表示">
-            <button type="button" aria-pressed={activeTab === 'rules'} className={activeTab === 'rules' ? 'active' : ''} onClick={() => setActiveTab('rules')}>
+            <button type="button" aria-pressed={activeTab === 'rules'} className={activeTab === 'rules' ? 'active' : ''} onClick={() => navigateToTab('rules')}>
               詳しいルール
             </button>
             {hasCoachSummary && (
-              <button type="button" aria-pressed={activeTab === 'coach'} className={activeTab === 'coach' ? 'active' : ''} onClick={() => setActiveTab('coach')}>
+              <button type="button" aria-pressed={activeTab === 'coach'} className={activeTab === 'coach' ? 'active' : ''} onClick={() => navigateToTab('coach')}>
                 準備・流れ・終了
               </button>
             )}
-            <button type="button" aria-pressed={activeTab === 'strategy'} className={activeTab === 'strategy' ? 'active' : ''} onClick={() => setActiveTab('strategy')}>
-              戦略
-            </button>
-            <button type="button" aria-pressed={activeTab === 'reviews'} className={activeTab === 'reviews' ? 'active' : ''} onClick={() => setActiveTab('reviews')}>
-              レビュー
-            </button>
-            <button type="button" aria-pressed={activeTab === 'graph'} className={activeTab === 'graph' ? 'active' : ''} onClick={() => setActiveTab('graph')}>
+            {hasStrategy && (
+              <button type="button" aria-pressed={activeTab === 'strategy'} className={activeTab === 'strategy' ? 'active' : ''} onClick={() => navigateToTab('strategy')}>
+                戦略
+              </button>
+            )}
+            {hasReviews && (
+              <button type="button" aria-pressed={activeTab === 'reviews'} className={activeTab === 'reviews' ? 'active' : ''} onClick={() => navigateToTab('reviews')}>
+                レビュー
+              </button>
+            )}
+            <button type="button" aria-pressed={activeTab === 'graph'} className={activeTab === 'graph' ? 'active' : ''} onClick={() => navigateToTab('graph')}>
               関連ゲーム
             </button>
             {hasInfographics && (
-              <button type="button" aria-pressed={activeTab === 'infographics'} className={activeTab === 'infographics' ? 'active' : ''} onClick={() => setActiveTab('infographics')}>
+              <button type="button" aria-pressed={activeTab === 'infographics'} className={activeTab === 'infographics' ? 'active' : ''} onClick={() => navigateToTab('infographics')}>
                 図で見る
               </button>
             )}
