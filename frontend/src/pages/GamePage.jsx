@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
-import ReactMarkdown from 'react-markdown'
 import { api } from '../lib/api'
 import { ShareButton, TwitterShareButton } from '../components/game/ShareButtons'
 import { TextToSpeech } from '../components/game/TextToSpeech'
@@ -34,8 +33,6 @@ const REVIEW_LABELS = {
 const TAB_HASHES = {
   rules: '#rules',
   coach: '#setup',
-  strategy: '#strategy',
-  reviews: '#reviews',
   graph: '#connections',
   infographics: '#visual',
 }
@@ -53,10 +50,8 @@ function formatPlayTime(game) {
   return game.play_time != null ? `${game.play_time}m` : 'N/A'
 }
 
-function isTabAvailable(tab, { hasCoachSummary, hasStrategy, hasReviews, hasInfographics }) {
+function isTabAvailable(tab, { hasCoachSummary, hasInfographics }) {
   if (tab === 'coach') return hasCoachSummary
-  if (tab === 'strategy') return hasStrategy
-  if (tab === 'reviews') return hasReviews
   if (tab === 'infographics') return hasInfographics
   return tab === 'rules' || tab === 'graph'
 }
@@ -74,7 +69,6 @@ export default function GamePage({ slug: propSlug, initialGame }) {
   const [connectionsError, setConnectionsError] = useState(false)
 
   const BASE_URL = 'https://bodoge-no-mikata.vercel.app'
-  const structuredData = game?.structured_data || {}
   const infographicsSourceUrl = game?.infographics_source_url || game?.source_url || null
   const hasInfographics = Boolean(
     game?.infographics &&
@@ -84,9 +78,7 @@ export default function GamePage({ slug: propSlug, initialGame }) {
   const hasCoachSummary = Boolean(
     game?.setup_summary || game?.gameplay_summary || game?.end_game_summary,
   )
-  const hasStrategy = Boolean(structuredData.strategy_analysis)
-  const hasReviews = Boolean(structuredData.persona_reviews?.length)
-  const tabAvailability = { hasCoachSummary, hasStrategy, hasReviews, hasInfographics }
+  const tabAvailability = { hasCoachSummary, hasInfographics }
 
   useEffect(() => {
     const fetchData = async () => {
@@ -127,7 +119,7 @@ export default function GamePage({ slug: propSlug, initialGame }) {
       window.removeEventListener('popstate', syncFromLocation)
       window.removeEventListener('hashchange', syncFromLocation)
     }
-  }, [game, hasCoachSummary, hasStrategy, hasReviews, hasInfographics])
+  }, [game, hasCoachSummary, hasInfographics])
 
   useEffect(() => {
     if (activeTab !== 'graph') return undefined
@@ -179,7 +171,6 @@ export default function GamePage({ slug: propSlug, initialGame }) {
 
   const title = game.title_ja || game.title || 'Untitled'
   const rules = game.rules_content || ''
-  const sd = game.structured_data || {}
   const coachSourceUrl = game.source_url || null
   const identityLabel = IDENTITY_LABELS[game.identity_status] || IDENTITY_LABELS.unverified
   const sourceTrustLabel = SOURCE_TRUST_LABELS[game.source_trust] || SOURCE_TRUST_LABELS.unknown
@@ -191,7 +182,7 @@ export default function GamePage({ slug: propSlug, initialGame }) {
     legacyInfographicsSourceUrl,
   )
 
-  const pageTitle = `「${title}」のルール${sd.strategy_analysis ? '・戦略' : ''}・インスト要約 | ボドゲのミカタ`
+  const pageTitle = `「${title}」のルール・インスト要約 | ボドゲのミカタ`
   const description = game.summary || `「${title}」の登録済みルール要約と出典情報を確認できます。`
   const gameUrl = `${BASE_URL}/games/${slug}`
   const imageUrl = game.image_url || `${BASE_URL}/assets/no-image.webp`
@@ -262,16 +253,6 @@ export default function GamePage({ slug: propSlug, initialGame }) {
                 準備・流れ・終了
               </button>
             )}
-            {hasStrategy && (
-              <button type="button" aria-pressed={activeTab === 'strategy'} className={activeTab === 'strategy' ? 'active' : ''} onClick={() => navigateToTab('strategy')}>
-                戦略
-              </button>
-            )}
-            {hasReviews && (
-              <button type="button" aria-pressed={activeTab === 'reviews'} className={activeTab === 'reviews' ? 'active' : ''} onClick={() => navigateToTab('reviews')}>
-                レビュー
-              </button>
-            )}
             <button type="button" aria-pressed={activeTab === 'graph'} className={activeTab === 'graph' ? 'active' : ''} onClick={() => navigateToTab('graph')}>
               関連ゲーム
             </button>
@@ -320,41 +301,6 @@ export default function GamePage({ slug: propSlug, initialGame }) {
                     </>
                   )}
                 </div>
-              </div>
-            )}
-
-            {activeTab === 'strategy' && (
-              <div className="markdown-content">
-                {sd.strategy_analysis ? (
-                  <ReactMarkdown>{sd.strategy_analysis}</ReactMarkdown>
-                ) : (
-                  <div className="game-empty-state" role="status">
-                    戦略解説はまだ登録されていません。
-                  </div>
-                )}
-              </div>
-            )}
-
-            {activeTab === 'reviews' && (
-              <div className="persona-reviews">
-                <div className="pro-card-title">SUB-AGENT PERSPECTIVES</div>
-                <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
-                  異なるプレイスタイルのAIエージェントによる多角的な評価。
-                </p>
-
-                {sd.persona_reviews?.length > 0 ? sd.persona_reviews.map((rev, i) => (
-                  <div key={i} className="review-card">
-                    <div className="review-header">
-                      <span className="persona-badge">{rev.persona}</span>
-                      <span className="rating-badge">{rev.rating} / 10</span>
-                    </div>
-                    <div className="review-text">「{rev.review_text}」</div>
-                  </div>
-                )) : (
-                  <div className="game-empty-state" role="status">
-                    レビューはまだ登録されていません。
-                  </div>
-                )}
               </div>
             )}
 
