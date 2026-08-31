@@ -72,7 +72,7 @@ test('game detail coalesces duplicate GET and gives mutation feedback within one
   }))
   expect(feedback.elapsedMs).toBeLessThan(100)
   expect(feedback.text).toContain('保存中')
-  await expect(page.getByRole('status')).toContainText('保存しました')
+  await expect(page.getByText('保存しました', { exact: true })).toBeVisible()
   expect(saveRequests).toBe(1)
 })
 

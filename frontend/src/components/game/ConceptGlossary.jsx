@@ -2,53 +2,34 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '../../lib/api'
 
-function LegacyGlossary({ keywords }) {
-  if (!keywords?.length) return null
-  return (
-    <div className="pro-card">
-      <div className="pro-card-title">GLOSSARY</div>
-      <div className="tag-list">
-        {keywords.map((kw, i) => (
-          <div key={`${kw.term}-${i}`} className="tag-item" title={kw.description}>{kw.term}</div>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-export function ConceptGlossary({ slug, legacyKeywords = [] }) {
+export function ConceptGlossary({ slug }) {
   const [entries, setEntries] = useState([])
   const [selectedId, setSelectedId] = useState(null)
   const [detail, setDetail] = useState(null)
-  const [canonicalAvailable, setCanonicalAvailable] = useState(false)
+  const [fetchStatus, setFetchStatus] = useState('loading')
   const [loadedSlug, setLoadedSlug] = useState(null)
-  const hasGlossary = legacyKeywords.length > 0
+  const [detailError, setDetailError] = useState(false)
 
   useEffect(() => {
-    if (!hasGlossary) return undefined
-
     let cancelled = false
+
     api.get(`/api/games/${slug}/glossary?language_code=ja`)
       .then((data) => {
         if (cancelled) return
         const available = data?.status === 'available' && data.entries?.length > 0
         setEntries(available ? data.entries : [])
-        setSelectedId(null)
-        setDetail(null)
-        setCanonicalAvailable(Boolean(available))
+        setFetchStatus(available ? 'available' : 'unavailable')
         setLoadedSlug(slug)
       })
       .catch(() => {
         if (cancelled) return
         setEntries([])
-        setSelectedId(null)
-        setDetail(null)
-        setCanonicalAvailable(false)
+        setFetchStatus('error')
         setLoadedSlug(slug)
       })
 
     return () => { cancelled = true }
-  }, [slug, hasGlossary])
+  }, [slug])
 
   const selected = useMemo(
     () => entries.find((entry) => entry.concept_id === selectedId) || null,
@@ -59,20 +40,45 @@ export function ConceptGlossary({ slug, legacyKeywords = [] }) {
     if (selectedId === conceptId) {
       setSelectedId(null)
       setDetail(null)
+      setDetailError(false)
       return
     }
     setSelectedId(conceptId)
     setDetail(null)
+    setDetailError(false)
     try {
       const response = await api.get(`/api/concepts/${encodeURIComponent(conceptId)}`)
       setDetail(response)
     } catch {
-      // The game glossary remains useful even if the deeper backlink view is unavailable.
+      setDetailError(true)
     }
   }
 
-  if (!hasGlossary || loadedSlug !== slug || !canonicalAvailable) {
-    return <LegacyGlossary keywords={legacyKeywords} />
+  if (loadedSlug !== slug) {
+    return (
+      <div className="pro-card" aria-label="用語集">
+        <div className="pro-card-title">GLOSSARY</div>
+        <div className="game-empty-state" role="status">用語集を確認しています...</div>
+      </div>
+    )
+  }
+
+  if (fetchStatus === 'error') {
+    return (
+      <div className="pro-card" aria-label="用語集">
+        <div className="pro-card-title">GLOSSARY</div>
+        <div className="game-empty-state" role="alert">用語集の正準データを取得できませんでした。</div>
+      </div>
+    )
+  }
+
+  if (fetchStatus === 'unavailable') {
+    return (
+      <div className="pro-card" aria-label="用語集">
+        <div className="pro-card-title">GLOSSARY</div>
+        <div className="game-empty-state">用語集の正準データは未整備です。</div>
+      </div>
+    )
   }
 
   return (
@@ -124,6 +130,11 @@ export function ConceptGlossary({ slug, legacyKeywords = [] }) {
                   {reference.normalized_statement}
                 </div>
               ))}
+            </div>
+          )}
+          {detailError && (
+            <div className="game-empty-note" role="alert" style={{ marginTop: '0.75rem' }}>
+              この用語の関連ゲーム情報を取得できませんでした。
             </div>
           )}
           {detail?.game_backlinks?.length > 0 && (
