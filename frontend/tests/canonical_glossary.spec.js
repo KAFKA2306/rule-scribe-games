@@ -139,3 +139,70 @@ test('正準用語集を日本語名と英語別名のどちらからでも検�
   await expect(glossary.getByRole('status')).toHaveText('1件の用語が見つかりました')
   await expect(glossary.getByRole('button', { name: 'Mermaid', exact: true })).toBeVisible()
 })
+
+test('未確認の関連ルールは表示せず、確認済みの参照だけ表示する', async ({ page }) => {
+  await mockGameAndGlossary(page, {
+    status: 'available',
+    entries: [
+      {
+        concept_id: 'scoring',
+        label: '得点',
+        definition: 'ゲームの得点に関する用語です。',
+        aliases: [],
+        rule_references: [
+          {
+            rule_id: 'rule-unverified',
+            node_type: 'scoring',
+            normalized_statement: '未確認の得点ルールです。',
+            reference_kind: 'mentions',
+            verification_status: 'unknown',
+          },
+          {
+            rule_id: 'rule-verified',
+            node_type: 'scoring',
+            normalized_statement: '確認済みの得点ルールです。',
+            reference_kind: 'defines',
+            verification_status: 'verified',
+          },
+        ],
+      },
+    ],
+  })
+  await page.goto('/games/glossary-test#rules')
+
+  const glossary = page.locator('[aria-label="用語集"]')
+  await glossary.getByRole('button', { name: '得点', exact: true }).click()
+
+  await expect(glossary.getByText('確認済みの得点ルールです。', { exact: true })).toBeVisible()
+  await expect(glossary.getByText('未確認の得点ルールです。', { exact: true })).toHaveCount(0)
+})
+
+test('関連ルールが未確認だけなら未確認文を隠して状態を明示する', async ({ page }) => {
+  await mockGameAndGlossary(page, {
+    status: 'available',
+    entries: [
+      {
+        concept_id: 'scoring',
+        label: '得点',
+        definition: 'ゲームの得点に関する用語です。',
+        aliases: [],
+        rule_references: [
+          {
+            rule_id: 'rule-unverified',
+            node_type: 'scoring',
+            normalized_statement: '未確認の得点ルールです。',
+            reference_kind: 'mentions',
+            verification_status: 'unknown',
+          },
+        ],
+      },
+    ],
+  })
+  await page.goto('/games/glossary-test#rules')
+
+  const glossary = page.locator('[aria-label="用語集"]')
+  await glossary.getByRole('button', { name: '得点', exact: true }).click()
+
+  await expect(glossary.getByText('未確認の得点ルールです。', { exact: true })).toHaveCount(0)
+  await expect(glossary.getByText('確認済みの関連ルールはありません。', { exact: true })).toBeVisible()
+})
