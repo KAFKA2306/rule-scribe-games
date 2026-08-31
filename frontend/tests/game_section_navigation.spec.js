@@ -17,7 +17,7 @@ const game = {
   source_url: 'https://example.com/big-shot-source',
   source_trust: 'third_party',
   content_review_status: 'review_required',
-  rules_content: '# Big Shot Rules\n\n## 準備\n\n開始資金を受け取ります。\n\n## ゲームの流れ\n\n競りを行い、土地を獲得します。\n\n## 得点\n\n獲得した土地から得点を計算します。0ビッドの場合は得点計算が変わります。\n\n## 2人プレイ\n\n2人用の条件を確認します。\n\n## 特殊カード\n\nMermaid、Skull King、Pirateが同じトリックに出た場合の裁定を確認します。',
+  rules_content: '# Big Shot Rules\n\n## 準備\n\n開始資金を受け取ります。\n\n## ゲームの流れ\n\n競りを行い、土地を獲得します。\n\n## 得点\n\n獲得した土地から得点を計算します。0ビッドの場合は得点計算が変わります。\n\n## 2人プレイ\n\n2人用の条件を確認します。\n\n## 特殊カード\n\nMermaid、Skull King、Pirateが同じトリックに出た場合の裁定を確認します。\n\n## 長い裁定\n\nこの段落は検索結果の先頭だけを表示すると一致理由が見えないケースを再現するためのテスト用文章です。前提や背景の説明が長く続き、利用者が探している語が本文の後半に現れる状況を作ります。さらに検索対象とは直接関係しない説明を追加して、従来の140文字固定snippetでは一致箇所が見えない長さにします。Graybeardに関する確認事項はこの文にあります。',
   structured_data: {
     strategy_analysis: '## Strategy\n\n資金効率を優先します。',
     persona_reviews: [{ persona: '慎重派', rating: 8, review_text: '資金管理が重要です。' }],
@@ -167,6 +167,19 @@ test('ルール本文を検索し、結果からcanonical fragmentへ移動で�
 
   await expect(page).toHaveURL(/#rule-%E7%89%B9%E6%AE%8A%E3%82%AB%E3%83%BC%E3%83%89$/)
   await expect(page.getByRole('heading', { name: '特殊カード', exact: true })).toBeFocused()
+})
+
+test('検索語が長いsectionの後半にあっても、一致箇所をsnippetへ表示する', async ({ page }) => {
+  await mockGameApi(page)
+  await page.goto('/games/big-shot#rules')
+
+  const lookup = page.getByRole('region', { name: 'ルール内を検索' })
+  await lookup.getByRole('searchbox', { name: '裁定・用語を入力' }).fill('Graybeard')
+
+  await expect(lookup.getByRole('status')).toContainText('1件見つかりました')
+  const result = lookup.getByRole('link', { name: '長い裁定', exact: true })
+  await expect(result).toBeVisible()
+  await expect(result.locator('..')).toContainText('Graybeard')
 })
 
 test('0ビッドと2人の検索は対応sectionだけを返し、検索語をURLへ保存しない', async ({ page }) => {

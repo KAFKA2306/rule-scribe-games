@@ -119,8 +119,20 @@ function searchSections(sections, query) {
   return sections.filter((section) => tokens.every((token) => section.searchText.includes(token)))
 }
 
-function resultSnippet(section) {
+function resultSnippet(section, query) {
   if (!section.body) return 'この見出しへ移動します。'
+
+  const tokens = normalizeSearchText(query).split(' ').filter(Boolean)
+  const sentences = section.body.match(/[^。！？!?]+[。！？!?]?/gu) || [section.body]
+  const matchedSentences = sentences.filter((sentence) => {
+    const normalizedSentence = normalizeSearchText(sentence)
+    return tokens.some((token) => normalizedSentence.includes(token))
+  })
+
+  if (matchedSentences.length > 0) {
+    return matchedSentences.slice(0, 2).join(' ').trim()
+  }
+
   return section.body.length > 140 ? `${section.body.slice(0, 140)}…` : section.body
 }
 
@@ -181,7 +193,7 @@ function RuleMarkdown({ markdown = '' }) {
                     {results.map((section) => (
                       <li key={section.id} style={{ marginBlock: '0.6rem' }}>
                         <a href={`#${section.id}`}><strong>{section.label}</strong></a>
-                        <div style={{ marginTop: '0.2rem' }}>{resultSnippet(section)}</div>
+                        <div style={{ marginTop: '0.2rem' }}>{resultSnippet(section, query)}</div>
                       </li>
                     ))}
                   </ul>
