@@ -17,7 +17,7 @@ const game = {
   source_url: 'https://example.com/big-shot-source',
   source_trust: 'third_party',
   content_review_status: 'review_required',
-  rules_content: '# Big Shot Rules\n\n## ゲームの流れ\n\n競りを行い、土地を獲得します。',
+  rules_content: '# Big Shot Rules\n\n## 準備\n\n開始資金を受け取ります。\n\n## ゲームの流れ\n\n競りを行い、土地を獲得します。\n\n## 得点\n\n獲得した土地から得点を計算します。\n\n## 2人プレイ\n\n2人用の条件を確認します。',
   structured_data: {
     strategy_analysis: '## Strategy\n\n資金効率を優先します。',
     persona_reviews: [{ persona: '慎重派', rating: 8, review_text: '資金管理が重要です。' }],
@@ -120,4 +120,34 @@ test('connections fragmentから関連ゲーム取得を開始する', async ({ 
   await expect(page.getByRole('button', { name: '関連ゲーム', exact: true })).toHaveAttribute('aria-pressed', 'true')
   await expect(page.getByText('正準Concept上の関連ゲームはまだ登録されていません。')).toBeVisible()
   expect(connectionRequests).toBe(1)
+})
+
+test('詳細ルール見出しへdirect loadでき、見出し一覧から同じfragmentへ移動できる', async ({ page }) => {
+  await mockGameApi(page)
+  await page.goto('/games/big-shot#rule-%E5%BE%97%E7%82%B9')
+
+  const rules = page.getByRole('button', { name: '詳しいルール', exact: true })
+  const scoreHeading = page.getByRole('heading', { name: '得点', exact: true })
+
+  await expect(rules).toHaveAttribute('aria-pressed', 'true')
+  await expect(scoreHeading).toHaveAttribute('id', 'rule-得点')
+  await expect(scoreHeading).toBeFocused()
+
+  await page.getByRole('link', { name: '2人プレイ', exact: true }).click()
+  await expect(page).toHaveURL(/#rule-/)
+  const twoPlayerHeading = page.getByRole('heading', { name: '2人プレイ', exact: true })
+  await expect(twoPlayerHeading).toHaveAttribute('id', 'rule-2人プレイ')
+  await expect(twoPlayerHeading).toBeFocused()
+})
+
+test('375pxでも詳細ルール見出しへ1回のsection link操作で移動できる', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 812 })
+  await mockGameApi(page)
+  await page.goto('/games/big-shot#rules')
+
+  const sectionNav = page.getByRole('navigation', { name: 'ルール内の見出し' })
+  await expect(sectionNav).toBeVisible()
+  await sectionNav.getByRole('link', { name: 'ゲームの流れ', exact: true }).click()
+
+  await expect(page.getByRole('heading', { name: 'ゲームの流れ', exact: true })).toBeFocused()
 })
