@@ -9,6 +9,7 @@ from app.scripts.verify_production_contract import (
     indexability_reasons,
     validate_anonymous_catalog_patch_status,
     validate_mechanical_dna_payload,
+    validate_public_cache_observation,
     validate_source_bound_glossary_payload,
 )
 
@@ -106,6 +107,21 @@ def test_validate_source_bound_glossary_payload_requires_current_ruleset_and_sou
 
     with pytest.raises(ValueError, match=missing_field):
         validate_source_bound_glossary_payload(payload)
+
+
+def test_validate_public_cache_observation_accepts_second_request_hit():
+    validate_public_cache_observation(200, 200, b'{"slug":"skull-king"}', b'{"slug":"skull-king"}', "HIT")
+
+
+@pytest.mark.parametrize("cache_status", [None, "MISS", "BYPASS", "STALE"])
+def test_validate_public_cache_observation_requires_actual_second_request_hit(cache_status):
+    with pytest.raises(ValueError, match="did not hit Vercel CDN"):
+        validate_public_cache_observation(200, 200, b"same", b"same", cache_status)
+
+
+def test_validate_public_cache_observation_rejects_changed_body():
+    with pytest.raises(ValueError, match="different response bodies"):
+        validate_public_cache_observation(200, 200, b"first", b"second", "HIT")
 
 
 @pytest.mark.parametrize("status_code", [401, 403])
