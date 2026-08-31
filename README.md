@@ -12,7 +12,7 @@ https://bodoge-no-mikata.vercel.app/
   ### **The Infinite Intelligence for Board Gamers**
   **「世界中のボードゲームのルールを、瞬時に、正確に、その手に」。**
 
-  [![Vercel](https://img.shields.io/badge/Vercel-Deployed-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://rule-scribe-games.vercel.app)
+  [![Vercel](https://img.shields.io/badge/Vercel-Deployed-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://bodoge-no-mikata.vercel.app/)
   [![License: MIT](https://img.shields.io/badge/License-MIT-005CB9?style=for-the-badge&logo=github)](https://opensource.org/licenses/MIT)
   [![Python](https://img.shields.io/badge/Python-3.11-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
   [![React](https://img.shields.io/badge/React-18.x-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://reactjs.org/)
