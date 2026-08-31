@@ -162,7 +162,7 @@ test('game detail saves canonical game id to selected custom list with bearer to
   await page.goto('/games/game-one')
   await expect(page.getByRole('button', { name: 'リストに保存' })).toBeVisible()
   await page.getByRole('button', { name: 'リストに保存' }).click()
-  await expect(page.getByRole('status', { name: '保存しました' })).toBeVisible()
+  await expect(page.getByText('保存しました', { exact: true })).toBeVisible()
   expect(saved).toBe(true)
 })
 
