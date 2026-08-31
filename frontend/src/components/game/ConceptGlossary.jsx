@@ -2,13 +2,6 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '../../lib/api'
 
-const PRESENTATION_SECTION_HASHES = {
-  setup: '#rule-セットアップ',
-  game_flow: '#rule-ゲーム進行',
-  end_condition: '#rule-終了条件勝利',
-  scoring: '#rule-得点',
-}
-
 function normalizeSearchText(value) {
   return String(value || '')
     .normalize('NFKC')
@@ -21,21 +14,40 @@ function isVerifiedRuleReference(reference) {
   return reference?.verification_status === 'source_bound' || reference?.verification_status === 'verified'
 }
 
-function projectionRuleDestinations(projection) {
-  if (projection?.status !== 'available') return {}
+function ruleNodeFragment(ruleId) {
+  return `#rule-node-${encodeURIComponent(ruleId)}`
+}
 
+function projectionRuleDestinations(projection, references) {
+  if (projection?.status !== 'available') return { destinations: {}, ruleNodes: [] }
+
+  const referenceKeys = new Set(
+    references.map((reference) => `${reference.rule_set_id}:${reference.rule_id}`),
+  )
   const destinations = {}
-  Object.entries(PRESENTATION_SECTION_HASHES).forEach(([sectionKey, hash]) => {
+  const ruleNodes = []
+
+  ;['setup', 'game_flow', 'end_condition', 'scoring'].forEach((sectionKey) => {
     const section = projection?.[sectionKey]
     if (section?.status !== 'available') return
     ;(section.items || []).forEach((item) => {
-      if (item?.rule_id) destinations[`${projection.rule_set_id}:${item.rule_id}`] = hash
+      if (!item?.rule_id) return
+      const key = `${projection.rule_set_id}:${item.rule_id}`
+      if (!referenceKeys.has(key)) return
+      destinations[key] = ruleNodeFragment(item.rule_id)
+      ruleNodes.push({
+        rule_set_id: projection.rule_set_id,
+        rule_id: item.rule_id,
+        text: item.text,
+        section_key: sectionKey,
+      })
     })
   })
-  return destinations
+
+  return { destinations, ruleNodes }
 }
 
-export function ConceptGlossary({ slug }) {
+export function ConceptGlossary({ slug, onRuleNodesLoaded }) {
   const [entries, setEntries] = useState([])
   const [query, setQuery] = useState('')
   const [selectedId, setSelectedId] = useState(null)
@@ -90,15 +102,18 @@ export function ConceptGlossary({ slug }) {
   )
 
   const loadRuleDestinations = async (entry) => {
+    const references = (entry?.rule_references || []).filter(isVerifiedRuleReference)
     const ruleSetIds = [
       ...new Set(
-        (entry?.rule_references || [])
-          .filter(isVerifiedRuleReference)
+        references
           .map((reference) => reference.rule_set_id)
           .filter(Boolean),
       ),
     ]
-    if (ruleSetIds.length === 0) return
+    if (ruleSetIds.length === 0) {
+      onRuleNodesLoaded?.([])
+      return
+    }
 
     try {
       const projections = await Promise.all(
@@ -106,10 +121,13 @@ export function ConceptGlossary({ slug }) {
           `/api/games/${slug}/presentation?rule_set_id=${encodeURIComponent(ruleSetId)}&language_code=ja`,
         )),
       )
-      setRuleDestinations(Object.assign({}, ...projections.map(projectionRuleDestinations)))
+      const resolved = projections.map((projection) => projectionRuleDestinations(projection, references))
+      setRuleDestinations(Object.assign({}, ...resolved.map((item) => item.destinations)))
+      onRuleNodesLoaded?.(resolved.flatMap((item) => item.ruleNodes))
     } catch {
       setRuleDestinations({})
       setPresentationError(true)
+      onRuleNodesLoaded?.([])
     }
   }
 
@@ -120,6 +138,7 @@ export function ConceptGlossary({ slug }) {
       setDetailError(false)
       setRuleDestinations({})
       setPresentationError(false)
+      onRuleNodesLoaded?.([])
       return
     }
     setSelectedId(conceptId)
@@ -127,6 +146,7 @@ export function ConceptGlossary({ slug }) {
     setDetailError(false)
     setRuleDestinations({})
     setPresentationError(false)
+    onRuleNodesLoaded?.([])
 
     const entry = entries.find((item) => item.concept_id === conceptId)
     await loadRuleDestinations(entry)
