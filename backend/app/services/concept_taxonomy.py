@@ -74,7 +74,7 @@ class ConceptTaxonomyService:
                 label = next(iter(reference.preferred_labels.values()))
             if not label:
                 continue
-            aliases = reference.alternate_labels.get(language_code, [])
+            aliases = self._glossary_aliases(reference, language_code, label)
             entries.append(
                 GlossaryEntry(
                     concept_id=reference.concept_id,
@@ -88,6 +88,22 @@ class ConceptTaxonomyService:
         if not entries:
             return GameGlossaryReadResponse(status="not_available", **base)
         return GameGlossaryReadResponse(status="available", entries=entries, **base)
+
+    @staticmethod
+    def _glossary_aliases(reference: GameConceptReference, language_code: str, label: str) -> list[str]:
+        languages = [language_code]
+        if language_code.lower() != "en":
+            languages.append("en")
+
+        aliases: list[str] = []
+        for language in languages:
+            preferred = reference.preferred_labels.get(language)
+            if preferred and preferred != label and preferred not in aliases:
+                aliases.append(preferred)
+            for alternate in reference.alternate_labels.get(language, []):
+                if alternate != label and alternate not in aliases:
+                    aliases.append(alternate)
+        return aliases
 
     @classmethod
     def _load_concept(cls, concept_id: str) -> ConceptDetailResponse | None:
