@@ -24,3 +24,9 @@ jobs:
       - name: Build without production secrets
         working-directory: frontend
         run: npm run build
+      - name: Install Chromium for GamePage section navigation
+        working-directory: frontend
+        run: npx playwright install --with-deps chromium
+      - name: Verify GamePage section navigation
+        working-directory: frontend
+        run: npx playwright test tests/game_section_navigation.spec.js --project=chromium
