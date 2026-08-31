@@ -178,7 +178,12 @@ export function ConceptGlossary({ slug }) {
               <strong style={{ fontSize: '0.78rem' }}>このゲームでは</strong>
               {verifiedRuleReferences.map((reference) => (
                 <div key={`${reference.rule_id}-${reference.reference_kind}`} className="game-empty-note" style={{ marginTop: '6px' }}>
-                  {reference.normalized_statement}
+                  <div>{reference.normalized_statement}</div>
+                  {reference.source_url && (
+                    <a href={reference.source_url} target="_blank" rel="noreferrer" style={{ display: 'inline-block', marginTop: '4px' }}>
+                      出典を確認
+                    </a>
+                  )}
                 </div>
               ))}
             </div>
