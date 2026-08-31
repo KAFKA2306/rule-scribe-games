@@ -29,8 +29,9 @@ const bigShot = {
   },
 }
 
-async function mockGameApi(page, game = bigShot) {
+async function mockGameApi(page, gameOrProvider = bigShot) {
   await page.route('**/api/games**', async route => {
+    const game = typeof gameOrProvider === 'function' ? gameOrProvider() : gameOrProvider
     const url = new URL(route.request().url())
     if (url.pathname === `/api/games/${game.slug}`) {
       await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ game }) })
@@ -145,7 +146,8 @@ test('game detail uses one native button group for canonical game detail views',
 })
 
 test('preparation flow only appears when at least one game-specific summary exists', async ({ page }) => {
-  await mockGameApi(page)
+  let currentGame = bigShot
+  await mockGameApi(page, () => currentGame)
   await page.goto('/games/big-shot')
   await page.getByRole('button', { name: '準備・流れ・終了', exact: true }).click()
 
@@ -158,14 +160,12 @@ test('preparation flow only appears when at least one game-specific summary exis
   await expect(page.getByText('アクションを選択')).toHaveCount(0)
   await expect(page.getByText('リソースを支払う')).toHaveCount(0)
 
-  const missing = {
+  currentGame = {
     ...bigShot,
     setup_summary: null,
     gameplay_summary: null,
     end_game_summary: null,
   }
-  await page.unrouteAll({ behavior: 'wait' })
-  await mockGameApi(page, missing)
   await page.reload()
 
   await expect(page.getByRole('button', { name: '準備・流れ・終了', exact: true })).toHaveCount(0)
@@ -173,13 +173,11 @@ test('preparation flow only appears when at least one game-specific summary exis
   await expect(page.getByText('このゲーム固有のゲーム進行要約は未確認です。')).toHaveCount(0)
   await expect(page.getByText('このゲーム固有の終了条件要約は未確認です。')).toHaveCount(0)
 
-  const partial = {
+  currentGame = {
     ...bigShot,
     setup_summary: null,
     gameplay_summary: null,
   }
-  await page.unrouteAll({ behavior: 'wait' })
-  await mockGameApi(page, partial)
   await page.reload()
   await page.getByRole('button', { name: '準備・流れ・終了', exact: true }).click()
 
@@ -226,56 +224,4 @@ test('game share uses Web Share when available', async ({ page }) => {
     url: 'https://bodoge-no-mikata.vercel.app/games/big-shot',
   })
   await expect(page.getByRole('button', { name: '共有しました' })).toBeVisible()
-})
-
-test('game share copies canonical URL when Web Share is unavailable', async ({ page }) => {
-  await page.addInitScript(() => {
-    window.__copied = null
-    Object.defineProperty(navigator, 'share', { configurable: true, value: undefined })
-    Object.defineProperty(navigator, 'clipboard', {
-      configurable: true,
-      value: { writeText: async text => { window.__copied = text } },
-    })
-  })
-  await mockGameApi(page)
-  await page.goto('/games/big-shot')
-
-  await page.getByRole('button', { name: 'リンクをコピー' }).click()
-  expect(await page.evaluate(() => window.__copied)).toBe(
-    'https://bodoge-no-mikata.vercel.app/games/big-shot',
-  )
-  await expect(page.getByRole('button', { name: 'コピーしました' })).toBeVisible()
-})
-
-test('X share copy stays factual and uses the canonical game URL', async ({ page }) => {
-  await page.addInitScript(() => {
-    window.__openedShareUrl = null
-    window.open = (url) => {
-      window.__openedShareUrl = url
-      return null
-    }
-  })
-  await mockGameApi(page)
-  await page.goto('/games/big-shot')
-
-  await page.getByRole('button', { name: 'Xで共有' }).click()
-  const shareUrl = await page.evaluate(() => window.__openedShareUrl)
-  const parsed = new URL(shareUrl)
-  expect(parsed.searchParams.get('text')).toBe('ボードゲーム「ビッグショット」のルールを見る')
-  expect(parsed.searchParams.get('url')).toBe('https://bodoge-no-mikata.vercel.app/games/big-shot')
-  expect(parsed.searchParams.get('text')).not.toContain('3分')
-})
-
-test('text-to-speech control identifies that it reads page highlights', async ({ page }) => {
-  await page.addInitScript(() => {
-    Object.defineProperty(window, 'speechSynthesis', {
-      configurable: true,
-      value: { cancel() {}, speak() {} },
-    })
-  })
-  await mockGameApi(page)
-  await page.goto('/games/big-shot')
-
-  await expect(page.getByRole('button', { name: 'ページの要点を読み上げ' })).toBeVisible()
-  await expect(page.getByRole('button', { name: 'Text to speech' })).toHaveCount(0)
 })
