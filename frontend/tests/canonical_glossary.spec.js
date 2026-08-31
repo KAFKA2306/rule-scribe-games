@@ -212,3 +212,71 @@ test('関連ルールが未確認だけなら未確認文を隠して状態を�
   await expect(glossary.getByText('未確認の得点ルールです。', { exact: true })).toHaveCount(0)
   await expect(glossary.getByText('確認済みの関連ルールはありません。', { exact: true })).toBeVisible()
 })
+
+test('確認済みRuleNodeを同じRuleSetの正準Presentation Projectionから詳細ルールsectionへ移動できる', async ({ page }) => {
+  await page.route('**/api/games**', async route => {
+    const url = new URL(route.request().url())
+    if (url.pathname === '/api/games/glossary-test') {
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ game }) })
+      return
+    }
+    if (url.pathname === '/api/games/glossary-test/glossary') {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          status: 'available',
+          entries: [{
+            concept_id: 'scoring',
+            label: '得点',
+            definition: 'ゲームの得点に関する用語です。',
+            aliases: [],
+            rule_references: [{
+              rule_id: 'rule-verified',
+              node_type: 'scoring',
+              normalized_statement: '確認済みの得点ルールです。',
+              reference_kind: 'defines',
+              verification_status: 'source_bound',
+              rule_set_id: 'ruleset-current',
+              source_url: 'https://example.com/official-rulebook',
+            }],
+          }],
+        }),
+      })
+      return
+    }
+    if (url.pathname === '/api/games/glossary-test/presentation') {
+      expect(url.searchParams.get('rule_set_id')).toBe('ruleset-current')
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          status: 'available',
+          rule_set_id: 'ruleset-current',
+          setup: { status: 'not_available', items: [] },
+          game_flow: { status: 'not_available', items: [] },
+          end_condition: { status: 'not_available', items: [] },
+          scoring: { status: 'available', items: [{ rule_id: 'rule-verified', text: '確認済みの得点ルールです。' }] },
+        }),
+      })
+      return
+    }
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ games: [] }) })
+  })
+  await page.route('**/api/concepts/**', route => route.fulfill({
+    status: 200,
+    contentType: 'application/json',
+    body: JSON.stringify({ concept: {}, game_backlinks: [] }),
+  }))
+
+  await page.goto('/games/glossary-test#rules')
+  const glossary = page.locator('[aria-label="用語集"]')
+  await glossary.getByRole('button', { name: '得点', exact: true }).click()
+
+  const localLink = glossary.getByRole('link', { name: '詳しいルールで確認', exact: true })
+  await expect(localLink).toHaveAttribute('href', '#rule-得点')
+  await localLink.click()
+
+  await expect(page).toHaveURL(/#rule-%E5%BE%97%E7%82%B9$/)
+  await expect(page.getByRole('heading', { name: '得点', exact: true })).toBeFocused()
+})
