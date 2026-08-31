@@ -12,7 +12,11 @@ from urllib.request import Request, urlopen
 
 MECHANICAL_DNA_PATH = "/api/games/skull-king/connections?limit=8"
 SOURCE_BOUND_GLOSSARY_PATH = "/api/games/skull-king/glossary?language_code=ja"
-PUBLIC_GAME_CACHE_PATH = "/api/games/skull-king"
+PUBLIC_CACHE_PROBES = (
+    ("game_api", "/api/games/skull-king", "application/json"),
+    ("game_list_api", "/api/games?limit=100&offset=0", "application/json"),
+    ("indexable_game_page", "/games/splendor", "text/html"),
+)
 CATALOG_AUTH_PATH = "/api/games/splendor"
 PUBLIC_GAMES_PAGE_SIZE = 100
 SITEMAP_PATH = "/sitemap.xml"
@@ -287,16 +291,22 @@ def verify_anonymous_catalog_patch(base_url: str, timeout_seconds: float = 20.0)
     return status_code
 
 
-def verify_public_game_cache(base_url: str, timeout_seconds: float = 20.0) -> str:
+def verify_public_cache_path(
+    base_url: str,
+    path: str,
+    accept: str,
+    timeout_seconds: float = 20.0,
+) -> str:
     probe = uuid.uuid4().hex
-    url = f"{base_url.rstrip('/')}{PUBLIC_GAME_CACHE_PATH}?cache_probe={probe}"
+    separator = "&" if "?" in path else "?"
+    url = f"{base_url.rstrip('/')}{path}{separator}cache_probe={probe}"
     observations: list[tuple[int, bytes, str | None]] = []
 
     for _ in range(2):
         request = Request(
             url,
             headers={
-                "Accept": "application/json",
+                "Accept": accept,
                 "User-Agent": "rule-scribe-games-production-contract/1.0",
             },
         )
@@ -322,6 +332,13 @@ def verify_public_game_cache(base_url: str, timeout_seconds: float = 20.0) -> st
         second_cache_status,
     )
     return str(second_cache_status)
+
+
+def verify_public_read_caches(base_url: str, timeout_seconds: float = 20.0) -> dict[str, str]:
+    return {
+        name: verify_public_cache_path(base_url, path, accept, timeout_seconds)
+        for name, path, accept in PUBLIC_CACHE_PROBES
+    }
 
 
 def verify_search_indexability(base_url: str, timeout_seconds: float = 20.0) -> tuple[dict[str, Any], list[str]]:
@@ -390,7 +407,7 @@ def main() -> None:
 
     connection_count = verify_production(args.base_url, args.timeout_seconds)
     source_bound_glossary_references = verify_source_bound_glossary(args.base_url, args.timeout_seconds)
-    public_game_cache = verify_public_game_cache(args.base_url, args.timeout_seconds)
+    public_read_caches = verify_public_read_caches(args.base_url, args.timeout_seconds)
     auth_status = verify_anonymous_catalog_patch(args.base_url, args.timeout_seconds)
     indexability, current_slugs = verify_search_indexability(args.base_url, args.timeout_seconds)
     indexability.update(compare_indexability_state(current_slugs, args.previous_indexability_state))
@@ -402,7 +419,7 @@ def main() -> None:
         "Production API contracts: OK "
         f"(mechanical_dna_connections={connection_count}, "
         f"source_bound_glossary_references={source_bound_glossary_references}, "
-        f"public_game_cache={public_game_cache}, "
+        f"public_read_caches={json.dumps(public_read_caches, sort_keys=True)}, "
         f"anonymous_catalog_patch={auth_status})"
     )
     print(json.dumps({"search_indexability": indexability}, ensure_ascii=False, sort_keys=True))
