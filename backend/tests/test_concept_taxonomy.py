@@ -21,6 +21,7 @@ from app.models.concept_taxonomy import (
     validate_relation_set,
 )
 from app.routers import games
+from app.services.concept_taxonomy import ConceptTaxonomyReadError, ConceptTaxonomyService
 
 
 def concept(concept_id: str, labels: list[ConceptLabel], **kwargs) -> Concept:
@@ -175,6 +176,28 @@ def test_migration_declares_rule_node_concept_backlinks():
     assert "CREATE TABLE IF NOT EXISTS public.rule_node_concepts" in sql
     assert "FOREIGN KEY (rule_set_id, rule_id)" in sql
     assert "concept_labels_unique_normalized_per_language" in sql
+
+
+@pytest.mark.anyio
+async def test_concept_taxonomy_backend_failure_is_not_reported_as_missing_or_not_available(monkeypatch):
+    async def get_game(slug):
+        return {"id": "game-1", "slug": slug}
+
+    def fail_read(*args, **kwargs):
+        raise RuntimeError("backend disconnected")
+
+    monkeypatch.setattr("app.services.concept_taxonomy.supabase.get_by_slug", get_game)
+    monkeypatch.setattr("app.services.concept_taxonomy.supabase.is_local", lambda: False)
+    monkeypatch.setattr(ConceptTaxonomyService, "_load_concept", fail_read)
+    monkeypatch.setattr(ConceptTaxonomyService, "_load_game_concepts", fail_read)
+
+    service = ConceptTaxonomyService()
+    with pytest.raises(ConceptTaxonomyReadError, match="concept taxonomy backend failure"):
+        await service.get_concept("fixture.mechanic.trick")
+    with pytest.raises(ConceptTaxonomyReadError, match="concept projection backend failure"):
+        await service.get_by_game_slug("example")
+    with pytest.raises(ConceptTaxonomyReadError, match="glossary projection backend failure"):
+        await service.get_glossary_by_game_slug("example", language_code="ja")
 
 
 class FakeConceptService:
