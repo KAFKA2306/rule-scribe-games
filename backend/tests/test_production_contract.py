@@ -9,6 +9,7 @@ from app.scripts.verify_production_contract import (
     indexability_reasons,
     validate_anonymous_catalog_patch_status,
     validate_mechanical_dna_payload,
+    validate_source_bound_glossary_payload,
 )
 
 
@@ -58,6 +59,53 @@ def test_validate_mechanical_dna_payload_fails_closed(field, value):
 
     with pytest.raises(ValueError):
         validate_mechanical_dna_payload(payload)
+
+
+def test_validate_source_bound_glossary_payload_accepts_canonical_rule_reference():
+    payload = {
+        "status": "available",
+        "concepts": [
+            {
+                "display_label": "ビッド",
+                "rule_references": [
+                    {
+                        "verification_status": "source_bound",
+                        "rule_set_id": "current-rule-set",
+                        "source_url": "https://example.com/official-rules",
+                    }
+                ],
+            }
+        ],
+    }
+
+    assert validate_source_bound_glossary_payload(payload) == 1
+
+
+def test_validate_source_bound_glossary_payload_fails_when_rule_links_are_missing():
+    payload = {
+        "status": "available",
+        "concepts": [{"display_label": "ビッド", "rule_references": []}],
+    }
+
+    with pytest.raises(ValueError, match="no source-bound rule references"):
+        validate_source_bound_glossary_payload(payload)
+
+
+@pytest.mark.parametrize("missing_field", ["rule_set_id", "source_url"])
+def test_validate_source_bound_glossary_payload_requires_current_ruleset_and_source(missing_field):
+    reference = {
+        "verification_status": "source_bound",
+        "rule_set_id": "current-rule-set",
+        "source_url": "https://example.com/official-rules",
+    }
+    reference[missing_field] = ""
+    payload = {
+        "status": "available",
+        "concepts": [{"display_label": "ビッド", "rule_references": [reference]}],
+    }
+
+    with pytest.raises(ValueError, match=missing_field):
+        validate_source_bound_glossary_payload(payload)
 
 
 @pytest.mark.parametrize("status_code", [401, 403])
