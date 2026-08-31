@@ -46,15 +46,15 @@ def validate_source_bound_glossary_payload(payload: Any) -> int:
     if payload.get("status") != "available":
         raise ValueError(f"unexpected glossary status: {payload.get('status')!r}; expected 'available'")
 
-    concepts = payload.get("concepts")
-    if not isinstance(concepts, list):
-        raise ValueError("glossary concepts must be a JSON array")
+    entries = payload.get("entries")
+    if not isinstance(entries, list):
+        raise ValueError("glossary entries must be a JSON array")
 
     source_bound_references: list[dict[str, Any]] = []
-    for concept in concepts:
-        if not isinstance(concept, dict):
-            raise ValueError("glossary concepts must contain JSON objects")
-        references = concept.get("rule_references")
+    for entry in entries:
+        if not isinstance(entry, dict):
+            raise ValueError("glossary entries must contain JSON objects")
+        references = entry.get("rule_references")
         if not isinstance(references, list):
             raise ValueError("glossary rule_references must be a JSON array")
         for reference in references:
