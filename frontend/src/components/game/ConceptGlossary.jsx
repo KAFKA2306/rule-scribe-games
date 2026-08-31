@@ -2,6 +2,13 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '../../lib/api'
 
+const PRESENTATION_SECTION_HASHES = {
+  setup: '#rule-セットアップ',
+  game_flow: '#rule-ゲーム進行',
+  end_condition: '#rule-終了条件勝利',
+  scoring: '#rule-得点',
+}
+
 function normalizeSearchText(value) {
   return String(value || '')
     .normalize('NFKC')
@@ -14,6 +21,20 @@ function isVerifiedRuleReference(reference) {
   return reference?.verification_status === 'source_bound' || reference?.verification_status === 'verified'
 }
 
+function projectionRuleDestinations(projection) {
+  if (projection?.status !== 'available') return {}
+
+  const destinations = {}
+  Object.entries(PRESENTATION_SECTION_HASHES).forEach(([sectionKey, hash]) => {
+    const section = projection?.[sectionKey]
+    if (section?.status !== 'available') return
+    ;(section.items || []).forEach((item) => {
+      if (item?.rule_id) destinations[`${projection.rule_set_id}:${item.rule_id}`] = hash
+    })
+  })
+  return destinations
+}
+
 export function ConceptGlossary({ slug }) {
   const [entries, setEntries] = useState([])
   const [query, setQuery] = useState('')
@@ -22,6 +43,8 @@ export function ConceptGlossary({ slug }) {
   const [fetchStatus, setFetchStatus] = useState('loading')
   const [loadedSlug, setLoadedSlug] = useState(null)
   const [detailError, setDetailError] = useState(false)
+  const [ruleDestinations, setRuleDestinations] = useState({})
+  const [presentationError, setPresentationError] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -66,16 +89,48 @@ export function ConceptGlossary({ slug }) {
     [selected],
   )
 
+  const loadRuleDestinations = async (entry) => {
+    const ruleSetIds = [
+      ...new Set(
+        (entry?.rule_references || [])
+          .filter(isVerifiedRuleReference)
+          .map((reference) => reference.rule_set_id)
+          .filter(Boolean),
+      ),
+    ]
+    if (ruleSetIds.length === 0) return
+
+    try {
+      const projections = await Promise.all(
+        ruleSetIds.map((ruleSetId) => api.get(
+          `/api/games/${slug}/presentation?rule_set_id=${encodeURIComponent(ruleSetId)}&language_code=ja`,
+        )),
+      )
+      setRuleDestinations(Object.assign({}, ...projections.map(projectionRuleDestinations)))
+    } catch {
+      setRuleDestinations({})
+      setPresentationError(true)
+    }
+  }
+
   const selectConcept = async (conceptId) => {
     if (selectedId === conceptId) {
       setSelectedId(null)
       setDetail(null)
       setDetailError(false)
+      setRuleDestinations({})
+      setPresentationError(false)
       return
     }
     setSelectedId(conceptId)
     setDetail(null)
     setDetailError(false)
+    setRuleDestinations({})
+    setPresentationError(false)
+
+    const entry = entries.find((item) => item.concept_id === conceptId)
+    await loadRuleDestinations(entry)
+
     try {
       const response = await api.get(`/api/concepts/${encodeURIComponent(conceptId)}`)
       setDetail(response)
@@ -176,24 +231,41 @@ export function ConceptGlossary({ slug }) {
           {verifiedRuleReferences.length > 0 && (
             <div style={{ marginTop: '0.75rem' }}>
               <strong style={{ fontSize: '0.78rem' }}>このゲームでは</strong>
-              {verifiedRuleReferences.map((reference) => (
-                <div key={`${reference.rule_id}-${reference.reference_kind}`} className="game-empty-note" style={{ marginTop: '6px' }}>
-                  {reference.player_count && (
-                    <div style={{ fontWeight: 700, marginBottom: '2px' }}>{reference.player_count}人用</div>
-                  )}
-                  <div>{reference.normalized_statement}</div>
-                  {reference.source_url && (
-                    <a href={reference.source_url} target="_blank" rel="noreferrer" style={{ display: 'inline-block', marginTop: '4px' }}>
-                      出典を確認
-                    </a>
-                  )}
-                </div>
-              ))}
+              {verifiedRuleReferences.map((reference) => {
+                const destination = ruleDestinations[`${reference.rule_set_id}:${reference.rule_id}`]
+                return (
+                  <div key={`${reference.rule_id}-${reference.reference_kind}`} className="game-empty-note" style={{ marginTop: '6px' }}>
+                    {reference.player_count && (
+                      <div style={{ fontWeight: 700, marginBottom: '2px' }}>{reference.player_count}人用</div>
+                    )}
+                    <div>{reference.normalized_statement}</div>
+                    {destination ? (
+                      <a href={destination} style={{ display: 'inline-block', marginTop: '4px', marginRight: '0.75rem' }}>
+                        詳しいルールで確認
+                      </a>
+                    ) : (
+                      <div className="game-empty-note" style={{ marginTop: '4px' }}>
+                        詳しいルール内の移動先は未確認です。
+                      </div>
+                    )}
+                    {reference.source_url && (
+                      <a href={reference.source_url} target="_blank" rel="noreferrer" style={{ display: 'inline-block', marginTop: '4px' }}>
+                        出典を確認
+                      </a>
+                    )}
+                  </div>
+                )
+              })}
             </div>
           )}
           {selected.rule_references?.length > 0 && verifiedRuleReferences.length === 0 && (
             <div className="game-empty-note" style={{ marginTop: '0.75rem' }}>
               確認済みの関連ルールはありません。
+            </div>
+          )}
+          {presentationError && (
+            <div className="game-empty-note" role="alert" style={{ marginTop: '0.75rem' }}>
+              詳しいルール内の移動先を取得できませんでした。
             </div>
           )}
           {detailError && (
