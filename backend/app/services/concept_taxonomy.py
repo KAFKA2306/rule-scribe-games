@@ -19,6 +19,10 @@ from app.models.concept_taxonomy import (
 logger = logging.getLogger("services.concept_taxonomy")
 
 
+class ConceptTaxonomyReadError(RuntimeError):
+    """Raised when canonical concept taxonomy data cannot be read safely."""
+
+
 class ConceptTaxonomyService:
     async def get_concept(self, concept_id: str) -> ConceptDetailResponse | None:
         if supabase.is_local():
@@ -26,8 +30,8 @@ class ConceptTaxonomyService:
         try:
             return await anyio.to_thread.run_sync(self._load_concept, concept_id)
         except Exception as exc:
-            logger.warning("Concept taxonomy unavailable for %s: %s", concept_id, exc)
-            return None
+            logger.exception("Concept taxonomy read failed for %s", concept_id)
+            raise ConceptTaxonomyReadError(f"concept taxonomy backend failure for {concept_id}") from exc
 
     async def get_by_game_slug(self, slug: str) -> GameConceptsReadResponse | None:
         game = await supabase.get_by_slug(slug)
@@ -39,8 +43,8 @@ class ConceptTaxonomyService:
         try:
             return await anyio.to_thread.run_sync(self._load_game_concepts, game, base)
         except Exception as exc:
-            logger.warning("Concept projection unavailable for %s: %s", slug, exc)
-            return GameConceptsReadResponse(status="not_available", **base)
+            logger.exception("Concept projection read failed for %s", slug)
+            raise ConceptTaxonomyReadError(f"concept projection backend failure for {slug}") from exc
 
     async def get_glossary_by_game_slug(self, slug: str, language_code: str = "ja") -> GameGlossaryReadResponse | None:
         game = await supabase.get_by_slug(slug)
@@ -60,8 +64,8 @@ class ConceptTaxonomyService:
                 {"game_id": base["game_id"], "slug": base["slug"]},
             )
         except Exception as exc:
-            logger.warning("Glossary projection unavailable for %s: %s", slug, exc)
-            return GameGlossaryReadResponse(status="not_available", **base)
+            logger.exception("Glossary projection read failed for %s", slug)
+            raise ConceptTaxonomyReadError(f"glossary projection backend failure for {slug}") from exc
 
         entries: list[GlossaryEntry] = []
         for reference in concepts.concepts:
