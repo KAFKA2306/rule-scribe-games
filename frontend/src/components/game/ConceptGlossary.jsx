@@ -10,6 +10,10 @@ function normalizeSearchText(value) {
     .trim()
 }
 
+function isVerifiedRuleReference(reference) {
+  return reference?.verification_status === 'source_bound' || reference?.verification_status === 'verified'
+}
+
 export function ConceptGlossary({ slug }) {
   const [entries, setEntries] = useState([])
   const [query, setQuery] = useState('')
@@ -56,6 +60,10 @@ export function ConceptGlossary({ slug }) {
   const selected = useMemo(
     () => entries.find((entry) => entry.concept_id === selectedId) || null,
     [entries, selectedId],
+  )
+  const verifiedRuleReferences = useMemo(
+    () => selected?.rule_references?.filter(isVerifiedRuleReference) || [],
+    [selected],
   )
 
   const selectConcept = async (conceptId) => {
@@ -165,14 +173,19 @@ export function ConceptGlossary({ slug }) {
               <div className="game-empty-note">{selected.related_concept_ids.join(' · ')}</div>
             </div>
           )}
-          {selected.rule_references?.length > 0 && (
+          {verifiedRuleReferences.length > 0 && (
             <div style={{ marginTop: '0.75rem' }}>
               <strong style={{ fontSize: '0.78rem' }}>このゲームでは</strong>
-              {selected.rule_references.map((reference) => (
+              {verifiedRuleReferences.map((reference) => (
                 <div key={`${reference.rule_id}-${reference.reference_kind}`} className="game-empty-note" style={{ marginTop: '6px' }}>
                   {reference.normalized_statement}
                 </div>
               ))}
+            </div>
+          )}
+          {selected.rule_references?.length > 0 && verifiedRuleReferences.length === 0 && (
+            <div className="game-empty-note" style={{ marginTop: '0.75rem' }}>
+              確認済みの関連ルールはありません。
             </div>
           )}
           {detailError && (
