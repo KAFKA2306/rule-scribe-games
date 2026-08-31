@@ -40,7 +40,7 @@ test('正準用語集が未整備なら旧keywordsへ戻らず未整備を明示
   await page.goto('/games/glossary-test#rules')
 
   const glossary = page.locator('[aria-label="用語集"]')
-  await expect(glossary.getByRole('status')).toHaveText('用語集の正準データは未整備です。')
+  await expect(glossary.getByText('用語集の正準データは未整備です。', { exact: true })).toBeVisible()
   await expect(page.getByText('旧データの用語')).toHaveCount(0)
 })
 
@@ -60,7 +60,7 @@ test('正準用語集の取得失敗を旧keywordsで隠さず明示する', asy
 
   await page.goto('/games/glossary-test#rules')
   const glossary = page.locator('[aria-label="用語集"]')
-  await expect(glossary.getByRole('status')).toHaveText('用語集の正準データを取得できませんでした。')
+  await expect(glossary.getByRole('alert')).toHaveText('用語集の正準データを取得できませんでした。')
   await expect(page.getByText('旧データの用語')).toHaveCount(0)
 })
 
