@@ -64,9 +64,9 @@ def test_validate_mechanical_dna_payload_fails_closed(field, value):
 def test_validate_source_bound_glossary_payload_accepts_canonical_rule_reference():
     payload = {
         "status": "available",
-        "concepts": [
+        "entries": [
             {
-                "display_label": "ビッド",
+                "label": "ビッド",
                 "rule_references": [
                     {
                         "verification_status": "source_bound",
@@ -84,7 +84,7 @@ def test_validate_source_bound_glossary_payload_accepts_canonical_rule_reference
 def test_validate_source_bound_glossary_payload_fails_when_rule_links_are_missing():
     payload = {
         "status": "available",
-        "concepts": [{"display_label": "ビッド", "rule_references": []}],
+        "entries": [{"label": "ビッド", "rule_references": []}],
     }
 
     with pytest.raises(ValueError, match="no source-bound rule references"):
@@ -101,7 +101,7 @@ def test_validate_source_bound_glossary_payload_requires_current_ruleset_and_sou
     reference[missing_field] = ""
     payload = {
         "status": "available",
-        "concepts": [{"display_label": "ビッド", "rule_references": [reference]}],
+        "entries": [{"label": "ビッド", "rule_references": [reference]}],
     }
 
     with pytest.raises(ValueError, match=missing_field):
