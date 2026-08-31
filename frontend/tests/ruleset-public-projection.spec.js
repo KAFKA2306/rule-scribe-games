@@ -39,7 +39,7 @@ test('RuleSetがないゲームでは未確認ルールを補完しない', asyn
 
   await page.goto('/games/minna-de-ponkotsu-paint')
 
-  await expect(page.getByRole('heading', { name: 'みんなでぽんこつペイント' })).toBeVisible()
+  await expect(page.locator('h1.game-title')).toHaveText('みんなでぽんこつペイント')
   await expect(page.getByText('「みんなでぽんこつペイント」のゲーム概要', { exact: true })).toBeVisible()
   await expect(page.getByText('公式ルール確認済み', { exact: true })).toHaveCount(0)
   await expect(page.getByText('ルールを質問', { exact: true })).toHaveCount(0)
@@ -68,7 +68,7 @@ test('RuleSetがあるゲームでもfrontend独自ルールを重ねない', as
 
   await page.goto('/games/splendor')
 
-  await expect(page.getByRole('heading', { name: '宝石の煌き' })).toBeVisible()
+  await expect(page.locator('h1.game-title')).toHaveText('宝石の煌き')
   await expect(page.getByText('公開RuleSetに基づくルール。', { exact: true })).toBeVisible()
   await expect(page.getByText('30秒でわかる「宝石の煌き」', { exact: true })).toHaveCount(0)
   await expect(page.getByText('公式ルール確認済み', { exact: true })).toHaveCount(0)
