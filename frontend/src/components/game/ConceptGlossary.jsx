@@ -6,28 +6,27 @@ export function ConceptGlossary({ slug }) {
   const [entries, setEntries] = useState([])
   const [selectedId, setSelectedId] = useState(null)
   const [detail, setDetail] = useState(null)
-  const [status, setStatus] = useState('loading')
+  const [fetchStatus, setFetchStatus] = useState('loading')
+  const [loadedSlug, setLoadedSlug] = useState(null)
   const [detailError, setDetailError] = useState(false)
 
   useEffect(() => {
     let cancelled = false
-    setStatus('loading')
-    setEntries([])
-    setSelectedId(null)
-    setDetail(null)
-    setDetailError(false)
 
     api.get(`/api/games/${slug}/glossary?language_code=ja`)
       .then((data) => {
         if (cancelled) return
         const available = data?.status === 'available' && data.entries?.length > 0
         setEntries(available ? data.entries : [])
-        setStatus(available ? 'available' : 'unavailable')
+        setFetchStatus(available ? 'available' : 'unavailable')
+        setLoadedSlug(slug)
       })
       .catch((err) => {
         console.error('Failed to fetch canonical glossary:', err)
         if (cancelled) return
-        setStatus('error')
+        setEntries([])
+        setFetchStatus('error')
+        setLoadedSlug(slug)
       })
 
     return () => { cancelled = true }
@@ -57,7 +56,7 @@ export function ConceptGlossary({ slug }) {
     }
   }
 
-  if (status === 'loading') {
+  if (loadedSlug !== slug) {
     return (
       <div className="pro-card" aria-label="用語集">
         <div className="pro-card-title">GLOSSARY</div>
@@ -66,7 +65,7 @@ export function ConceptGlossary({ slug }) {
     )
   }
 
-  if (status === 'error') {
+  if (fetchStatus === 'error') {
     return (
       <div className="pro-card" aria-label="用語集">
         <div className="pro-card-title">GLOSSARY</div>
@@ -75,7 +74,7 @@ export function ConceptGlossary({ slug }) {
     )
   }
 
-  if (status === 'unavailable') {
+  if (fetchStatus === 'unavailable') {
     return (
       <div className="pro-card" aria-label="用語集">
         <div className="pro-card-title">GLOSSARY</div>
