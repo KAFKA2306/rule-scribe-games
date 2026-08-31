@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import uuid
 import xml.etree.ElementTree as ET
 from collections import Counter
 from pathlib import Path
@@ -11,6 +12,7 @@ from urllib.request import Request, urlopen
 
 MECHANICAL_DNA_PATH = "/api/games/skull-king/connections?limit=8"
 SOURCE_BOUND_GLOSSARY_PATH = "/api/games/skull-king/glossary?language_code=ja"
+PUBLIC_GAME_CACHE_PATH = "/api/games/skull-king"
 CATALOG_AUTH_PATH = "/api/games/splendor"
 PUBLIC_GAMES_PAGE_SIZE = 100
 SITEMAP_PATH = "/sitemap.xml"
@@ -76,6 +78,27 @@ def validate_source_bound_glossary_payload(payload: Any) -> int:
             raise ValueError("source-bound glossary rule reference is missing source_url")
 
     return len(source_bound_references)
+
+
+def validate_public_cache_observation(
+    first_status: int,
+    second_status: int,
+    first_body: bytes,
+    second_body: bytes,
+    second_cache_status: str | None,
+) -> None:
+    if first_status != 200 or second_status != 200:
+        raise ValueError(
+            "public game cache probe must return HTTP 200 twice; "
+            f"received first={first_status}, second={second_status}"
+        )
+    if first_body != second_body:
+        raise ValueError("public game cache probe returned different response bodies")
+    if second_cache_status != "HIT":
+        raise ValueError(
+            "public game cache probe did not hit Vercel CDN on the second request; "
+            f"x-vercel-cache={second_cache_status!r}"
+        )
 
 
 def validate_anonymous_catalog_patch_status(status_code: int) -> None:
@@ -264,6 +287,43 @@ def verify_anonymous_catalog_patch(base_url: str, timeout_seconds: float = 20.0)
     return status_code
 
 
+def verify_public_game_cache(base_url: str, timeout_seconds: float = 20.0) -> str:
+    probe = uuid.uuid4().hex
+    url = f"{base_url.rstrip('/')}{PUBLIC_GAME_CACHE_PATH}?cache_probe={probe}"
+    observations: list[tuple[int, bytes, str | None]] = []
+
+    for _ in range(2):
+        request = Request(
+            url,
+            headers={
+                "Accept": "application/json",
+                "User-Agent": "rule-scribe-games-production-contract/1.0",
+            },
+        )
+        try:
+            with urlopen(request, timeout=timeout_seconds) as response:  # noqa: S310
+                observations.append(
+                    (
+                        response.status,
+                        response.read(),
+                        response.headers.get("X-Vercel-Cache"),
+                    )
+                )
+        except HTTPError as exc:
+            observations.append((exc.code, exc.read(), exc.headers.get("X-Vercel-Cache")))
+
+    first_status, first_body, _ = observations[0]
+    second_status, second_body, second_cache_status = observations[1]
+    validate_public_cache_observation(
+        first_status,
+        second_status,
+        first_body,
+        second_body,
+        second_cache_status,
+    )
+    return str(second_cache_status)
+
+
 def verify_search_indexability(base_url: str, timeout_seconds: float = 20.0) -> tuple[dict[str, Any], list[str]]:
     games = fetch_public_games(base_url, timeout_seconds)
 
@@ -330,6 +390,7 @@ def main() -> None:
 
     connection_count = verify_production(args.base_url, args.timeout_seconds)
     source_bound_glossary_references = verify_source_bound_glossary(args.base_url, args.timeout_seconds)
+    public_game_cache = verify_public_game_cache(args.base_url, args.timeout_seconds)
     auth_status = verify_anonymous_catalog_patch(args.base_url, args.timeout_seconds)
     indexability, current_slugs = verify_search_indexability(args.base_url, args.timeout_seconds)
     indexability.update(compare_indexability_state(current_slugs, args.previous_indexability_state))
@@ -341,6 +402,7 @@ def main() -> None:
         "Production API contracts: OK "
         f"(mechanical_dna_connections={connection_count}, "
         f"source_bound_glossary_references={source_bound_glossary_references}, "
+        f"public_game_cache={public_game_cache}, "
         f"anonymous_catalog_patch={auth_status})"
     )
     print(json.dumps({"search_indexability": indexability}, ensure_ascii=False, sort_keys=True))
