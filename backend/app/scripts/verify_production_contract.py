@@ -10,6 +10,7 @@ from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
 MECHANICAL_DNA_PATH = "/api/games/skull-king/connections?limit=8"
+SOURCE_BOUND_GLOSSARY_PATH = "/api/games/skull-king/glossary?language_code=ja"
 CATALOG_AUTH_PATH = "/api/games/splendor"
 PUBLIC_GAMES_PAGE_SIZE = 100
 SITEMAP_PATH = "/sitemap.xml"
@@ -37,6 +38,44 @@ def validate_mechanical_dna_payload(payload: Any) -> int:
         raise ValueError("connections must be a JSON array")
 
     return len(connections)
+
+
+def validate_source_bound_glossary_payload(payload: Any) -> int:
+    if not isinstance(payload, dict):
+        raise ValueError("Glossary response must be a JSON object")
+    if payload.get("status") != "available":
+        raise ValueError(f"unexpected glossary status: {payload.get('status')!r}; expected 'available'")
+
+    concepts = payload.get("concepts")
+    if not isinstance(concepts, list):
+        raise ValueError("glossary concepts must be a JSON array")
+
+    source_bound_references: list[dict[str, Any]] = []
+    for concept in concepts:
+        if not isinstance(concept, dict):
+            raise ValueError("glossary concepts must contain JSON objects")
+        references = concept.get("rule_references")
+        if not isinstance(references, list):
+            raise ValueError("glossary rule_references must be a JSON array")
+        for reference in references:
+            if not isinstance(reference, dict):
+                raise ValueError("glossary rule_references must contain JSON objects")
+            if reference.get("verification_status") == "source_bound":
+                source_bound_references.append(reference)
+
+    if not source_bound_references:
+        raise ValueError(
+            "production glossary has no source-bound rule references; "
+            "canonical RuleSet data may be missing or migrations may not be applied"
+        )
+
+    for reference in source_bound_references:
+        if not str(reference.get("rule_set_id") or "").strip():
+            raise ValueError("source-bound glossary rule reference is missing rule_set_id")
+        if not str(reference.get("source_url") or "").strip():
+            raise ValueError("source-bound glossary rule reference is missing source_url")
+
+    return len(source_bound_references)
 
 
 def validate_anonymous_catalog_patch_status(status_code: int) -> None:
@@ -270,6 +309,13 @@ def verify_production(base_url: str, timeout_seconds: float = 20.0) -> int:
     return validate_mechanical_dna_payload(payload)
 
 
+def verify_source_bound_glossary(base_url: str, timeout_seconds: float = 20.0) -> int:
+    status, body = _request(base_url, SOURCE_BOUND_GLOSSARY_PATH, timeout_seconds, "application/json")
+    if status != 200:
+        raise RuntimeError(f"source-bound glossary endpoint returned HTTP {status}")
+    return validate_source_bound_glossary_payload(json.loads(body))
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Verify canonical production API contracts")
     parser.add_argument(
@@ -283,6 +329,7 @@ def main() -> None:
     args = parser.parse_args()
 
     connection_count = verify_production(args.base_url, args.timeout_seconds)
+    source_bound_glossary_references = verify_source_bound_glossary(args.base_url, args.timeout_seconds)
     auth_status = verify_anonymous_catalog_patch(args.base_url, args.timeout_seconds)
     indexability, current_slugs = verify_search_indexability(args.base_url, args.timeout_seconds)
     indexability.update(compare_indexability_state(current_slugs, args.previous_indexability_state))
@@ -292,7 +339,9 @@ def main() -> None:
 
     print(
         "Production API contracts: OK "
-        f"(mechanical_dna_connections={connection_count}, anonymous_catalog_patch={auth_status})"
+        f"(mechanical_dna_connections={connection_count}, "
+        f"source_bound_glossary_references={source_bound_glossary_references}, "
+        f"anonymous_catalog_patch={auth_status})"
     )
     print(json.dumps({"search_indexability": indexability}, ensure_ascii=False, sort_keys=True))
 
