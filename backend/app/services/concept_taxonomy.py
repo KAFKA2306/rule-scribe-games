@@ -244,7 +244,7 @@ class ConceptTaxonomyService:
         for link in links:
             nodes = (
                 client.table("rule_nodes")
-                .select("rule_id,node_type,normalized_statement")
+                .select("rule_id,node_type,normalized_statement,source_url,source_locator")
                 .eq("rule_set_id", rule_set_id)
                 .eq("rule_id", link["rule_id"])
                 .limit(1)
@@ -261,6 +261,9 @@ class ConceptTaxonomyService:
                     normalized_statement=node["normalized_statement"],
                     reference_kind=link["reference_kind"],
                     verification_status=link.get("verification_status", "unknown"),
+                    rule_set_id=str(rule_set_id),
+                    source_url=node.get("source_url"),
+                    source_locator=node.get("source_locator"),
                 )
             )
         return references
