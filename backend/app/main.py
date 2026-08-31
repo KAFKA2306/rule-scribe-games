@@ -13,7 +13,7 @@ setup_logging()
 app = FastAPI(title="RuleScribe Minimal", version="1.0.0")
 
 PUBLIC_GAME_BROWSER_CACHE = "public, max-age=0, must-revalidate"
-PUBLIC_GAME_VERCEL_CDN_CACHE = "public, max-age=60, stale-while-revalidate=300"
+PUBLIC_GAME_VERCEL_CDN_CACHE = "public, s-maxage=60, stale-while-revalidate=300"
 
 
 def is_public_game_read_path(path: str) -> bool:
