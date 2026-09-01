@@ -15,7 +15,7 @@ jobs:
       github.event_name == 'workflow_dispatch' ||
       (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main')
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v5
         with:
@@ -28,3 +28,20 @@ jobs:
         env:
           PYTHONPATH: backend
         run: uv run python backend/app/scripts/curated_release_verification.py
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+      - name: Install Chromium
+        working-directory: frontend
+        run: npx playwright install --with-deps chromium
+      - name: Verify production rule lookup in Chromium
+        working-directory: frontend
+        env:
+          PLAYWRIGHT_BASE_URL: https://bodoge-no-mikata.vercel.app
+        run: npx playwright test tests/production_rule_lookup.spec.js --project=ux-mobile
