@@ -3,20 +3,24 @@ name: Presentation Projection contract
 on:
   pull_request:
     paths:
+      - "backend/app/core/read_retry.py"
       - "backend/app/models/presentation_projection.py"
       - "backend/app/services/presentation_projection.py"
       - "backend/app/routers/presentation.py"
       - "backend/app/main.py"
+      - "backend/tests/test_read_retry.py"
       - "backend/tests/test_presentation_projection.py"
       - "docs/PRESENTATION_PROJECTION_V1.md"
       - ".github/workflows/test-presentation-projection.yml"
   push:
     branches: [main]
     paths:
+      - "backend/app/core/read_retry.py"
       - "backend/app/models/presentation_projection.py"
       - "backend/app/services/presentation_projection.py"
       - "backend/app/routers/presentation.py"
       - "backend/app/main.py"
+      - "backend/tests/test_read_retry.py"
       - "backend/tests/test_presentation_projection.py"
       - "docs/PRESENTATION_PROJECTION_V1.md"
       - ".github/workflows/test-presentation-projection.yml"
@@ -40,6 +44,7 @@ jobs:
       - name: Compile projection modules
         run: >-
           uv run python -m compileall -q
+          backend/app/core/read_retry.py
           backend/app/models/presentation_projection.py
           backend/app/services/presentation_projection.py
           backend/app/routers/presentation.py
@@ -50,6 +55,7 @@ jobs:
           PYTHONPATH: backend
         run: >-
           uv run pytest -q
+          backend/tests/test_read_retry.py
           backend/tests/test_presentation_projection.py
           backend/tests/test_claim_evidence.py
           backend/tests/test_rule_graph.py
