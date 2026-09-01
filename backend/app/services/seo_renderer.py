@@ -137,30 +137,37 @@ async def _canonical_rule_text(slug: str) -> str | None:
 
 def _render_ruleset_identity(canonical_rules: str | None, game: dict) -> str:
     ruleset = getattr(canonical_rules, "ruleset", None)
-    if ruleset is None:
-        return ""
-
     facts: list[str] = []
-    if ruleset.edition_label:
-        facts.append(f"<p><strong>版:</strong> {html.escape(str(ruleset.edition_label))}</p>")
-    if ruleset.language_code:
-        facts.append(f"<p><strong>言語:</strong> {html.escape(str(ruleset.language_code))}</p>")
-    if ruleset.platform:
-        facts.append(f"<p><strong>プラットフォーム:</strong> {html.escape(str(ruleset.platform))}</p>")
-    revision = ruleset.revision_label or ruleset.source_revision
-    if revision:
-        facts.append(f"<p><strong>改訂:</strong> {html.escape(str(revision))}</p>")
 
-    source_url = game.get("source_url") if game.get("source_trust") == "official_publisher" else None
+    if ruleset is not None:
+        if ruleset.edition_label:
+            facts.append(f"<p><strong>版:</strong> {html.escape(str(ruleset.edition_label))}</p>")
+        if ruleset.language_code:
+            facts.append(f"<p><strong>言語:</strong> {html.escape(str(ruleset.language_code))}</p>")
+        if ruleset.platform:
+            facts.append(f"<p><strong>プラットフォーム:</strong> {html.escape(str(ruleset.platform))}</p>")
+        revision = ruleset.revision_label or ruleset.source_revision
+        if revision:
+            facts.append(f"<p><strong>改訂:</strong> {html.escape(str(revision))}</p>")
+
+    review_status = game.get("content_review_status")
+    if review_status:
+        facts.append(f"<p><strong>内容確認状態:</strong> {html.escape(str(review_status))}</p>")
+
+    source_trust = game.get("source_trust")
+    if source_trust:
+        facts.append(f"<p><strong>出典の信頼状態:</strong> {html.escape(str(source_trust))}</p>")
+
+    source_url = game.get("source_url")
     if isinstance(source_url, str) and source_url.startswith(("https://", "http://")):
         safe_url = html.escape(source_url, quote=True)
         facts.append(
-            f'<p><strong>一次資料:</strong> <a href="{safe_url}" rel="noopener noreferrer">出版社の公式ページ</a></p>'
+            f'<p><strong>登録済み出典:</strong> <a href="{safe_url}" rel="noopener noreferrer">出典を確認</a></p>'
         )
 
     if not facts:
         return ""
-    return "    <section>\n      <h2>このルール要約の対象</h2>\n      " + "\n      ".join(facts) + "\n    </section>\n"
+    return "    <section>\n      <h2>出典・確認状態</h2>\n      " + "\n      ".join(facts) + "\n    </section>\n"
 
 
 async def generate_seo_html(slug: str) -> str | None:
