@@ -4,7 +4,7 @@ from types import SimpleNamespace
 import pytest
 
 from app.services import seo_renderer
-from app.services.seo_renderer import _render_projection_rules
+from app.services.seo_renderer import CanonicalRuleText, _render_projection_rules, _render_ruleset_identity
 
 
 def _section(*texts: str):
@@ -30,6 +30,39 @@ def test_render_projection_rules_keeps_player_facing_sections():
     assert "## 終了条件・勝利" in rendered
     assert "- end rule" in rendered
     assert "## 得点" not in rendered
+
+
+def test_ruleset_identity_uses_canonical_ruleset_and_official_source_only():
+    ruleset = SimpleNamespace(
+        edition_label="Grandpa Beck's Games current edition",
+        language_code="en",
+        platform="physical",
+        revision_label="current-web-rulebook-1764178570",
+        source_revision=None,
+    )
+    canonical = CanonicalRuleText("## ゲーム進行\n- rule", ruleset)
+
+    rendered = _render_ruleset_identity(
+        canonical,
+        {
+            "source_url": "https://www.grandpabecksgames.com/pages/skull-king",
+            "source_trust": "official_publisher",
+        },
+    )
+
+    assert "このルール要約の対象" in rendered
+    assert "Grandpa Beck&#x27;s Games current edition" in rendered
+    assert "<strong>言語:</strong> en" in rendered
+    assert "<strong>プラットフォーム:</strong> physical" in rendered
+    assert "current-web-rulebook-1764178570" in rendered
+    assert 'href="https://www.grandpabecksgames.com/pages/skull-king"' in rendered
+    assert "出版社の公式ページ" in rendered
+
+    untrusted = _render_ruleset_identity(
+        canonical,
+        {"source_url": "https://example.invalid/rules", "source_trust": "community"},
+    )
+    assert "example.invalid" not in untrusted
 
 
 @pytest.mark.asyncio
