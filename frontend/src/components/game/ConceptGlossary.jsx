@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '../../lib/api'
+import { getGlossaryData, glossaryConceptFragment } from './glossaryData'
 
 function normalizeSearchText(value) {
   return String(value || '')
@@ -47,6 +48,17 @@ function projectionRuleDestinations(projection, references) {
   return { destinations, ruleNodes }
 }
 
+function conceptIdFromHash() {
+  if (typeof window === 'undefined') return null
+  const prefix = '#glossary-concept-'
+  if (!window.location.hash.startsWith(prefix)) return null
+  try {
+    return decodeURIComponent(window.location.hash.slice(prefix.length))
+  } catch {
+    return null
+  }
+}
+
 export function ConceptGlossary({ slug, onRuleNodesLoaded }) {
   const [entries, setEntries] = useState([])
   const [query, setQuery] = useState('')
@@ -61,7 +73,7 @@ export function ConceptGlossary({ slug, onRuleNodesLoaded }) {
   useEffect(() => {
     let cancelled = false
 
-    api.get(`/api/games/${slug}/glossary?language_code=ja`)
+    getGlossaryData(slug, 'ja')
       .then((data) => {
         if (cancelled) return
         const available = data?.status === 'available' && data.entries?.length > 0
@@ -159,6 +171,29 @@ export function ConceptGlossary({ slug, onRuleNodesLoaded }) {
     }
   }
 
+  useEffect(() => {
+    if (fetchStatus !== 'available') return undefined
+
+    const selectHashConcept = () => {
+      const conceptId = conceptIdFromHash()
+      if (!conceptId || !entries.some((entry) => entry.concept_id === conceptId)) return
+      if (selectedId !== conceptId) selectConcept(conceptId)
+      window.requestAnimationFrame(() => {
+        const target = document.getElementById(`glossary-concept-${conceptId}`)
+        target?.scrollIntoView({ block: 'center' })
+        target?.focus({ preventScroll: true })
+      })
+    }
+
+    selectHashConcept()
+    window.addEventListener('hashchange', selectHashConcept)
+    window.addEventListener('popstate', selectHashConcept)
+    return () => {
+      window.removeEventListener('hashchange', selectHashConcept)
+      window.removeEventListener('popstate', selectHashConcept)
+    }
+  }, [entries, fetchStatus, selectedId])
+
   if (loadedSlug !== slug) {
     return (
       <div className="pro-card" aria-label="用語集">
@@ -213,11 +248,12 @@ export function ConceptGlossary({ slug, onRuleNodesLoaded }) {
           {filteredEntries.map((entry) => (
             <button
               key={entry.concept_id}
+              id={`glossary-concept-${entry.concept_id}`}
               type="button"
               className="tag-item"
               aria-expanded={selectedId === entry.concept_id}
               onClick={() => selectConcept(entry.concept_id)}
-              style={{ cursor: 'pointer', font: 'inherit' }}
+              style={{ cursor: 'pointer', font: 'inherit', scrollMarginTop: '1rem' }}
             >
               {entry.label}
             </button>
