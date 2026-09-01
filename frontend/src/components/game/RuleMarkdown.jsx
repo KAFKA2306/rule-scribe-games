@@ -131,7 +131,16 @@ function searchGlossary(entries, query) {
 
   const tokens = normalizedQuery.split(' ').filter(Boolean)
   return entries.filter((entry) => {
-    const searchable = normalizeSearchText([entry.label, ...(entry.aliases || [])].join(' '))
+    const verifiedRuleText = (entry.rule_references || [])
+      .filter((reference) => ['verified', 'source_bound'].includes(reference.verification_status))
+      .map((reference) => reference.normalized_statement)
+      .filter(Boolean)
+    const searchable = normalizeSearchText([
+      entry.label,
+      ...(entry.aliases || []),
+      entry.definition,
+      ...verifiedRuleText,
+    ].filter(Boolean).join(' '))
     return tokens.every((token) => searchable.includes(token))
   })
 }
