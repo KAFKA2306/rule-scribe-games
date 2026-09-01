@@ -130,31 +130,53 @@ function trustedRuleReferences(entry) {
     .filter((reference) => ['verified', 'source_bound'].includes(reference.verification_status))
 }
 
+function glossaryEntrySearchText(entry) {
+  return normalizeSearchText([
+    entry.label,
+    ...(entry.aliases || []),
+    entry.definition,
+  ].filter(Boolean).join(' '))
+}
+
+function matchingRuleReferences(entry, query) {
+  const normalizedQuery = normalizeSearchText(query)
+  if (!normalizedQuery) return []
+
+  const tokens = normalizedQuery.split(' ').filter(Boolean)
+  const entrySearchText = glossaryEntrySearchText(entry)
+  return trustedRuleReferences(entry).filter((reference) => {
+    const searchable = normalizeSearchText([
+      entrySearchText,
+      reference.normalized_statement,
+      reference.player_count ? `${reference.player_count}人` : null,
+      ruleReferenceSourceLabel(reference),
+    ].filter(Boolean).join(' '))
+    return tokens.every((token) => searchable.includes(token))
+  })
+}
+
 function searchGlossary(entries, query) {
   const normalizedQuery = normalizeSearchText(query)
   if (!normalizedQuery) return []
 
   const tokens = normalizedQuery.split(' ').filter(Boolean)
   return entries.filter((entry) => {
-    const verifiedRuleText = trustedRuleReferences(entry)
-      .flatMap((reference) => [
-        reference.normalized_statement,
-        reference.player_count ? `${reference.player_count}人` : null,
-        ruleReferenceSourceLabel(reference),
-      ])
-      .filter(Boolean)
-    const searchable = normalizeSearchText([
-      entry.label,
-      ...(entry.aliases || []),
-      entry.definition,
-      ...verifiedRuleText,
-    ].filter(Boolean).join(' '))
-    return tokens.every((token) => searchable.includes(token))
+    const entrySearchText = glossaryEntrySearchText(entry)
+    if (tokens.every((token) => entrySearchText.includes(token))) return true
+    return matchingRuleReferences(entry, query).length > 0
   })
 }
 
-function glossaryResultContext(entry) {
-  const references = trustedRuleReferences(entry)
+function glossaryResultContext(entry, query) {
+  const normalizedQuery = normalizeSearchText(query)
+  const tokens = normalizedQuery.split(' ').filter(Boolean)
+  const entrySearchText = glossaryEntrySearchText(entry)
+  const referencesMatchingQuery = matchingRuleReferences(entry, query)
+  const references = referencesMatchingQuery.length > 0
+    ? referencesMatchingQuery
+    : tokens.every((token) => entrySearchText.includes(token))
+      ? trustedRuleReferences(entry)
+      : []
   const sourceLabels = [...new Set(references.map(ruleReferenceSourceLabel).filter(Boolean))]
   const playerCounts = [...new Set(references.map((reference) => reference.player_count).filter(Boolean))]
   return {
@@ -294,7 +316,7 @@ function RuleMarkdown({ markdown = '', ruleNodes = [] }) {
                 {glossaryResults.length > 0 && (
                   <ul aria-label="用語集の検索結果" style={{ margin: '0.75rem 0 0', paddingInlineStart: '1.25rem' }}>
                     {glossaryResults.map((entry) => {
-                      const context = glossaryResultContext(entry)
+                      const context = glossaryResultContext(entry, query)
                       return (
                         <li key={entry.concept_id} style={{ marginBlock: '0.6rem' }}>
                           <a href={glossaryConceptFragment(entry.concept_id)}><strong>{entry.label}</strong></a>
