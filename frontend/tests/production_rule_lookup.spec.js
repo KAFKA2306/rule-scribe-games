@@ -2,11 +2,22 @@ import { test, expect } from '@playwright/test'
 
 const productionBaseURL = globalThis.process?.env?.PLAYWRIGHT_BASE_URL
 
+const officialSkullKingSourcePatterns = [
+  /^https:\/\/(?:www\.)?grandpabecksgames\.com\//,
+  /^https:\/\/cdn\.shopify\.com\/s\/files\/1\/0565\/3230\/4053\/files\/Skull_King_.*\.pdf(?:\?.*)?$/,
+]
+
 test.skip(!productionBaseURL, 'production URLが指定されたdeploy後検証でのみ実行する')
 
 async function expectNoPageOverflow(page) {
   const hasOverflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)
   expect(hasOverflow).toBe(false)
+}
+
+async function expectOfficialSkullKingSource(sourceLink) {
+  const href = await sourceLink.getAttribute('href')
+  expect(href).toBeTruthy()
+  expect(officialSkullKingSourcePatterns.some((pattern) => pattern.test(href))).toBe(true)
 }
 
 async function openCanonicalRuleFromSearch(page, query, ruleId, expectedSource, expectedPlayerCount = null) {
@@ -25,7 +36,7 @@ async function openCanonicalRuleFromSearch(page, query, ruleId, expectedSource, 
   const glossary = page.locator('[aria-label="用語集"]')
   const sourceLink = glossary.getByRole('link', { name: '出典を確認', exact: true }).first()
   await expect(sourceLink).toBeVisible()
-  await expect(sourceLink).toHaveAttribute('href', /^https:\/\/www\.grandpabecksgames\.com\//)
+  await expectOfficialSkullKingSource(sourceLink)
 
   const ruleLink = glossary.locator(`a[href="#rule-node-${ruleId}"]`).first()
   await expect(ruleLink).toBeVisible()
