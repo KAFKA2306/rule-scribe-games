@@ -35,12 +35,20 @@ const glossary = {
           verification_status: 'source_bound',
           source_url: 'https://example.com/official-rulebook',
         },
+        {
+          rule_id: 'scoring.bid-zero',
+          rule_set_id: 'ruleset-current',
+          normalized_statement: '0ビッドを宣言した場合は、0ビッド用の得点計算を行います。',
+          reference_kind: 'mentions',
+          verification_status: 'source_bound',
+          source_url: 'https://example.com/official-rulebook',
+        },
       ],
     },
   ],
 }
 
-test('ルール内検索で正準用語集の英語別名から同じConceptと確認済みRuleNodeへ到達する', async ({ page }) => {
+test('ルール内検索で正準用語集の英語別名と確認済みRuleNodeから同じConceptへ到達する', async ({ page }) => {
   let glossaryRequests = 0
 
   await page.route('**/api/**', async route => {
@@ -67,7 +75,10 @@ test('ルール内検索で正準用語集の英語別名から同じConceptと�
           end_condition: { status: 'not_available', items: [] },
           scoring: {
             status: 'available',
-            items: [{ rule_id: 'scoring.bid-one-plus', text: '1以上をビッドした場合の得点を計算します。' }],
+            items: [
+              { rule_id: 'scoring.bid-one-plus', text: '1以上をビッドした場合の得点を計算します。' },
+              { rule_id: 'scoring.bid-zero', text: '0ビッドを宣言した場合は、0ビッド用の得点計算を行います。' },
+            ],
           },
         }),
       })
@@ -88,6 +99,9 @@ test('ルール内検索で正準用語集の英語別名から同じConceptと�
   await page.goto('/games/rule-lookup-alias-test#rules')
 
   const ruleSearch = page.getByRole('searchbox', { name: '裁定・用語を入力' })
+  await ruleSearch.fill('0 bid')
+  await expect(page.getByRole('link', { name: 'ビッド', exact: true })).toBeVisible()
+
   await ruleSearch.fill('Bid')
   await expect(page.getByRole('link', { name: 'ビッド', exact: true })).toBeVisible()
   await page.getByRole('link', { name: 'ビッド', exact: true }).click()
@@ -95,9 +109,10 @@ test('ルール内検索で正準用語集の英語別名から同じConceptと�
   const glossaryPanel = page.locator('[aria-label="用語集"]')
   await expect(glossaryPanel.getByRole('button', { name: 'ビッド', exact: true })).toHaveAttribute('aria-expanded', 'true')
   await expect(glossaryPanel.getByText('1以上をビッドした場合の得点を計算します。', { exact: true })).toBeVisible()
-  await expect(glossaryPanel.getByRole('link', { name: '詳しいルールで確認', exact: true })).toHaveAttribute('href', '#rule-node-scoring.bid-one-plus')
+  await expect(glossaryPanel.getByText('0ビッドを宣言した場合は、0ビッド用の得点計算を行います。', { exact: true })).toBeVisible()
+  await expect(glossaryPanel.getByRole('link', { name: '詳しいルールで確認', exact: true }).first()).toHaveAttribute('href', '#rule-node-scoring.bid-one-plus')
 
-  await glossaryPanel.getByRole('link', { name: '詳しいルールで確認', exact: true }).click()
+  await glossaryPanel.getByRole('link', { name: '詳しいルールで確認', exact: true }).first().click()
   await expect(page.locator('#rule-node-scoring\\.bid-one-plus')).toContainText('1以上をビッドした場合の得点を計算します。')
   expect(glossaryRequests).toBe(1)
 })
