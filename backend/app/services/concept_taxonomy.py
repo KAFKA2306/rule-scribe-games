@@ -1,7 +1,7 @@
 import logging
 
 from app.core import supabase
-from app.core.read_retry import run_supabase_read
+from app.core.read_retry import run_supabase_read_async
 from app.models.concept_taxonomy import (
     Concept,
     ConceptDetailResponse,
