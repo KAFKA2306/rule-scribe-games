@@ -387,17 +387,13 @@ export default function GamePage({ slug: propSlug, initialGame }) {
         </div>
 
         <div className="game-sidebar" aria-label="補足情報">
-          <div className="pro-card" aria-label="データ信頼状態">
-            <div className="pro-card-title">TRUST &amp; PROVENANCE</div>
+          <ConceptGlossary slug={slug} onRuleNodesLoaded={setRuleNodes} />
+
+          <div className="pro-card" aria-label="出典・根拠">
+            <div className="pro-card-title">出典・根拠</div>
             <div className="game-empty-note">{identityLabel}</div>
             <div className="game-empty-note">{sourceTrustLabel}</div>
             <div className="game-empty-note">{reviewLabel}</div>
-          </div>
-
-          <ConceptGlossary slug={slug} onRuleNodesLoaded={setRuleNodes} />
-
-          <div className="pro-card">
-            <div className="pro-card-title">LINKS</div>
             <ExternalLinks game={game} />
           </div>
         </div>
