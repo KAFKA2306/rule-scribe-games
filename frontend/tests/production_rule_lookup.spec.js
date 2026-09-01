@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test'
 
-const productionBaseURL = process.env.PLAYWRIGHT_BASE_URL
+const productionBaseURL = globalThis.process?.env?.PLAYWRIGHT_BASE_URL
 
 test.skip(!productionBaseURL, 'production URLが指定されたdeploy後検証でのみ実行する')
 
