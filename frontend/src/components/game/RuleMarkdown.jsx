@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import ReactMarkdown from 'react-markdown'
-import { getGlossaryData, glossaryConceptFragment } from './glossaryData'
+import { getGlossaryData, glossaryConceptFragment, ruleReferenceSourceLabel } from './glossaryData'
 
 function headingLabel(markdownText) {
   return markdownText
@@ -125,15 +125,23 @@ function searchSections(sections, query) {
   return sections.filter((section) => tokens.every((token) => section.searchText.includes(token)))
 }
 
+function trustedRuleReferences(entry) {
+  return (entry.rule_references || [])
+    .filter((reference) => ['verified', 'source_bound'].includes(reference.verification_status))
+}
+
 function searchGlossary(entries, query) {
   const normalizedQuery = normalizeSearchText(query)
   if (!normalizedQuery) return []
 
   const tokens = normalizedQuery.split(' ').filter(Boolean)
   return entries.filter((entry) => {
-    const verifiedRuleText = (entry.rule_references || [])
-      .filter((reference) => ['verified', 'source_bound'].includes(reference.verification_status))
-      .map((reference) => reference.normalized_statement)
+    const verifiedRuleText = trustedRuleReferences(entry)
+      .flatMap((reference) => [
+        reference.normalized_statement,
+        reference.player_count ? `${reference.player_count}人` : null,
+        ruleReferenceSourceLabel(reference),
+      ])
       .filter(Boolean)
     const searchable = normalizeSearchText([
       entry.label,
@@ -143,6 +151,16 @@ function searchGlossary(entries, query) {
     ].filter(Boolean).join(' '))
     return tokens.every((token) => searchable.includes(token))
   })
+}
+
+function glossaryResultContext(entry) {
+  const references = trustedRuleReferences(entry)
+  const sourceLabels = [...new Set(references.map(ruleReferenceSourceLabel).filter(Boolean))]
+  const playerCounts = [...new Set(references.map((reference) => reference.player_count).filter(Boolean))]
+  return {
+    sourceLabels,
+    playerCounts,
+  }
 }
 
 function resultSnippet(section, query) {
@@ -275,14 +293,27 @@ function RuleMarkdown({ markdown = '', ruleNodes = [] }) {
                 )}
                 {glossaryResults.length > 0 && (
                   <ul aria-label="用語集の検索結果" style={{ margin: '0.75rem 0 0', paddingInlineStart: '1.25rem' }}>
-                    {glossaryResults.map((entry) => (
-                      <li key={entry.concept_id} style={{ marginBlock: '0.6rem' }}>
-                        <a href={glossaryConceptFragment(entry.concept_id)}><strong>{entry.label}</strong></a>
-                        {entry.aliases?.length > 0 && (
-                          <div className="game-empty-note" style={{ marginTop: '0.2rem' }}>別名: {entry.aliases.join(' / ')}</div>
-                        )}
-                      </li>
-                    ))}
+                    {glossaryResults.map((entry) => {
+                      const context = glossaryResultContext(entry)
+                      return (
+                        <li key={entry.concept_id} style={{ marginBlock: '0.6rem' }}>
+                          <a href={glossaryConceptFragment(entry.concept_id)}><strong>{entry.label}</strong></a>
+                          {entry.aliases?.length > 0 && (
+                            <div className="game-empty-note" style={{ marginTop: '0.2rem' }}>別名: {entry.aliases.join(' / ')}</div>
+                          )}
+                          {context.sourceLabels.length > 0 && (
+                            <div className="game-empty-note" style={{ marginTop: '0.2rem' }}>
+                              出典: {context.sourceLabels.join(' / ')}
+                            </div>
+                          )}
+                          {context.playerCounts.length > 0 && (
+                            <div className="game-empty-note" style={{ marginTop: '0.2rem' }}>
+                              人数条件: {context.playerCounts.map((count) => `${count}人`).join(' / ')}
+                            </div>
+                          )}
+                        </li>
+                      )
+                    })}
                   </ul>
                 )}
                 {glossarySlug === slug && glossaryStatus === 'error' && (

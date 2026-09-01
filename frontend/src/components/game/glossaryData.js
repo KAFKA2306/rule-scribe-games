@@ -2,6 +2,13 @@ import { api } from '../../lib/api'
 
 const glossaryRequests = new Map()
 
+export function ruleReferenceSourceLabel(reference) {
+  const locator = String(reference?.source_locator || '')
+  if (locator.includes(':rulebook:')) return 'ルールブック'
+  if (locator.includes(':faq:')) return 'FAQ'
+  return null
+}
+
 export function getGlossaryData(slug, languageCode = 'ja') {
   if (!slug) return Promise.resolve({ status: 'not_available', entries: [] })
 
