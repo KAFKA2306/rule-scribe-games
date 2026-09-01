@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '../../lib/api'
-import { getGlossaryData, glossaryConceptFragment } from './glossaryData'
+import { getGlossaryData } from './glossaryData'
 
 function normalizeSearchText(value) {
   return String(value || '')
