@@ -32,7 +32,7 @@ def test_render_projection_rules_keeps_player_facing_sections():
     assert "## 得点" not in rendered
 
 
-def test_ruleset_identity_uses_canonical_ruleset_and_official_source_only():
+def test_ruleset_identity_uses_canonical_ruleset_and_exact_review_source_state():
     ruleset = SimpleNamespace(
         edition_label="Grandpa Beck's Games current edition",
         language_code="en",
@@ -47,22 +47,37 @@ def test_ruleset_identity_uses_canonical_ruleset_and_official_source_only():
         {
             "source_url": "https://www.grandpabecksgames.com/pages/skull-king",
             "source_trust": "official_publisher",
+            "content_review_status": "unknown",
         },
     )
 
-    assert "このルール要約の対象" in rendered
+    assert "出典・確認状態" in rendered
     assert "Grandpa Beck&#x27;s Games current edition" in rendered
     assert "<strong>言語:</strong> en" in rendered
     assert "<strong>プラットフォーム:</strong> physical" in rendered
     assert "current-web-rulebook-1764178570" in rendered
+    assert "<strong>内容確認状態:</strong> unknown" in rendered
+    assert "<strong>出典の信頼状態:</strong> official_publisher" in rendered
     assert 'href="https://www.grandpabecksgames.com/pages/skull-king"' in rendered
-    assert "出版社の公式ページ" in rendered
+    assert "出典を確認" in rendered
 
-    untrusted = _render_ruleset_identity(
-        canonical,
-        {"source_url": "https://example.invalid/rules", "source_trust": "community"},
+
+def test_source_review_state_is_visible_without_projected_rule_text():
+    rendered = _render_ruleset_identity(
+        None,
+        {
+            "source_url": "https://ja.boardgamearena.com/gamepanel?game=pilipili",
+            "source_trust": "authorized_partner",
+            "content_review_status": "review_required",
+        },
     )
-    assert "example.invalid" not in untrusted
+
+    assert "出典・確認状態" in rendered
+    assert "<strong>内容確認状態:</strong> review_required" in rendered
+    assert "<strong>出典の信頼状態:</strong> authorized_partner" in rendered
+    assert 'href="https://ja.boardgamearena.com/gamepanel?game=pilipili"' in rendered
+    assert "出版社" not in rendered
+    assert "<strong>版:</strong>" not in rendered
 
 
 @pytest.mark.asyncio
@@ -102,5 +117,6 @@ async def test_source_bound_ssr_uses_same_neutral_summary_as_public_api(
     assert neutral in rendered
     assert 'name="description" content="「イト」の出典付きルール要約と出典情報を確認できます。"' in rendered
     assert 'itemprop="description">「イト」の出典付きルール要約と出典情報を確認できます。</p>' in rendered
+    assert "<strong>内容確認状態:</strong> review_required" in rendered
     assert "unreviewed legacy summary" not in rendered
     assert "unreviewed legacy description" not in rendered
