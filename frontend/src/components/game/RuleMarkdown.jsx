@@ -158,16 +158,17 @@ function RuleMarkdown({ markdown = '', ruleNodes = [] }) {
   const [query, setQuery] = useState('')
   const [glossaryEntries, setGlossaryEntries] = useState([])
   const [glossaryStatus, setGlossaryStatus] = useState('loading')
+  const [glossarySlug, setGlossarySlug] = useState(null)
   const sections = useMemo(() => getRuleSections(markdown), [markdown])
   const sectionResults = useMemo(() => searchSections(sections, query), [sections, query])
-  const glossaryResults = useMemo(() => searchGlossary(glossaryEntries, query), [glossaryEntries, query])
+  const currentGlossaryEntries = glossarySlug === slug ? glossaryEntries : []
+  const glossaryResults = useMemo(() => searchGlossary(currentGlossaryEntries, query), [currentGlossaryEntries, query])
   const headingComponents = useMemo(() => createHeadingComponents(sections), [sections])
   const hasQuery = normalizeSearchText(query).length > 0
   const resultCount = sectionResults.length + glossaryResults.length
 
   useEffect(() => {
     let cancelled = false
-    setGlossaryStatus('loading')
 
     getGlossaryData(slug, 'ja')
       .then((data) => {
@@ -175,11 +176,13 @@ function RuleMarkdown({ markdown = '', ruleNodes = [] }) {
         const available = data?.status === 'available' && data.entries?.length > 0
         setGlossaryEntries(available ? data.entries : [])
         setGlossaryStatus(available ? 'available' : 'unavailable')
+        setGlossarySlug(slug)
       })
       .catch(() => {
         if (cancelled) return
         setGlossaryEntries([])
         setGlossaryStatus('error')
+        setGlossarySlug(slug)
       })
 
     return () => { cancelled = true }
@@ -273,7 +276,7 @@ function RuleMarkdown({ markdown = '', ruleNodes = [] }) {
                     ))}
                   </ul>
                 )}
-                {glossaryStatus === 'error' && (
+                {glossarySlug === slug && glossaryStatus === 'error' && (
                   <div className="game-empty-note" role="alert" style={{ marginTop: '0.75rem' }}>
                     用語集の正準データを取得できないため、本文だけを検索しています。
                   </div>
