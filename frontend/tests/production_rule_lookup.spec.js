@@ -22,17 +22,23 @@ async function openCanonicalRuleFromSearch(page, query, ruleId, expectedSource, 
 
   await results.getByRole('link').first().click()
 
-  const ruleLink = page.locator(`[aria-label="用語集"] a[href="#rule-node-${ruleId}"]`).first()
+  const glossary = page.locator('[aria-label="用語集"]')
+  const sourceLink = glossary.getByRole('link', { name: '出典を確認', exact: true }).first()
+  await expect(sourceLink).toBeVisible()
+  await expect(sourceLink).toHaveAttribute('href', /^https:\/\/www\.grandpabecksgames\.com\//)
+
+  const ruleLink = glossary.locator(`a[href="#rule-node-${ruleId}"]`).first()
   await expect(ruleLink).toBeVisible()
   await ruleLink.click()
 
-  const target = page.locator(`#rule-node-${ruleId.replaceAll('.', '\\.')}`)
+  const escapedRuleId = ruleId.replaceAll('.', '\\.')
+  const target = page.locator(`#rule-node-${escapedRuleId}`)
   await expect(target).toBeVisible()
-  await expect(page).toHaveURL(new RegExp(`#rule-node-${ruleId.replaceAll('.', '\\.')}$`))
+  await expect(page).toHaveURL(new RegExp(`#rule-node-${escapedRuleId}$`))
   await expectNoPageOverflow(page)
 }
 
-test('productionのSkull Kingで代表queryから確認済みRuleNodeへ到達できる', async ({ page }) => {
+test('productionのSkull Kingで代表queryから確認済みRuleNodeと公式出典へ到達できる', async ({ page }) => {
   await page.goto('/games/skull-king#rules', { waitUntil: 'networkidle' })
   await expect(page.getByRole('searchbox', { name: '裁定・用語を入力' })).toBeVisible()
   await expectNoPageOverflow(page)
