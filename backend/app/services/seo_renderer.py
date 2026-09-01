@@ -15,6 +15,15 @@ logger = logging.getLogger(__name__)
 BASE_URL = "https://bodoge-no-mikata.vercel.app"
 
 
+class CanonicalRuleText(str):
+    """Canonical rule text with the RuleSet identity used to produce it."""
+
+    def __new__(cls, value: str, ruleset):
+        instance = super().__new__(cls, value)
+        instance.ruleset = ruleset
+        return instance
+
+
 def _replace_or_insert_tag(document: str, pattern: str, replacement: str) -> str:
     updated, count = re.subn(pattern, replacement, document, count=1, flags=re.IGNORECASE | re.DOTALL)
     if count:
@@ -122,8 +131,36 @@ async def _canonical_rule_text(slug: str) -> str | None:
             continue
         rendered = _render_projection_rules(projection)
         if rendered:
-            return rendered
+            return CanonicalRuleText(rendered, ruleset)
     return None
+
+
+def _render_ruleset_identity(canonical_rules: str | None, game: dict) -> str:
+    ruleset = getattr(canonical_rules, "ruleset", None)
+    if ruleset is None:
+        return ""
+
+    facts: list[str] = []
+    if ruleset.edition_label:
+        facts.append(f"<p><strong>版:</strong> {html.escape(str(ruleset.edition_label))}</p>")
+    if ruleset.language_code:
+        facts.append(f"<p><strong>言語:</strong> {html.escape(str(ruleset.language_code))}</p>")
+    if ruleset.platform:
+        facts.append(f"<p><strong>プラットフォーム:</strong> {html.escape(str(ruleset.platform))}</p>")
+    revision = ruleset.revision_label or ruleset.source_revision
+    if revision:
+        facts.append(f"<p><strong>改訂:</strong> {html.escape(str(revision))}</p>")
+
+    source_url = game.get("source_url") if game.get("source_trust") == "official_publisher" else None
+    if isinstance(source_url, str) and source_url.startswith(("https://", "http://")):
+        safe_url = html.escape(source_url, quote=True)
+        facts.append(
+            f'<p><strong>一次資料:</strong> <a href="{safe_url}" rel="noopener noreferrer">出版社の公式ページ</a></p>'
+        )
+
+    if not facts:
+        return ""
+    return "    <section>\n      <h2>このルール要約の対象</h2>\n      " + "\n      ".join(facts) + "\n    </section>\n"
 
 
 async def generate_seo_html(slug: str) -> str | None:
@@ -242,6 +279,7 @@ async def generate_seo_html(slug: str) -> str | None:
     safe_title = html.escape(title)
     safe_summary = html.escape(str(game.get("summary") or ""))
     safe_rules = html.escape(canonical_rules) if canonical_rules else ""
+    ruleset_identity_section = _render_ruleset_identity(canonical_rules, game)
     rules_section = ""
     if safe_rules:
         rules_section = f"""    <section>
@@ -274,6 +312,6 @@ async def generate_seo_html(slug: str) -> str | None:
       {players_info}
       {time_info}
     </section>
-{rules_section}  </article>
+{ruleset_identity_section}{rules_section}  </article>
 </div>"""
     return html_content.replace('<div id="root"></div>', ssr_content, 1)
