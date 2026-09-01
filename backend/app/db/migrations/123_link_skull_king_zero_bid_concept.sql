@@ -2,6 +2,7 @@ BEGIN;
 
 -- 現行Skull King RuleSetの0ビッド得点を、既存の正準Concept「ビッド」へ結ぶ。
 -- RuleNode、Claim、Evidenceがすべて確認済みの場合だけ追加する。
+-- RuleNodeの出典状態はmetadataで保持し、このConcept関連自体は明示確認済みとしてverifiedにする。
 
 DO $$
 DECLARE
@@ -63,12 +64,13 @@ BEGIN
     rn.rule_id,
     'player-action.bid',
     'mentions',
-    rn.verification_status,
+    'verified',
     rn.source_url,
     rn.source_locator,
     jsonb_build_object(
       'source_claim_ref', rn.source_claim_ref,
       'evidence_ref', rn.evidence_ref,
+      'source_rule_verification_status', rn.verification_status,
       'scope', COALESCE(rn.metadata->>'scope', 'base'),
       'condition', COALESCE(rn.metadata->'condition', 'null'::jsonb),
       'migration', '123_link_skull_king_zero_bid_concept'
@@ -101,10 +103,11 @@ BEGIN
       AND rnc.rule_id = 'scoring.zero-bid'
       AND rnc.concept_id = 'player-action.bid'
       AND rnc.reference_kind = 'mentions'
-      AND rnc.verification_status IN ('source_bound', 'verified')
+      AND rnc.verification_status = 'verified'
       AND rnc.source_locator = 'skull-king:rulebook:scoring'
+      AND rnc.metadata->>'source_rule_verification_status' IN ('source_bound', 'verified')
   ) <> 1 THEN
-    RAISE EXCEPTION 'Expected one source-bound zero-bid concept reference on the active RuleSet';
+    RAISE EXCEPTION 'Expected one verified zero-bid concept reference on the active RuleSet';
   END IF;
 END $$;
 
