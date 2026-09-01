@@ -2,10 +2,6 @@ import { api } from '../../lib/api'
 
 const glossaryRequests = new Map()
 
-export function isVerifiedRuleReference(reference) {
-  return reference?.verification_status === 'source_bound' || reference?.verification_status === 'verified'
-}
-
 export function ruleReferenceSourceLabel(reference) {
   const locator = String(reference?.source_locator || '')
   if (locator.includes(':rulebook:')) return 'ルールブック'
