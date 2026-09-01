@@ -252,7 +252,7 @@ function RuleMarkdown({ markdown = '', ruleNodes = [] }) {
             {hasQuery && (
               <div style={{ marginTop: '0.75rem' }}>
                 <div role="status" aria-live="polite" style={{ marginBottom: '0.5rem' }}>
-                  {resultCount > 0 ? `${resultCount}件見つかりました` : '該当するルールや用語は見つかりませんでした'}
+                  {resultCount > 0 ? `${resultCount}件見つかりました` : '該当するルールは見つかりませんでした'}
                 </div>
                 {sectionResults.length > 0 && (
                   <ul style={{ margin: 0, paddingInlineStart: '1.25rem' }}>
