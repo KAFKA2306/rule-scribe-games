@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useParams } from 'react-router-dom'
 import ReactMarkdown from 'react-markdown'
+import { getGlossaryData, glossaryConceptFragment } from './glossaryData'
 
 function headingLabel(markdownText) {
   return markdownText
@@ -123,6 +125,17 @@ function searchSections(sections, query) {
   return sections.filter((section) => tokens.every((token) => section.searchText.includes(token)))
 }
 
+function searchGlossary(entries, query) {
+  const normalizedQuery = normalizeSearchText(query)
+  if (!normalizedQuery) return []
+
+  const tokens = normalizedQuery.split(' ').filter(Boolean)
+  return entries.filter((entry) => {
+    const searchable = normalizeSearchText([entry.label, ...(entry.aliases || [])].join(' '))
+    return tokens.every((token) => searchable.includes(token))
+  })
+}
+
 function resultSnippet(section, query) {
   if (!section.body) return 'この見出しへ移動します。'
 
@@ -141,11 +154,36 @@ function resultSnippet(section, query) {
 }
 
 function RuleMarkdown({ markdown = '', ruleNodes = [] }) {
+  const { slug } = useParams()
   const [query, setQuery] = useState('')
+  const [glossaryEntries, setGlossaryEntries] = useState([])
+  const [glossaryStatus, setGlossaryStatus] = useState('loading')
   const sections = useMemo(() => getRuleSections(markdown), [markdown])
-  const results = useMemo(() => searchSections(sections, query), [sections, query])
+  const sectionResults = useMemo(() => searchSections(sections, query), [sections, query])
+  const glossaryResults = useMemo(() => searchGlossary(glossaryEntries, query), [glossaryEntries, query])
   const headingComponents = useMemo(() => createHeadingComponents(sections), [sections])
   const hasQuery = normalizeSearchText(query).length > 0
+  const resultCount = sectionResults.length + glossaryResults.length
+
+  useEffect(() => {
+    let cancelled = false
+    setGlossaryStatus('loading')
+
+    getGlossaryData(slug, 'ja')
+      .then((data) => {
+        if (cancelled) return
+        const available = data?.status === 'available' && data.entries?.length > 0
+        setGlossaryEntries(available ? data.entries : [])
+        setGlossaryStatus(available ? 'available' : 'unavailable')
+      })
+      .catch(() => {
+        if (cancelled) return
+        setGlossaryEntries([])
+        setGlossaryStatus('error')
+      })
+
+    return () => { cancelled = true }
+  }, [slug])
 
   useEffect(() => {
     const focusCurrentSection = () => {
@@ -204,24 +242,41 @@ function RuleMarkdown({ markdown = '', ruleNodes = [] }) {
               type="search"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="例: 得点、2人、Mermaid"
+              placeholder="例: 得点、2人、Mermaid、Bid"
               autoComplete="off"
               style={{ width: '100%', maxWidth: '36rem' }}
             />
             {hasQuery && (
               <div style={{ marginTop: '0.75rem' }}>
                 <div role="status" aria-live="polite" style={{ marginBottom: '0.5rem' }}>
-                  {results.length > 0 ? `${results.length}件見つかりました` : '該当するルールは見つかりませんでした'}
+                  {resultCount > 0 ? `${resultCount}件見つかりました` : '該当するルールや用語は見つかりませんでした'}
                 </div>
-                {results.length > 0 && (
+                {sectionResults.length > 0 && (
                   <ul style={{ margin: 0, paddingInlineStart: '1.25rem' }}>
-                    {results.map((section) => (
+                    {sectionResults.map((section) => (
                       <li key={section.id} style={{ marginBlock: '0.6rem' }}>
                         <a href={`#${section.id}`}><strong>{section.label}</strong></a>
                         <div style={{ marginTop: '0.2rem' }}>{resultSnippet(section, query)}</div>
                       </li>
                     ))}
                   </ul>
+                )}
+                {glossaryResults.length > 0 && (
+                  <ul aria-label="用語集の検索結果" style={{ margin: '0.75rem 0 0', paddingInlineStart: '1.25rem' }}>
+                    {glossaryResults.map((entry) => (
+                      <li key={entry.concept_id} style={{ marginBlock: '0.6rem' }}>
+                        <a href={glossaryConceptFragment(entry.concept_id)}><strong>{entry.label}</strong></a>
+                        {entry.aliases?.length > 0 && (
+                          <div className="game-empty-note" style={{ marginTop: '0.2rem' }}>別名: {entry.aliases.join(' / ')}</div>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {glossaryStatus === 'error' && (
+                  <div className="game-empty-note" role="alert" style={{ marginTop: '0.75rem' }}>
+                    用語集の正準データを取得できないため、本文だけを検索しています。
+                  </div>
                 )}
               </div>
             )}
