@@ -1,8 +1,7 @@
 import logging
 
-import anyio
-
 from app.core import supabase
+from app.core.read_retry import run_supabase_read_async
 from app.models.concept_taxonomy import (
     Concept,
     ConceptDetailResponse,
@@ -28,7 +27,7 @@ class ConceptTaxonomyService:
         if supabase.is_local():
             return None
         try:
-            return await anyio.to_thread.run_sync(self._load_concept, concept_id)
+            return await run_supabase_read_async(self._load_concept, concept_id)
         except Exception as exc:
             logger.exception("Concept taxonomy read failed for %s", concept_id)
             raise ConceptTaxonomyReadError(f"concept taxonomy backend failure for {concept_id}") from exc
@@ -41,7 +40,7 @@ class ConceptTaxonomyService:
         if supabase.is_local():
             return GameConceptsReadResponse(status="not_available", **base)
         try:
-            return await anyio.to_thread.run_sync(self._load_game_concepts, game, base)
+            return await run_supabase_read_async(self._load_game_concepts, game, base)
         except Exception as exc:
             logger.exception("Concept projection read failed for %s", slug)
             raise ConceptTaxonomyReadError(f"concept projection backend failure for {slug}") from exc
@@ -58,7 +57,7 @@ class ConceptTaxonomyService:
         if supabase.is_local():
             return GameGlossaryReadResponse(status="not_available", **base)
         try:
-            concepts = await anyio.to_thread.run_sync(
+            concepts = await run_supabase_read_async(
                 self._load_game_concepts,
                 game,
                 {"game_id": base["game_id"], "slug": base["slug"]},

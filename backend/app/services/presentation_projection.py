@@ -1,9 +1,8 @@
 import logging
 from collections import defaultdict
 
-import anyio
-
 from app.core import supabase
+from app.core.read_retry import run_supabase_read_async
 from app.models.presentation_projection import (
     GlossaryProjectionSection,
     PresentationProjectionResponse,
@@ -131,7 +130,7 @@ class PresentationProjectionService:
         if supabase.is_local():
             return self._empty_response(game, rule_set_id, language_code)
         try:
-            return await anyio.to_thread.run_sync(
+            return await run_supabase_read_async(
                 self._load_projection,
                 game,
                 rule_set_id,
