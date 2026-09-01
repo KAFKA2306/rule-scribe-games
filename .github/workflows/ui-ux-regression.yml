@@ -111,6 +111,7 @@ jobs:
           tests/directory-source-trust.spec.js
           tests/ruleset-public-projection.spec.js
           tests/canonical_glossary.spec.js
+          tests/rule_lookup_glossary_alias.spec.js
           --project=chromium
 
       - name: Gate responsive geometry and pixel screenshot baselines
