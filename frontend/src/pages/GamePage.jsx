@@ -196,7 +196,9 @@ export default function GamePage({ slug: propSlug, initialGame }) {
     legacyInfographicsSourceUrl,
   )
 
-  const pageTitle = `「${title}」のルール・インスト要約 | ボドゲのミカタ`
+  const pageTitle = rules
+    ? `「${title}」のルール・インスト要約 | ボドゲのミカタ`
+    : `「${title}」の基本情報 | ボドゲのミカタ`
   const description = game.summary || `「${title}」の登録済みルール要約と出典情報を確認できます。`
   const gameUrl = `${BASE_URL}/games/${slug}`
   const imageUrl = game.image_url || `${BASE_URL}/assets/no-image.webp`
