@@ -44,7 +44,10 @@ def _safe_json_script(data: dict) -> str:
     return payload.replace("&", "\\u0026").replace("<", "\\u003c").replace(">", "\\u003e")
 
 
-def _page_title(game: dict, title: str) -> str:
+def _page_title(game: dict, title: str, *, has_canonical_rules: bool) -> str:
+    if not has_canonical_rules:
+        return f"「{title}」の基本情報 | ボドゲのミカタ"
+
     structured_data = game.get("structured_data")
     has_strategy = isinstance(structured_data, dict) and bool(structured_data.get("strategy_analysis"))
     strategy_label = "・戦略" if has_strategy else ""
@@ -185,7 +188,7 @@ async def generate_seo_html(slug: str) -> str | None:
         image_url = f"{BASE_URL}{image_url}"
 
     game_url = f"{BASE_URL}/games/{slug}"
-    page_title = _page_title(game, title)
+    page_title = _page_title(game, title, has_canonical_rules=canonical_rules is not None)
     seo_description = description or f"「{title}」の登録済みルール要約と出典情報を確認できます。"
     hide_from_search = should_hide_game_from_search(game)
 
