@@ -50,10 +50,17 @@ function formatPlayTime(game) {
   return game.play_time != null ? `${game.play_time}m` : 'N/A'
 }
 
-function isTabAvailable(tab, { hasCoachSummary, hasInfographics }) {
+function isTabAvailable(tab, { hasCoachSummary, hasInfographics, hasRules }) {
   if (tab === 'coach') return hasCoachSummary
   if (tab === 'infographics') return hasInfographics
-  return tab === 'rules' || tab === 'graph'
+  if (tab === 'rules') return hasRules
+  return tab === 'graph'
+}
+
+function getDefaultTab({ hasCoachSummary, hasRules }) {
+  if (hasCoachSummary) return 'coach'
+  if (hasRules) return 'rules'
+  return null
 }
 
 export default function GamePage({ slug: propSlug, initialGame }) {
@@ -79,7 +86,8 @@ export default function GamePage({ slug: propSlug, initialGame }) {
   const hasCoachSummary = Boolean(
     game?.setup_summary || game?.gameplay_summary || game?.end_game_summary,
   )
-  const tabAvailability = { hasCoachSummary, hasInfographics }
+  const hasRules = Boolean(game?.rules_content?.trim())
+  const tabAvailability = { hasCoachSummary, hasInfographics, hasRules }
 
   useEffect(() => {
     const fetchData = async () => {
@@ -110,12 +118,13 @@ export default function GamePage({ slug: propSlug, initialGame }) {
 
     const syncFromLocation = () => {
       const hash = window.location.hash
+      const defaultTab = getDefaultTab(tabAvailability)
       if (!hash) {
-        setActiveTab(hasCoachSummary ? 'coach' : 'rules')
+        setActiveTab(defaultTab)
         return
       }
       if (hash.startsWith('#rule-')) {
-        setActiveTab('rules')
+        setActiveTab(hasRules ? 'rules' : defaultTab)
         return
       }
       const requestedTab = HASH_TABS[hash]
@@ -123,7 +132,7 @@ export default function GamePage({ slug: propSlug, initialGame }) {
         setActiveTab(requestedTab)
         return
       }
-      setActiveTab('rules')
+      setActiveTab(defaultTab)
     }
 
     syncFromLocation()
@@ -133,7 +142,7 @@ export default function GamePage({ slug: propSlug, initialGame }) {
       window.removeEventListener('popstate', syncFromLocation)
       window.removeEventListener('hashchange', syncFromLocation)
     }
-  }, [game, hasCoachSummary, hasInfographics])
+  }, [game, hasCoachSummary, hasInfographics, hasRules])
 
   useEffect(() => {
     if (activeTab !== 'graph') return undefined
@@ -199,7 +208,9 @@ export default function GamePage({ slug: propSlug, initialGame }) {
   const pageTitle = rules
     ? `「${title}」のルール・インスト要約 | ボドゲのミカタ`
     : `「${title}」の基本情報 | ボドゲのミカタ`
-  const description = game.summary || `「${title}」の登録済みルール要約と出典情報を確認できます。`
+  const description = game.summary || (rules
+    ? `「${title}」の登録済みルール要約と出典情報を確認できます。`
+    : `「${title}」の登録済み基本情報と出典情報を確認できます。`)
   const gameUrl = `${BASE_URL}/games/${slug}`
   const imageUrl = game.image_url || `${BASE_URL}/assets/no-image.webp`
 
@@ -266,9 +277,11 @@ export default function GamePage({ slug: propSlug, initialGame }) {
                 準備・流れ・終了
               </button>
             )}
-            <button type="button" aria-pressed={activeTab === 'rules'} className={activeTab === 'rules' ? 'active' : ''} onClick={() => navigateToTab('rules')}>
-              詳しいルール
-            </button>
+            {hasRules && (
+              <button type="button" aria-pressed={activeTab === 'rules'} className={activeTab === 'rules' ? 'active' : ''} onClick={() => navigateToTab('rules')}>
+                詳しいルール
+              </button>
+            )}
             <button type="button" aria-pressed={activeTab === 'graph'} className={activeTab === 'graph' ? 'active' : ''} onClick={() => navigateToTab('graph')}>
               関連ゲーム
             </button>
@@ -280,7 +293,7 @@ export default function GamePage({ slug: propSlug, initialGame }) {
           </div>
 
           <div className="pro-main-col">
-            {activeTab === 'rules' && <RuleMarkdown markdown={rules} ruleNodes={ruleNodes} />}
+            {activeTab === 'rules' && hasRules && <RuleMarkdown markdown={rules} ruleNodes={ruleNodes} />}
 
             {activeTab === 'coach' && (
               <div className="coach-mode">
