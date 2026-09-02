@@ -123,7 +123,7 @@ BEGIN
       v_game_id, v_work_id, 1, '1.0', 'en', 'Grandpa Beck''s Games current edition',
       'current English rulebook web revision 1764178570; current FAQ and Advanced Rules player reference audited 2026-09-03',
       false, 'current-web-rulebook-1764178570', 'physical', 'Grandpa Beck''s Games',
-      'draft', 'source_bound', v_base_ruleset_id, 'variant_of', 'Advanced Play',
+      'unknown', 'source_bound', v_base_ruleset_id, 'variant_of', 'Advanced Play',
       ARRAY[
         'publisher:grandpa-becks:skull-king:current-rulebook',
         'publisher:grandpa-becks:skull-king:current-rules-faq',
@@ -138,7 +138,7 @@ BEGIN
       source_revision = 'current English rulebook web revision 1764178570; current FAQ and Advanced Rules player reference audited 2026-09-03',
       is_active = false,
       publisher_name = 'Grandpa Beck''s Games',
-      status = 'draft',
+      status = 'unknown',
       verification_status = 'source_bound',
       base_rule_set_id = v_base_ruleset_id,
       relation_type = 'variant_of',
