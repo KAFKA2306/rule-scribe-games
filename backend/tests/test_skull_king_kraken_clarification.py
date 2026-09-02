@@ -20,6 +20,10 @@ def test_advanced_play_stays_separate_from_base_ruleset():
     assert "'variant_of', 'Advanced Play'" in body
     assert "base_rule_set_id = v_base_ruleset_id" in body
     assert '"scope":"advanced_play"' in body
+    assert "false, 'current-web-rulebook-1764178570'" in body
+    assert "'draft', 'source_bound'" in body
+    assert "is_active = false" in body
+    assert "status = 'draft'" in body
 
 
 def test_current_kraken_ruling_is_supported_by_rulebook_and_official_faq():
