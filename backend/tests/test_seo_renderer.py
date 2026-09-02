@@ -8,13 +8,31 @@ from app.services import seo_renderer
 def test_page_title_omits_strategy_when_unavailable() -> None:
     game = {"structured_data": {"strategy_analysis": None}}
 
-    assert seo_renderer._page_title(game, "スカルキング") == "「スカルキング」のルール・インスト要約 | ボドゲのミカタ"
+    assert seo_renderer._page_title(
+        game,
+        "スカルキング",
+        has_canonical_rules=True,
+    ) == "「スカルキング」のルール・インスト要約 | ボドゲのミカタ"
 
 
 def test_page_title_includes_strategy_when_available() -> None:
     game = {"structured_data": {"strategy_analysis": "終盤では得点状況を見てビッドを調整する。"}}
 
-    assert seo_renderer._page_title(game, "Example") == "「Example」のルール・戦略・インスト要約 | ボドゲのミカタ"
+    assert seo_renderer._page_title(
+        game,
+        "Example",
+        has_canonical_rules=True,
+    ) == "「Example」のルール・戦略・インスト要約 | ボドゲのミカタ"
+
+
+def test_page_title_is_neutral_without_canonical_rules() -> None:
+    game = {"content_review_status": "review_required"}
+
+    assert seo_renderer._page_title(
+        game,
+        "みんなでぽんこつペイント",
+        has_canonical_rules=False,
+    ) == "「みんなでぽんこつペイント」の基本情報 | ボドゲのミカタ"
 
 
 def test_open_ended_player_count_does_not_invent_maximum() -> None:
@@ -130,6 +148,8 @@ async def test_game_ssr_replaces_metadata_escapes_content_and_omits_legacy_rules
     assert '&lt;script&gt;alert(&quot;rules&quot;)&lt;/script&gt;' not in rendered
     assert '<h2>ルール</h2>' not in rendered
     assert "\\u003cscript" in rendered
+    assert "ルール・インスト要約" not in rendered
+    assert "基本情報 | ボドゲのミカタ" in rendered
 
 
 @pytest.mark.asyncio
