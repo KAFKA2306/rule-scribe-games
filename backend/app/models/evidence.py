@@ -31,6 +31,13 @@ class EvidenceRelation(StrEnum):
     UNRESOLVED = "unresolved"
 
 
+class OfficialEvidenceSourceType(StrEnum):
+    RULEBOOK = "rulebook"
+    OFFICIAL_FAQ = "official_faq"
+    OFFICIAL_ERRATA = "official_errata"
+    OFFICIAL_CLARIFICATION = "official_clarification"
+
+
 class ClaimLifecycleStatus(StrEnum):
     UNKNOWN = "unknown"
     CANDIDATE = "candidate"
