@@ -109,12 +109,21 @@ export default function GamePage({ slug: propSlug, initialGame }) {
     if (!game || typeof window === 'undefined') return undefined
 
     const syncFromLocation = () => {
-      const requestedTab = HASH_TABS[window.location.hash]
+      const hash = window.location.hash
+      if (!hash) {
+        setActiveTab(hasCoachSummary ? 'coach' : 'rules')
+        return
+      }
+      if (hash.startsWith('#rule-')) {
+        setActiveTab('rules')
+        return
+      }
+      const requestedTab = HASH_TABS[hash]
       if (requestedTab && isTabAvailable(requestedTab, tabAvailability)) {
         setActiveTab(requestedTab)
         return
       }
-      setActiveTab(hasCoachSummary ? 'coach' : 'rules')
+      setActiveTab('rules')
     }
 
     syncFromLocation()
