@@ -9,8 +9,7 @@ https://bodoge-no-mikata.vercel.app/
 <div align="center">
   <img src="assets/02_ボドゲのミカタ.jpg" alt="RuleScribe Games Header" width="100%" style="border-radius: 12px; border: 1px solid rgba(0, 92, 185, 0.3);">
 
-  ### **The Infinite Intelligence for Board Gamers**
-  **「世界中のボードゲームのルールを、瞬時に、正確に、その手に」。**
+  **版や出典の違いを区別しながら、ボードゲームのルールを確認できる公開Webサービスです。**
 
   [![Vercel](https://img.shields.io/badge/Vercel-Deployed-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://bodoge-no-mikata.vercel.app/)
   [![License: MIT](https://img.shields.io/badge/License-MIT-005CB9?style=for-the-badge&logo=github)](https://opensource.org/licenses/MIT)
@@ -20,23 +19,23 @@ https://bodoge-no-mikata.vercel.app/
 
 ---
 
-## Zero-Fat Architecture
+## 設計方針
 
-本プロジェクトは、ゲーム固有の事実を複数の手書き経路へ複製せず、source-backed canonical dataから必要なviewを導出します。
+本プロジェクトは、ゲーム固有の事実を複数の手書き経路へ複製せず、出典に結び付いた正準データから必要な表示を導出します。
 
-- **Canonical identity**: work / title alias / edition / platform / languageを分離する。
-- **Source-bound rules**: RuleSet → Claim → Evidence → RuleNodeを正準のrule authorityとする。
-- **Derived presentation**: GamePageは選択RuleSetのaccepted evidence-backed projectionだけを表示する。旧ゲーム行のrule textへfallbackしない。
-- **One ingestion path**: curated gameは `data/curated-games/<slug>.json` と既存validation/release workflowから追加・更新する。
-- **Merge ≠ release**: PRの品質判定とproduction release/read-backを別workflow・別状態として扱う。
+- ゲーム本体、別名、版、プラットフォーム、言語を分けて管理する。
+- ルールは `RuleSet`、`Claim`、`Evidence`、`RuleNode` を使い、根拠と表示内容を結び付ける。
+- GamePageは、選択中のRuleSetに対応する確認済みの情報を表示する。古いルール本文へ黙って戻さない。
+- curated gameは `data/curated-games/<slug>.json` と既存のvalidation / release workflowから追加・更新する。
+- PRの検証成功とproduction releaseは別に確認し、mergeだけで公開成功と扱わない。
 
 ## 主要機能
 
-- 日本語/英語title aliasを含むcanonical search・filter・sort・pagination
-- source-bound RuleSetと版差の明示
-- accepted claim + supporting evidenceに限定したルールpresentation
-- canonical glossary / concept / rule graph / component catalog
-- game単位URL、server-side rendering、structured metadata
+- 日本語・英語の別名を含むゲーム検索、絞り込み、並び替え、ページ分割
+- RuleSetと版差の表示
+- supporting evidenceがあるaccepted claimに基づくルール表示
+- glossary、concept、rule graph、component catalog
+- ゲームごとのURL、server-side rendering、structured metadata
 
 ## Architecture
 
@@ -61,25 +60,25 @@ task dev
 task lint
 ```
 
-Curated gameの追加・更新:
+curated gameの追加・更新:
 
 ```bash
 task game:add GAME=<slug>
 ```
 
-このcommandはPR準備用のvalidation/read-only preflightであり、productionへ直接writeしません。production publicationはmerge後のrelease workflowが担当します。
+このコマンドはPR準備用のvalidationとread-only preflightを実行し、productionへ直接writeしません。production publicationはmerge後のrelease workflowが担当します。
 
 ## Repository
 
-- `backend/app/`: FastAPI、canonical read/write、RuleSet/evidence/projection service
+- `backend/app/`: FastAPI、正準データのread/write、RuleSet/evidence/projection service
 - `api/`: Vercel Serverless entrypoint
 - `frontend/`: React/Vite UI
-- `data/curated-games/`: source-backed curated game input
-- `docs/`: canonical specification and operations
+- `data/curated-games/`: 出典付きcurated game input
+- `docs/`: 仕様と運用文書
 
 ## Issue workflow
 
-新規Issueは、Acceptance Criteria・tests・必要なproduction verificationまでを完遂可能な契約として扱います。運用規約は `docs/ISSUE_GUIDE.md` を参照してください。
+新規Issueは、Acceptance Criteria、tests、必要なproduction verificationまでを完遂可能な契約として扱います。運用規約は `docs/ISSUE_GUIDE.md` を参照してください。
 
 ---
 
