@@ -60,7 +60,10 @@ const trackAffiliateOutbound = (gameSlug, provider) => {
 
 export const ExternalLinks = ({ game }) => {
   const { affiliate_urls, source_url, source_trust, bgg_url, amazon_url } = game
-  const [rulesetState, setRulesetState] = useState({ status: 'loading', rulesets: [] })
+  const [rulesetState, setRulesetState] = useState({ slug: game.slug, status: 'loading', rulesets: [] })
+  const currentRulesetState = rulesetState.slug === game.slug
+    ? rulesetState
+    : { slug: game.slug, status: 'loading', rulesets: [] }
   const affiliateAmazon = affiliate_urls?.amazon
   const amazon = affiliateAmazon || amazon_url
   const rakuten = affiliate_urls?.rakuten
@@ -83,7 +86,6 @@ export const ExternalLinks = ({ game }) => {
 
   useEffect(() => {
     let cancelled = false
-    setRulesetState({ status: 'loading', rulesets: [] })
 
     api.get(`/api/games/${encodeURIComponent(game.slug)}/rule-sets`)
       .then((data) => {
@@ -91,34 +93,34 @@ export const ExternalLinks = ({ game }) => {
         const activeRulesets = data?.status === 'available'
           ? (data.rulesets || []).filter((ruleset) => ruleset.is_active && ruleset.status === 'active')
           : []
-        setRulesetState({ status: 'loaded', rulesets: activeRulesets })
+        setRulesetState({ slug: game.slug, status: 'loaded', rulesets: activeRulesets })
       })
       .catch((error) => {
         console.error('Failed to fetch current RuleSet context:', error)
-        if (!cancelled) setRulesetState({ status: 'error', rulesets: [] })
+        if (!cancelled) setRulesetState({ slug: game.slug, status: 'error', rulesets: [] })
       })
 
     return () => { cancelled = true }
   }, [game.slug])
 
-  const hasRulesetContext = rulesetState.status !== 'loaded' || rulesetState.rulesets.length > 0
+  const hasRulesetContext = currentRulesetState.status !== 'loaded' || currentRulesetState.rulesets.length > 0
   if (!source && links.length === 0 && !hasRulesetContext) return null
 
   return (
     <div className="info-section">
-      {rulesetState.status === 'loading' && (
+      {currentRulesetState.status === 'loading' && (
         <div className="game-empty-note" role="status">現在のルールセットを確認しています...</div>
       )}
 
-      {rulesetState.status === 'error' && (
+      {currentRulesetState.status === 'error' && (
         <div className="game-empty-note" role="alert">現在のルールセットを確認できませんでした。</div>
       )}
 
-      {rulesetState.status === 'loaded' && rulesetState.rulesets.length > 0 && (
+      {currentRulesetState.status === 'loaded' && currentRulesetState.rulesets.length > 0 && (
         <div aria-label="現在のルールセット">
           <div className="game-empty-note">現在のルールセット</div>
           <ul style={{ margin: '0 0 0.8rem', paddingInlineStart: '1.25rem' }}>
-            {rulesetState.rulesets.map((ruleset) => (
+            {currentRulesetState.rulesets.map((ruleset) => (
               <li key={ruleset.ruleset_id} style={{ marginBlock: '0.35rem' }}>
                 <div>{rulesetStatusLabel(ruleset)}</div>
                 {rulesetIdentity(ruleset).length > 0 && (
