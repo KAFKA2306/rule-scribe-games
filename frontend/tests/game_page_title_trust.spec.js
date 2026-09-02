@@ -39,6 +39,13 @@ test('canonical rulesがないゲームはclient側でも基本情報と表示�
   await page.goto(`/games/${game.slug}`)
 
   await expect(page).toHaveTitle('「ルール未確認ゲーム」の基本情報 | ボドゲのミカタ')
+  await expect(page.getByRole('button', { name: '詳しいルール', exact: true })).toHaveCount(0)
+  await expect(page.getByText(game.summary, { exact: true })).toBeVisible()
+  await expect(page.getByText('REVIEW REQUIRED', { exact: true })).toBeVisible()
+
+  await page.goto(`/games/${game.slug}#rules`)
+  await expect(page.getByRole('button', { name: '詳しいルール', exact: true })).toHaveCount(0)
+  await expect(page.getByText(game.summary, { exact: true })).toBeVisible()
 })
 
 test('canonical rulesがあるゲームだけclient側でルール要約と表示する', async ({ page }) => {
@@ -61,4 +68,5 @@ test('canonical rulesがあるゲームだけclient側でルール要約と表�
   await page.goto(`/games/${game.slug}`)
 
   await expect(page).toHaveTitle('「ルール確認済みゲーム」のルール・インスト要約 | ボドゲのミカタ')
+  await expect(page.getByRole('button', { name: '詳しいルール', exact: true })).toBeVisible()
 })
