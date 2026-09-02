@@ -4,6 +4,13 @@ import ReactMarkdown from 'react-markdown'
 import { api } from '../../lib/api'
 import { getGlossaryData, glossaryConceptFragment, ruleReferenceSourceLabel } from './glossaryData'
 
+const SOURCE_TYPE_LABELS = {
+  rulebook: 'ルールブック',
+  official_faq: '公式FAQ',
+  official_errata: '公式エラッタ',
+  official_clarification: '公式補足',
+}
+
 function headingLabel(markdownText) {
   return markdownText
     .replace(/!\[([^\]]*)\]\([^)]*\)/g, '$1')
@@ -207,6 +214,11 @@ function sourceLabel(source) {
   return source.publisher_name || source.document_identity || source.source_id
 }
 
+function sourceTypeLabel(sourceType) {
+  if (!sourceType) return '不明'
+  return SOURCE_TYPE_LABELS[sourceType] || sourceType
+}
+
 function locatorLabel(locator) {
   if (!locator) return null
   return [
@@ -270,7 +282,7 @@ function RuleEvidence({ slug, ruleNode }) {
                     : <strong>{sourceLabel(source)}</strong>}
                 </div>
                 <div className="game-empty-note" style={{ marginTop: '0.2rem' }}>
-                  種類: {source.source_type}
+                  資料: {sourceTypeLabel(source.source_type)}
                   {source.revision_label ? ` / 改訂: ${source.revision_label}` : ''}
                   {source.language_code ? ` / 言語: ${source.language_code}` : ''}
                   {source.platform ? ` / プラットフォーム: ${source.platform}` : ''}
