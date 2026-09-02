@@ -109,7 +109,16 @@ export default function GamePage({ slug: propSlug, initialGame }) {
     if (!game || typeof window === 'undefined') return undefined
 
     const syncFromLocation = () => {
-      const requestedTab = HASH_TABS[window.location.hash]
+      const hash = window.location.hash
+      if (!hash) {
+        setActiveTab(hasCoachSummary ? 'coach' : 'rules')
+        return
+      }
+      if (hash.startsWith('#rule-')) {
+        setActiveTab('rules')
+        return
+      }
+      const requestedTab = HASH_TABS[hash]
       if (requestedTab && isTabAvailable(requestedTab, tabAvailability)) {
         setActiveTab(requestedTab)
         return
@@ -250,14 +259,14 @@ export default function GamePage({ slug: propSlug, initialGame }) {
           </div>
 
           <div className="rules-tabs" role="group" aria-label="ゲーム詳細表示">
-            <button type="button" aria-pressed={activeTab === 'rules'} className={activeTab === 'rules' ? 'active' : ''} onClick={() => navigateToTab('rules')}>
-              詳しいルール
-            </button>
             {hasCoachSummary && (
               <button type="button" aria-pressed={activeTab === 'coach'} className={activeTab === 'coach' ? 'active' : ''} onClick={() => navigateToTab('coach')}>
                 準備・流れ・終了
               </button>
             )}
+            <button type="button" aria-pressed={activeTab === 'rules'} className={activeTab === 'rules' ? 'active' : ''} onClick={() => navigateToTab('rules')}>
+              詳しいルール
+            </button>
             <button type="button" aria-pressed={activeTab === 'graph'} className={activeTab === 'graph' ? 'active' : ''} onClick={() => navigateToTab('graph')}>
               関連ゲーム
             </button>
@@ -273,29 +282,32 @@ export default function GamePage({ slug: propSlug, initialGame }) {
 
             {activeTab === 'coach' && (
               <div className="coach-mode">
-                <div className="coach-step active">
-                  <span className="coach-step-num">STEP 1</span>
-                  <div className="coach-step-title">セットアップ</div>
-                  <div style={{ fontSize: '0.95rem', lineHeight: 1.6 }}>
-                    {game.setup_summary || 'このゲーム固有のセットアップ要約は未確認です。'}
+                {game.setup_summary && (
+                  <div className="coach-step active">
+                    <div className="coach-step-title">セットアップ</div>
+                    <div style={{ fontSize: '0.95rem', lineHeight: 1.6 }}>
+                      {game.setup_summary}
+                    </div>
                   </div>
-                </div>
+                )}
 
-                <div className="coach-step">
-                  <span className="coach-step-num">STEP 2</span>
-                  <div className="coach-step-title">ゲームの流れ</div>
-                  <div style={{ fontSize: '0.95rem', lineHeight: 1.6 }}>
-                    {game.gameplay_summary || 'このゲーム固有のゲーム進行要約は未確認です。'}
+                {game.gameplay_summary && (
+                  <div className="coach-step">
+                    <div className="coach-step-title">ゲームの流れ</div>
+                    <div style={{ fontSize: '0.95rem', lineHeight: 1.6 }}>
+                      {game.gameplay_summary}
+                    </div>
                   </div>
-                </div>
+                )}
 
-                <div className="coach-step">
-                  <span className="coach-step-num">STEP 3</span>
-                  <div className="coach-step-title">ゲーム終了</div>
-                  <div style={{ fontSize: '0.95rem', lineHeight: 1.6 }}>
-                    {game.end_game_summary || 'このゲーム固有の終了条件要約は未確認です。'}
+                {game.end_game_summary && (
+                  <div className="coach-step">
+                    <div className="coach-step-title">ゲーム終了</div>
+                    <div style={{ fontSize: '0.95rem', lineHeight: 1.6 }}>
+                      {game.end_game_summary}
+                    </div>
                   </div>
-                </div>
+                )}
 
                 <div style={{ textAlign: 'center', padding: '1rem', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
                   登録済みのゲーム固有要約を表示しています。AI生成・要約を含む場合があり、公式裁定ではありません。

@@ -79,16 +79,19 @@ function expectSinglePrimaryFlow(layout) {
   expect(Math.abs(layout.readingLine.x - layout.main.x)).toBeLessThan(2)
 }
 
-test('game detail keeps one primary flow and readable long-form measure', async ({ page }) => {
+test('game detail shows verified short flow before long-form rules and keeps one primary layout flow', async ({ page }) => {
   await mockGameApi(page)
   await page.setViewportSize({ width: 1280, height: 900 })
   await page.goto('/games/big-shot')
 
   await expect(page.getByRole('heading', { name: 'ビッグショット' })).toBeVisible()
   await expect(page.getByText('「ビッグショット」のゲーム概要', { exact: true })).toBeVisible()
-  await expect(page.getByText('30秒でわかる「ビッグショット」', { exact: true })).toHaveCount(0)
-  await expect(page.getByRole('button', { name: '詳しいルール', exact: true })).toBeVisible()
+  await expect(page.getByText(bigShot.setup_summary)).toBeVisible()
+  await expect(page.getByText(bigShot.gameplay_summary)).toBeVisible()
+  await expect(page.getByText(bigShot.end_game_summary)).toBeVisible()
+  await expect(page.locator('.markdown-content')).toHaveCount(0)
 
+  await page.getByRole('button', { name: '詳しいルール', exact: true }).click()
   const desktop = await readLayout(page)
   expectSinglePrimaryFlow(desktop)
   expect(desktop.main.width).toBeGreaterThan(1000)
@@ -108,7 +111,7 @@ test('legacy strategy content does not change the public page title', async ({ p
   await expect(page).toHaveTitle('「ビッグショット」のルール・インスト要約 | ボドゲのミカタ')
 })
 
-test('game detail uses one native button group for canonical game detail views', async ({ page }) => {
+test('game detail uses one native button group and starts with the short game flow when available', async ({ page }) => {
   await mockGameApi(page)
   await page.setViewportSize({ width: 1280, height: 900 })
   await page.goto('/games/big-shot')
@@ -120,20 +123,19 @@ test('game detail uses one native button group for canonical game detail views',
 
   const rulesButton = page.getByRole('button', { name: '詳しいルール', exact: true })
   const flowButton = page.getByRole('button', { name: '準備・流れ・終了', exact: true })
-  await expect(rulesButton).toHaveAttribute('aria-pressed', 'true')
-  await expect(flowButton).toHaveAttribute('aria-pressed', 'false')
-
-  await flowButton.click()
-  await expect(rulesButton).toHaveAttribute('aria-pressed', 'false')
   await expect(flowButton).toHaveAttribute('aria-pressed', 'true')
+  await expect(rulesButton).toHaveAttribute('aria-pressed', 'false')
   await expect(page.getByRole('link', { name: '出典を確認' })).toHaveAttribute('href', bigShot.source_url)
+
+  await rulesButton.click()
+  await expect(flowButton).toHaveAttribute('aria-pressed', 'false')
+  await expect(rulesButton).toHaveAttribute('aria-pressed', 'true')
 })
 
-test('preparation flow only appears when at least one game-specific summary exists', async ({ page }) => {
+test('preparation flow only shows summaries that actually exist', async ({ page }) => {
   let currentGame = bigShot
   await mockGameApi(page, () => currentGame)
   await page.goto('/games/big-shot')
-  await page.getByRole('button', { name: '準備・流れ・終了', exact: true }).click()
 
   await expect(page.getByText(bigShot.setup_summary)).toBeVisible()
   await expect(page.getByText(bigShot.gameplay_summary)).toBeVisible()
@@ -163,11 +165,11 @@ test('preparation flow only appears when at least one game-specific summary exis
     gameplay_summary: null,
   }
   await page.reload()
-  await page.getByRole('button', { name: '準備・流れ・終了', exact: true }).click()
 
-  await expect(page.getByText('このゲーム固有のセットアップ要約は未確認です。')).toBeVisible()
-  await expect(page.getByText('このゲーム固有のゲーム進行要約は未確認です。')).toBeVisible()
+  await expect(page.getByRole('button', { name: '準備・流れ・終了', exact: true })).toHaveAttribute('aria-pressed', 'true')
   await expect(page.getByText(bigShot.end_game_summary)).toBeVisible()
+  await expect(page.getByText('このゲーム固有のセットアップ要約は未確認です。')).toHaveCount(0)
+  await expect(page.getByText('このゲーム固有のゲーム進行要約は未確認です。')).toHaveCount(0)
 })
 
 test('legacy strategy and AI reviews are not exposed as detail destinations', async ({ page }) => {
