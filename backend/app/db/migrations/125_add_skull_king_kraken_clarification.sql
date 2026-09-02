@@ -5,6 +5,8 @@ BEGIN;
 -- A publisher-hosted player reference card shows the conflicting wording that
 -- the FAQ identifies as a discrepancy from one print run. The exact print run
 -- of the hosted image is not inferred here.
+-- Keep this variant inactive until the public UI explicitly selects variants;
+-- canonical SSR currently scans every active source-bound RuleSet.
 
 INSERT INTO public.evidence_sources (
   source_id, url, document_identity, source_type, publisher_name, platform,
@@ -120,8 +122,8 @@ BEGIN
     ) VALUES (
       v_game_id, v_work_id, 1, '1.0', 'en', 'Grandpa Beck''s Games current edition',
       'current English rulebook web revision 1764178570; current FAQ and Advanced Rules player reference audited 2026-09-03',
-      true, 'current-web-rulebook-1764178570', 'physical', 'Grandpa Beck''s Games',
-      'active', 'source_bound', v_base_ruleset_id, 'variant_of', 'Advanced Play',
+      false, 'current-web-rulebook-1764178570', 'physical', 'Grandpa Beck''s Games',
+      'draft', 'source_bound', v_base_ruleset_id, 'variant_of', 'Advanced Play',
       ARRAY[
         'publisher:grandpa-becks:skull-king:current-rulebook',
         'publisher:grandpa-becks:skull-king:current-rules-faq',
@@ -134,9 +136,9 @@ BEGIN
       work_id = v_work_id,
       schema_version = '1.0',
       source_revision = 'current English rulebook web revision 1764178570; current FAQ and Advanced Rules player reference audited 2026-09-03',
-      is_active = true,
+      is_active = false,
       publisher_name = 'Grandpa Beck''s Games',
-      status = 'active',
+      status = 'draft',
       verification_status = 'source_bound',
       base_rule_set_id = v_base_ruleset_id,
       relation_type = 'variant_of',
