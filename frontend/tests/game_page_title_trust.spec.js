@@ -70,3 +70,39 @@ test('canonical rulesがあるゲームだけclient側でルール要約と表�
   await expect(page).toHaveTitle('「ルール確認済みゲーム」のルール・インスト要約 | ボドゲのミカタ')
   await expect(page.getByRole('button', { name: '詳しいルール', exact: true })).toBeVisible()
 })
+
+test('部分的な要点だけを表示し、keyboardで同じゲームの詳細ルールへ進める', async ({ page }) => {
+  const game = {
+    id: 'game-with-partial-summary',
+    slug: 'game-with-partial-summary',
+    title: 'Game With Partial Summary',
+    title_ja: '部分要点ゲーム',
+    summary: '確認できた要点と詳細ルールを同じゲーム情報から表示します。',
+    identity_status: 'verified',
+    source_trust: 'official_publisher',
+    content_review_status: 'review_required',
+    source_url: 'https://example.com/official-rules',
+    rules_content: '## 詳細ルール\n- 確認済みの手順です。',
+    setup_summary: '確認済みの準備だけを表示します。',
+    gameplay_summary: null,
+    end_game_summary: null,
+  }
+
+  await mockGame(page, game)
+  await page.goto(`/games/${game.slug}`)
+
+  await expect(page.getByRole('button', { name: '準備・流れ・終了', exact: true })).toHaveAttribute('aria-pressed', 'true')
+  await expect(page.getByText(game.setup_summary, { exact: true })).toBeVisible()
+  await expect(page.getByText('未確認です', { exact: true })).toHaveCount(0)
+  await expect(page.getByText('REVIEW REQUIRED', { exact: true })).toBeVisible()
+
+  const rulesButton = page.getByRole('button', { name: '詳しいルール', exact: true })
+  await rulesButton.focus()
+  await expect(rulesButton).toBeFocused()
+  await page.keyboard.press('Enter')
+
+  await expect(page).toHaveURL(/#rules$/)
+  await expect(rulesButton).toHaveAttribute('aria-pressed', 'true')
+  await expect(page.getByRole('heading', { name: '詳細ルール', exact: true })).toBeVisible()
+  await expect(page.getByText('REVIEW REQUIRED', { exact: true })).toBeVisible()
+})
