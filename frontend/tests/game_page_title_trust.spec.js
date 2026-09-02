@@ -106,3 +106,124 @@ test('部分的な要点だけを表示し、keyboardで同じゲームの詳細
   await expect(page.getByRole('heading', { name: '詳細ルール', exact: true })).toBeVisible()
   await expect(page.getByText('REVIEW REQUIRED', { exact: true })).toBeVisible()
 })
+
+test('根拠資料の正式な種類を利用者向けの日本語で区別する', async ({ page }) => {
+  const slug = 'evidence-source-role-game'
+  const game = {
+    id: slug,
+    slug,
+    title: 'Evidence Source Role Game',
+    title_ja: '根拠資料表示ゲーム',
+    summary: '同じルールに結び付いた根拠資料の役割を確認します。',
+    identity_status: 'verified',
+    source_trust: 'official_publisher',
+    content_review_status: 'unknown',
+    rules_content: '## 詳細ルール\n- Mermaid裁定を確認します。',
+    setup_summary: null,
+    gameplay_summary: null,
+    end_game_summary: null,
+  }
+
+  await page.route('**/api/**', async route => {
+    const url = new URL(route.request().url())
+
+    if (url.pathname === `/api/games/${slug}`) {
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ game }) })
+      return
+    }
+
+    if (url.pathname === `/api/games/${slug}/glossary`) {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          status: 'available',
+          entries: [{
+            concept_id: 'mermaid',
+            label: 'Mermaid',
+            aliases: [],
+            rule_references: [{
+              rule_set_id: 'ruleset-1',
+              rule_id: 'rule-1',
+              verification_status: 'source_bound',
+            }],
+          }],
+        }),
+      })
+      return
+    }
+
+    if (url.pathname === `/api/games/${slug}/presentation`) {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          status: 'available',
+          rule_set_id: 'ruleset-1',
+          setup: { status: 'available', items: [{ rule_id: 'rule-1', text: 'Mermaid裁定' }] },
+          game_flow: { status: 'not_available', items: [] },
+          end_condition: { status: 'not_available', items: [] },
+          scoring: { status: 'not_available', items: [] },
+        }),
+      })
+      return
+    }
+
+    if (url.pathname === `/api/games/${slug}/evidence`) {
+      const source = (bindingId, sourceType, sectionHeading) => ({
+        binding: { binding_id: bindingId, relation: 'supports' },
+        source: {
+          source_id: `source-${bindingId}`,
+          publisher_name: "Grandpa Beck's Games",
+          source_type: sourceType,
+          source_url: 'https://www.grandpabecksgames.com/pages/skull-king',
+          revision_label: 'current',
+          language_code: 'en',
+          platform: 'physical',
+        },
+        locator: { section_heading: sectionHeading },
+      })
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          claims: [{
+            support_status: 'supported',
+            claim: { lifecycle_status: 'accepted' },
+            bindings: [
+              source('rulebook', 'rulebook', 'PLAYING'),
+              source('faq', 'official_faq', 'FAQ / Mermaid'),
+              source('errata', 'official_errata', 'Errata'),
+              source('clarification', 'official_clarification', 'Clarification'),
+              source('unknown', 'publisher_blog', 'Blog'),
+            ],
+          }],
+        }),
+      })
+      return
+    }
+
+    if (url.pathname === '/api/concepts/mermaid') {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ concept_id: 'mermaid', label: 'Mermaid' }),
+      })
+      return
+    }
+
+    await route.fulfill({ status: 404, contentType: 'application/json', body: JSON.stringify({ detail: 'not found' }) })
+  })
+
+  await page.goto(`/games/${slug}`)
+  await page.getByRole('button', { name: 'Mermaid', exact: true }).click()
+  await expect(page.getByText('Mermaid裁定', { exact: true })).toBeVisible()
+  await page.getByText('根拠を確認', { exact: true }).click()
+
+  await expect(page.getByText('資料: ルールブック', { exact: true })).toBeVisible()
+  await expect(page.getByText('資料: 公式FAQ', { exact: true })).toBeVisible()
+  await expect(page.getByText('資料: 公式エラッタ', { exact: true })).toBeVisible()
+  await expect(page.getByText('資料: 公式補足', { exact: true })).toBeVisible()
+  await expect(page.getByText('資料: publisher_blog', { exact: true })).toBeVisible()
+  await expect(page.getByText('資料: official_faq', { exact: true })).toHaveCount(0)
+})
