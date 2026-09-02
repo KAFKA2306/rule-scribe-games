@@ -265,8 +265,8 @@ function RuleEvidence({ slug, ruleNode }) {
             {bindings.map(({ binding, source, locator, supportStatus, lifecycleStatus }) => (
               <li key={binding.binding_id} style={{ marginBlock: '0.5rem' }}>
                 <div>
-                  {source.url
-                    ? <a href={source.url} target="_blank" rel="noreferrer">{sourceLabel(source)}</a>
+                  {source.source_url
+                    ? <a href={source.source_url} target="_blank" rel="noreferrer">{sourceLabel(source)}</a>
                     : <strong>{sourceLabel(source)}</strong>}
                 </div>
                 <div className="game-empty-note" style={{ marginTop: '0.2rem' }}>
