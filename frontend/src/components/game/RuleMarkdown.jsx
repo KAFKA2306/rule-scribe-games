@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import ReactMarkdown from 'react-markdown'
+import { api } from '../../lib/api'
 import { getGlossaryData, glossaryConceptFragment, ruleReferenceSourceLabel } from './glossaryData'
 
 function headingLabel(markdownText) {
@@ -202,6 +203,93 @@ function resultSnippet(section, query) {
   return section.body.length > 140 ? `${section.body.slice(0, 140)}…` : section.body
 }
 
+function sourceLabel(source) {
+  return source.publisher_name || source.document_identity || source.source_id
+}
+
+function locatorLabel(locator) {
+  if (!locator) return null
+  return [
+    locator.page_number ? `ページ ${locator.page_number}` : null,
+    locator.section_heading ? `節 ${locator.section_heading}` : null,
+    locator.anchor ? `位置 ${locator.anchor}` : null,
+    locator.external_reference ? `参照 ${locator.external_reference}` : null,
+  ].filter(Boolean).join(' / ') || null
+}
+
+function evidenceBindings(trace) {
+  return (trace?.claims || []).flatMap((claimTrace) =>
+    (claimTrace.bindings || []).map((detail) => ({
+      ...detail,
+      supportStatus: claimTrace.support_status,
+      lifecycleStatus: claimTrace.claim?.lifecycle_status,
+    })),
+  )
+}
+
+function RuleEvidence({ slug, ruleNode }) {
+  const [state, setState] = useState({ status: 'idle', data: null })
+
+  const loadEvidence = () => {
+    if (state.status !== 'idle') return
+    setState({ status: 'loading', data: null })
+    const params = new URLSearchParams({
+      rule_set_id: ruleNode.rule_set_id,
+      target_type: 'rule_node',
+      rule_id: ruleNode.rule_id,
+    })
+    api.get(`/api/games/${encodeURIComponent(slug)}/evidence?${params.toString()}`)
+      .then((data) => setState({ status: 'loaded', data }))
+      .catch((error) => {
+        console.error('Failed to fetch rule evidence:', error)
+        setState({ status: 'error', data: null })
+      })
+  }
+
+  const bindings = state.status === 'loaded' ? evidenceBindings(state.data) : []
+
+  return (
+    <details onToggle={(event) => { if (event.currentTarget.open) loadEvidence() }} style={{ marginTop: '0.4rem' }}>
+      <summary>根拠を確認</summary>
+      <div style={{ marginTop: '0.5rem' }}>
+        {state.status === 'idle' && <div className="game-empty-note">開くと登録済みの根拠を取得します。</div>}
+        {state.status === 'loading' && <div className="game-empty-note" role="status">根拠を取得しています...</div>}
+        {state.status === 'error' && (
+          <div className="game-empty-note" role="alert">根拠を取得できませんでした。</div>
+        )}
+        {state.status === 'loaded' && bindings.length === 0 && (
+          <div className="game-empty-note">このルールの根拠は登録されていません。</div>
+        )}
+        {state.status === 'loaded' && bindings.length > 0 && (
+          <ul aria-label="このルールの根拠" style={{ margin: 0, paddingInlineStart: '1.25rem' }}>
+            {bindings.map(({ binding, source, locator, supportStatus, lifecycleStatus }) => (
+              <li key={binding.binding_id} style={{ marginBlock: '0.5rem' }}>
+                <div>
+                  {source.url
+                    ? <a href={source.url} target="_blank" rel="noreferrer">{sourceLabel(source)}</a>
+                    : <strong>{sourceLabel(source)}</strong>}
+                </div>
+                <div className="game-empty-note" style={{ marginTop: '0.2rem' }}>
+                  種類: {source.source_type}
+                  {source.revision_label ? ` / 改訂: ${source.revision_label}` : ''}
+                  {source.language_code ? ` / 言語: ${source.language_code}` : ''}
+                  {source.platform ? ` / プラットフォーム: ${source.platform}` : ''}
+                </div>
+                {locatorLabel(locator) && (
+                  <div className="game-empty-note" style={{ marginTop: '0.2rem' }}>位置: {locatorLabel(locator)}</div>
+                )}
+                <div className="game-empty-note" style={{ marginTop: '0.2rem' }}>
+                  関係: {binding.relation} / Claim: {lifecycleStatus} / 根拠状態: {supportStatus}
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </details>
+  )
+}
+
 function RuleMarkdown({ markdown = '', ruleNodes = [] }) {
   const { slug } = useParams()
   const [query, setQuery] = useState('')
@@ -276,6 +364,7 @@ function RuleMarkdown({ markdown = '', ruleNodes = [] }) {
                 style={{ marginBlock: '0.6rem', scrollMarginTop: '1rem' }}
               >
                 <div>{ruleNode.text}</div>
+                <RuleEvidence slug={slug} ruleNode={ruleNode} />
               </li>
             ))}
           </ul>
