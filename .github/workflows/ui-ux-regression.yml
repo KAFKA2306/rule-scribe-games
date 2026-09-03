@@ -102,6 +102,7 @@ jobs:
           tests/performance.spec.js
           tests/game_layout.spec.js
           tests/game_page_title_trust.spec.js
+          tests/game_ruleset_context.spec.js
           tests/game_section_navigation.spec.js
           tests/mobile_game_scroll.spec.js
           tests/auth.spec.js
