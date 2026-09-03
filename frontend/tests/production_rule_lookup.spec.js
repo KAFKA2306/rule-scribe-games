@@ -76,9 +76,21 @@ test('productionのSkull KingでClaimから公式FAQのEvidenceへ辿れる', as
   )
   await mermaidRule.getByText('根拠を確認', { exact: true }).click()
 
-  const faqLink = mermaidRule.getByRole('link', { name: "Grandpa Beck's Games（公式FAQ）", exact: true })
-  await expect(faqLink).toBeVisible()
-  await expectOfficialSkullKingSource(faqLink)
+  const evidenceLinks = mermaidRule.locator('a[href]')
+  let officialFaqLink = null
+  for (let index = 0; index < await evidenceLinks.count(); index += 1) {
+    const candidate = evidenceLinks.nth(index)
+    const href = await candidate.getAttribute('href')
+    if (href && officialSkullKingSourcePatterns.some((pattern) => pattern.test(href))) {
+      officialFaqLink = candidate
+      break
+    }
+  }
+
+  expect(officialFaqLink).not.toBeNull()
+  await expect(officialFaqLink).toBeVisible()
+  await expect(officialFaqLink).toContainText('Grandpa Beck')
+  await expectOfficialSkullKingSource(officialFaqLink)
 
   const hydratedHtml = await page.content()
   expect(hydratedHtml).toContain('Grandpa Beck')
