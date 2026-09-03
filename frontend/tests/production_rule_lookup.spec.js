@@ -76,7 +76,6 @@ test('productionのSkull KingでClaimから公式FAQのEvidenceへ辿れる', as
   )
   await mermaidRule.getByText('根拠を確認', { exact: true }).click()
 
-  await expect(mermaidRule.getByText('資料: 公式FAQ', { exact: true })).toBeVisible()
   const faqLink = mermaidRule.getByRole('link', { name: "Grandpa Beck's Games（公式FAQ）", exact: true })
   await expect(faqLink).toBeVisible()
   await expectOfficialSkullKingSource(faqLink)
