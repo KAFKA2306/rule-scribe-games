@@ -176,7 +176,7 @@ test('根拠資料の正式な種類を利用者向けの日本語で区別す�
           source_id: `source-${bindingId}`,
           publisher_name: "Grandpa Beck's Games",
           source_type: sourceType,
-          source_url: 'https://www.grandpabecksgames.com/pages/skull-king',
+          url: 'https://www.grandpabecksgames.com/pages/skull-king',
           revision_label: 'current',
           language_code: 'en',
           platform: 'physical',
