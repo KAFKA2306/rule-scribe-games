@@ -65,8 +65,20 @@ test('productionのSkull KingでClaimから公式FAQのEvidenceへ辿れる', as
   expect(response.ok()).toBe(true)
   const ssrHtml = await response.text()
   expect(ssrHtml).toContain('Grandpa Beck')
+  expect(ssrHtml).toContain('内容確認状態:</strong> unknown')
+  expect(ssrHtml).toContain("版:</strong> Grandpa Beck&#x27;s Games current edition")
 
   await page.goto('/games/skull-king#rules', { waitUntil: 'networkidle' })
+
+  const trustPanel = page.getByLabel('出典・根拠')
+  await expect(trustPanel).toBeVisible()
+  await expect(trustPanel.getByText('PUBLISHER SOURCE', { exact: true })).toBeVisible()
+  await expect(trustPanel.getByText('REVIEW UNKNOWN', { exact: true })).toBeVisible()
+
+  const currentRuleset = trustPanel.getByLabel('現在のルールセット')
+  await expect(currentRuleset).toBeVisible()
+  await expect(currentRuleset.getByText('出典に結び付いたルールセット', { exact: true })).toBeVisible()
+  await expect(currentRuleset.getByText("版: Grandpa Beck's Games current edition / プラットフォーム: physical / 言語: en / 改訂: current-web-rulebook-1764178570", { exact: true })).toBeVisible()
 
   const mermaidRule = await openCanonicalRuleFromSearch(
     page,
