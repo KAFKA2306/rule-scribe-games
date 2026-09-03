@@ -76,7 +76,10 @@ test('productionのSkull KingでClaimから公式FAQのEvidenceへ辿れる', as
   )
   await mermaidRule.getByText('根拠を確認', { exact: true }).click()
 
-  const evidenceLinks = mermaidRule.locator('a[href]')
+  const evidenceList = mermaidRule.getByRole('list', { name: 'このルールの根拠' })
+  await expect(evidenceList).toBeVisible()
+
+  const evidenceLinks = evidenceList.locator('a[href]')
   let officialFaqLink = null
   for (let index = 0; index < await evidenceLinks.count(); index += 1) {
     const candidate = evidenceLinks.nth(index)
