@@ -3,7 +3,7 @@
   "source": "https://api.vercel.com/v1/query/web-analytics/visits/aggregate",
   "event_source": "https://api.vercel.com/v1/query/web-analytics/events/aggregate",
   "scope": "production Web Analytics; custom-event export may be plan-limited",
-  "collected_at": "2026-09-02T04:46:12.700407+00:00",
+  "collected_at": "2026-09-03T04:42:53.696764+00:00",
   "days": [
     {
       "date": "2026-07-26",
@@ -194,6 +194,11 @@
       "date": "2026-09-01",
       "pageviews": 0,
       "visitors": 0
+    },
+    {
+      "date": "2026-09-02",
+      "pageviews": 11,
+      "visitors": 11
     }
   ],
   "affiliate_outbound": {
@@ -203,14 +208,14 @@
   },
   "affiliate_outbound_days": [],
   "rolling_window": {
-    "since": "2026-08-02",
-    "until": "2026-09-02",
+    "since": "2026-08-03",
+    "until": "2026-09-03",
     "limit_per_breakdown": 100,
     "request_paths": [
       {
         "requestPath": "/",
-        "pageviews": 15,
-        "visitors": 11
+        "pageviews": 26,
+        "visitors": 22
       },
       {
         "requestPath": "/games/minna-de-ponkotsu-paint",
@@ -224,6 +229,11 @@
       },
       {
         "requestPath": "/games/hack-clad",
+        "pageviews": 1,
+        "visitors": 1
+      },
+      {
+        "requestPath": "/games/odin",
         "pageviews": 1,
         "visitors": 1
       },
@@ -251,13 +261,13 @@
     "referrers": [
       {
         "referrerHostname": "",
-        "pageviews": 16,
-        "visitors": 9
+        "pageviews": 25,
+        "visitors": 18
       },
       {
         "referrerHostname": "bing.com",
-        "pageviews": 3,
-        "visitors": 3
+        "pageviews": 5,
+        "visitors": 5
       },
       {
         "referrerHostname": "github.com",
@@ -271,6 +281,11 @@
       },
       {
         "referrerHostname": "note.com",
+        "pageviews": 1,
+        "visitors": 1
+      },
+      {
+        "referrerHostname": "search.yahoo.com",
         "pageviews": 1,
         "visitors": 1
       }
@@ -307,6 +322,18 @@
         "referrers": [
           {
             "referrerHostname": "",
+            "pageviews": 1,
+            "visitors": 1
+          }
+        ]
+      },
+      {
+        "requestPath": "/games/odin",
+        "pageviews": 1,
+        "visitors": 1,
+        "referrers": [
+          {
+            "referrerHostname": "bing.com",
             "pageviews": 1,
             "visitors": 1
           }
