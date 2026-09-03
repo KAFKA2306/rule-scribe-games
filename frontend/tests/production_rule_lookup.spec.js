@@ -47,6 +47,7 @@ async function openCanonicalRuleFromSearch(page, query, ruleId, expectedSource, 
   await expect(target).toBeVisible()
   await expect(page).toHaveURL(new RegExp(`#rule-node-${escapedRuleId}$`))
   await expectNoPageOverflow(page)
+  return target
 }
 
 test('productionのSkull Kingで代表queryから確認済みRuleNodeと公式出典へ到達できる', async ({ page }) => {
@@ -65,17 +66,19 @@ test('productionのSkull KingでClaimから公式FAQのEvidenceへ辿れる', as
   const ssrHtml = await response.text()
   expect(ssrHtml).toContain('Grandpa Beck')
 
-  await page.goto('/games/skull-king', { waitUntil: 'networkidle' })
+  await page.goto('/games/skull-king#rules', { waitUntil: 'networkidle' })
   await expect(page.getByText(/Grandpa Beck/).first()).toBeVisible()
 
-  const mermaid = page.getByRole('button', { name: 'Mermaid', exact: true })
-  await expect(mermaid).toBeVisible()
-  await mermaid.click()
-  await expect(page.getByText('Mermaid裁定', { exact: true })).toBeVisible()
-  await page.getByText('根拠を確認', { exact: true }).click()
+  const mermaidRule = await openCanonicalRuleFromSearch(
+    page,
+    'FAQ Mermaid',
+    'resolution.mermaid-triad',
+    'FAQ',
+  )
+  await mermaidRule.getByText('根拠を確認', { exact: true }).click()
 
-  await expect(page.getByText('資料: 公式FAQ', { exact: true })).toBeVisible()
-  const faqLink = page.getByRole('link', { name: "Grandpa Beck's Games（公式FAQ）", exact: true })
+  await expect(mermaidRule.getByText('資料: 公式FAQ', { exact: true })).toBeVisible()
+  const faqLink = mermaidRule.getByRole('link', { name: "Grandpa Beck's Games（公式FAQ）", exact: true })
   await expect(faqLink).toBeVisible()
   await expectOfficialSkullKingSource(faqLink)
 
