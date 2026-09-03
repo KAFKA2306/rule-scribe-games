@@ -78,9 +78,11 @@ test('productionのSkull KingでClaimから公式FAQのEvidenceへ辿れる', as
 
   const evidenceList = mermaidRule.getByRole('list', { name: 'このルールの根拠' })
   await expect(evidenceList).toBeVisible()
-  await expect(evidenceList.getByText(/資料: 公式FAQ/).first()).toBeVisible()
 
-  const officialFaqLink = evidenceList.getByRole('link', { name: /Grandpa Beck.*公式FAQ/ }).first()
+  const officialFaqEvidence = evidenceList.getByRole('listitem').filter({ hasText: '資料: 公式FAQ' }).first()
+  await expect(officialFaqEvidence).toBeVisible()
+
+  const officialFaqLink = officialFaqEvidence.getByRole('link').first()
   await expect(officialFaqLink).toBeVisible()
   const officialFaqHref = await officialFaqLink.getAttribute('href')
   expect(officialFaqHref).toBeTruthy()
