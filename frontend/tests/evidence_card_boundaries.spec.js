@@ -100,7 +100,7 @@ function sourceBinding(id, publisherName) {
       source_id: `source-${id}`,
       publisher_name: publisherName,
       source_type: 'official_faq',
-      source_url: `https://example.com/${id}`,
+      url: `https://example.com/${id}`,
       revision_label: 'current',
       language_code: 'en',
       platform: 'physical',
