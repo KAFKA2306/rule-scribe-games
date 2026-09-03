@@ -59,6 +59,17 @@ function conceptIdFromHash() {
   }
 }
 
+function ruleIdFromHash() {
+  if (typeof window === 'undefined') return null
+  const prefix = '#rule-node-'
+  if (!window.location.hash.startsWith(prefix)) return null
+  try {
+    return decodeURIComponent(window.location.hash.slice(prefix.length))
+  } catch {
+    return null
+  }
+}
+
 export function ConceptGlossary({ slug, onRuleNodesLoaded }) {
   const [entries, setEntries] = useState([])
   const [query, setQuery] = useState('')
@@ -174,23 +185,38 @@ export function ConceptGlossary({ slug, onRuleNodesLoaded }) {
   useEffect(() => {
     if (fetchStatus !== 'available') return undefined
 
-    const selectHashConcept = () => {
+    const syncHash = () => {
       const conceptId = conceptIdFromHash()
-      if (!conceptId || !entries.some((entry) => entry.concept_id === conceptId)) return
-      if (selectedId !== conceptId) selectConcept(conceptId)
-      window.requestAnimationFrame(() => {
-        const target = document.getElementById(`glossary-concept-${conceptId}`)
-        target?.scrollIntoView({ block: 'center' })
-        target?.focus({ preventScroll: true })
-      })
+      if (conceptId && entries.some((entry) => entry.concept_id === conceptId)) {
+        if (selectedId !== conceptId) selectConcept(conceptId)
+        window.requestAnimationFrame(() => {
+          const target = document.getElementById(`glossary-concept-${conceptId}`)
+          target?.scrollIntoView({ block: 'center' })
+          target?.focus({ preventScroll: true })
+        })
+        return
+      }
+
+      const ruleId = ruleIdFromHash()
+      if (!ruleId) return
+      const references = entries.flatMap((entry) =>
+        (entry.rule_references || []).filter((reference) =>
+          isVerifiedRuleReference(reference) && reference.rule_id === ruleId,
+        ),
+      )
+      if (references.length === 0) {
+        onRuleNodesLoaded?.([])
+        return
+      }
+      loadRuleDestinations({ rule_references: references })
     }
 
-    selectHashConcept()
-    window.addEventListener('hashchange', selectHashConcept)
-    window.addEventListener('popstate', selectHashConcept)
+    syncHash()
+    window.addEventListener('hashchange', syncHash)
+    window.addEventListener('popstate', syncHash)
     return () => {
-      window.removeEventListener('hashchange', selectHashConcept)
-      window.removeEventListener('popstate', selectHashConcept)
+      window.removeEventListener('hashchange', syncHash)
+      window.removeEventListener('popstate', syncHash)
     }
   }, [entries, fetchStatus, selectedId])
 
