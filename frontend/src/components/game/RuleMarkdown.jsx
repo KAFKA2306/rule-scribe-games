@@ -219,6 +219,10 @@ function sourceTypeLabel(sourceType) {
   return SOURCE_TYPE_LABELS[sourceType] || sourceType
 }
 
+function evidenceSourceLabel(source) {
+  return `${sourceLabel(source)}（${sourceTypeLabel(source.source_type)}）`
+}
+
 function locatorLabel(locator) {
   if (!locator) return null
   return [
@@ -278,8 +282,8 @@ function RuleEvidence({ slug, ruleNode }) {
               <li key={binding.binding_id} style={{ marginBlock: '0.5rem' }}>
                 <div>
                   {source.source_url
-                    ? <a href={source.source_url} target="_blank" rel="noreferrer">{sourceLabel(source)}</a>
-                    : <strong>{sourceLabel(source)}</strong>}
+                    ? <a href={source.source_url} target="_blank" rel="noreferrer">{evidenceSourceLabel(source)}</a>
+                    : <strong>{evidenceSourceLabel(source)}</strong>}
                 </div>
                 <div className="game-empty-note" style={{ marginTop: '0.2rem' }}>
                   資料: {sourceTypeLabel(source.source_type)}

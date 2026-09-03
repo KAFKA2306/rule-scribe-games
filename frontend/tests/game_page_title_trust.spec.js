@@ -226,4 +226,20 @@ test('根拠資料の正式な種類を利用者向けの日本語で区別す�
   await expect(page.getByText('資料: 公式補足')).toBeVisible()
   await expect(page.getByText('資料: publisher_blog')).toBeVisible()
   await expect(page.getByText('資料: official_faq')).toHaveCount(0)
+
+  const officialSourceUrl = 'https://www.grandpabecksgames.com/pages/skull-king'
+  const rulebookLink = page.getByRole('link', { name: "Grandpa Beck's Games（ルールブック）", exact: true })
+  const faqLink = page.getByRole('link', { name: "Grandpa Beck's Games（公式FAQ）", exact: true })
+  const errataLink = page.getByRole('link', { name: "Grandpa Beck's Games（公式エラッタ）", exact: true })
+  const clarificationLink = page.getByRole('link', { name: "Grandpa Beck's Games（公式補足）", exact: true })
+  const unknownLink = page.getByRole('link', { name: "Grandpa Beck's Games（publisher_blog）", exact: true })
+
+  await expect(rulebookLink).toHaveAttribute('href', officialSourceUrl)
+  await expect(faqLink).toHaveAttribute('href', officialSourceUrl)
+  await expect(errataLink).toHaveAttribute('href', officialSourceUrl)
+  await expect(clarificationLink).toHaveAttribute('href', officialSourceUrl)
+  await expect(unknownLink).toHaveAttribute('href', officialSourceUrl)
+
+  await faqLink.focus()
+  await expect(faqLink).toBeFocused()
 })
