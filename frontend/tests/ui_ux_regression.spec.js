@@ -149,6 +149,19 @@ async function mockApi(page, state) {
       return
     }
 
+    const rulesetMatch = path.match(/^\/api\/games\/([^/]+)\/rule-sets$/)
+    if (rulesetMatch && method === 'GET') {
+      const game = games.find((candidate) => candidate.slug === decodeURIComponent(rulesetMatch[1]))
+      await route.fulfill({
+        status: game ? 200 : 404,
+        contentType: 'application/json',
+        body: JSON.stringify(game
+          ? { schema_version: '1.0', status: 'not_available', game_id: game.id, slug: game.slug, rulesets: [] }
+          : { detail: 'not found' }),
+      })
+      return
+    }
+
     const gameMatch = path.match(/^\/api\/games\/([^/]+)$/)
     if (gameMatch && method === 'GET') {
       await delay(100)
