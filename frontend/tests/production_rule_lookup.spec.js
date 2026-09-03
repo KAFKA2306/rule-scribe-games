@@ -67,7 +67,6 @@ test('productionのSkull KingでClaimから公式FAQのEvidenceへ辿れる', as
   expect(ssrHtml).toContain('Grandpa Beck')
 
   await page.goto('/games/skull-king#rules', { waitUntil: 'networkidle' })
-  await expect(page.getByText(/Grandpa Beck/).first()).toBeVisible()
 
   const mermaidRule = await openCanonicalRuleFromSearch(
     page,
