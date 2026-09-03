@@ -60,6 +60,22 @@ test('productionのSkull Kingで代表queryから確認済みRuleNodeと公式�
   await openCanonicalRuleFromSearch(page, 'FAQ 2人', 'two-player.tigress', 'FAQ', 2)
 })
 
+test('productionのSkull Kingでルール深リンクを直接再読込できる', async ({ page }) => {
+  const targetId = 'rule-node-scoring.zero-bid'
+  await page.goto(`/games/skull-king#${targetId}`, { waitUntil: 'networkidle' })
+
+  const target = page.locator(`#${targetId.replaceAll('.', '\\.')}`)
+  await expect(target).toBeVisible()
+  await expect(page).toHaveURL(new RegExp(`#${targetId.replaceAll('.', '\\.')}$`))
+  await expect(target).toBeFocused()
+  await expectNoPageOverflow(page)
+
+  await page.reload({ waitUntil: 'networkidle' })
+  await expect(target).toBeVisible()
+  await expect(page).toHaveURL(new RegExp(`#${targetId.replaceAll('.', '\\.')}$`))
+  await expect(target).toBeFocused()
+})
+
 test('productionのSkull KingでClaimから公式FAQのEvidenceへ辿れる', async ({ page }) => {
   const response = await page.request.get('/games/skull-king')
   expect(response.ok()).toBe(true)
