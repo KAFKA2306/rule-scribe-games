@@ -281,4 +281,9 @@ test('確認済みRuleNodeを同じRuleSetの正準Presentation Projectionから
   const ruleNode = page.locator('#rule-node-rule-verified')
   await expect(ruleNode).toContainText('確認済みの得点ルールです。')
   await expect(ruleNode).toBeFocused()
+
+  await page.reload()
+  await expect(page).toHaveURL(/#rule-node-rule-verified$/)
+  await expect(ruleNode).toContainText('確認済みの得点ルールです。')
+  await expect(ruleNode).toBeFocused()
 })
