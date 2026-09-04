@@ -32,6 +32,7 @@ function normalizeSearchText(value) {
   return String(value || '')
     .normalize('NFKC')
     .toLowerCase()
+    .replace(/\bzero\b/g, '0')
     .replace(/\s+/g, ' ')
     .trim()
 }
