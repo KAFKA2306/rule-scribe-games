@@ -6,9 +6,51 @@ DIRECTORY_UNVERIFIED_SUMMARY = "概要は確認中です。"
 _LEGACY_RULE_SUMMARY_FIELDS = ("setup_summary", "gameplay_summary", "end_game_summary")
 
 
+def _extract_rule_section(rules_content: str | None, heading: str) -> str | None:
+    """Project one player-facing section from canonical source-bound markdown."""
+    if not rules_content:
+        return None
+
+    marker = f"## {heading}"
+    lines = rules_content.splitlines()
+    try:
+        start = lines.index(marker) + 1
+    except ValueError:
+        return None
+
+    items: list[str] = []
+    for line in lines[start:]:
+        stripped = line.strip()
+        if stripped.startswith("## "):
+            break
+        if not stripped:
+            continue
+        if stripped.startswith("- "):
+            stripped = stripped[2:].strip()
+        if stripped:
+            items.append(stripped)
+    return " ".join(items) or None
+
+
+def _canonical_coach_projection(rules_content: str | None) -> dict[str, str | None]:
+    setup = _extract_rule_section(rules_content, "セットアップ")
+    gameplay = _extract_rule_section(rules_content, "ゲーム進行")
+    end_condition = _extract_rule_section(rules_content, "終了条件・勝利")
+    scoring = _extract_rule_section(rules_content, "得点")
+    end_parts = [part for part in (end_condition, scoring) if part]
+    return {
+        "setup_summary": setup,
+        "gameplay_summary": gameplay,
+        "end_game_summary": " ".join(end_parts) or None,
+    }
+
+
 def project_player_summary(game: dict[str, Any], *, source_bound: bool) -> dict[str, Any]:
     """Project player-facing fields without treating legacy game-row rules as authority."""
     projected = {**game, **{field: None for field in _LEGACY_RULE_SUMMARY_FIELDS}}
+    if source_bound:
+        projected.update(_canonical_coach_projection(projected.get("rules_content")))
+
     infographics_verified = bool(
         source_bound
         and projected.get("infographics")
