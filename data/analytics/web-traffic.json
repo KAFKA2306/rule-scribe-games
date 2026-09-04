@@ -3,7 +3,7 @@
   "source": "https://api.vercel.com/v1/query/web-analytics/visits/aggregate",
   "event_source": "https://api.vercel.com/v1/query/web-analytics/events/aggregate",
   "scope": "production Web Analytics; custom-event export may be plan-limited",
-  "collected_at": "2026-09-03T04:42:53.696764+00:00",
+  "collected_at": "2026-09-04T04:44:32.042992+00:00",
   "days": [
     {
       "date": "2026-07-26",
@@ -199,6 +199,11 @@
       "date": "2026-09-02",
       "pageviews": 11,
       "visitors": 11
+    },
+    {
+      "date": "2026-09-03",
+      "pageviews": 2,
+      "visitors": 2
     }
   ],
   "affiliate_outbound": {
@@ -208,14 +213,14 @@
   },
   "affiliate_outbound_days": [],
   "rolling_window": {
-    "since": "2026-08-03",
-    "until": "2026-09-03",
+    "since": "2026-08-04",
+    "until": "2026-09-04",
     "limit_per_breakdown": 100,
     "request_paths": [
       {
         "requestPath": "/",
-        "pageviews": 26,
-        "visitors": 22
+        "pageviews": 27,
+        "visitors": 23
       },
       {
         "requestPath": "/games/minna-de-ponkotsu-paint",
@@ -266,8 +271,8 @@
       },
       {
         "referrerHostname": "bing.com",
-        "pageviews": 5,
-        "visitors": 5
+        "pageviews": 6,
+        "visitors": 6
       },
       {
         "referrerHostname": "github.com",
