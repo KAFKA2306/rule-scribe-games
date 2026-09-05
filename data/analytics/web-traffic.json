@@ -3,7 +3,7 @@
   "source": "https://api.vercel.com/v1/query/web-analytics/visits/aggregate",
   "event_source": "https://api.vercel.com/v1/query/web-analytics/events/aggregate",
   "scope": "production Web Analytics; custom-event export may be plan-limited",
-  "collected_at": "2026-09-04T04:44:32.042992+00:00",
+  "collected_at": "2026-09-05T04:40:16.896220+00:00",
   "days": [
     {
       "date": "2026-07-26",
@@ -204,6 +204,11 @@
       "date": "2026-09-03",
       "pageviews": 2,
       "visitors": 2
+    },
+    {
+      "date": "2026-09-04",
+      "pageviews": 0,
+      "visitors": 0
     }
   ],
   "affiliate_outbound": {
@@ -213,8 +218,8 @@
   },
   "affiliate_outbound_days": [],
   "rolling_window": {
-    "since": "2026-08-04",
-    "until": "2026-09-04",
+    "since": "2026-08-05",
+    "until": "2026-09-05",
     "limit_per_breakdown": 100,
     "request_paths": [
       {
