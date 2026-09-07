@@ -3,7 +3,7 @@
   "source": "https://api.vercel.com/v1/query/web-analytics/visits/aggregate",
   "event_source": "https://api.vercel.com/v1/query/web-analytics/events/aggregate",
   "scope": "production Web Analytics; custom-event export may be plan-limited",
-  "collected_at": "2026-09-06T04:50:10.661250+00:00",
+  "collected_at": "2026-09-07T04:55:39.611367+00:00",
   "days": [
     {
       "date": "2026-07-26",
@@ -214,6 +214,11 @@
       "date": "2026-09-05",
       "pageviews": 0,
       "visitors": 0
+    },
+    {
+      "date": "2026-09-06",
+      "pageviews": 16,
+      "visitors": 9
     }
   ],
   "affiliate_outbound": {
@@ -223,14 +228,14 @@
   },
   "affiliate_outbound_days": [],
   "rolling_window": {
-    "since": "2026-08-06",
-    "until": "2026-09-06",
+    "since": "2026-08-07",
+    "until": "2026-09-07",
     "limit_per_breakdown": 100,
     "request_paths": [
       {
         "requestPath": "/",
-        "pageviews": 27,
-        "visitors": 23
+        "pageviews": 39,
+        "visitors": 32
       },
       {
         "requestPath": "/games/minna-de-ponkotsu-paint",
@@ -268,6 +273,16 @@
         "visitors": 1
       },
       {
+        "requestPath": "/games/trick-meister",
+        "pageviews": 3,
+        "visitors": 1
+      },
+      {
+        "requestPath": "/games/wie-ich-die-welt-sehe",
+        "pageviews": 1,
+        "visitors": 1
+      },
+      {
         "requestPath": "/games/yokohama-duel",
         "pageviews": 1,
         "visitors": 1
@@ -276,13 +291,13 @@
     "referrers": [
       {
         "referrerHostname": "",
-        "pageviews": 25,
-        "visitors": 18
+        "pageviews": 33,
+        "visitors": 26
       },
       {
         "referrerHostname": "bing.com",
-        "pageviews": 6,
-        "visitors": 6
+        "pageviews": 9,
+        "visitors": 7
       },
       {
         "referrerHostname": "github.com",
@@ -291,8 +306,8 @@
       },
       {
         "referrerHostname": "google.com",
-        "pageviews": 1,
-        "visitors": 1
+        "pageviews": 6,
+        "visitors": 2
       },
       {
         "referrerHostname": "note.com",
@@ -385,6 +400,30 @@
         "referrers": [
           {
             "referrerHostname": "note.com",
+            "pageviews": 1,
+            "visitors": 1
+          }
+        ]
+      },
+      {
+        "requestPath": "/games/trick-meister",
+        "pageviews": 3,
+        "visitors": 1,
+        "referrers": [
+          {
+            "referrerHostname": "google.com",
+            "pageviews": 3,
+            "visitors": 1
+          }
+        ]
+      },
+      {
+        "requestPath": "/games/wie-ich-die-welt-sehe",
+        "pageviews": 1,
+        "visitors": 1,
+        "referrers": [
+          {
+            "referrerHostname": "google.com",
             "pageviews": 1,
             "visitors": 1
           }
