@@ -3,7 +3,7 @@
   "source": "https://api.vercel.com/v1/query/web-analytics/visits/aggregate",
   "event_source": "https://api.vercel.com/v1/query/web-analytics/events/aggregate",
   "scope": "production Web Analytics; custom-event export may be plan-limited",
-  "collected_at": "2026-09-10T04:55:00.425916+00:00",
+  "collected_at": "2026-09-11T04:51:36.613930+00:00",
   "days": [
     {
       "date": "2026-07-26",
@@ -234,6 +234,11 @@
       "date": "2026-09-09",
       "pageviews": 0,
       "visitors": 0
+    },
+    {
+      "date": "2026-09-10",
+      "pageviews": 2,
+      "visitors": 2
     }
   ],
   "affiliate_outbound": {
@@ -243,14 +248,19 @@
   },
   "affiliate_outbound_days": [],
   "rolling_window": {
-    "since": "2026-08-10",
-    "until": "2026-09-10",
+    "since": "2026-08-11",
+    "until": "2026-09-11",
     "limit_per_breakdown": 100,
     "request_paths": [
       {
         "requestPath": "/",
         "pageviews": 41,
         "visitors": 34
+      },
+      {
+        "requestPath": "/games/geister",
+        "pageviews": 2,
+        "visitors": 2
       },
       {
         "requestPath": "/games/minna-de-ponkotsu-paint",
@@ -306,8 +316,8 @@
     "referrers": [
       {
         "referrerHostname": "",
-        "pageviews": 35,
-        "visitors": 28
+        "pageviews": 36,
+        "visitors": 29
       },
       {
         "referrerHostname": "bing.com",
@@ -326,8 +336,8 @@
       },
       {
         "referrerHostname": "note.com",
-        "pageviews": 1,
-        "visitors": 1
+        "pageviews": 2,
+        "visitors": 2
       },
       {
         "referrerHostname": "search.yahoo.com",
@@ -336,6 +346,23 @@
       }
     ],
     "game_page_referrers": [
+      {
+        "requestPath": "/games/geister",
+        "pageviews": 2,
+        "visitors": 2,
+        "referrers": [
+          {
+            "referrerHostname": "",
+            "pageviews": 1,
+            "visitors": 1
+          },
+          {
+            "referrerHostname": "note.com",
+            "pageviews": 1,
+            "visitors": 1
+          }
+        ]
+      },
       {
         "requestPath": "/games/minna-de-ponkotsu-paint",
         "pageviews": 2,
