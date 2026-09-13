@@ -1,10 +1,14 @@
+import anyio
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from pydantic import ValidationError
 
+from app.core import supabase
 from app.models.ruleset import RuleSet, RuleSetListResponse
 from app.routers import games
+from app.services.rulesets import RuleSetReadError, RuleSetService
+from app.services.seo_renderer import _canonical_rule_text
 
 
 def _ruleset(**overrides):
@@ -121,10 +125,15 @@ class FakeRuleSetService:
         )
 
 
-def _app():
+class FailingRuleSetService:
+    async def get_by_slug(self, slug: str):
+        raise RuleSetReadError(f"ruleset backend failure for {slug}")
+
+
+def _app(service=None):
     app = FastAPI()
     app.include_router(games.router, prefix="/api")
-    app.dependency_overrides[games.get_ruleset_service] = lambda: FakeRuleSetService()
+    app.dependency_overrides[games.get_ruleset_service] = lambda: service or FakeRuleSetService()
     return app
 
 
@@ -145,3 +154,42 @@ def test_ruleset_api_returns_404_only_for_unknown_game():
     client = TestClient(_app())
     response = client.get("/api/games/missing/rule-sets")
     assert response.status_code == 404
+
+
+def test_ruleset_api_does_not_turn_backend_failure_into_not_available():
+    client = TestClient(_app(FailingRuleSetService()), raise_server_exceptions=False)
+    response = client.get("/api/games/example/rule-sets")
+
+    assert response.status_code >= 500
+
+
+def test_ruleset_service_distinguishes_zero_rows_from_backend_failure(monkeypatch):
+    async def fake_get_by_slug(slug: str):
+        return {"id": "game-1", "slug": slug}
+
+    monkeypatch.setattr(supabase, "get_by_slug", fake_get_by_slug)
+    monkeypatch.setattr(supabase, "is_local", lambda: False)
+    service = RuleSetService()
+    monkeypatch.setattr(service, "_load_rulesets", lambda game: [])
+
+    result = anyio.run(service.get_by_slug, "example")
+    assert result.status == "not_available"
+
+    def fail_read(game):
+        raise RuntimeError("database unavailable")
+
+    monkeypatch.setattr(service, "_load_rulesets", fail_read)
+    with pytest.raises(RuleSetReadError):
+        anyio.run(service.get_by_slug, "example")
+    with pytest.raises(RuleSetReadError):
+        anyio.run(service.get_by_slug, "example")
+
+
+def test_canonical_rule_text_propagates_ruleset_read_failure(monkeypatch):
+    async def fail_read(self, slug: str):
+        raise RuleSetReadError(f"ruleset backend failure for {slug}")
+
+    monkeypatch.setattr(RuleSetService, "get_by_slug", fail_read)
+
+    with pytest.raises(RuleSetReadError):
+        anyio.run(_canonical_rule_text, "example")
