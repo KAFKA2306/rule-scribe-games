@@ -130,6 +130,11 @@ class FailingRuleSetService:
         raise RuleSetReadError(f"ruleset backend failure for {slug}")
 
 
+class FakeGameService:
+    async def get_game_by_slug(self, slug: str):
+        return {"id": "game-1", "slug": slug, "title": "Example"}
+
+
 def _app(service=None):
     app = FastAPI()
     app.include_router(games.router, prefix="/api")
@@ -193,3 +198,17 @@ def test_canonical_rule_text_propagates_ruleset_read_failure(monkeypatch):
 
     with pytest.raises(RuleSetReadError):
         anyio.run(_canonical_rule_text, "example")
+
+
+def test_game_detail_does_not_fallback_when_canonical_rules_cannot_be_read(monkeypatch):
+    async def fail_canonical_rules(slug: str):
+        raise RuleSetReadError(f"ruleset backend failure for {slug}")
+
+    monkeypatch.setattr(games, "_canonical_rule_text", fail_canonical_rules)
+    app = _app()
+    app.dependency_overrides[games.get_game_service] = lambda: FakeGameService()
+    client = TestClient(app, raise_server_exceptions=False)
+
+    response = client.get("/api/games/example")
+
+    assert response.status_code >= 500
