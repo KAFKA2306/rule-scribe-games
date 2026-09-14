@@ -13,7 +13,7 @@ function buildVisibleNarration(fallbackText) {
     .map((element) => element.textContent?.trim())
     .filter(Boolean)
   const synopsis = visibleText('.pro-card--synopsis .summary-text')
-  const trustState = [...document.querySelectorAll('[aria-label="出典・根拠"] .game-empty-note')]
+  const trustState = [...document.querySelectorAll('[aria-label="出典・根拠"] > .game-empty-note')]
     .map((element) => element.textContent?.trim())
     .filter(Boolean)
 
