@@ -1,11 +1,14 @@
 import logging
 
-import anyio
-
 from app.core import supabase
+from app.core.read_retry import run_supabase_read_async
 from app.models.ruleset import RuleSet, RuleSetListResponse
 
 logger = logging.getLogger("services.rulesets")
+
+
+class RuleSetReadError(RuntimeError):
+    """Raised when canonical RuleSet data cannot be read safely."""
 
 
 class RuleSetService:
@@ -23,12 +26,10 @@ class RuleSetService:
             return RuleSetListResponse(status="not_available", **base)
 
         try:
-            rows = await anyio.to_thread.run_sync(self._load_rulesets, game)
+            rows = await run_supabase_read_async(self._load_rulesets, game)
         except Exception as exc:
-            # Application code may be deployed before migration 013. Fail closed
-            # instead of inferring edition/platform identity from legacy Game data.
-            logger.warning("RuleSet identity unavailable for %s: %s", slug, exc)
-            return RuleSetListResponse(status="not_available", **base)
+            logger.exception("RuleSet read failed for %s", slug)
+            raise RuleSetReadError(f"ruleset backend failure for {slug}") from exc
 
         if not rows:
             return RuleSetListResponse(status="not_available", **base)
