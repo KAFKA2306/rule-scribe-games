@@ -3,7 +3,7 @@
   "source": "https://api.vercel.com/v1/query/web-analytics/visits/aggregate",
   "event_source": "https://api.vercel.com/v1/query/web-analytics/events/aggregate",
   "scope": "production Web Analytics; custom-event export may be plan-limited",
-  "collected_at": "2026-09-19T04:45:40.789957+00:00",
+  "collected_at": "2026-09-20T05:02:15.425506+00:00",
   "days": [
     {
       "date": "2026-07-26",
@@ -279,6 +279,11 @@
       "date": "2026-09-18",
       "pageviews": 1,
       "visitors": 1
+    },
+    {
+      "date": "2026-09-19",
+      "pageviews": 3,
+      "visitors": 1
     }
   ],
   "affiliate_outbound": {
@@ -288,14 +293,14 @@
   },
   "affiliate_outbound_days": [],
   "rolling_window": {
-    "since": "2026-08-19",
-    "until": "2026-09-19",
+    "since": "2026-08-20",
+    "until": "2026-09-20",
     "limit_per_breakdown": 100,
     "request_paths": [
       {
         "requestPath": "/",
-        "pageviews": 43,
-        "visitors": 36
+        "pageviews": 44,
+        "visitors": 37
       },
       {
         "requestPath": "/games/geister",
@@ -306,6 +311,11 @@
         "requestPath": "/games/minna-de-ponkotsu-paint",
         "pageviews": 2,
         "visitors": 2
+      },
+      {
+        "requestPath": "/games/3-second-try",
+        "pageviews": 1,
+        "visitors": 1
       },
       {
         "requestPath": "/games/age-of-steam",
@@ -319,6 +329,11 @@
       },
       {
         "requestPath": "/games/hack-clad",
+        "pageviews": 1,
+        "visitors": 1
+      },
+      {
+        "requestPath": "/games/modern-art",
         "pageviews": 1,
         "visitors": 1
       },
@@ -361,8 +376,8 @@
     "referrers": [
       {
         "referrerHostname": "",
-        "pageviews": 39,
-        "visitors": 32
+        "pageviews": 42,
+        "visitors": 33
       },
       {
         "referrerHostname": "bing.com",
@@ -421,6 +436,18 @@
         ]
       },
       {
+        "requestPath": "/games/3-second-try",
+        "pageviews": 1,
+        "visitors": 1,
+        "referrers": [
+          {
+            "referrerHostname": "",
+            "pageviews": 1,
+            "visitors": 1
+          }
+        ]
+      },
+      {
         "requestPath": "/games/age-of-steam",
         "pageviews": 1,
         "visitors": 1,
@@ -446,6 +473,18 @@
       },
       {
         "requestPath": "/games/hack-clad",
+        "pageviews": 1,
+        "visitors": 1,
+        "referrers": [
+          {
+            "referrerHostname": "",
+            "pageviews": 1,
+            "visitors": 1
+          }
+        ]
+      },
+      {
+        "requestPath": "/games/modern-art",
         "pageviews": 1,
         "visitors": 1,
         "referrers": [
