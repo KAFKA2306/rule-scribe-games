@@ -32,7 +32,7 @@
   "rewrites": [
     {
       "source": "/api/ai-search",
-      "destination": "/api/ai-search.mjs"
+      "destination": "/api/ai-search.js"
     },
     {
       "source": "/api/:path*",
