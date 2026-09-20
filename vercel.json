@@ -31,6 +31,10 @@
   ],
   "rewrites": [
     {
+      "source": "/api/ai-search",
+      "destination": "/api/ai-search.mjs"
+    },
+    {
       "source": "/api/:path*",
       "destination": "/api/index.py"
     },
