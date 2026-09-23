@@ -3,7 +3,7 @@
   "source": "https://api.vercel.com/v1/query/web-analytics/visits/aggregate",
   "event_source": "https://api.vercel.com/v1/query/web-analytics/events/aggregate",
   "scope": "production Web Analytics; custom-event export may be plan-limited",
-  "collected_at": "2026-09-22T05:09:26.289593+00:00",
+  "collected_at": "2026-09-23T04:54:02.538729+00:00",
   "days": [
     {
       "date": "2026-07-26",
@@ -294,6 +294,11 @@
       "date": "2026-09-21",
       "pageviews": 1,
       "visitors": 1
+    },
+    {
+      "date": "2026-09-22",
+      "pageviews": 1,
+      "visitors": 1
     }
   ],
   "affiliate_outbound": {
@@ -303,8 +308,8 @@
   },
   "affiliate_outbound_days": [],
   "rolling_window": {
-    "since": "2026-08-22",
-    "until": "2026-09-22",
+    "since": "2026-08-23",
+    "until": "2026-09-23",
     "limit_per_breakdown": 100,
     "request_paths": [
       {
@@ -334,6 +339,11 @@
       },
       {
         "requestPath": "/games/century-spice-road",
+        "pageviews": 1,
+        "visitors": 1
+      },
+      {
+        "requestPath": "/games/gambler-x-gamble",
         "pageviews": 1,
         "visitors": 1
       },
@@ -395,6 +405,11 @@
         "visitors": 8
       },
       {
+        "referrerHostname": "google.com",
+        "pageviews": 7,
+        "visitors": 3
+      },
+      {
         "referrerHostname": "note.com",
         "pageviews": 3,
         "visitors": 3
@@ -402,11 +417,6 @@
       {
         "referrerHostname": "github.com",
         "pageviews": 2,
-        "visitors": 2
-      },
-      {
-        "referrerHostname": "google.com",
-        "pageviews": 6,
         "visitors": 2
       },
       {
@@ -476,6 +486,18 @@
         "referrers": [
           {
             "referrerHostname": "bing.com",
+            "pageviews": 1,
+            "visitors": 1
+          }
+        ]
+      },
+      {
+        "requestPath": "/games/gambler-x-gamble",
+        "pageviews": 1,
+        "visitors": 1,
+        "referrers": [
+          {
+            "referrerHostname": "google.com",
             "pageviews": 1,
             "visitors": 1
           }
