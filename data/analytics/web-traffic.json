@@ -3,7 +3,7 @@
   "source": "https://api.vercel.com/v1/query/web-analytics/visits/aggregate",
   "event_source": "https://api.vercel.com/v1/query/web-analytics/events/aggregate",
   "scope": "production Web Analytics; custom-event export may be plan-limited",
-  "collected_at": "2026-09-24T05:03:25.914624+00:00",
+  "collected_at": "2026-09-25T05:06:34.644383+00:00",
   "days": [
     {
       "date": "2026-07-26",
@@ -304,6 +304,11 @@
       "date": "2026-09-23",
       "pageviews": 0,
       "visitors": 0
+    },
+    {
+      "date": "2026-09-24",
+      "pageviews": 3,
+      "visitors": 3
     }
   ],
   "affiliate_outbound": {
@@ -313,14 +318,14 @@
   },
   "affiliate_outbound_days": [],
   "rolling_window": {
-    "since": "2026-08-24",
-    "until": "2026-09-24",
+    "since": "2026-08-25",
+    "until": "2026-09-25",
     "limit_per_breakdown": 100,
     "request_paths": [
       {
         "requestPath": "/",
-        "pageviews": 44,
-        "visitors": 37
+        "pageviews": 46,
+        "visitors": 39
       },
       {
         "requestPath": "/games/geister",
@@ -383,6 +388,11 @@
         "visitors": 1
       },
       {
+        "requestPath": "/games/white-castle-matcha",
+        "pageviews": 1,
+        "visitors": 1
+      },
+      {
         "requestPath": "/games/wie-ich-die-welt-sehe",
         "pageviews": 1,
         "visitors": 1
@@ -396,18 +406,18 @@
     "referrers": [
       {
         "referrerHostname": "",
-        "pageviews": 41,
-        "visitors": 32
+        "pageviews": 42,
+        "visitors": 33
       },
       {
         "referrerHostname": "bing.com",
-        "pageviews": 10,
-        "visitors": 8
+        "pageviews": 11,
+        "visitors": 9
       },
       {
         "referrerHostname": "google.com",
-        "pageviews": 7,
-        "visitors": 3
+        "pageviews": 8,
+        "visitors": 4
       },
       {
         "referrerHostname": "note.com",
@@ -571,6 +581,18 @@
           {
             "referrerHostname": "google.com",
             "pageviews": 3,
+            "visitors": 1
+          }
+        ]
+      },
+      {
+        "requestPath": "/games/white-castle-matcha",
+        "pageviews": 1,
+        "visitors": 1,
+        "referrers": [
+          {
+            "referrerHostname": "google.com",
+            "pageviews": 1,
             "visitors": 1
           }
         ]
