@@ -3,7 +3,7 @@
   "source": "https://api.vercel.com/v1/query/web-analytics/visits/aggregate",
   "event_source": "https://api.vercel.com/v1/query/web-analytics/events/aggregate",
   "scope": "production Web Analytics; custom-event export may be plan-limited",
-  "collected_at": "2026-09-27T05:27:29.322924+00:00",
+  "collected_at": "2026-09-28T05:35:21.654183+00:00",
   "days": [
     {
       "date": "2026-07-26",
@@ -319,6 +319,11 @@
       "date": "2026-09-26",
       "pageviews": 1,
       "visitors": 1
+    },
+    {
+      "date": "2026-09-27",
+      "pageviews": 1,
+      "visitors": 1
     }
   ],
   "affiliate_outbound": {
@@ -328,13 +333,13 @@
   },
   "affiliate_outbound_days": [],
   "rolling_window": {
-    "since": "2026-08-27",
-    "until": "2026-09-27",
+    "since": "2026-08-28",
+    "until": "2026-09-28",
     "limit_per_breakdown": 100,
     "request_paths": [
       {
         "requestPath": "/",
-        "pageviews": 43,
+        "pageviews": 42,
         "visitors": 38
       },
       {
@@ -359,11 +364,6 @@
       },
       {
         "requestPath": "/games/gambler-x-gamble",
-        "pageviews": 1,
-        "visitors": 1
-      },
-      {
-        "requestPath": "/games/minna-de-ponkotsu-paint",
         "pageviews": 1,
         "visitors": 1
       },
@@ -406,7 +406,7 @@
     "referrers": [
       {
         "referrerHostname": "",
-        "pageviews": 37,
+        "pageviews": 35,
         "visitors": 32
       },
       {
@@ -496,18 +496,6 @@
         "referrers": [
           {
             "referrerHostname": "google.com",
-            "pageviews": 1,
-            "visitors": 1
-          }
-        ]
-      },
-      {
-        "requestPath": "/games/minna-de-ponkotsu-paint",
-        "pageviews": 1,
-        "visitors": 1,
-        "referrers": [
-          {
-            "referrerHostname": "",
             "pageviews": 1,
             "visitors": 1
           }
