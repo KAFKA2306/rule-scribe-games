@@ -3,7 +3,7 @@
   "source": "https://api.vercel.com/v1/query/web-analytics/visits/aggregate",
   "event_source": "https://api.vercel.com/v1/query/web-analytics/events/aggregate",
   "scope": "production Web Analytics; custom-event export may be plan-limited",
-  "collected_at": "2026-09-28T05:35:21.654183+00:00",
+  "collected_at": "2026-09-29T05:52:54.228899+00:00",
   "days": [
     {
       "date": "2026-07-26",
@@ -324,6 +324,11 @@
       "date": "2026-09-27",
       "pageviews": 1,
       "visitors": 1
+    },
+    {
+      "date": "2026-09-28",
+      "pageviews": 0,
+      "visitors": 0
     }
   ],
   "affiliate_outbound": {
@@ -333,8 +338,8 @@
   },
   "affiliate_outbound_days": [],
   "rolling_window": {
-    "since": "2026-08-28",
-    "until": "2026-09-28",
+    "since": "2026-08-29",
+    "until": "2026-09-29",
     "limit_per_breakdown": 100,
     "request_paths": [
       {
@@ -383,11 +388,6 @@
         "visitors": 1
       },
       {
-        "requestPath": "/games/splendor",
-        "pageviews": 1,
-        "visitors": 1
-      },
-      {
         "requestPath": "/games/trick-meister",
         "pageviews": 3,
         "visitors": 1
@@ -421,8 +421,8 @@
       },
       {
         "referrerHostname": "note.com",
-        "pageviews": 4,
-        "visitors": 4
+        "pageviews": 3,
+        "visitors": 3
       },
       {
         "referrerHostname": "github.com",
@@ -532,18 +532,6 @@
         "referrers": [
           {
             "referrerHostname": "github.com",
-            "pageviews": 1,
-            "visitors": 1
-          }
-        ]
-      },
-      {
-        "requestPath": "/games/splendor",
-        "pageviews": 1,
-        "visitors": 1,
-        "referrers": [
-          {
-            "referrerHostname": "note.com",
             "pageviews": 1,
             "visitors": 1
           }
