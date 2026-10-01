@@ -3,7 +3,7 @@
   "source": "https://api.vercel.com/v1/query/web-analytics/visits/aggregate",
   "event_source": "https://api.vercel.com/v1/query/web-analytics/events/aggregate",
   "scope": "production Web Analytics; custom-event export may be plan-limited",
-  "collected_at": "2026-09-30T05:43:50.489863+00:00",
+  "collected_at": "2026-10-01T06:09:34.328470+00:00",
   "days": [
     {
       "date": "2026-07-26",
@@ -334,6 +334,11 @@
       "date": "2026-09-29",
       "pageviews": 2,
       "visitors": 2
+    },
+    {
+      "date": "2026-09-30",
+      "pageviews": 0,
+      "visitors": 0
     }
   ],
   "affiliate_outbound": {
@@ -343,14 +348,14 @@
   },
   "affiliate_outbound_days": [],
   "rolling_window": {
-    "since": "2026-08-30",
-    "until": "2026-09-30",
+    "since": "2026-08-31",
+    "until": "2026-10-01",
     "limit_per_breakdown": 100,
     "request_paths": [
       {
         "requestPath": "/",
-        "pageviews": 42,
-        "visitors": 38
+        "pageviews": 32,
+        "visitors": 29
       },
       {
         "requestPath": "/games/geister",
@@ -359,11 +364,6 @@
       },
       {
         "requestPath": "/games/3-second-try",
-        "pageviews": 1,
-        "visitors": 1
-      },
-      {
-        "requestPath": "/games/age-of-steam",
         "pageviews": 1,
         "visitors": 1
       },
@@ -421,18 +421,18 @@
     "referrers": [
       {
         "referrerHostname": "",
-        "pageviews": 36,
-        "visitors": 33
+        "pageviews": 29,
+        "visitors": 27
       },
       {
         "referrerHostname": "bing.com",
-        "pageviews": 10,
-        "visitors": 8
+        "pageviews": 8,
+        "visitors": 6
       },
       {
         "referrerHostname": "google.com",
-        "pageviews": 9,
-        "visitors": 5
+        "pageviews": 8,
+        "visitors": 4
       },
       {
         "referrerHostname": "note.com",
@@ -441,8 +441,8 @@
       },
       {
         "referrerHostname": "github.com",
-        "pageviews": 2,
-        "visitors": 2
+        "pageviews": 1,
+        "visitors": 1
       },
       {
         "referrerHostname": "search.yahoo.com",
@@ -475,18 +475,6 @@
         "referrers": [
           {
             "referrerHostname": "",
-            "pageviews": 1,
-            "visitors": 1
-          }
-        ]
-      },
-      {
-        "requestPath": "/games/age-of-steam",
-        "pageviews": 1,
-        "visitors": 1,
-        "referrers": [
-          {
-            "referrerHostname": "google.com",
             "pageviews": 1,
             "visitors": 1
           }
