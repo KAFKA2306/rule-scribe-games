@@ -3,7 +3,7 @@
   "source": "https://api.vercel.com/v1/query/web-analytics/visits/aggregate",
   "event_source": "https://api.vercel.com/v1/query/web-analytics/events/aggregate",
   "scope": "production Web Analytics; custom-event export may be plan-limited",
-  "collected_at": "2026-10-01T06:09:34.328470+00:00",
+  "collected_at": "2026-10-02T05:53:05.789117+00:00",
   "days": [
     {
       "date": "2026-07-26",
@@ -339,6 +339,11 @@
       "date": "2026-09-30",
       "pageviews": 0,
       "visitors": 0
+    },
+    {
+      "date": "2026-10-01",
+      "pageviews": 1,
+      "visitors": 1
     }
   ],
   "affiliate_outbound": {
@@ -348,8 +353,8 @@
   },
   "affiliate_outbound_days": [],
   "rolling_window": {
-    "since": "2026-08-31",
-    "until": "2026-10-01",
+    "since": "2026-09-01",
+    "until": "2026-10-02",
     "limit_per_breakdown": 100,
     "request_paths": [
       {
@@ -398,13 +403,13 @@
         "visitors": 1
       },
       {
-        "requestPath": "/games/skull-king",
-        "pageviews": 1,
+        "requestPath": "/games/trick-meister",
+        "pageviews": 3,
         "visitors": 1
       },
       {
-        "requestPath": "/games/trick-meister",
-        "pageviews": 3,
+        "requestPath": "/games/we-didnt-playtest-this-at-all",
+        "pageviews": 1,
         "visitors": 1
       },
       {
@@ -436,13 +441,8 @@
       },
       {
         "referrerHostname": "note.com",
-        "pageviews": 3,
-        "visitors": 3
-      },
-      {
-        "referrerHostname": "github.com",
-        "pageviews": 1,
-        "visitors": 1
+        "pageviews": 4,
+        "visitors": 4
       },
       {
         "referrerHostname": "search.yahoo.com",
@@ -553,18 +553,6 @@
         ]
       },
       {
-        "requestPath": "/games/skull-king",
-        "pageviews": 1,
-        "visitors": 1,
-        "referrers": [
-          {
-            "referrerHostname": "github.com",
-            "pageviews": 1,
-            "visitors": 1
-          }
-        ]
-      },
-      {
         "requestPath": "/games/trick-meister",
         "pageviews": 3,
         "visitors": 1,
@@ -572,6 +560,18 @@
           {
             "referrerHostname": "google.com",
             "pageviews": 3,
+            "visitors": 1
+          }
+        ]
+      },
+      {
+        "requestPath": "/games/we-didnt-playtest-this-at-all",
+        "pageviews": 1,
+        "visitors": 1,
+        "referrers": [
+          {
+            "referrerHostname": "note.com",
+            "pageviews": 1,
             "visitors": 1
           }
         ]
