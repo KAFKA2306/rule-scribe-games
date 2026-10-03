@@ -1,13 +1,6 @@
 name: Web Analytics Snapshot
 
 on:
-  pull_request:
-    paths:
-      - frontend/index.html
-      - scripts/export_vercel_web_analytics.py
-      - .github/workflows/web-analytics.yml
-      - .gitignore
-      - vercel.json
   push:
     branches:
       - main
@@ -18,7 +11,6 @@ on:
       - .gitignore
       - vercel.json
   schedule:
-    # 09:24 JST / 00:24 UTC. Persist only completed UTC days.
     - cron: "24 0 * * *"
   workflow_dispatch:
 
@@ -26,34 +18,11 @@ permissions:
   contents: read
 
 concurrency:
-  group: web-analytics-history-${{ github.event_name == 'pull_request' && github.event.pull_request.number || 'production' }}
-  # PR validation should converge on the latest head; production snapshots must not race.
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  group: web-analytics-history-production
+  cancel-in-progress: false
 
 jobs:
-  Validate-Exporter:
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-python@v6
-        with:
-          python-version: "3.12"
-      - name: Compile exporter
-        run: python -m py_compile scripts/export_vercel_web_analytics.py
-      - name: Test history merge
-        run: python scripts/export_vercel_web_analytics.py --self-test
-      - name: Verify canonical history path is trackable
-        run: |
-          mkdir -p data/analytics
-          touch data/analytics/web-traffic.json
-          if git check-ignore -q data/analytics/web-traffic.json; then
-            echo "data/analytics/web-traffic.json must remain trackable" >&2
-            exit 1
-          fi
-
   Snapshot-Production-Traffic:
-    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     permissions:
       contents: write

@@ -48,12 +48,12 @@
 
 変更は可能な範囲で次まで完了する。
 
-`validation/test → PR → exact-head CI → merge → main read-back → production release → public read-back`
+`targeted validation/test → change/merge → main read-back → production release → public read-back`
 
-PRのCI成功とproduction成功は別物。merge後にproductionを直接確認できなければ `UNRELEASED/UNVERIFIED` とする。CIを弱めたりskipして通さない。
+GitHub Actions CIはmerge gateとして運用しない。必要なvalidation/testは変更対象に対して明示的に実行する。production releaseとpublic read-backはCD・release verification・実環境確認で扱い、merge可否をCI待ちにしない。
 
 ## コンテキスト節約
 
 最初からrepository全体、全Issue、全履歴を読まない。上の開始順序で必要最小限を取得し、未解決の曖昧さがある場合だけ範囲を広げる。
 
-同じ修正が繰り返される原因を見つけたら、その場のpatchではなく既存の `AGENTS.md`、CI、schema、test、canonical docsの最小authorityへ統合する。新しい管理層は作らない。
+同じ修正が繰り返される原因を見つけたら、その場のpatchではなく既存の `AGENTS.md`、schema、test、canonical docsの最小authorityへ統合する。新しい管理層は作らない。

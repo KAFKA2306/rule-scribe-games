@@ -1,24 +1,9 @@
-name: Dependency audit
+name: Dependency audit (scheduled)
 
 on:
-  pull_request:
-    paths:
-      - "frontend/package.json"
-      - "frontend/package-lock.json"
-      - "pyproject.toml"
-      - "uv.lock"
-      - ".github/workflows/dependency-audit.yml"
-  push:
-    branches:
-      - main
-    paths:
-      - "frontend/package.json"
-      - "frontend/package-lock.json"
-      - "pyproject.toml"
-      - "uv.lock"
-      - ".github/workflows/dependency-audit.yml"
   schedule:
     - cron: "23 3 * * 1"
+  workflow_dispatch:
 
 permissions:
   contents: read

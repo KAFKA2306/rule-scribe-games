@@ -24,18 +24,13 @@ task game:add GAME=<slug>
 
 This validates the source, checks the official source and live identity read-only, regenerates local generated artifacts, validates the runtime guide, and stops without a production write.
 
-## PR merge conditions
+## Change and merge conditions
 
-PR merge and product release are separate decisions.
+GitHub Actions CI is intentionally not a merge gate for this repository.
 
-The pull request is evaluated only with checks that can run safely before merge:
+Before changing a curated record, run the targeted validation needed for that change, such as `task game:add GAME=<slug>` or `task game:check GAME=<slug>`. These checks are explicit developer operations, not required PR checks.
 
-- `Frontend PR build` builds the frontend without production secrets;
-- `Curated game PR checks` runs when curated-game paths change;
-- curated checks validate schema, assertions, source reachability, production identity read-only, generated artifacts, and runtime guide integration;
-- no PR job publishes catalog data, writes production data, or deploys production.
-
-A curated source change is merge-ready when its applicable PR checks pass on the exact head and review requirements are satisfied. Production deployment state is not a PR merge condition.
+Merge or direct-main changes must still preserve the canonical schema and source contracts. Production correctness is established after the change reaches `main` through the release workflows and public read-back.
 
 ## Product release conditions
 
@@ -48,11 +43,11 @@ Two release paths may run independently:
 
 `Curated game release verification` runs after successful completion of either release workflow and checks the actual production curated registry/catalog state. For a curated change, an early verification may fail while the other release path is still pending; the later release workflow triggers verification again.
 
-A merged change is **released** only when the production state required by that change is directly verified. If publication, deployment, quota, credentials, or production read-back fails after merge, the code remains merged but the product is **UNRELEASED/UNVERIFIED**. Do not reinterpret that as a failed PR merge check.
+A merged change is **released** only when the production state required by that change is directly verified. If publication, deployment, quota, credentials, or production read-back fails after merge, the code remains merged but the product is **UNRELEASED/UNVERIFIED**. Do not reinterpret that as a merge failure.
 
 ## Validation performed before merge
 
-`task game:add GAME=<slug>` and `Curated game PR checks` cover the reusable pre-merge contract:
+`task game:add GAME=<slug>` covers the reusable explicit validation contract:
 
 1. load and validate the structured source;
 2. validate cross-field requirements and assertions;
@@ -62,7 +57,7 @@ A merged change is **released** only when the production state required by that 
 6. validate generated revision consistency;
 7. validate `getCuratedRuleGuide(slug)` integration.
 
-Pull-request validation has no production database write step and does not require production deployment credentials.
+Explicit pre-release validation has no production database write step and does not require production deployment credentials.
 
 ## Publishing from `main`
 
@@ -117,7 +112,6 @@ A generic deployment failure does not undo a verified catalog publication. Conve
 
 A curated game change is complete when:
 
-- applicable exact-head PR merge checks passed before merge;
 - the canonical source is merged to `main`;
 - main-only publication revalidated the live source and identity;
 - production contains the intended work and edition;
