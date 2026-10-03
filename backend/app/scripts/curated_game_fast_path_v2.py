@@ -18,6 +18,7 @@ from app.scripts.curated_game_workflow import (
     load_all_specs,
     load_spec,
     preflight_identity,
+    require_publishable,
 )
 
 DEFAULT_BASE_URL = "https://bodoge-no-mikata.vercel.app"
@@ -51,6 +52,8 @@ def load_named_spec(game: str, specs: list[CuratedGameSpec]) -> CuratedGameSpec:
 
 
 def verify_source_reachable_streamed(spec: CuratedGameSpec) -> None:
+    require_publishable(spec)
+    assert spec.source is not None
     headers = {"User-Agent": "BodogeNoMikataSourceVerifier/2.0 (+https://bodoge-no-mikata.vercel.app/)"}
     with httpx.Client(follow_redirects=True, timeout=20, headers=headers) as client:
         with client.stream("GET", spec.source.url) as response:
@@ -61,12 +64,16 @@ def verify_source_reachable_streamed(spec: CuratedGameSpec) -> None:
 
 
 def deployment_manifest_payload(specs: list[CuratedGameSpec]) -> dict[str, Any]:
+    publishable = [
+        spec for spec in specs
+        if spec.is_publishable and spec.source is not None and spec.game is not None
+    ]
     games = {
         spec.slug: {
             "rule_version": spec.source.rule_version,
             "source_revision": spec.source.revision,
         }
-        for spec in sorted(specs, key=lambda item: item.slug)
+        for spec in sorted(publishable, key=lambda item: item.slug)
     }
     revision_contract = json.dumps(games, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
     digest = hashlib.sha256(revision_contract.encode("utf-8")).hexdigest()
@@ -103,6 +110,7 @@ def generate_artifacts(specs: list[CuratedGameSpec]) -> None:
 
 
 def preflight_catalog(spec: CuratedGameSpec) -> tuple[Any, IdentityPlan]:
+    require_publishable(spec)
     from app.core import supabase
 
     client = supabase._get_client()
@@ -111,6 +119,8 @@ def preflight_catalog(spec: CuratedGameSpec) -> tuple[Any, IdentityPlan]:
 
 
 def catalog_write_payload(spec: CuratedGameSpec, work_id: str | None) -> dict[str, Any]:
+    require_publishable(spec)
+    assert spec.game is not None
     payload = dict(spec.game)
     for field in LEGACY_RULE_FIELDS:
         payload[field] = None
@@ -173,6 +183,9 @@ def validate_exposed_catalog_fields(expected: Any, actual: Any, path: str = "gam
 
 
 def verify_catalog_live(spec: CuratedGameSpec, base_url: str) -> None:
+    require_publishable(spec)
+    assert spec.source is not None
+    assert spec.game is not None
     base = base_url.rstrip("/")
     with httpx.Client(follow_redirects=True, timeout=20) as client:
         api_response = client.get(f"{base}/api/games/{spec.slug}")
@@ -231,7 +244,8 @@ def verify_release(specs: list[CuratedGameSpec], base_url: str) -> None:
     generate_artifacts(specs)
     verify_frontend_release(specs, base_url)
     for spec in specs:
-        verify_catalog_live(spec, base_url)
+        if spec.is_publishable:
+            verify_catalog_live(spec, base_url)
 
 
 def routine_files(spec: CuratedGameSpec) -> list[str]:
@@ -248,6 +262,7 @@ def prepare_game(
     spec: CuratedGameSpec,
     specs: list[CuratedGameSpec],
 ) -> tuple[Any, IdentityPlan]:
+    require_publishable(spec)
     verify_source_reachable_streamed(spec)
     client, plan = preflight_catalog(spec)
     generate_artifacts(specs)
@@ -255,12 +270,20 @@ def prepare_game(
 
 
 def add_game(spec: CuratedGameSpec, specs: list[CuratedGameSpec]) -> None:
+    if not spec.is_publishable:
+        generate_artifacts(specs)
+        print_routine_files(spec)
+        print("Candidate fixed point: validated; production catalog unchanged")
+        return
     prepare_game(spec, specs)
     print_routine_files(spec)
     print("Prepare fixed point: verified; production catalog unchanged until merge")
 
 
 def publish_game(spec: CuratedGameSpec, specs: list[CuratedGameSpec], base_url: str) -> None:
+    if not spec.is_publishable:
+        print(f"Catalog publish skipped for candidate {spec.slug}")
+        return
     client, plan = prepare_game(spec, specs)
     write_catalog_with_plan(client, spec, plan)
     verify_catalog_live(spec, base_url)
@@ -273,6 +296,7 @@ def check_game(spec: CuratedGameSpec, specs: list[CuratedGameSpec]) -> None:
 
 
 def verify_game(spec: CuratedGameSpec, specs: list[CuratedGameSpec], base_url: str) -> None:
+    require_publishable(spec)
     verify_source_reachable_streamed(spec)
     generate_artifacts(specs)
     verify_catalog_live(spec, base_url)

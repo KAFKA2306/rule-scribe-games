@@ -4,6 +4,7 @@ import pytest
 
 from app.scripts.curated_game_workflow import (
     LEGACY_RULE_FIELDS,
+    CuratedGameSpec,
     WorkflowError,
     load_spec,
     plan_identity,
@@ -95,4 +96,60 @@ def test_duplicate_work_edition_under_another_slug_fails_before_write():
                     "language_code": "en",
                 }
             ],
+        )
+
+
+
+def test_candidate_uses_same_game_schema_without_source_or_game_payload():
+    spec = CuratedGameSpec.model_validate(
+        {
+            "schema_version": "1",
+            "lifecycle_status": "candidate",
+            "slug": "brass-birmingham",
+            "work": {
+                "canonical_title": "Brass: Birmingham",
+                "identity_status": "unverified",
+            },
+            "preference": {
+                "status": "candidate",
+                "priority": "highest",
+                "played": False,
+            },
+        }
+    )
+
+    assert spec.is_publishable is False
+    assert spec.source is None
+    assert spec.game is None
+    assert spec.preference is not None
+    assert spec.preference.priority == "highest"
+
+
+def test_candidate_requires_preference_instead_of_shadow_list():
+    with pytest.raises(ValueError, match="candidate record requires preference"):
+        CuratedGameSpec.model_validate(
+            {
+                "schema_version": "1",
+                "lifecycle_status": "candidate",
+                "slug": "missing-preference",
+                "work": {
+                    "canonical_title": "Missing Preference",
+                    "identity_status": "unverified",
+                },
+            }
+        )
+
+
+def test_curated_record_still_requires_source_and_game():
+    with pytest.raises(ValueError, match="curated record requires source and game"):
+        CuratedGameSpec.model_validate(
+            {
+                "schema_version": "1",
+                "lifecycle_status": "curated",
+                "slug": "missing-source",
+                "work": {
+                    "canonical_title": "Missing Source",
+                    "identity_status": "unverified",
+                },
+            }
         )

@@ -1,12 +1,13 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://bodoge-no-mikata.vercel.app/schemas/curated-game-v1.json",
-  "title": "ボドゲのミカタ curated game input v1",
+  "title": "ボドゲのミカタ game record v1",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_version", "slug", "work", "source", "game"],
+  "required": ["schema_version", "lifecycle_status", "slug", "work"],
   "properties": {
     "schema_version": {"const": "1"},
+    "lifecycle_status": {"enum": ["candidate", "curated"]},
     "slug": {"type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"},
     "work": {
       "type": "object",
@@ -15,6 +16,16 @@
       "properties": {
         "canonical_title": {"type": "string", "minLength": 1},
         "identity_status": {"enum": ["verified", "needs_review", "unverified"]}
+      }
+    },
+    "preference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status"],
+      "properties": {
+        "status": {"enum": ["candidate", "liked", "neutral", "disliked"]},
+        "priority": {"enum": ["highest", "high", "normal"], "default": "normal"},
+        "played": {"type": "boolean", "default": false}
       }
     },
     "source": {
@@ -43,5 +54,15 @@
         "end_game_summary": false
       }
     }
-  }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"lifecycle_status": {"const": "candidate"}}},
+      "then": {"required": ["preference"]}
+    },
+    {
+      "if": {"properties": {"lifecycle_status": {"const": "curated"}}},
+      "then": {"required": ["source", "game"]}
+    }
+  ]
 }

@@ -1,0 +1,14 @@
+{
+  "schema_version": "1",
+  "lifecycle_status": "candidate",
+  "slug": "modern-art",
+  "work": {
+    "canonical_title": "Modern Art",
+    "identity_status": "unverified"
+  },
+  "preference": {
+    "status": "candidate",
+    "priority": "high",
+    "played": false
+  }
+}

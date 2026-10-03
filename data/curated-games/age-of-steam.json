@@ -1,0 +1,14 @@
+{
+  "schema_version": "1",
+  "lifecycle_status": "candidate",
+  "slug": "age-of-steam",
+  "work": {
+    "canonical_title": "Age of Steam",
+    "identity_status": "unverified"
+  },
+  "preference": {
+    "status": "candidate",
+    "priority": "highest",
+    "played": false
+  }
+}

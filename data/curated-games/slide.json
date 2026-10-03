@@ -1,5 +1,6 @@
 {
   "schema_version": "1",
+  "lifecycle_status": "curated",
   "slug": "slide",
   "work": {
     "canonical_title": "Slide",

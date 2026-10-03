@@ -34,6 +34,11 @@ async function loadSpecs() {
     if (!spec.slug || stem !== spec.slug) {
       throw new Error(`curated spec filename/slug mismatch: ${name}`)
     }
+    const lifecycleStatus = spec.lifecycle_status ?? 'curated'
+    if (!['candidate', 'curated'].includes(lifecycleStatus)) {
+      throw new Error(`invalid lifecycle_status: ${name}`)
+    }
+    if (lifecycleStatus === 'candidate') continue
     if (!spec.source?.rule_version || !spec.source?.revision) {
       throw new Error(`curated source revision contract missing: ${name}`)
     }
