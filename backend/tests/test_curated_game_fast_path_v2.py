@@ -184,7 +184,7 @@ def test_unexposed_storage_fields_do_not_fail_catalog_comparison():
 
 
 def test_release_check_verifies_catalog_for_every_curated_game(monkeypatch):
-    specs = load_all_specs()[:2]
+    specs = [spec for spec in load_all_specs() if spec.is_publishable][:2]
     events = []
 
     monkeypatch.setattr(v2, "generate_artifacts", lambda values: events.append("generate"))
