@@ -52,7 +52,7 @@ class CuratedGameSpec(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     schema_version: str
-    lifecycle_status: Literal["candidate", "curated"] = "curated"
+    lifecycle_status: Literal["candidate", "curated"]
     slug: str
     work: WorkSpec
     preference: PreferenceSpec | None = None
