@@ -278,6 +278,10 @@
             "designer_publisher"
           ],
           "default": "official_publisher"
+        },
+        "source_url": {
+          "type": "string",
+          "pattern": "^https://"
         }
       }
     }
