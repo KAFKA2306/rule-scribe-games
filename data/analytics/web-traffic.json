@@ -3,7 +3,7 @@
   "source": "https://api.vercel.com/v1/query/web-analytics/visits/aggregate",
   "event_source": "https://api.vercel.com/v1/query/web-analytics/events/aggregate",
   "scope": "production Web Analytics; custom-event export may be plan-limited",
-  "collected_at": "2026-10-03T05:28:22.213402+00:00",
+  "collected_at": "2026-10-03T13:19:32.459376+00:00",
   "days": [
     {
       "date": "2026-07-26",
