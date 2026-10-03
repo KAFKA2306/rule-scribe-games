@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 
 import app.scripts.curated_game_fast_path_v2 as v2
-from app.scripts.curated_game_workflow import WorkflowError, load_all_specs, load_spec
+from app.scripts.curated_game_workflow import CuratedGameSpec, WorkflowError, load_all_specs, load_spec
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SKULL_KING = REPO_ROOT / "data" / "curated-games" / "skull-king.json"
@@ -184,7 +184,7 @@ def test_unexposed_storage_fields_do_not_fail_catalog_comparison():
 
 
 def test_release_check_verifies_catalog_for_every_curated_game(monkeypatch):
-    specs = load_all_specs()[:2]
+    specs = [spec for spec in load_all_specs() if spec.is_publishable][:2]
     events = []
 
     monkeypatch.setattr(v2, "generate_artifacts", lambda values: events.append("generate"))
@@ -204,3 +204,47 @@ def test_routine_pr_contains_only_structured_source():
     spec = load_spec(SKULL_KING)
 
     assert v2.routine_files(spec) == ["data/curated-games/skull-king.json"]
+
+
+
+def test_candidate_records_are_excluded_from_release_manifest():
+    candidate = CuratedGameSpec.model_validate(
+        {
+            "schema_version": "1",
+            "lifecycle_status": "candidate",
+            "slug": "brass-birmingham",
+            "work": {
+                "canonical_title": "Brass: Birmingham",
+                "identity_status": "unverified",
+            },
+            "preference": {"status": "candidate", "priority": "highest"},
+        }
+    )
+    payload = v2.deployment_manifest_payload([load_spec(SKULL_KING), candidate])
+
+    assert "skull-king" in payload["games"]
+    assert "brass-birmingham" not in payload["games"]
+
+
+def test_candidate_publish_is_a_noop(capsys, monkeypatch):
+    candidate = CuratedGameSpec.model_validate(
+        {
+            "schema_version": "1",
+            "lifecycle_status": "candidate",
+            "slug": "brass-birmingham",
+            "work": {
+                "canonical_title": "Brass: Birmingham",
+                "identity_status": "unverified",
+            },
+            "preference": {"status": "candidate", "priority": "highest"},
+        }
+    )
+    events = []
+    monkeypatch.setattr(v2, "prepare_game", lambda *args: events.append("prepare"))
+    monkeypatch.setattr(v2, "write_catalog_with_plan", lambda *args: events.append("write"))
+    monkeypatch.setattr(v2, "verify_catalog_live", lambda *args: events.append("verify"))
+
+    v2.publish_game(candidate, [candidate], "https://example.invalid")
+
+    assert events == []
+    assert "publish skipped" in capsys.readouterr().out

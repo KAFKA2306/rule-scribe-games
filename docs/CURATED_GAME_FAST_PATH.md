@@ -8,7 +8,13 @@ Create or update:
 
 `data/curated-games/<slug>.json`
 
-The filename, `spec.slug`, and routine `GAME` argument must match. The structured file owns repository-specific game identity, source provenance, catalog fields, reviewed guide data, and regression assertions. Do not copy official rulebooks or FAQ text into separate repository documents.
+The filename, `spec.slug`, and routine `GAME` argument must match. The structured file owns the game's repository lifecycle, preference signal, identity, source provenance, catalog fields, reviewed guide data, and regression assertions. Do not create a separate candidate/wishlist document that repeats game titles, and do not copy official rulebooks or FAQ text into separate repository documents.
+
+Each game uses the same record throughout its lifecycle:
+
+- `lifecycle_status: candidate` records a game candidate before authoritative rule/source work is complete. Candidate records require `preference` and may omit `source` and `game`.
+- `lifecycle_status: curated` is publishable and requires the existing `source` and `game` contracts.
+- Promotion happens by enriching the same `data/curated-games/<slug>.json` record and changing its lifecycle status. Do not maintain a parallel Markdown list or second truth store.
 
 Run:
 
@@ -72,7 +78,9 @@ The internal publish command is:
 - rejects source deletion because removal requires an explicit deprecation change;
 - skips production environment setup when no game source changed;
 - loads trusted production Supabase credentials from the established Vercel production environment;
-- publishes only changed games;
+- evaluates only changed game records;
+- skips `candidate` records without a catalog write;
+- publishes only changed `curated` games;
 - rechecks source reachability and live identity before writing;
 - verifies catalog fixed points after publication;
 - does not itself request a Vercel deployment.

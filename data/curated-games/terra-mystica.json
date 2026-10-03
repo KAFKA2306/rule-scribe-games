@@ -1,0 +1,14 @@
+{
+  "schema_version": "1",
+  "lifecycle_status": "candidate",
+  "slug": "terra-mystica",
+  "work": {
+    "canonical_title": "Terra Mystica",
+    "identity_status": "unverified"
+  },
+  "preference": {
+    "status": "candidate",
+    "priority": "high",
+    "played": false
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "schema_version": "1",
+  "lifecycle_status": "candidate",
+  "slug": "container-10th-anniversary-jumbo-edition",
+  "work": {
+    "canonical_title": "Container",
+    "identity_status": "unverified"
+  },
+  "preference": {
+    "status": "candidate",
+    "priority": "high",
+    "played": false
+  }
+}

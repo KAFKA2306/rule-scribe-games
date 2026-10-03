@@ -1,0 +1,14 @@
+{
+  "schema_version": "1",
+  "lifecycle_status": "candidate",
+  "slug": "puerto-rico",
+  "work": {
+    "canonical_title": "Puerto Rico",
+    "identity_status": "unverified"
+  },
+  "preference": {
+    "status": "candidate",
+    "priority": "high",
+    "played": false
+  }
+}

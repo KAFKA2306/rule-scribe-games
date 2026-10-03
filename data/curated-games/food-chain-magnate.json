@@ -1,0 +1,14 @@
+{
+  "schema_version": "1",
+  "lifecycle_status": "candidate",
+  "slug": "food-chain-magnate",
+  "work": {
+    "canonical_title": "Food Chain Magnate",
+    "identity_status": "unverified"
+  },
+  "preference": {
+    "status": "candidate",
+    "priority": "highest",
+    "played": false
+  }
+}

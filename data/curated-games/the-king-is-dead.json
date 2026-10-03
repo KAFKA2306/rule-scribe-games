@@ -1,0 +1,14 @@
+{
+  "schema_version": "1",
+  "lifecycle_status": "candidate",
+  "slug": "the-king-is-dead",
+  "work": {
+    "canonical_title": "The King Is Dead",
+    "identity_status": "unverified"
+  },
+  "preference": {
+    "status": "candidate",
+    "priority": "highest",
+    "played": false
+  }
+}

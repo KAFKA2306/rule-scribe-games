@@ -4,7 +4,7 @@ import re
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 import httpx
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -40,14 +40,28 @@ class SourceSpec(BaseModel):
     revision: str = Field(min_length=1)
 
 
+class PreferenceSpec(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    status: Literal["candidate", "liked", "neutral", "disliked"] = "candidate"
+    priority: Literal["highest", "high", "normal"] = "normal"
+    played: bool = False
+
+
 class CuratedGameSpec(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     schema_version: str
+    lifecycle_status: Literal["candidate", "curated"]
     slug: str
     work: WorkSpec
-    source: SourceSpec
-    game: dict[str, Any]
+    preference: PreferenceSpec | None = None
+    source: SourceSpec | None = None
+    game: dict[str, Any] | None = None
+
+    @property
+    def is_publishable(self) -> bool:
+        return self.lifecycle_status == "curated"
 
     @model_validator(mode="after")
     def validate_contract(self):
@@ -55,6 +69,21 @@ class CuratedGameSpec(BaseModel):
             raise ValueError("schema_version must be 1")
         if not SLUG_RE.fullmatch(self.slug):
             raise ValueError("slug must be canonical kebab-case")
+
+        if self.lifecycle_status == "candidate":
+            if self.preference is None:
+                raise ValueError("candidate record requires preference")
+            if self.preference.status != "candidate":
+                raise ValueError("candidate lifecycle requires preference.status=candidate")
+            if (self.source is None) != (self.game is None):
+                raise ValueError("candidate source and game must be provided together")
+            if self.source is None:
+                return self
+        elif self.source is None or self.game is None:
+            raise ValueError("curated record requires source and game")
+
+        assert self.source is not None
+        assert self.game is not None
         required_game = {
             "slug",
             "title",
@@ -102,7 +131,15 @@ def load_all_specs() -> list[CuratedGameSpec]:
     return specs
 
 
+def require_publishable(spec: CuratedGameSpec) -> CuratedGameSpec:
+    if not spec.is_publishable or spec.source is None or spec.game is None:
+        raise WorkflowError(f"game {spec.slug} is a candidate and is not publishable")
+    return spec
+
+
 def verify_source_reachable(spec: CuratedGameSpec) -> None:
+    require_publishable(spec)
+    assert spec.source is not None
     headers = {"User-Agent": "BodogeNoMikataSourceVerifier/1.0 (+https://bodoge-no-mikata.vercel.app/)"}
     with httpx.Client(follow_redirects=True, timeout=20, headers=headers) as client:
         response = client.get(spec.source.url)
@@ -116,6 +153,8 @@ def plan_identity(
     work_rows: list[dict[str, Any]],
     edition_rows: list[dict[str, Any]],
 ) -> IdentityPlan:
+    require_publishable(spec)
+    assert spec.game is not None
     if len(slug_rows) > 1:
         raise WorkflowError(f"multiple games already use slug {spec.slug}")
 
@@ -147,6 +186,8 @@ def plan_identity(
 
 
 def preflight_identity(client: Any, spec: CuratedGameSpec) -> IdentityPlan:
+    require_publishable(spec)
+    assert spec.game is not None
     slug_rows = (
         client.table("games")
         .select("id,slug,work_id,edition_label,language_code,source_url,source_revision")
@@ -190,6 +231,9 @@ def preflight_identity(client: Any, spec: CuratedGameSpec) -> IdentityPlan:
 
 
 def verify_production(spec: CuratedGameSpec, base_url: str) -> None:
+    require_publishable(spec)
+    assert spec.source is not None
+    assert spec.game is not None
     base = base_url.rstrip("/")
     with httpx.Client(follow_redirects=True, timeout=20) as client:
         api_response = client.get(f"{base}/api/games/{spec.slug}")
