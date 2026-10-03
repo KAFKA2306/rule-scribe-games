@@ -34,7 +34,7 @@ async function loadSpecs() {
     if (!spec.slug || stem !== spec.slug) {
       throw new Error(`curated spec filename/slug mismatch: ${name}`)
     }
-    const lifecycleStatus = spec.lifecycle_status ?? 'curated'
+    const lifecycleStatus = spec.lifecycle_status
     if (!['candidate', 'curated'].includes(lifecycleStatus)) {
       throw new Error(`invalid lifecycle_status: ${name}`)
     }
