@@ -1,14 +1,169 @@
 {
   "schema_version": "1",
-  "lifecycle_status": "candidate",
+  "lifecycle_status": "curated",
   "slug": "brass-birmingham",
   "work": {
     "canonical_title": "Brass: Birmingham",
-    "identity_status": "unverified"
+    "identity_status": "verified"
   },
   "preference": {
     "status": "candidate",
     "priority": "highest",
     "played": false
+  },
+  "source": {
+    "url": "https://files.roxley.com/Brass-Birmingham-Rulebook-2018.11.20-highlights.pdf",
+    "rule_version": "roxley-2018.11.20-en",
+    "revision": "roxley-brass-birmingham-rulebook-2018.11.20-accessed-2026-10-04"
+  },
+  "game": {
+    "slug": "brass-birmingham",
+    "title": "Brass: Birmingham",
+    "summary": "カードを使って建設・ネットワーク・開発・売却・借入・偵察を行い、運河時代と鉄道時代の終わりにリンクと稼働済み産業を得点する経済戦略ゲーム。",
+    "source_url": "https://files.roxley.com/Brass-Birmingham-Rulebook-2018.11.20-highlights.pdf",
+    "source_revision": "roxley-brass-birmingham-rulebook-2018.11.20-accessed-2026-10-04",
+    "generated_from_source_revision": "roxley-brass-birmingham-rulebook-2018.11.20-accessed-2026-10-04",
+    "title_ja": "ブラス：バーミンガム",
+    "title_en": "Brass: Birmingham",
+    "description": "産業革命期のイングランド中西部で産業施設と運河・鉄道網を築き、2つの時代を通じて勝利点を競う経済戦略ゲーム。",
+    "min_players": 2,
+    "max_players": 4,
+    "play_time": 120,
+    "min_age": 14,
+    "published_year": 2019,
+    "publisher": "アークライト / Roxley Games",
+    "edition_label": "ブラス：バーミンガム 完全日本語版（2019年11月28日）",
+    "language_code": "ja",
+    "official_url": "https://arclightgames.jp/product/%E3%83%96%E3%83%A9%E3%82%B9%E3%83%90%E3%83%BC%E3%83%9F%E3%83%B3%E3%82%AC%E3%83%A0/",
+    "source_trust": "official_publisher",
+    "identity_status": "verified",
+    "identity_source": "https://arclightgames.jp/product/%E3%83%96%E3%83%A9%E3%82%B9%E3%83%90%E3%83%BC%E3%83%9F%E3%83%B3%E3%82%AC%E3%83%A0/",
+    "content_review_status": "human_reviewed"
+  },
+  "ruleset": {
+    "language_code": "ja",
+    "edition_label": "ブラス：バーミンガム 完全日本語版（2019年11月28日）",
+    "revision_label": "roxley-2018.11.20-ja-2019-11-28",
+    "platform": "physical",
+    "publisher_name": "アークライト / Roxley Games",
+    "source_id": "publisher:roxley:brass-birmingham:rulebook",
+    "source_type": "publisher_rulebook",
+    "authority": "official_publisher",
+    "coverage": "full",
+    "version": 1,
+    "nodes": [
+      {
+        "rule_id": "setup.base",
+        "node_type": "setup",
+        "normalized_statement": "プレイヤー人数に応じて対象外のカードと商人タイルを除外し、石炭市場・鉄市場・商人のビールを準備する。各プレイヤーは£17、個人ボード、産業タイル、リンクタイルを受け取り、VPを0、収入マーカーを10に置き、8枚を手札として引き、さらに1枚を裏向きの捨て札として置く。",
+        "sequence": 10,
+        "section_heading": "BOARD SETUP / PLAYER AREA SETUP",
+        "locator_id": "brass-birmingham:rulebook:setup"
+      },
+      {
+        "rule_id": "game.two-eras",
+        "node_type": "condition",
+        "normalized_statement": "ゲームは運河時代（1770–1830）と鉄道時代（1830–1870）の2時代で行う。各時代は山札と全員の手札が尽きるまでラウンドを続け、4人戦は8、3人戦は9、2人戦は10ラウンドとなる。",
+        "sequence": 20,
+        "section_heading": "THE GOAL / ROUNDS",
+        "locator_id": "brass-birmingham:rulebook:goal"
+      },
+      {
+        "rule_id": "turn.actions",
+        "node_type": "turn",
+        "normalized_statement": "通常の手番では合計2アクションを行い、各アクションごとに手札から1枚を捨てる。例外として運河時代の第1ラウンドだけは各プレイヤー1アクションで、手番終了後は可能なら手札を8枚まで補充する。",
+        "sequence": 30,
+        "section_heading": "PLAYER TURNS",
+        "locator_id": "brass-birmingham:rulebook:turn"
+      },
+      {
+        "rule_id": "round.turn-order",
+        "node_type": "turn",
+        "normalized_statement": "ラウンド終了時、次ラウンドの手番順はそのラウンドに使った金額が少ないプレイヤーから並べる。同額なら直前の相対順を維持し、その後に各プレイヤーの現在の収入レベルに従って収入処理を行う。",
+        "sequence": 40,
+        "section_heading": "END OF ROUND",
+        "locator_id": "brass-birmingham:rulebook:turn-order"
+      },
+      {
+        "rule_id": "action.build",
+        "node_type": "action",
+        "normalized_statement": "建設では有効なカードを捨て、個人ボード上でその産業の最も低いレベルのタイルを適切な建設枠へ置く。表示された金額を支払い、必要なら石炭・鉄を消費する。",
+        "sequence": 50,
+        "section_heading": "BUILD ACTION",
+        "locator_id": "brass-birmingham:rulebook:build"
+      },
+      {
+        "rule_id": "action.network",
+        "node_type": "action",
+        "normalized_statement": "ネットワークでは自分のネットワークに隣接する未使用の路線へリンクを置く。運河時代は運河1本を£3で建設できる。鉄道時代は鉄道1本につき石炭1個を消費し、1本なら£5、同じアクションで2本なら合計£15に加えてビール1個を消費する。",
+        "sequence": 60,
+        "section_heading": "NETWORK ACTION",
+        "locator_id": "brass-birmingham:rulebook:network"
+      },
+      {
+        "rule_id": "action.develop",
+        "node_type": "action",
+        "normalized_statement": "開発では個人ボード上の産業タイルを1枚または2枚取り除き、取り除いたタイル1枚につき鉄1個を消費する。各産業では最も低いレベルのタイルから取り除く。",
+        "sequence": 70,
+        "section_heading": "DEVELOP ACTION",
+        "locator_id": "brass-birmingham:rulebook:develop"
+      },
+      {
+        "rule_id": "action.sell",
+        "node_type": "action",
+        "normalized_statement": "売却では自分の未裏返しの綿工場・製造所・窯元を、その商品を受け入れる接続済み商人へ売る。必要なビールを消費し、条件を満たした産業タイルを裏返す。1回の売却アクションで複数の産業を続けて売却できる。",
+        "sequence": 80,
+        "section_heading": "SELL ACTION",
+        "locator_id": "brass-birmingham:rulebook:sell"
+      },
+      {
+        "rule_id": "action.loan",
+        "node_type": "action",
+        "normalized_statement": "借入では銀行から£30を受け取り、収入マーカーを3収入レベル後退させ、その下側レベルの最も高いスペースに置く。収入レベルが-10を下回る借入はできない。",
+        "sequence": 90,
+        "section_heading": "LOAN ACTION",
+        "locator_id": "brass-birmingham:rulebook:loan"
+      },
+      {
+        "rule_id": "action.scout",
+        "node_type": "action",
+        "normalized_statement": "偵察では通常のアクション用カード1枚に加えてさらに2枚、合計3枚を捨て、ワイルド産業カード1枚とワイルドロケーションカード1枚を得る。すでに手札にワイルドカードがある場合は偵察できない。",
+        "sequence": 100,
+        "section_heading": "SCOUT ACTION",
+        "locator_id": "brass-birmingham:rulebook:scout"
+      },
+      {
+        "rule_id": "resource.coal",
+        "node_type": "condition",
+        "normalized_statement": "石炭を消費する場合、その場所は石炭供給源へ接続されていなければならない。利用可能な石炭鉱山が接続されている場合は最も近い石炭を優先し、利用できる鉱山が無ければ石炭市場から安い価格順に購入する。",
+        "sequence": 110,
+        "section_heading": "CONSUMING COAL",
+        "locator_id": "brass-birmingham:rulebook:coal"
+      },
+      {
+        "rule_id": "resource.iron",
+        "node_type": "condition",
+        "normalized_statement": "鉄を消費する産業は鉄供給源へ接続している必要がない。盤上に鉄が残る未裏返しの製鉄所がある間は任意の製鉄所から無料で消費し、無くなった後は鉄市場から安い価格順に購入する。",
+        "sequence": 120,
+        "section_heading": "CONSUMING IRON",
+        "locator_id": "brass-birmingham:rulebook:iron"
+      },
+      {
+        "rule_id": "resource.beer",
+        "node_type": "condition",
+        "normalized_statement": "自分の醸造所のビールは接続なしで消費できる。他プレイヤーの醸造所のビールは必要な場所から接続されている場合だけ使える。商人脇のビールは、その商人へ売却するときだけ消費できる。",
+        "sequence": 130,
+        "section_heading": "CONSUMING BEER",
+        "locator_id": "brass-birmingham:rulebook:beer"
+      },
+      {
+        "rule_id": "game.scoring",
+        "node_type": "victory",
+        "normalized_statement": "各時代の終了時、リンクと裏返った産業タイルからVPを得る。運河時代終了時には盤上のレベル1産業を除去する。鉄道時代の得点後、VP最多のプレイヤーが勝ち、同点は収入、次に所持金で判定する。",
+        "sequence": 140,
+        "section_heading": "END OF ERA MAINTENANCE / WINNING THE GAME",
+        "locator_id": "brass-birmingham:rulebook:era-end"
+      }
+    ]
   }
 }

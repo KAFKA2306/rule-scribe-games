@@ -1,14 +1,94 @@
 {
   "schema_version": "1",
-  "lifecycle_status": "candidate",
+  "lifecycle_status": "curated",
   "slug": "puerto-rico",
   "work": {
     "canonical_title": "Puerto Rico",
-    "identity_status": "unverified"
+    "identity_status": "verified"
   },
   "preference": {
     "status": "candidate",
     "priority": "high",
     "played": false
+  },
+  "source": {
+    "url": "https://product-files.ravensburger.cloud/manuals/665059.pdf",
+    "rule_version": "ravensburger-puerto-rico-1897-en",
+    "revision": "ravensburger-puerto-rico-1897-en-manual-665059-accessed-2026-10-04"
+  },
+  "game": {
+    "slug": "puerto-rico",
+    "title": "Puerto Rico 1897",
+    "summary": "毎ラウンド、役割を1つ選び、全員がその役割のアクションを実行する一方、選択者だけが特権を得る。島を発展させ、最も多くの勝利点を得ることを目指す。",
+    "source_url": "https://product-files.ravensburger.cloud/manuals/665059.pdf",
+    "source_revision": "ravensburger-puerto-rico-1897-en-manual-665059-accessed-2026-10-04",
+    "generated_from_source_revision": "ravensburger-puerto-rico-1897-en-manual-665059-accessed-2026-10-04",
+    "title_ja": "プエルトリコ1897",
+    "title_en": "Puerto Rico 1897",
+    "min_players": 2,
+    "max_players": 5,
+    "play_time": 120,
+    "min_age": 12,
+    "publisher": "Ravensburger",
+    "edition_label": "Ravensburger Puerto Rico 1897",
+    "language_code": "en",
+    "official_url": "https://www.ravensburger.us/en-US/products/games/strategy-games/puerto-rico-1897-27348",
+    "source_trust": "official_publisher",
+    "identity_status": "verified",
+    "identity_source": "https://www.ravensburger.us/en-US/products/games/strategy-games/puerto-rico-1897-27348",
+    "content_review_status": "ai_draft"
+  },
+  "ruleset": {
+    "language_code": "en",
+    "edition_label": "Ravensburger Puerto Rico 1897",
+    "revision_label": "ravensburger-665059-en",
+    "platform": "physical",
+    "publisher_name": "Ravensburger",
+    "source_type": "publisher_rulebook",
+    "authority": "official_publisher",
+    "coverage": "core",
+    "version": 1,
+    "nodes": [
+      {
+        "rule_id": "setup.basic",
+        "node_type": "setup",
+        "normalized_statement": "For the basic 3–5 player game, place the central board and buildings, choose a Governor, give each player an island board, starting coins and the specified starting estate, then prepare VP chips, ships, workers, role cards, quarries and face-up estates according to player count.",
+        "sequence": 10,
+        "section_heading": "GAME SETUP (BASIC GAME; 3 TO 5 PLAYERS)",
+        "locator_id": "puerto-rico:rulebook:setup"
+      },
+      {
+        "rule_id": "round.roles",
+        "node_type": "turn",
+        "normalized_statement": "Beginning with the Governor, each player in clockwise order chooses one available role. The chooser performs that role's action with its advantage, then the other players may perform the same action without the advantage. After everyone has chosen a role, the round ends.",
+        "sequence": 20,
+        "section_heading": "GAMEPLAY",
+        "locator_id": "puerto-rico:rulebook:roles"
+      },
+      {
+        "rule_id": "round.end",
+        "node_type": "round_end",
+        "normalized_statement": "At the end of the round, place one coin on each of the three unchosen role cards, return all role cards beside the board, and pass the Governor card to the player on the left.",
+        "sequence": 30,
+        "section_heading": "A New Round",
+        "locator_id": "puerto-rico:rulebook:round-end"
+      },
+      {
+        "rule_id": "game.end",
+        "node_type": "game_end",
+        "normalized_statement": "The game ends at the end of a round if there are not enough workers to refill the Work Register, any player has filled all City spaces, or the last VP chip has been taken.",
+        "sequence": 40,
+        "section_heading": "ENDING THE GAME",
+        "locator_id": "puerto-rico:rulebook:game-end"
+      },
+      {
+        "rule_id": "game.victory",
+        "node_type": "victory",
+        "normalized_statement": "Players total VP chips, building VP, and bonus VP from occupied large buildings. The player with the most VP wins; a tie is broken by the most coins and goods, counting each coin or barrel as one.",
+        "sequence": 50,
+        "section_heading": "ENDING THE GAME",
+        "locator_id": "puerto-rico:rulebook:victory"
+      }
+    ]
   }
 }

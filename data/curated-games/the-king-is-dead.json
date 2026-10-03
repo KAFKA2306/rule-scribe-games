@@ -1,14 +1,96 @@
 {
   "schema_version": "1",
-  "lifecycle_status": "candidate",
+  "lifecycle_status": "curated",
   "slug": "the-king-is-dead",
   "work": {
     "canonical_title": "The King Is Dead",
-    "identity_status": "unverified"
+    "identity_status": "verified"
   },
   "preference": {
     "status": "candidate",
     "priority": "highest",
     "played": false
+  },
+  "source": {
+    "url": "https://www.ospreypublishing.com/media/3yxddtqg/tkid2_rulebook.pdf",
+    "rule_version": "osprey-second-edition-en",
+    "revision": "osprey-second-edition-rulebook-accessed-2026-10-04"
+  },
+  "game": {
+    "slug": "the-king-is-dead",
+    "title": "The King Is Dead: Second Edition",
+    "summary": "8つの地域の権力争いを操作し、勝利した派閥から自分への支持を集めて王位を狙う、2〜4人用の政治戦略ゲーム。",
+    "source_url": "https://www.ospreypublishing.com/media/3yxddtqg/tkid2_rulebook.pdf",
+    "source_revision": "osprey-second-edition-rulebook-accessed-2026-10-04",
+    "generated_from_source_revision": "osprey-second-edition-rulebook-accessed-2026-10-04",
+    "title_ja": "ザ・キング・イズ・デッド：第2版",
+    "title_en": "The King Is Dead: Second Edition",
+    "description": "中世ブリテンの3派閥を直接所有せずに動かし、限られた8枚のアクションカードで地域支配と宮廷支持の両方を調整する。",
+    "min_players": 2,
+    "max_players": 4,
+    "play_time": 45,
+    "min_age": 14,
+    "published_year": 2020,
+    "publisher": "Osprey Games",
+    "edition_label": "Osprey Games Second Edition (2020)",
+    "language_code": "en",
+    "official_url": "https://www.ospreypublishing.com/us/king-is-dead-9781472836601/",
+    "source_trust": "official_publisher",
+    "identity_status": "verified",
+    "identity_source": "https://www.ospreypublishing.com/us/king-is-dead-9781472836601/",
+    "content_review_status": "ai_draft"
+  },
+  "ruleset": {
+    "language_code": "en",
+    "edition_label": "Osprey Games Second Edition (2020)",
+    "revision_label": "osprey-second-edition-en",
+    "platform": "physical",
+    "publisher_name": "Osprey Games",
+    "source_type": "publisher_rulebook",
+    "authority": "official_publisher",
+    "coverage": "core",
+    "version": 1,
+    "nodes": [
+      {
+        "rule_id": "setup.base",
+        "node_type": "setup",
+        "normalized_statement": "Place the board centrally, seed the three home regions, randomly populate every region to four followers, give each player two followers for their court and a negotiation disc, deal each player the same eight basic action cards, then randomize the eight region cards around the numbered spaces.",
+        "sequence": 10,
+        "section_heading": "SETUP",
+        "locator_id": "the-king-is-dead:rulebook:setup"
+      },
+      {
+        "rule_id": "turn.action-or-pass",
+        "node_type": "turn",
+        "normalized_statement": "Starting with the first player and proceeding clockwise, a player either takes an action by playing and resolving one action card or passes. After an action, that player must summon one follower from any region to their court. Played action cards cannot be reused.",
+        "sequence": 20,
+        "section_heading": "HOW TO PLAY / Turns / Taking actions",
+        "locator_id": "the-king-is-dead:rulebook:turn"
+      },
+      {
+        "rule_id": "power-struggle.resolve",
+        "node_type": "condition",
+        "normalized_statement": "If all players pass in sequence, resolve the lowest-numbered face-up region card. The faction with the most followers there gains control; a tie or an empty region instead gains an instability disc. All followers in that region then return to the supply.",
+        "sequence": 30,
+        "section_heading": "HOW TO PLAY / Power struggles",
+        "locator_id": "the-king-is-dead:rulebook:power-struggle"
+      },
+      {
+        "rule_id": "game.end",
+        "node_type": "game_end",
+        "normalized_statement": "The game ends immediately in invasion when all three instability discs are on the board, or in coronation after all eight power struggles have been resolved without an invasion.",
+        "sequence": 40,
+        "section_heading": "GAME END / Trigger",
+        "locator_id": "the-king-is-dead:rulebook:game-end"
+      },
+      {
+        "rule_id": "game.victory",
+        "node_type": "victory",
+        "normalized_statement": "For an invasion, the player with the most complete sets of one follower from each faction wins. For a coronation, rank factions by controlled regions and the player with the most court followers of the most powerful faction wins; the rulebook specifies tiebreakers for both endings.",
+        "sequence": 50,
+        "section_heading": "GAME END / Invasion / Coronation",
+        "locator_id": "the-king-is-dead:rulebook:victory"
+      }
+    ]
   }
 }

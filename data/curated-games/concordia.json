@@ -1,14 +1,85 @@
 {
   "schema_version": "1",
-  "lifecycle_status": "candidate",
+  "lifecycle_status": "curated",
   "slug": "concordia",
   "work": {
     "canonical_title": "Concordia",
-    "identity_status": "unverified"
+    "identity_status": "verified"
   },
   "preference": {
     "status": "candidate",
     "priority": "high",
     "played": false
+  },
+  "source": {
+    "url": "https://www.pd-verlag.de/WebRoot/HostEurope/Shops/es719366/MediaGallery/Spielregeln/Concordia_rules_eng_1_1.pdf",
+    "rule_version": "pd-verlag-rules-1.1-en",
+    "revision": "pd-verlag-concordia-rules-1.1-en-accessed-2026-10-04"
+  },
+  "game": {
+    "slug": "concordia",
+    "title": "Concordia",
+    "summary": "手札の人物カードを1枚ずつプレイして植民・建設・生産・交易を進め、獲得した人物カードが示す神々の得点条件に沿って帝国を発展させる経済戦略ゲーム。",
+    "source_url": "https://www.pd-verlag.de/WebRoot/HostEurope/Shops/es719366/MediaGallery/Spielregeln/Concordia_rules_eng_1_1.pdf",
+    "source_revision": "pd-verlag-concordia-rules-1.1-en-accessed-2026-10-04",
+    "generated_from_source_revision": "pd-verlag-concordia-rules-1.1-en-accessed-2026-10-04",
+    "title_ja": "コンコルディア",
+    "title_en": "Concordia",
+    "min_players": 2,
+    "max_players": 5,
+    "min_age": 13,
+    "publisher": "PD-Verlag",
+    "edition_label": "PD-Verlag base game / Rules 1.1",
+    "language_code": "en",
+    "official_url": "https://www.pd-verlag.de/Concordia/en",
+    "source_trust": "official_publisher",
+    "identity_status": "verified",
+    "identity_source": "https://www.pd-verlag.de/Concordia/en",
+    "content_review_status": "ai_draft"
+  },
+  "ruleset": {
+    "language_code": "en",
+    "edition_label": "PD-Verlag base game / Rules 1.1",
+    "revision_label": "pd-verlag-rules-1.1-en",
+    "platform": "physical",
+    "publisher_name": "PD-Verlag",
+    "source_type": "publisher_rulebook",
+    "authority": "official_publisher",
+    "coverage": "core",
+    "version": 1,
+    "nodes": [
+      {
+        "rule_id": "setup.overview",
+        "node_type": "setup",
+        "normalized_statement": "Use the appropriate board side for the player count, remove cards for sale that are not needed, determine a start player randomly, and give the Praefectus Magnus to the player to the right of the start player. The separate Quick Intro contains the detailed setup.",
+        "sequence": 10,
+        "section_heading": "GAME OVERVIEW / Game setup",
+        "locator_id": "concordia:rulebook:setup"
+      },
+      {
+        "rule_id": "turn.card",
+        "node_type": "turn",
+        "normalized_statement": "Players take turns clockwise. On a turn, play exactly one unplayed personality card from hand and execute its actions. Played cards form a personal discard pile; the Tribune can return previously played cards to hand.",
+        "sequence": 20,
+        "section_heading": "GAME OVERVIEW / Game flow",
+        "locator_id": "concordia:rulebook:turn"
+      },
+      {
+        "rule_id": "game.end",
+        "node_type": "game_end",
+        "normalized_statement": "The game ends when a player purchases the last personality card from the display or builds their 15th house. That player receives the Concordia card, then every other player takes one final turn.",
+        "sequence": 30,
+        "section_heading": "GAME OVERVIEW / Game end",
+        "locator_id": "concordia:rulebook:game-end"
+      },
+      {
+        "rule_id": "game.victory",
+        "node_type": "victory",
+        "normalized_statement": "After final scoring, the player with the most victory points wins. A tie is won by the player holding Praefectus Magnus, or by the tied player who would receive it next in the normal course of play.",
+        "sequence": 40,
+        "section_heading": "Game End / Scoring victory points",
+        "locator_id": "concordia:rulebook:victory"
+      }
+    ]
   }
 }
