@@ -48,6 +48,52 @@ class PreferenceSpec(BaseModel):
     played: bool = False
 
 
+class RuleNodeSpec(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    rule_id: str = Field(pattern=r"^[a-z0-9][a-z0-9._:-]{2,127}$")
+    node_type: Literal[
+        "phase",
+        "turn",
+        "action",
+        "condition",
+        "effect",
+        "setup",
+        "scoring",
+        "round_end",
+        "game_end",
+        "victory",
+        "exception",
+        "targeting",
+        "conflict_resolution",
+        "variant",
+    ]
+    normalized_statement: str = Field(min_length=1)
+    sequence: int = Field(ge=0)
+    section_heading: str | None = None
+    page_number: int | None = Field(default=None, ge=1)
+    external_reference: str | None = None
+
+    @model_validator(mode="after")
+    def require_locator(self):
+        if not self.section_heading and self.page_number is None and not self.external_reference:
+            raise ValueError("ruleset node requires a source locator")
+        return self
+
+
+class RuleSetSpec(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    language_code: str = Field(min_length=2, max_length=35)
+    edition_label: str = Field(min_length=1)
+    revision_label: str = Field(min_length=1)
+    platform: str = Field(min_length=1)
+    publisher_name: str = Field(min_length=1)
+    coverage: Literal["core", "full"] = "core"
+    version: int = Field(default=1, ge=1)
+    nodes: list[RuleNodeSpec] = Field(min_length=1)
+
+
 class CuratedGameSpec(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -58,6 +104,7 @@ class CuratedGameSpec(BaseModel):
     preference: PreferenceSpec | None = None
     source: SourceSpec | None = None
     game: dict[str, Any] | None = None
+    ruleset: RuleSetSpec | None = None
 
     @property
     def is_publishable(self) -> bool:
@@ -77,6 +124,8 @@ class CuratedGameSpec(BaseModel):
                 raise ValueError("candidate lifecycle requires preference.status=candidate")
             if (self.source is None) != (self.game is None):
                 raise ValueError("candidate source and game must be provided together")
+            if self.ruleset is not None:
+                raise ValueError("candidate record cannot contain ruleset")
             if self.source is None:
                 return self
         elif self.source is None or self.game is None:
