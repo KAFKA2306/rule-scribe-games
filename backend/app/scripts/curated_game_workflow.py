@@ -73,6 +73,7 @@ class RuleNodeSpec(BaseModel):
     section_heading: str | None = None
     page_number: int | None = Field(default=None, ge=1)
     external_reference: str | None = None
+    locator_id: str | None = Field(default=None, pattern=r"^[a-z0-9][a-z0-9._:-]{2,191}$")
 
     @model_validator(mode="after")
     def require_locator(self):
