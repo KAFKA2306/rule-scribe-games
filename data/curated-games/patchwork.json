@@ -1,14 +1,95 @@
 {
   "schema_version": "1",
-  "lifecycle_status": "candidate",
+  "lifecycle_status": "curated",
   "slug": "patchwork",
   "work": {
     "canonical_title": "Patchwork",
-    "identity_status": "unverified"
+    "identity_status": "verified"
   },
   "preference": {
     "status": "candidate",
     "priority": "high",
     "played": false
+  },
+  "source": {
+    "url": "https://www.lookout-spiele.de/upload/en_patchworkre.html_PWNR_Rulebook_EN_web.pdf",
+    "rule_version": "lookout-revised-2025-en",
+    "revision": "lookout-patchwork-revised-2025-en-rulebook-accessed-2026-10-04"
+  },
+  "game": {
+    "slug": "patchwork",
+    "title": "Patchwork: Revised Edition",
+    "summary": "2人で時間トラックを進みながらパッチを購入・配置し、ボタン収入と盤面の空白を管理して最終得点を競うタイル配置ゲーム。",
+    "source_url": "https://www.lookout-spiele.de/upload/en_patchworkre.html_PWNR_Rulebook_EN_web.pdf",
+    "source_revision": "lookout-patchwork-revised-2025-en-rulebook-accessed-2026-10-04",
+    "generated_from_source_revision": "lookout-patchwork-revised-2025-en-rulebook-accessed-2026-10-04",
+    "title_ja": "パッチワーク 改訂版",
+    "title_en": "Patchwork: Revised Edition",
+    "min_players": 2,
+    "max_players": 2,
+    "play_time": 30,
+    "min_age": 8,
+    "published_year": 2025,
+    "publisher": "Lookout GmbH",
+    "edition_label": "Revised Edition 2025",
+    "language_code": "en",
+    "official_url": "https://www.lookout-spiele.de/en/games/patchworkre.html",
+    "source_trust": "official_publisher",
+    "identity_status": "verified",
+    "identity_source": "https://www.lookout-spiele.de/en/games/patchworkre.html",
+    "content_review_status": "ai_draft"
+  },
+  "ruleset": {
+    "language_code": "en",
+    "edition_label": "Revised Edition 2025",
+    "revision_label": "lookout-revised-2025-en",
+    "platform": "physical",
+    "publisher_name": "Lookout GmbH",
+    "source_type": "publisher_rulebook",
+    "authority": "official_publisher",
+    "coverage": "full",
+    "version": 1,
+    "nodes": [
+      {
+        "rule_id": "setup.base",
+        "node_type": "setup",
+        "normalized_statement": "Each player takes a quilt board, a time token, and five buttons. Put the time board centrally, both time tokens on its start, arrange regular patches in a circle, place the neutral token after the smallest patch, set aside the special tile, and place special patches on marked time-board spaces.",
+        "sequence": 10,
+        "section_heading": "SETUP",
+        "locator_id": "patchwork:rulebook:setup"
+      },
+      {
+        "rule_id": "turn.order",
+        "node_type": "turn",
+        "normalized_statement": "The player whose time token is furthest behind takes the next turn; if both tokens share a space, the token on top acts. This can let the same player take multiple consecutive turns.",
+        "sequence": 20,
+        "section_heading": "PLAYING THE GAME",
+        "locator_id": "patchwork:rulebook:turn-order"
+      },
+      {
+        "rule_id": "turn.actions",
+        "node_type": "action",
+        "normalized_statement": "On a turn, either advance to the space directly ahead of the opponent and gain one button per space moved, or choose one of the next three patches, move the neutral token, pay its button cost, place the patch without overlap, and advance time by its time cost.",
+        "sequence": 30,
+        "section_heading": "A: Advance and Receive Buttons / B: Take and Place a Patch",
+        "locator_id": "patchwork:rulebook:actions"
+      },
+      {
+        "rule_id": "game.end",
+        "node_type": "game_end",
+        "normalized_statement": "The game ends after both time tokens reach the final space of the time board.",
+        "sequence": 40,
+        "section_heading": "END OF THE GAME",
+        "locator_id": "patchwork:rulebook:game-end"
+      },
+      {
+        "rule_id": "game.victory",
+        "node_type": "victory",
+        "normalized_statement": "Score remaining buttons plus the special-tile value if owned, then subtract two points for each empty quilt-board space. The higher score wins; a tie goes to the player who reached the final time-board space first.",
+        "sequence": 50,
+        "section_heading": "END OF THE GAME / Scoring",
+        "locator_id": "patchwork:rulebook:victory"
+      }
+    ]
   }
 }

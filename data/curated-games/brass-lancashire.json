@@ -1,14 +1,94 @@
 {
   "schema_version": "1",
-  "lifecycle_status": "candidate",
+  "lifecycle_status": "curated",
   "slug": "brass-lancashire",
   "work": {
     "canonical_title": "Brass: Lancashire",
-    "identity_status": "unverified"
+    "identity_status": "verified"
   },
   "preference": {
     "status": "candidate",
     "priority": "high",
     "played": false
+  },
+  "source": {
+    "url": "https://files.roxley.com/Brass-Lancashire-Rulebook-2018.11.20-highlights.pdf",
+    "rule_version": "roxley-2018.11.20-en",
+    "revision": "roxley-brass-lancashire-rulebook-2018.11.20-accessed-2026-10-04"
+  },
+  "game": {
+    "slug": "brass-lancashire",
+    "title": "Brass: Lancashire",
+    "summary": "運河時代と鉄道時代の2時代を通じて産業と輸送網を築き、綿花を港や遠隔市場へ売却しながらリンクと稼働済み産業から勝利点を得る経済戦略ゲーム。",
+    "source_url": "https://files.roxley.com/Brass-Lancashire-Rulebook-2018.11.20-highlights.pdf",
+    "source_revision": "roxley-brass-lancashire-rulebook-2018.11.20-accessed-2026-10-04",
+    "generated_from_source_revision": "roxley-brass-lancashire-rulebook-2018.11.20-accessed-2026-10-04",
+    "title_ja": "ブラス：ランカシャー",
+    "title_en": "Brass: Lancashire",
+    "min_players": 2,
+    "max_players": 4,
+    "play_time": 120,
+    "min_age": 14,
+    "publisher": "Roxley Games",
+    "edition_label": "Roxley current edition",
+    "language_code": "en",
+    "official_url": "https://roxley.com/products/brass-lancashire",
+    "source_trust": "official_publisher",
+    "identity_status": "verified",
+    "identity_source": "https://roxley.com/products/brass-lancashire",
+    "content_review_status": "ai_draft"
+  },
+  "ruleset": {
+    "language_code": "en",
+    "edition_label": "Roxley current edition",
+    "revision_label": "roxley-2018.11.20-en",
+    "platform": "physical",
+    "publisher_name": "Roxley Games",
+    "source_type": "publisher_rulebook",
+    "authority": "official_publisher",
+    "coverage": "core",
+    "version": 1,
+    "nodes": [
+      {
+        "rule_id": "game.two-eras",
+        "node_type": "phase",
+        "normalized_statement": "The game is played over the Canal Era and the Rail Era. Each era continues in rounds until both the draw deck and all players' hands are exhausted; there are 8, 9, or 10 rounds per era with 4, 3, or 2 players respectively.",
+        "sequence": 10,
+        "section_heading": "THE GOAL / ROUNDS",
+        "locator_id": "brass-lancashire:rulebook:rounds"
+      },
+      {
+        "rule_id": "turn.actions",
+        "node_type": "turn",
+        "normalized_statement": "On a normal turn, perform two actions, discarding one card for each action, then refill your hand to eight cards if possible. During the first round of the Canal Era, each player performs only one action.",
+        "sequence": 20,
+        "section_heading": "PLAYER TURNS",
+        "locator_id": "brass-lancashire:rulebook:turn"
+      },
+      {
+        "rule_id": "action.sell",
+        "node_type": "action",
+        "normalized_statement": "A Sell action flips eligible Cotton Mills by selling cotton either through a connected unflipped Port or, when available, to the Distant Cotton Market. Port and market effects adjust income and may advance the Distant Cotton Market marker.",
+        "sequence": 30,
+        "section_heading": "SELL ACTION",
+        "locator_id": "brass-lancashire:rulebook:sell"
+      },
+      {
+        "rule_id": "action.network",
+        "node_type": "action",
+        "normalized_statement": "A Network action places links adjacent to the player's network. Canal links are used only in the Canal Era; rail links are used only in the Rail Era and require coal, with the rulebook specifying the cost and conditions for building one or two rail links.",
+        "sequence": 40,
+        "section_heading": "NETWORK ACTION",
+        "locator_id": "brass-lancashire:rulebook:network"
+      },
+      {
+        "rule_id": "game.victory",
+        "node_type": "victory",
+        "normalized_statement": "Victory points are scored at the end of each era for link tiles and flipped industry tiles. After scoring at the end of the Rail Era, the player with the most victory points wins.",
+        "sequence": 50,
+        "section_heading": "THE GOAL",
+        "locator_id": "brass-lancashire:rulebook:victory"
+      }
+    ]
   }
 }

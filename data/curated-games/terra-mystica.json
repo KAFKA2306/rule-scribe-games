@@ -1,14 +1,93 @@
 {
   "schema_version": "1",
-  "lifecycle_status": "candidate",
+  "lifecycle_status": "curated",
   "slug": "terra-mystica",
   "work": {
     "canonical_title": "Terra Mystica",
-    "identity_status": "unverified"
+    "identity_status": "verified"
   },
   "preference": {
     "status": "candidate",
     "priority": "high",
     "played": false
+  },
+  "source": {
+    "url": "https://www.feuerland-spiele.de/fileadmin/game/Terra_Mystica/Terra_Mystica_rules_EN_Web.pdf",
+    "rule_version": "feuerland-current-en",
+    "revision": "feuerland-terra-mystica-rules-en-accessed-2026-10-04"
+  },
+  "game": {
+    "slug": "terra-mystica",
+    "title": "Terra Mystica",
+    "summary": "14の勢力から1つを担当し、地形を自勢力向けに変換して建物を広げ、6ラウンドを通じて建設・宗教・領域などから勝利点を競う。",
+    "source_url": "https://www.feuerland-spiele.de/fileadmin/game/Terra_Mystica/Terra_Mystica_rules_EN_Web.pdf",
+    "source_revision": "feuerland-terra-mystica-rules-en-accessed-2026-10-04",
+    "generated_from_source_revision": "feuerland-terra-mystica-rules-en-accessed-2026-10-04",
+    "title_ja": "テラミスティカ",
+    "title_en": "Terra Mystica",
+    "min_players": 2,
+    "max_players": 5,
+    "min_age": 12,
+    "publisher": "Feuerland Spiele",
+    "edition_label": "Feuerland base game",
+    "language_code": "en",
+    "official_url": "https://www.feuerland-spiele.de/spiele/terra-mystica/",
+    "source_trust": "official_publisher",
+    "identity_status": "verified",
+    "identity_source": "https://www.feuerland-spiele.de/spiele/terra-mystica/",
+    "content_review_status": "ai_draft"
+  },
+  "ruleset": {
+    "language_code": "en",
+    "edition_label": "Feuerland base game",
+    "revision_label": "feuerland-current-en",
+    "platform": "physical",
+    "publisher_name": "Feuerland Spiele",
+    "source_type": "publisher_rulebook",
+    "authority": "official_publisher",
+    "coverage": "core",
+    "version": 1,
+    "nodes": [
+      {
+        "rule_id": "game.rounds",
+        "node_type": "phase",
+        "normalized_statement": "The game is played over six rounds. Every round consists of three phases in order: Income, Actions, then Cult bonuses and Clean-up.",
+        "sequence": 10,
+        "section_heading": "FLOW OF PLAY OVER SIX ROUNDS",
+        "locator_id": "terra-mystica:rulebook:rounds"
+      },
+      {
+        "rule_id": "round.income",
+        "node_type": "phase",
+        "normalized_statement": "During the Income phase, players collect workers, coins, priests, and power according to visible income symbols from built structures, their bonus card, and favor tiles.",
+        "sequence": 20,
+        "section_heading": "PHASE I: INCOME",
+        "locator_id": "terra-mystica:rulebook:income"
+      },
+      {
+        "rule_id": "round.pass",
+        "node_type": "turn",
+        "normalized_statement": "During the Action phase, a player who cannot or does not want to take further actions passes and takes no more actions that round. The first player to pass becomes the next round's starting player; when passing in rounds 1–5, return the current bonus card and take a different available one.",
+        "sequence": 30,
+        "section_heading": "8 - PASSING AND NEW STARTING PLAYER",
+        "locator_id": "terra-mystica:rulebook:passing"
+      },
+      {
+        "rule_id": "round.cleanup",
+        "node_type": "round_end",
+        "normalized_statement": "After all players have passed, award the Cult bonuses shown on the current scoring tile. In rounds 1–5, then perform clean-up for the next round, including refreshing action spaces and placing coins on leftover bonus cards.",
+        "sequence": 40,
+        "section_heading": "Phase III: Cult bonuses and clean-up phase",
+        "locator_id": "terra-mystica:rulebook:cleanup"
+      },
+      {
+        "rule_id": "game.victory",
+        "node_type": "victory",
+        "normalized_statement": "At the end of the game, add end-game area scoring and Cult scoring to all victory points earned during play. The player with the most victory points wins.",
+        "sequence": 50,
+        "section_heading": "GOAL OF THE GAME",
+        "locator_id": "terra-mystica:rulebook:victory"
+      }
+    ]
   }
 }

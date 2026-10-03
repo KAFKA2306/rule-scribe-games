@@ -1,14 +1,86 @@
 {
   "schema_version": "1",
-  "lifecycle_status": "candidate",
+  "lifecycle_status": "curated",
   "slug": "modern-art",
   "work": {
     "canonical_title": "Modern Art",
-    "identity_status": "unverified"
+    "identity_status": "verified"
   },
   "preference": {
     "status": "candidate",
     "priority": "high",
     "played": false
+  },
+  "source": {
+    "url": "https://www.cmon.com/wp-content/uploads/2023/06/MA_Rulebbok_Artbook_v18-low.pdf",
+    "rule_version": "cmon-rulebook-v18-en",
+    "revision": "cmon-modern-art-rulebook-v18-accessed-2026-10-04"
+  },
+  "game": {
+    "slug": "modern-art",
+    "title": "Modern Art",
+    "summary": "4ラウンドにわたり絵画を5種類の方式で競売し、そのラウンドで人気になった作家の作品価値を市場が決める。最終的に最も多くの現金を持つプレイヤーが勝つ。",
+    "source_url": "https://www.cmon.com/wp-content/uploads/2023/06/MA_Rulebbok_Artbook_v18-low.pdf",
+    "source_revision": "cmon-modern-art-rulebook-v18-accessed-2026-10-04",
+    "generated_from_source_revision": "cmon-modern-art-rulebook-v18-accessed-2026-10-04",
+    "title_ja": "モダンアート",
+    "title_en": "Modern Art",
+    "min_players": 3,
+    "max_players": 5,
+    "play_time": 60,
+    "min_age": 14,
+    "publisher": "CMON",
+    "edition_label": "CMON edition",
+    "language_code": "en",
+    "official_url": "https://www.cmon.com/products/modern-art/",
+    "source_trust": "official_publisher",
+    "identity_status": "verified",
+    "identity_source": "https://www.cmon.com/products/modern-art/",
+    "content_review_status": "ai_draft"
+  },
+  "ruleset": {
+    "language_code": "en",
+    "edition_label": "CMON edition",
+    "revision_label": "cmon-rulebook-v18-en",
+    "platform": "physical",
+    "publisher_name": "CMON",
+    "source_type": "publisher_rulebook",
+    "authority": "official_publisher",
+    "coverage": "core",
+    "version": 1,
+    "nodes": [
+      {
+        "rule_id": "setup.base",
+        "node_type": "setup",
+        "normalized_statement": "Shuffle the 70 painting cards and deal 10/9/8 cards to each player for 3/4/5 players. Give each player $100 behind a museum screen; the youngest player receives the hammer and begins the first auction.",
+        "sequence": 10,
+        "section_heading": "GAME SETUP",
+        "locator_id": "modern-art:rulebook:setup"
+      },
+      {
+        "rule_id": "auction.run",
+        "node_type": "turn",
+        "normalized_statement": "The auctioneer plays one painting and uses the auction type printed on that card. When the auction ends, the highest bidder pays the auctioneer, except an auctioneer buying their own painting pays the bank. The winner places the painting at their museum, and auctioneer responsibility moves left.",
+        "sequence": 20,
+        "section_heading": "RUNNING AUCTIONS",
+        "locator_id": "modern-art:rulebook:auction"
+      },
+      {
+        "rule_id": "round.market",
+        "node_type": "round_end",
+        "normalized_statement": "A round ends when the fifth painting by any single artist is played; that fifth painting is not auctioned. Rank artists by paintings played, assign the round's values to the top three, and every player sells all paintings bought that round to the bank at the resulting artist values.",
+        "sequence": 30,
+        "section_heading": "ENDING THE AUCTION ROUND / SELLING TO THE BANK",
+        "locator_id": "modern-art:rulebook:round-end"
+      },
+      {
+        "rule_id": "game.victory",
+        "node_type": "victory",
+        "normalized_statement": "Modern Art lasts four rounds. After the fourth round is settled, the player with the most money wins.",
+        "sequence": 40,
+        "section_heading": "GOAL OF THE GAME",
+        "locator_id": "modern-art:rulebook:victory"
+      }
+    ]
   }
 }
