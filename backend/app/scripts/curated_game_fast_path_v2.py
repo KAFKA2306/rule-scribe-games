@@ -211,7 +211,7 @@ def write_ruleset_projection(client: Any, spec: CuratedGameSpec, game_row: dict[
     )
     source_payload = {
         "source_id": source_id,
-        "url": spec.source.url,
+        "url": ruleset.source_url or spec.source.url,
         "document_identity": f"{spec.work.canonical_title} rule source",
         "source_type": ruleset.source_type,
         "publisher_name": ruleset.publisher_name,
@@ -331,7 +331,7 @@ def write_ruleset_projection(client: Any, spec: CuratedGameSpec, game_row: dict[
             "verification_status": "source_bound",
             "source_claim_ref": claim_id,
             "evidence_ref": binding_id,
-            "source_url": spec.source.url,
+            "source_url": ruleset.source_url or spec.source.url,
             "source_locator": locator_id,
             "metadata": metadata,
             "updated_at": now,
