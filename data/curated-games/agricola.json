@@ -1,14 +1,95 @@
 {
   "schema_version": "1",
-  "lifecycle_status": "candidate",
+  "lifecycle_status": "curated",
   "slug": "agricola",
   "work": {
     "canonical_title": "Agricola",
-    "identity_status": "unverified"
+    "identity_status": "verified"
   },
   "preference": {
     "status": "candidate",
     "priority": "high",
     "played": false
+  },
+  "source": {
+    "url": "https://www.lookout-spiele.de/upload/en_agricolare.html_Rules_Agricola-RE_EN.pdf",
+    "rule_version": "lookout-revised-2016-en",
+    "revision": "lookout-agricola-revised-2016-en-rulebook-accessed-2026-10-04"
+  },
+  "game": {
+    "slug": "agricola",
+    "title": "Agricola (Revised Edition)",
+    "summary": "14ラウンドにわたり家族をアクションスペースへ配置し、農場を拡張して作物・家畜・家族を育てる。収穫では家族を養い、最後に農場全体の得点を競う。",
+    "source_url": "https://www.lookout-spiele.de/upload/en_agricolare.html_Rules_Agricola-RE_EN.pdf",
+    "source_revision": "lookout-agricola-revised-2016-en-rulebook-accessed-2026-10-04",
+    "generated_from_source_revision": "lookout-agricola-revised-2016-en-rulebook-accessed-2026-10-04",
+    "title_ja": "アグリコラ 改訂版",
+    "title_en": "Agricola (Revised Edition)",
+    "min_players": 1,
+    "max_players": 4,
+    "play_time": 90,
+    "min_age": 12,
+    "published_year": 2016,
+    "publisher": "Lookout GmbH",
+    "edition_label": "Revised Edition 2016",
+    "language_code": "en",
+    "official_url": "https://www.lookout-spiele.de/en/games/agricolare.html",
+    "source_trust": "official_publisher",
+    "identity_status": "verified",
+    "identity_source": "https://www.lookout-spiele.de/en/games/agricolare.html",
+    "content_review_status": "ai_draft"
+  },
+  "ruleset": {
+    "language_code": "en",
+    "edition_label": "Revised Edition 2016",
+    "revision_label": "lookout-revised-2016-en",
+    "platform": "physical",
+    "publisher_name": "Lookout GmbH",
+    "source_type": "publisher_rulebook",
+    "authority": "official_publisher",
+    "coverage": "core",
+    "version": 1,
+    "nodes": [
+      {
+        "rule_id": "setup.personal",
+        "node_type": "setup",
+        "normalized_statement": "Each player takes a farmyard board and a color, places one person in each of the two starting wood rooms, and keeps the remaining people, fences, and stables as personal supply. Prepare the player-count board extension, major improvements, seven minor improvements and seven occupations per player, and the 14 action-space cards.",
+        "sequence": 10,
+        "section_heading": "Setup",
+        "locator_id": "agricola:rulebook:setup"
+      },
+      {
+        "rule_id": "game.rounds",
+        "node_type": "phase",
+        "normalized_statement": "The game lasts 14 rounds. Each round follows the round structure, and a harvest occurs after rounds 4, 7, 9, 11, 13, and 14.",
+        "sequence": 20,
+        "section_heading": "General Overview / Course of Play",
+        "locator_id": "agricola:rulebook:rounds"
+      },
+      {
+        "rule_id": "round.work",
+        "node_type": "turn",
+        "normalized_statement": "During the Work phase, starting with the starting player and continuing clockwise, each player places exactly one person on an unoccupied action space and immediately performs that action. Continue until all players have placed all their people.",
+        "sequence": 30,
+        "section_heading": "Work Phase",
+        "locator_id": "agricola:rulebook:work"
+      },
+      {
+        "rule_id": "game.scoring",
+        "node_type": "scoring",
+        "normalized_statement": "At final scoring, the farm is valued across fields, pastures, crops, animals, rooms, people, improvements and bonuses, with penalties including unused farmyard spaces and missing animal types.",
+        "sequence": 40,
+        "section_heading": "Have a First Look at the Scoring Sheet",
+        "locator_id": "agricola:rulebook:scoring"
+      },
+      {
+        "rule_id": "game.victory",
+        "node_type": "victory",
+        "normalized_statement": "After round 14 and its harvest, final scoring is performed. The player whose farm is worth the most points wins.",
+        "sequence": 50,
+        "section_heading": "Have a First Look at the Scoring Sheet",
+        "locator_id": "agricola:rulebook:victory"
+      }
+    ]
   }
 }
