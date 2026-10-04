@@ -12,17 +12,17 @@
     "played": false
   },
   "source": {
-    "url": "https://boardgamegeek.com/filepage/256798/english-edition-rulebooks-25th-century-games",
+    "url": "https://25thcenturygames.com/products/ra-regular-edition",
     "rule_version": "25th-century-retail-v17-en",
-    "revision": "25th-century-ra-retail-third-printing-rules-v17-accessed-2026-10-04"
+    "revision": "25th-century-official-product-plus-retail-rulebook-mirror-accessed-2026-10-04"
   },
   "game": {
     "slug": "ra",
     "title": "Ra",
     "summary": "3つの時代を通じ、袋からタイルを引くか自らラーを呼んで競りを発生させ、固定値の太陽ディスクで入札して多様な得点タイルを集める競りゲーム。",
-    "source_url": "https://boardgamegeek.com/filepage/256798/english-edition-rulebooks-25th-century-games",
-    "source_revision": "25th-century-ra-retail-third-printing-rules-v17-accessed-2026-10-04",
-    "generated_from_source_revision": "25th-century-ra-retail-third-printing-rules-v17-accessed-2026-10-04",
+    "source_url": "https://25thcenturygames.com/products/ra-regular-edition",
+    "source_revision": "25th-century-official-product-plus-retail-rulebook-mirror-accessed-2026-10-04",
+    "generated_from_source_revision": "25th-century-official-product-plus-retail-rulebook-mirror-accessed-2026-10-04",
     "title_ja": "ラー",
     "title_en": "Ra",
     "min_players": 2,
@@ -33,7 +33,7 @@
     "edition_label": "25th Century Games retail edition, third printing",
     "language_code": "en",
     "official_url": "https://www.25thcenturygames.com/store/ra",
-    "source_trust": "authorized_partner",
+    "source_trust": "official_publisher",
     "identity_status": "verified",
     "identity_source": "https://www.25thcenturygames.com/store/ra",
     "content_review_status": "ai_draft"
@@ -90,6 +90,7 @@
         "section_heading": "Scoring / Winning the Game",
         "locator_id": "ra:rulebook:victory"
       }
-    ]
+    ],
+    "source_url": "https://boardgamegeek.com/filepage/256798/english-edition-rulebooks-25th-century-games"
   }
 }
