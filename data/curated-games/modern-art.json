@@ -44,7 +44,7 @@
     "revision_label": "cmon-rulebook-v18-en",
     "platform": "physical",
     "publisher_name": "CMON",
-    "source_type": "publisher_rulebook",
+    "source_type": "rulebook",
     "authority": "official_publisher",
     "coverage": "core",
     "version": 1,
