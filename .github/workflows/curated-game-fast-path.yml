@@ -58,59 +58,7 @@ jobs:
 
           mapfile -t changed < <(
             git diff --name-only --diff-filter=AM "$BEFORE_SHA" "$GITHUB_SHA" -- data/curated-games/ \
-              | grep -E '^data/curated-games/[^/]+\.json
-      - name: Install uv
-        if: steps.changed.outputs.count != '0'
-        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9
-      - name: Install Python dependencies
-        if: steps.changed.outputs.count != '0'
-        run: uv sync --frozen
-      - name: Install Vercel CLI
-        if: steps.changed.outputs.count != '0'
-        run: npm install --global vercel@59.0.0
-      - name: Pull production environment only
-        if: steps.changed.outputs.count != '0'
-        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
-      - name: Export trusted Supabase server credentials
-        if: steps.changed.outputs.count != '0'
-        shell: bash
-        run: |
-          python - .vercel/.env.production.local "$GITHUB_ENV" <<'PY'
-          import sys
-          from pathlib import Path
-
-          source = Path(sys.argv[1])
-          destination = Path(sys.argv[2])
-          values = {}
-          for raw in source.read_text(encoding="utf-8").splitlines():
-              line = raw.strip()
-              if not line or line.startswith("#") or "=" not in line:
-                  continue
-              key, value = line.split("=", 1)
-              value = value.strip()
-              if len(value) >= 2 and value[0] == value[-1] and value[0] in "'\"":
-                  value = value[1:-1]
-              values[key.strip()] = value
-          required = ("SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY")
-          missing = [key for key in required if not values.get(key)]
-          if missing:
-              raise SystemExit("Missing trusted production DB variables: " + ", ".join(missing))
-          with destination.open("a", encoding="utf-8") as output:
-              for key in required:
-                  output.write(f"{key}={values[key]}\n")
-          print("Trusted production DB environment loaded")
-          PY
-      - name: Publish changed curated games and verify catalog fixed points
-        if: steps.changed.outputs.count != '0'
-        env:
-          PYTHONPATH: backend
-        shell: bash
-        run: |
-          while IFS= read -r slug; do
-            [ -n "$slug" ] || continue
-            uv run python backend/app/scripts/curated_game_fast_path_v2.py publish --game "$slug"
-          done < /tmp/curated-games.txt
- \
+              | grep -E '^data/curated-games/[^/]+\.json$' \
               | grep -v '/schema-' \
               | sed -E 's#^data/curated-games/##; s#\.json$##' \
               | sort -u \
