@@ -267,8 +267,19 @@ def preflight_identity(client: Any, spec: CuratedGameSpec) -> IdentityPlan:
                 .execute()
                 .data
             )
-            if not actual_work or actual_work[0].get("canonical_title") != spec.work.canonical_title:
-                raise WorkflowError(f"slug {spec.slug} resolves to a different canonical work")
+            if not actual_work:
+                raise WorkflowError(f"slug {spec.slug} resolves to a missing canonical work")
+            if actual_work[0].get("canonical_title") != spec.work.canonical_title:
+                alias_rows = (
+                    client.table("game_title_aliases")
+                    .select("game_id,title")
+                    .eq("game_id", slug_rows[0]["id"])
+                    .eq("title", spec.work.canonical_title)
+                    .execute()
+                    .data
+                )
+                if not alias_rows:
+                    raise WorkflowError(f"slug {spec.slug} resolves to a different canonical work")
             work_rows = actual_work
 
     edition_rows: list[dict[str, Any]] = []
