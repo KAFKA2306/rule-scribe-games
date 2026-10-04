@@ -1,14 +1,112 @@
 {
   "schema_version": "1",
-  "lifecycle_status": "candidate",
+  "lifecycle_status": "curated",
   "slug": "food-chain-magnate",
   "work": {
     "canonical_title": "Food Chain Magnate",
-    "identity_status": "unverified"
+    "identity_status": "verified"
   },
   "preference": {
     "status": "candidate",
     "priority": "highest",
     "played": false
+  },
+  "source": {
+    "url": "https://boardgamegeek.com/filepage/123433/english-rulebook",
+    "rule_version": "splotter-en-3rd-printing",
+    "revision": "splotter-food-chain-magnate-en-3rd-printing-accessed-2026-10-04"
+  },
+  "game": {
+    "slug": "food-chain-magnate",
+    "title": "Food Chain Magnate",
+    "summary": "ファストフード企業を組織し、採用・訓練・生産・広告・価格設定・販売を通じて需要を奪い合い、最終的に最も多くの現金を持つことを目指す経済戦略ゲーム。",
+    "source_url": "https://boardgamegeek.com/filepage/123433/english-rulebook",
+    "source_revision": "splotter-food-chain-magnate-en-3rd-printing-accessed-2026-10-04",
+    "generated_from_source_revision": "splotter-food-chain-magnate-en-3rd-printing-accessed-2026-10-04",
+    "title_ja": "フードチェーンマグネイト",
+    "title_en": "Food Chain Magnate",
+    "min_players": 2,
+    "max_players": 5,
+    "play_time": 240,
+    "min_age": 14,
+    "published_year": 2015,
+    "publisher": "Splotter Spellen",
+    "edition_label": "Splotter English 3rd printing",
+    "language_code": "en",
+    "official_url": "https://www.splottershop.com/products/food-chain-magnate",
+    "source_trust": "authorized_partner",
+    "identity_status": "verified",
+    "identity_source": "https://www.splottershop.com/products/food-chain-magnate",
+    "content_review_status": "ai_draft"
+  },
+  "ruleset": {
+    "language_code": "en",
+    "edition_label": "Splotter English 3rd printing",
+    "revision_label": "splotter-en-3rd-printing",
+    "platform": "physical",
+    "publisher_name": "Splotter Spellen",
+    "source_id": "designer:splotter:food-chain-magnate:rulebook-v3",
+    "source_type": "designer_publisher_rulebook_mirror",
+    "authority": "designer_publisher",
+    "coverage": "core",
+    "version": 1,
+    "nodes": [
+      {
+        "rule_id": "setup.bank-and-company",
+        "node_type": "setup",
+        "normalized_statement": "Place $50 per player in the bank pool. Each player chooses a restaurant chain and receives its CEO, three restaurants, turn-order marker, and three bank reserve cards; players begin with no cash.",
+        "sequence": 10,
+        "section_heading": "Setting up the game / Filling the bank / Player markers",
+        "locator_id": "food-chain-magnate:rulebook:setup"
+      },
+      {
+        "rule_id": "phase.restructuring",
+        "node_type": "phase",
+        "normalized_statement": "At the start of each turn, all players simultaneously choose which employees are at work in their company structure. The CEO is always at work; employees not placed in the structure are on the beach.",
+        "sequence": 20,
+        "section_heading": "Phase 1: Restructuring",
+        "locator_id": "food-chain-magnate:rulebook:restructuring"
+      },
+      {
+        "rule_id": "phase.order-of-business",
+        "node_type": "phase",
+        "normalized_statement": "Players choose turn-order positions in descending order of open slots in their company structures, with previous turn order breaking ties.",
+        "sequence": 30,
+        "section_heading": "Phase 2: Order of business",
+        "locator_id": "food-chain-magnate:rulebook:order"
+      },
+      {
+        "rule_id": "phase.working",
+        "node_type": "phase",
+        "normalized_statement": "In turn order, each player resolves one action for each employee at work. Employee actions are carried out in the rulebook's specified sequence, including recruiting, training, production, purchasing, development, pricing and related work.",
+        "sequence": 40,
+        "section_heading": "Phase 3: Working 9:00–5:00",
+        "locator_id": "food-chain-magnate:rulebook:working"
+      },
+      {
+        "rule_id": "phase.dinnertime",
+        "node_type": "phase",
+        "normalized_statement": "During Dinnertime, houses are processed in printed number order. A house buys only if a connected restaurant chain can satisfy its full demand; choice among eligible restaurants is determined by the rulebook's distance and price rules.",
+        "sequence": 50,
+        "section_heading": "Phase 4: Dinnertime",
+        "locator_id": "food-chain-magnate:rulebook:dinnertime"
+      },
+      {
+        "rule_id": "game.bank-break",
+        "node_type": "game_end",
+        "normalized_statement": "When the bank first lacks enough money during Dinnertime, reveal all players' reserve cards and add their money values to the bank, also changing CEO slots as specified. If the bank breaks a second time, finish Dinnertime and the game ends before salaries are paid.",
+        "sequence": 60,
+        "section_heading": "Breaking the bank",
+        "locator_id": "food-chain-magnate:rulebook:bank-break"
+      },
+      {
+        "rule_id": "game.victory",
+        "node_type": "victory",
+        "normalized_statement": "When the bank breaks for the second time, the player with the most cash at the end of Dinnertime wins; a tie is won by the tied player earlier in turn order.",
+        "sequence": 70,
+        "section_heading": "Breaking the bank (2nd time)",
+        "locator_id": "food-chain-magnate:rulebook:victory"
+      }
+    ]
   }
 }

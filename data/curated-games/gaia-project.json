@@ -1,14 +1,94 @@
 {
   "schema_version": "1",
-  "lifecycle_status": "candidate",
+  "lifecycle_status": "curated",
   "slug": "gaia-project",
   "work": {
     "canonical_title": "Gaia Project",
-    "identity_status": "unverified"
+    "identity_status": "verified"
   },
   "preference": {
     "status": "candidate",
     "priority": "high",
     "played": false
+  },
+  "source": {
+    "url": "https://www.feuerland-spiele.de/fileadmin/game/Gaia_Project/GAIA_PROJECT_EN_rules_Web.pdf",
+    "rule_version": "feuerland-current-en",
+    "revision": "feuerland-gaia-project-rules-en-accessed-2026-10-04"
+  },
+  "game": {
+    "slug": "gaia-project",
+    "title": "Gaia Project",
+    "summary": "14勢力の1つを担当して惑星をテラフォーミングし、鉱山・建物・連邦・研究を発展させる。6ラウンド後の総勝利点で競う宇宙開拓戦略ゲーム。",
+    "source_url": "https://www.feuerland-spiele.de/fileadmin/game/Gaia_Project/GAIA_PROJECT_EN_rules_Web.pdf",
+    "source_revision": "feuerland-gaia-project-rules-en-accessed-2026-10-04",
+    "generated_from_source_revision": "feuerland-gaia-project-rules-en-accessed-2026-10-04",
+    "title_ja": "ガイアプロジェクト",
+    "title_en": "Gaia Project",
+    "min_players": 1,
+    "max_players": 4,
+    "play_time": 150,
+    "min_age": 14,
+    "publisher": "Feuerland Spiele",
+    "edition_label": "Feuerland base game",
+    "language_code": "en",
+    "official_url": "https://www.feuerland-spiele.de/spiele/gaia-project/",
+    "source_trust": "official_publisher",
+    "identity_status": "verified",
+    "identity_source": "https://www.feuerland-spiele.de/spiele/gaia-project/",
+    "content_review_status": "ai_draft"
+  },
+  "ruleset": {
+    "language_code": "en",
+    "edition_label": "Feuerland base game",
+    "revision_label": "feuerland-current-en",
+    "platform": "physical",
+    "publisher_name": "Feuerland Spiele",
+    "source_type": "publisher_rulebook",
+    "authority": "official_publisher",
+    "coverage": "core",
+    "version": 1,
+    "nodes": [
+      {
+        "rule_id": "game.rounds",
+        "node_type": "phase",
+        "normalized_statement": "Gaia Project lasts six rounds. Each round proceeds through four phases in order: Income, Gaia, Actions, and Clean-Up.",
+        "sequence": 10,
+        "section_heading": "THE 6 ROUNDS OF PLAY",
+        "locator_id": "gaia-project:rulebook:rounds"
+      },
+      {
+        "rule_id": "round.gaia",
+        "node_type": "phase",
+        "normalized_statement": "During the Gaia phase, power tokens in the Gaia area normally move to area I of the power cycle, and a Gaiaformer on a Transdim Planet converts that planet into a Gaia Planet.",
+        "sequence": 20,
+        "section_heading": "Phase II: Gaia",
+        "locator_id": "gaia-project:rulebook:gaia"
+      },
+      {
+        "rule_id": "round.actions",
+        "node_type": "turn",
+        "normalized_statement": "During the Actions phase, starting with the first player and continuing clockwise, players take one action per turn until all have passed. After passing, a player takes no further turns in that phase.",
+        "sequence": 30,
+        "section_heading": "Phase III: Actions",
+        "locator_id": "gaia-project:rulebook:actions"
+      },
+      {
+        "rule_id": "game.end",
+        "node_type": "game_end",
+        "normalized_statement": "The game ends after the Action phase of round 6 and is followed by final scoring.",
+        "sequence": 40,
+        "section_heading": "GAME END AND SCORING",
+        "locator_id": "gaia-project:rulebook:game-end"
+      },
+      {
+        "rule_id": "game.victory",
+        "node_type": "victory",
+        "normalized_statement": "Final scoring awards points for the two final-scoring rankings, research progress, and remaining resources. The player with the most victory points wins; tied players share the victory.",
+        "sequence": 50,
+        "section_heading": "GAME END AND SCORING / Winner",
+        "locator_id": "gaia-project:rulebook:victory"
+      }
+    ]
   }
 }

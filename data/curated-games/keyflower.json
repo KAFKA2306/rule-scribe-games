@@ -1,14 +1,96 @@
 {
   "schema_version": "1",
-  "lifecycle_status": "candidate",
+  "lifecycle_status": "curated",
   "slug": "keyflower",
   "work": {
     "canonical_title": "Keyflower",
-    "identity_status": "unverified"
+    "identity_status": "verified"
   },
   "preference": {
     "status": "candidate",
     "priority": "highest",
     "played": false
+  },
+  "source": {
+    "url": "https://boardgamegeek.com/filepage/93479/keyflower-second-edition-rules",
+    "rule_version": "rd-games-second-edition-en-2013",
+    "revision": "rd-games-keyflower-second-edition-en-2013-accessed-2026-10-04"
+  },
+  "game": {
+    "slug": "keyflower",
+    "title": "Keyflower",
+    "summary": "春・夏・秋・冬の4ラウンドで、色付きワーカーを入札と施設利用の両方に使い、村タイルを獲得・稼働・改良して最終勝利点を競う。",
+    "source_url": "https://boardgamegeek.com/filepage/93479/keyflower-second-edition-rules",
+    "source_revision": "rd-games-keyflower-second-edition-en-2013-accessed-2026-10-04",
+    "generated_from_source_revision": "rd-games-keyflower-second-edition-en-2013-accessed-2026-10-04",
+    "title_ja": "キーフラワー",
+    "title_en": "Keyflower",
+    "min_players": 2,
+    "max_players": 6,
+    "play_time": 120,
+    "min_age": 12,
+    "published_year": 2012,
+    "publisher": "R&D Games",
+    "edition_label": "Second Edition rules (2013)",
+    "language_code": "en",
+    "official_url": "https://boardgamegeek.com/boardgame/122515/keyflower",
+    "source_trust": "authorized_partner",
+    "identity_status": "verified",
+    "identity_source": "https://boardgamegeek.com/filepage/93479/keyflower-second-edition-rules",
+    "content_review_status": "ai_draft"
+  },
+  "ruleset": {
+    "language_code": "en",
+    "edition_label": "Second Edition rules (2013)",
+    "revision_label": "rd-games-second-edition-2013-en",
+    "platform": "physical",
+    "publisher_name": "R&D Games",
+    "source_id": "designer:richard-breese:keyflower:second-edition-rules",
+    "source_type": "designer_publisher_rulebook",
+    "authority": "designer_publisher",
+    "coverage": "core",
+    "version": 1,
+    "nodes": [
+      {
+        "rule_id": "game.seasons",
+        "node_type": "phase",
+        "normalized_statement": "The game lasts four rounds representing spring, summer, autumn, and winter. New village and turn-order tiles enter play by season, with winter using the players' previously received winter tiles.",
+        "sequence": 10,
+        "section_heading": "Introduction / Seasons",
+        "locator_id": "keyflower:rulebook:seasons"
+      },
+      {
+        "rule_id": "turn.bid-or-work",
+        "node_type": "turn",
+        "normalized_statement": "On a turn, a player normally uses one or more workers either to bid for a village or turn-order tile, or to use a village tile for its production or other action. A player may instead pass.",
+        "sequence": 20,
+        "section_heading": "Game play / Bidding and production",
+        "locator_id": "keyflower:rulebook:turn"
+      },
+      {
+        "rule_id": "worker.colour",
+        "node_type": "condition",
+        "normalized_statement": "All workers used in a bid for a particular tile, or to activate a particular village tile during that season, must be the same colour as the first worker used there. Later bids or activations must respect that colour and the applicable worker-count rules.",
+        "sequence": 30,
+        "section_heading": "Keyples / Bidding / Using village tiles",
+        "locator_id": "keyflower:rulebook:colour"
+      },
+      {
+        "rule_id": "season.end",
+        "node_type": "round_end",
+        "normalized_statement": "When all players pass in succession, resolve the season: determine auction winners, return losing bid workers, collect workers used in home villages, assign turn-order and boat benefits as specified, and add won village tiles to each player's village.",
+        "sequence": 40,
+        "section_heading": "End of season",
+        "locator_id": "keyflower:rulebook:season-end"
+      },
+      {
+        "rule_id": "game.victory",
+        "node_type": "victory",
+        "normalized_statement": "After winter, players score victory points from their village tiles and remaining gold according to each tile's scoring conditions. The player with the most victory points wins.",
+        "sequence": 50,
+        "section_heading": "Game end scoring",
+        "locator_id": "keyflower:rulebook:victory"
+      }
+    ]
   }
 }

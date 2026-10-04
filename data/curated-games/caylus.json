@@ -1,14 +1,112 @@
 {
   "schema_version": "1",
-  "lifecycle_status": "candidate",
+  "lifecycle_status": "curated",
   "slug": "caylus",
   "work": {
     "canonical_title": "Caylus",
-    "identity_status": "unverified"
+    "identity_status": "verified"
   },
   "preference": {
     "status": "candidate",
     "priority": "high",
     "played": false
+  },
+  "source": {
+    "url": "https://www.ystari.com/caylus/CayUS.pdf",
+    "rule_version": "ystari-original-en",
+    "revision": "ystari-caylus-english-rules-accessed-2026-10-04"
+  },
+  "game": {
+    "slug": "caylus",
+    "title": "Caylus",
+    "summary": "城下町へ労働者を配置して建物を利用・建設し、監督官の位置で利用可能な建物が変化する中、城の建設と都市開発から威信点と王の恩恵を得るワーカープレイスメント。",
+    "source_url": "https://www.ystari.com/caylus/CayUS.pdf",
+    "source_revision": "ystari-caylus-english-rules-accessed-2026-10-04",
+    "generated_from_source_revision": "ystari-caylus-english-rules-accessed-2026-10-04",
+    "title_ja": "ケイラス",
+    "title_en": "Caylus",
+    "min_players": 2,
+    "max_players": 5,
+    "play_time": 120,
+    "min_age": 12,
+    "published_year": 2005,
+    "publisher": "Ystari Games",
+    "edition_label": "Ystari English rules",
+    "language_code": "en",
+    "official_url": "https://www.ystari.com/caylus/",
+    "source_trust": "official_publisher",
+    "identity_status": "verified",
+    "identity_source": "https://www.ystari.com/caylus/CayUS.pdf",
+    "content_review_status": "ai_draft"
+  },
+  "ruleset": {
+    "language_code": "en",
+    "edition_label": "Ystari English rules",
+    "revision_label": "ystari-original-en",
+    "platform": "physical",
+    "publisher_name": "Ystari Games",
+    "source_id": "publisher:ystari:caylus:english-rules",
+    "source_type": "publisher_rulebook",
+    "authority": "official_publisher",
+    "coverage": "core",
+    "version": 1,
+    "nodes": [
+      {
+        "rule_id": "turn.sequence",
+        "node_type": "phase",
+        "normalized_statement": "Each turn has seven phases in order: collect income, place workers, activate special buildings, move the Provost, activate buildings along the road, build the castle, and end the turn.",
+        "sequence": 10,
+        "section_heading": "Progress of the game",
+        "locator_id": "caylus:rulebook:sequence"
+      },
+      {
+        "rule_id": "phase.place-workers",
+        "node_type": "turn",
+        "normalized_statement": "During worker placement, players act in turn order and either place a worker on a legal unoccupied building or castle space by paying the current cost, or pass and place their marker on the bridge passing scale.",
+        "sequence": 20,
+        "section_heading": "Phase 2 - Placing workers",
+        "locator_id": "caylus:rulebook:placing-workers"
+      },
+      {
+        "rule_id": "phase.provost",
+        "node_type": "phase",
+        "normalized_statement": "Following passing order, each player may pay to move the Provost one to three spaces forward or backward. The Provost's final position determines how far along the road normal buildings will activate.",
+        "sequence": 30,
+        "section_heading": "Phase 4 - The provost’s move",
+        "locator_id": "caylus:rulebook:provost"
+      },
+      {
+        "rule_id": "phase.activate-buildings",
+        "node_type": "phase",
+        "normalized_statement": "Buildings activate in road order from the bridge through the space occupied by the Provost. Workers beyond the Provost are returned without activating those buildings.",
+        "sequence": 40,
+        "section_heading": "Phase 5 - Activation of the buildings",
+        "locator_id": "caylus:rulebook:activate"
+      },
+      {
+        "rule_id": "phase.castle",
+        "node_type": "phase",
+        "normalized_statement": "Players with workers at the castle may spend valid resource batches to build the current castle section and gain prestige; the player contributing the most batches receives a royal favor, with placement order breaking ties.",
+        "sequence": 50,
+        "section_heading": "Phase 6 - Building of the Castle",
+        "locator_id": "caylus:rulebook:castle"
+      },
+      {
+        "rule_id": "game.end",
+        "node_type": "game_end",
+        "normalized_statement": "The game ends after scoring the Towers, the third section of the castle, whether completed by construction or reached by the Bailiff.",
+        "sequence": 60,
+        "section_heading": "End of the game",
+        "locator_id": "caylus:rulebook:end"
+      },
+      {
+        "rule_id": "game.victory",
+        "node_type": "victory",
+        "normalized_statement": "After adding end-game points for remaining money, resources and gold as specified, the player with the most prestige points wins. The rules provide no tiebreaker.",
+        "sequence": 70,
+        "section_heading": "End of the game",
+        "locator_id": "caylus:rulebook:victory"
+      }
+    ]
   }
 }

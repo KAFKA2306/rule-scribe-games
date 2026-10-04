@@ -4,6 +4,7 @@ import argparse
 import hashlib
 import json
 import subprocess
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -124,6 +125,11 @@ def catalog_write_payload(spec: CuratedGameSpec, work_id: str | None) -> dict[st
     payload = dict(spec.game)
     for field in LEGACY_RULE_FIELDS:
         payload[field] = None
+    # Legacy trust/identity columns were retired by migration 009. They may
+    # remain in canonical JSON as display/provenance metadata, but are never
+    # written back to the production games table.
+    payload.pop("official_url", None)
+    payload.pop("is_official", None)
     payload["work_id"] = work_id
     return payload
 
@@ -167,6 +173,284 @@ def write_catalog_with_plan(client: Any, spec: CuratedGameSpec, plan: IdentityPl
     if row.get("slug") != spec.slug:
         raise WorkflowError("catalog write returned unexpected slug")
     return row
+
+
+def _one_or_none(rows: list[dict[str, Any]], label: str) -> dict[str, Any] | None:
+    if len(rows) > 1:
+        raise WorkflowError(f"multiple rows match canonical {label}")
+    return rows[0] if rows else None
+
+
+def _source_id(spec: CuratedGameSpec) -> str:
+    assert spec.ruleset is not None
+    return spec.ruleset.source_id or f"curated:{spec.slug}:rulebook"
+
+
+def write_ruleset_projection(client: Any, spec: CuratedGameSpec, game_row: dict[str, Any]) -> str | None:
+    if spec.ruleset is None:
+        return None
+    require_publishable(spec)
+    assert spec.source is not None
+    assert spec.game is not None
+
+    ruleset = spec.ruleset
+    source_id = _source_id(spec)
+    now = datetime.now(UTC).isoformat()
+
+    source_rows = (
+        client.table("evidence_sources")
+        .select("*")
+        .eq("source_id", source_id)
+        .limit(2)
+        .execute()
+        .data
+    )
+    existing_source = _one_or_none(source_rows, f"evidence source {source_id}")
+    trust = dict((existing_source or {}).get("trust_metadata") or {})
+    trust.update(
+        {
+            "authority": ruleset.authority,
+            "canonical_source": "data/curated-games",
+            "coverage": ruleset.coverage,
+        }
+    )
+    source_payload = {
+        "source_id": source_id,
+        "url": ruleset.source_url or spec.source.url,
+        "document_identity": f"{spec.work.canonical_title} rule source",
+        "source_type": ruleset.source_type,
+        "publisher_name": ruleset.publisher_name,
+        "platform": ruleset.platform,
+        "language_code": ruleset.language_code,
+        "revision_label": ruleset.revision_label,
+        "retrieved_at": now,
+        "trust_metadata": trust,
+        "updated_at": now,
+    }
+    if existing_source:
+        client.table("evidence_sources").update(source_payload).eq("source_id", source_id).execute()
+    else:
+        client.table("evidence_sources").insert(source_payload).execute()
+
+    game_id = str(game_row["id"])
+    work_id = str(game_row.get("work_id") or "")
+    if not work_id:
+        raise WorkflowError(f"published game {spec.slug} has no canonical work_id")
+
+    all_rule_sets = client.table("rule_sets").select("*").eq("game_id", game_id).execute().data
+    identity_rows = [
+        row
+        for row in all_rule_sets
+        if (row.get("language_code") or "") == ruleset.language_code
+        and (row.get("edition_label") or "") == ruleset.edition_label
+        and (row.get("platform") or "") == ruleset.platform
+        and (row.get("revision_label") or "") == ruleset.revision_label
+        and (row.get("variant_label") or "") == ""
+        and int(row.get("version") or 1) == ruleset.version
+    ]
+    existing_ruleset = _one_or_none(identity_rows, f"ruleset identity for {spec.slug}")
+    existing_source_ids = set((existing_ruleset or {}).get("source_ids") or [])
+    existing_source_ids.add(source_id)
+    ruleset_payload = {
+        "game_id": game_id,
+        "work_id": work_id,
+        "version": ruleset.version,
+        "schema_version": "1.0",
+        "language_code": ruleset.language_code,
+        "edition_label": ruleset.edition_label,
+        "source_revision": spec.source.revision,
+        "is_active": True,
+        "revision_label": ruleset.revision_label,
+        "platform": ruleset.platform,
+        "publisher_name": ruleset.publisher_name,
+        "status": "active",
+        "verification_status": "source_bound",
+        "source_ids": sorted(existing_source_ids),
+        "updated_at": now,
+    }
+    if existing_ruleset:
+        rows = (
+            client.table("rule_sets")
+            .update(ruleset_payload)
+            .eq("id", existing_ruleset["id"])
+            .execute()
+            .data
+        )
+    else:
+        rows = client.table("rule_sets").insert(ruleset_payload).execute().data
+    if not rows:
+        raise WorkflowError(f"ruleset write returned no row for {spec.slug}")
+    ruleset_id = str(rows[0]["id"])
+
+    for node in ruleset.nodes:
+        locator_id = node.locator_id or f"{spec.slug}:rulebook:{node.rule_id}"
+        locator_rows = (
+            client.table("source_locators")
+            .select("*")
+            .eq("locator_id", locator_id)
+            .limit(2)
+            .execute()
+            .data
+        )
+        existing_locator = _one_or_none(locator_rows, f"source locator {locator_id}")
+        locator_payload: dict[str, Any] = {
+            "locator_id": locator_id,
+            "source_id": source_id,
+        }
+        if node.page_number is not None:
+            locator_payload["page_number"] = node.page_number
+        if node.section_heading:
+            locator_payload["section_heading"] = node.section_heading
+        if node.external_reference:
+            locator_payload["external_reference"] = node.external_reference
+        if existing_locator:
+            client.table("source_locators").update(locator_payload).eq("locator_id", locator_id).execute()
+        else:
+            client.table("source_locators").insert(locator_payload).execute()
+
+        claim_id = f"{spec.slug}:rule:{node.rule_id}"
+        binding_id = f"{spec.slug}:binding:{node.rule_id}"
+        node_rows = (
+            client.table("rule_nodes")
+            .select("*")
+            .eq("rule_set_id", ruleset_id)
+            .eq("rule_id", node.rule_id)
+            .limit(2)
+            .execute()
+            .data
+        )
+        existing_node = _one_or_none(node_rows, f"rule node {spec.slug}:{node.rule_id}")
+        metadata = dict((existing_node or {}).get("metadata") or {})
+        metadata.update(
+            {
+                "canonical_source": "data/curated-games",
+                "coverage": ruleset.coverage,
+            }
+        )
+        node_payload = {
+            "rule_set_id": ruleset_id,
+            "rule_id": node.rule_id,
+            "node_type": node.node_type,
+            "normalized_statement": node.normalized_statement,
+            "sequence": node.sequence,
+            "verification_status": "source_bound",
+            "source_claim_ref": claim_id,
+            "evidence_ref": binding_id,
+            "source_url": ruleset.source_url or spec.source.url,
+            "source_locator": locator_id,
+            "metadata": metadata,
+            "updated_at": now,
+        }
+        if existing_node:
+            client.table("rule_nodes").update(node_payload).eq("id", existing_node["id"]).execute()
+        else:
+            client.table("rule_nodes").insert(node_payload).execute()
+
+        claim_rows = (
+            client.table("claims")
+            .select("*")
+            .eq("claim_id", claim_id)
+            .limit(2)
+            .execute()
+            .data
+        )
+        existing_claim = _one_or_none(claim_rows, f"claim {claim_id}")
+        provenance = dict((existing_claim or {}).get("generator_provenance") or {})
+        provenance.update(
+            {
+                "method": "curated_game_projection",
+                "coverage": ruleset.coverage,
+                "source_revision": spec.source.revision,
+            }
+        )
+        claim_payload = {
+            "claim_id": claim_id,
+            "rule_set_id": ruleset_id,
+            "claim_type": "normalized_rule_statement",
+            "normalized_payload": {"statement": node.normalized_statement},
+            "target_type": "rule_node",
+            "rule_id": node.rule_id,
+            "lifecycle_status": "accepted",
+            "generator_provenance": provenance,
+            "updated_at": now,
+        }
+        if existing_claim:
+            client.table("claims").update(claim_payload).eq("claim_id", claim_id).execute()
+        else:
+            client.table("claims").insert(claim_payload).execute()
+
+        binding_rows = (
+            client.table("evidence_bindings")
+            .select("*")
+            .eq("binding_id", binding_id)
+            .limit(2)
+            .execute()
+            .data
+        )
+        existing_binding = _one_or_none(binding_rows, f"evidence binding {binding_id}")
+        reviewer = dict((existing_binding or {}).get("reviewer_provenance") or {})
+        reviewer.update({"review": ruleset.authority, "canonical_source": "data/curated-games"})
+        generator = dict((existing_binding or {}).get("generator_provenance") or {})
+        generator.update({"method": "curated_game_projection"})
+        binding_payload = {
+            "binding_id": binding_id,
+            "claim_id": claim_id,
+            "source_id": source_id,
+            "locator_id": locator_id,
+            "relation": "supports",
+            "reviewer_provenance": reviewer,
+            "generator_provenance": generator,
+            "verified_at": now,
+        }
+        if existing_binding:
+            client.table("evidence_bindings").update(binding_payload).eq("binding_id", binding_id).execute()
+        else:
+            client.table("evidence_bindings").insert(binding_payload).execute()
+
+    return ruleset_id
+
+
+def verify_ruleset_live(spec: CuratedGameSpec, base_url: str) -> None:
+    if spec.ruleset is None:
+        return
+    base = base_url.rstrip("/")
+    with httpx.Client(follow_redirects=True, timeout=20) as client:
+        rulesets_response = client.get(f"{base}/api/games/{spec.slug}/rule-sets")
+        if rulesets_response.status_code != 200:
+            raise WorkflowError(
+                f"production ruleset API failed: HTTP {rulesets_response.status_code} for {spec.slug}"
+            )
+        rulesets_payload = rulesets_response.json()
+        matches = [
+            row
+            for row in (rulesets_payload.get("rulesets") or [])
+            if row.get("revision_label") == spec.ruleset.revision_label
+            and row.get("edition_label") == spec.ruleset.edition_label
+            and row.get("language_code") == spec.ruleset.language_code
+            and row.get("platform") == spec.ruleset.platform
+        ]
+        if len(matches) != 1:
+            raise WorkflowError(f"production ruleset identity mismatch for {spec.slug}")
+        ruleset_id = str(matches[0]["ruleset_id"])
+
+        graph_response = client.get(
+            f"{base}/api/games/{spec.slug}/rule-graph",
+            params={"rule_set_id": ruleset_id},
+        )
+        if graph_response.status_code != 200:
+            raise WorkflowError(
+                f"production rule graph failed: HTTP {graph_response.status_code} for {spec.slug}"
+            )
+        graph = graph_response.json()
+        actual = {
+            node.get("rule_id"): node.get("normalized_statement")
+            for node in (graph.get("nodes") or [])
+        }
+        for node in spec.ruleset.nodes:
+            if actual.get(node.rule_id) != node.normalized_statement:
+                raise WorkflowError(
+                    f"production rule graph mismatch at {spec.slug}:{node.rule_id}"
+                )
 
 
 def validate_exposed_catalog_fields(expected: Any, actual: Any, path: str = "game") -> None:
@@ -246,6 +530,7 @@ def verify_release(specs: list[CuratedGameSpec], base_url: str) -> None:
     for spec in specs:
         if spec.is_publishable:
             verify_catalog_live(spec, base_url)
+            verify_ruleset_live(spec, base_url)
 
 
 def routine_files(spec: CuratedGameSpec) -> list[str]:
@@ -285,9 +570,11 @@ def publish_game(spec: CuratedGameSpec, specs: list[CuratedGameSpec], base_url: 
         print(f"Catalog publish skipped for candidate {spec.slug}")
         return
     client, plan = prepare_game(spec, specs)
-    write_catalog_with_plan(client, spec, plan)
+    game_row = write_catalog_with_plan(client, spec, plan)
+    write_ruleset_projection(client, spec, game_row)
     verify_catalog_live(spec, base_url)
-    print(f"Catalog publish fixed point: verified for {spec.slug}")
+    verify_ruleset_live(spec, base_url)
+    print(f"Catalog/ruleset publish fixed point: verified for {spec.slug}")
 
 
 def check_game(spec: CuratedGameSpec, specs: list[CuratedGameSpec]) -> None:
@@ -300,6 +587,7 @@ def verify_game(spec: CuratedGameSpec, specs: list[CuratedGameSpec], base_url: s
     verify_source_reachable_streamed(spec)
     generate_artifacts(specs)
     verify_catalog_live(spec, base_url)
+    verify_ruleset_live(spec, base_url)
     verify_frontend_release(specs, base_url, game=spec.slug)
     print("Catalog fixed point: verified")
     print("Frontend release fixed point: verified")

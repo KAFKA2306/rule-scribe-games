@@ -1,14 +1,94 @@
 {
   "schema_version": "1",
-  "lifecycle_status": "candidate",
+  "lifecycle_status": "curated",
   "slug": "acquire",
   "work": {
     "canonical_title": "Acquire",
-    "identity_status": "unverified"
+    "identity_status": "verified"
   },
   "preference": {
     "status": "candidate",
     "priority": "high",
     "played": false
+  },
+  "source": {
+    "url": "https://retailers.renegadegamestudios.com/content/File%20Storage%20for%20site/Rulebooks/Acquire/Acquire_RGS_Rulebook_WEB.pdf",
+    "rule_version": "renegade-current-en",
+    "revision": "renegade-acquire-rulebook-web-accessed-2026-10-04"
+  },
+  "game": {
+    "slug": "acquire",
+    "title": "Acquire",
+    "summary": "建物タイルでホテルチェーンを成長・合併させながら株式を売買し、合併ボーナスと株式価値を現金化して最終資産を競う。",
+    "source_url": "https://retailers.renegadegamestudios.com/content/File%20Storage%20for%20site/Rulebooks/Acquire/Acquire_RGS_Rulebook_WEB.pdf",
+    "source_revision": "renegade-acquire-rulebook-web-accessed-2026-10-04",
+    "generated_from_source_revision": "renegade-acquire-rulebook-web-accessed-2026-10-04",
+    "title_ja": "アクワイア",
+    "title_en": "Acquire",
+    "min_players": 2,
+    "max_players": 6,
+    "play_time": 90,
+    "min_age": 12,
+    "publisher": "Renegade Game Studios",
+    "edition_label": "Renegade Game Studios edition",
+    "language_code": "en",
+    "official_url": "https://renegadegamestudios.com/acquire/",
+    "source_trust": "official_publisher",
+    "identity_status": "verified",
+    "identity_source": "https://renegadegamestudios.com/acquire/",
+    "content_review_status": "ai_draft"
+  },
+  "ruleset": {
+    "language_code": "en",
+    "edition_label": "Renegade Game Studios edition",
+    "revision_label": "renegade-current-en",
+    "platform": "physical",
+    "publisher_name": "Renegade Game Studios",
+    "source_type": "publisher_rulebook",
+    "authority": "official_publisher",
+    "coverage": "core",
+    "version": 1,
+    "nodes": [
+      {
+        "rule_id": "setup.base",
+        "node_type": "setup",
+        "normalized_statement": "Place the board, mix building tiles face down, prepare headquarters and stock cards, give each player $6,000 and a stockholder card, choose Classic or Tycoon bonus mode and open or hidden money/stocks, determine first player with initial tiles, then give each player six hidden building tiles.",
+        "sequence": 10,
+        "section_heading": "SETUP",
+        "locator_id": "acquire:rulebook:setup"
+      },
+      {
+        "rule_id": "turn.sequence",
+        "node_type": "turn",
+        "normalized_statement": "On each turn, place one building tile on its matching space, buy up to three stocks in active hotel chains, then draw one replacement building tile.",
+        "sequence": 20,
+        "section_heading": "HOW TO PLAY",
+        "locator_id": "acquire:rulebook:turn"
+      },
+      {
+        "rule_id": "merger.resolve",
+        "node_type": "condition",
+        "normalized_statement": "A merger occurs when a placed building tile connects two or more hotel chains. The smaller chain is acquired by the larger chain, and stockholder bonuses are paid for the acquired chain according to the chosen bonus mode.",
+        "sequence": 30,
+        "section_heading": "Merger / Stockholder Bonuses",
+        "locator_id": "acquire:rulebook:merger"
+      },
+      {
+        "rule_id": "game.end",
+        "node_type": "game_end",
+        "normalized_statement": "During a turn, a player may announce the end when all active hotel chains are safe or one active chain has at least 41 building tiles. That player completes the turn before final settlement.",
+        "sequence": 40,
+        "section_heading": "THE END OF THE GAME",
+        "locator_id": "acquire:rulebook:game-end"
+      },
+      {
+        "rule_id": "game.victory",
+        "node_type": "victory",
+        "normalized_statement": "At game end, pay stockholder bonuses for all active chains, sell all remaining stock at current values, then total cash. The player with the most money wins; tied players share the victory.",
+        "sequence": 50,
+        "section_heading": "THE END OF THE GAME",
+        "locator_id": "acquire:rulebook:victory"
+      }
+    ]
   }
 }

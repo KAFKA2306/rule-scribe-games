@@ -15,6 +15,8 @@ Each game uses the same record throughout its lifecycle:
 - `lifecycle_status: candidate` records a game candidate before authoritative rule/source work is complete. Candidate records require `preference` and may omit `source` and `game`.
 - `lifecycle_status: curated` is publishable and requires the existing `source` and `game` contracts.
 - Promotion happens by enriching the same `data/curated-games/<slug>.json` record and changing its lifecycle status. Do not maintain a parallel Markdown list or second truth store.
+- Source-bound rules live in the same record under `ruleset`. Publishing projects that payload into the existing RuleSet / RuleNode / Claim / Evidence tables.
+- New games must not add per-game seed SQL when the canonical JSON ruleset can express the same facts. Historical seed migrations remain migration history, not a second authoring authority.
 
 Run:
 
