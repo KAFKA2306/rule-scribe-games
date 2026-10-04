@@ -125,6 +125,11 @@ def catalog_write_payload(spec: CuratedGameSpec, work_id: str | None) -> dict[st
     payload = dict(spec.game)
     for field in LEGACY_RULE_FIELDS:
         payload[field] = None
+    # Legacy trust/identity columns were retired by migration 009. They may
+    # remain in canonical JSON as display/provenance metadata, but are never
+    # written back to the production games table.
+    payload.pop("official_url", None)
+    payload.pop("is_official", None)
     payload["work_id"] = work_id
     return payload
 
