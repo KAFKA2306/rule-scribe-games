@@ -45,7 +45,7 @@
     "revision_label": "lookout-revised-2016-en",
     "platform": "physical",
     "publisher_name": "Lookout GmbH",
-    "source_type": "publisher_rulebook",
+    "source_type": "rulebook",
     "authority": "official_publisher",
     "coverage": "core",
     "version": 1,
