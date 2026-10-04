@@ -46,7 +46,7 @@
     "platform": "physical",
     "publisher_name": "Eagle-Gryphon Games",
     "source_id": "publisher:eagle-gryphon:age-of-steam-deluxe:rules-v17",
-    "source_type": "publisher_rulebook_mirror",
+    "source_type": "rulebook",
     "authority": "official_publisher",
     "coverage": "core",
     "version": 1,

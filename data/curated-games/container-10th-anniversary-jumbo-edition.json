@@ -46,7 +46,7 @@
     "platform": "physical",
     "publisher_name": "Mercury Games",
     "source_id": "publisher-authorized:mercury:container-10th:rulebook-scan",
-    "source_type": "publisher_authorized_rulebook_scan",
+    "source_type": "rulebook",
     "authority": "publisher_authorized",
     "coverage": "core",
     "version": 1,

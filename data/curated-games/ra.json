@@ -45,7 +45,7 @@
     "platform": "physical",
     "publisher_name": "25th Century Games",
     "source_id": "designer-publisher:25c:ra:retail-v17",
-    "source_type": "designer_publisher_rulebook_mirror",
+    "source_type": "rulebook",
     "authority": "designer_publisher",
     "coverage": "core",
     "version": 1,

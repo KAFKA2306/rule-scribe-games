@@ -43,7 +43,7 @@
     "revision_label": "pd-verlag-rules-1.1-en",
     "platform": "physical",
     "publisher_name": "PD-Verlag",
-    "source_type": "publisher_rulebook",
+    "source_type": "rulebook",
     "authority": "official_publisher",
     "coverage": "core",
     "version": 1,

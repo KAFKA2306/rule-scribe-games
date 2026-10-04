@@ -45,7 +45,7 @@
     "platform": "physical",
     "publisher_name": "Sorry We Are French",
     "source_id": "publisher:swaf:iki:english-rules",
-    "source_type": "publisher_rules_landing_page",
+    "source_type": "rulebook",
     "authority": "official_publisher",
     "coverage": "core",
     "version": 1,

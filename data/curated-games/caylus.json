@@ -46,7 +46,7 @@
     "platform": "physical",
     "publisher_name": "Ystari Games",
     "source_id": "publisher:ystari:caylus:english-rules",
-    "source_type": "publisher_rulebook",
+    "source_type": "rulebook",
     "authority": "official_publisher",
     "coverage": "core",
     "version": 1,

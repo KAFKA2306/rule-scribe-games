@@ -45,7 +45,7 @@
     "platform": "physical",
     "publisher_name": "Fantasy Flight Games",
     "source_id": "publisher:ffg:samurai:kn26-rulebook",
-    "source_type": "publisher_rulebook",
+    "source_type": "rulebook",
     "authority": "official_publisher",
     "coverage": "core",
     "version": 1,

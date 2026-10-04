@@ -44,7 +44,7 @@
     "revision_label": "ravensburger-665059-en",
     "platform": "physical",
     "publisher_name": "Ravensburger",
-    "source_type": "publisher_rulebook",
+    "source_type": "rulebook",
     "authority": "official_publisher",
     "coverage": "core",
     "version": 1,
