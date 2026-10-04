@@ -12,17 +12,17 @@
     "played": false
   },
   "source": {
-    "url": "https://boardgamegeek.com/boardgame/229892/container-10th-anniversary-jumbo-edition/files",
+    "url": "https://www.kickstarter.com/projects/1280624810/container-10th-anniversary-jumbo-edition",
     "rule_version": "mercury-10th-anniversary-retail-en",
-    "revision": "mercury-container-10th-anniversary-retail-rulebook-publisher-authorized-scan-accessed-2026-10-04"
+    "revision": "mercury-official-kickstarter-plus-publisher-authorized-rulebook-scan-accessed-2026-10-04"
   },
   "game": {
     "slug": "container-10th-anniversary-jumbo-edition",
     "title": "Container: 10th Anniversary Jumbo Edition!",
     "summary": "工場でコンテナを生産・値付けし、他人の商品を倉庫で仕入れ直して値付けし、船で島へ運んでブラインド競りにかける、プレイヤー主導の閉鎖経済ゲーム。",
-    "source_url": "https://boardgamegeek.com/boardgame/229892/container-10th-anniversary-jumbo-edition/files",
-    "source_revision": "mercury-container-10th-anniversary-retail-rulebook-publisher-authorized-scan-accessed-2026-10-04",
-    "generated_from_source_revision": "mercury-container-10th-anniversary-retail-rulebook-publisher-authorized-scan-accessed-2026-10-04",
+    "source_url": "https://www.kickstarter.com/projects/1280624810/container-10th-anniversary-jumbo-edition",
+    "source_revision": "mercury-official-kickstarter-plus-publisher-authorized-rulebook-scan-accessed-2026-10-04",
+    "generated_from_source_revision": "mercury-official-kickstarter-plus-publisher-authorized-rulebook-scan-accessed-2026-10-04",
     "title_ja": "コンテナ：10周年記念ジャンボ版",
     "title_en": "Container: 10th Anniversary Jumbo Edition!",
     "min_players": 3,
@@ -34,7 +34,7 @@
     "edition_label": "10th Anniversary Jumbo Edition retail rules",
     "language_code": "en",
     "official_url": "https://www.kickstarter.com/projects/1280624810/container-10th-anniversary-jumbo-edition",
-    "source_trust": "authorized_partner",
+    "source_trust": "official_publisher",
     "identity_status": "verified",
     "identity_source": "https://www.kickstarter.com/projects/1280624810/container-10th-anniversary-jumbo-edition",
     "content_review_status": "ai_draft"
@@ -99,6 +99,7 @@
         "section_heading": "Final Scoring",
         "locator_id": "container-10th:rulebook:victory"
       }
-    ]
+    ],
+    "source_url": "https://boardgamegeek.com/boardgame/229892/container-10th-anniversary-jumbo-edition/files"
   }
 }
