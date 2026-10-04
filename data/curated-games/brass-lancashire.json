@@ -12,17 +12,17 @@
     "played": false
   },
   "source": {
-    "url": "https://files.roxley.com/Brass-Lancashire-Rulebook-2018.11.20-highlights.pdf",
+    "url": "https://roxley.com/products/brass-lancashire",
     "rule_version": "roxley-2018.11.20-en",
-    "revision": "roxley-brass-lancashire-rulebook-2018.11.20-accessed-2026-10-04"
+    "revision": "roxley-product-plus-rulebook-2018.11.20-accessed-2026-10-04"
   },
   "game": {
     "slug": "brass-lancashire",
     "title": "Brass: Lancashire",
     "summary": "運河時代と鉄道時代の2時代を通じて産業と輸送網を築き、綿花を港や遠隔市場へ売却しながらリンクと稼働済み産業から勝利点を得る経済戦略ゲーム。",
-    "source_url": "https://files.roxley.com/Brass-Lancashire-Rulebook-2018.11.20-highlights.pdf",
-    "source_revision": "roxley-brass-lancashire-rulebook-2018.11.20-accessed-2026-10-04",
-    "generated_from_source_revision": "roxley-brass-lancashire-rulebook-2018.11.20-accessed-2026-10-04",
+    "source_url": "https://roxley.com/products/brass-lancashire",
+    "source_revision": "roxley-product-plus-rulebook-2018.11.20-accessed-2026-10-04",
+    "generated_from_source_revision": "roxley-product-plus-rulebook-2018.11.20-accessed-2026-10-04",
     "title_ja": "ブラス：ランカシャー",
     "title_en": "Brass: Lancashire",
     "min_players": 2,
@@ -89,6 +89,7 @@
         "section_heading": "THE GOAL",
         "locator_id": "brass-lancashire:rulebook:victory"
       }
-    ]
+    ],
+    "source_url": "https://files.roxley.com/Brass-Lancashire-Rulebook-2018.11.20-highlights.pdf"
   }
 }

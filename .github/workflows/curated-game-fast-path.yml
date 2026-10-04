@@ -132,7 +132,22 @@ jobs:
           PYTHONPATH: backend
         shell: bash
         run: |
+          set +e
+          failures=()
+          successes=()
           while IFS= read -r slug; do
             [ -n "$slug" ] || continue
-            uv run python backend/app/scripts/curated_game_fast_path_v2.py publish --game "$slug"
+            if uv run python backend/app/scripts/curated_game_fast_path_v2.py publish --game "$slug"; then
+              successes+=("$slug")
+            else
+              failures+=("$slug")
+            fi
           done < /tmp/curated-games.txt
+
+          echo "Published/verified: ${#successes[@]}"
+          printf '  OK %s\n' "${successes[@]}"
+          if (("${#failures[@]}" > 0)); then
+            echo "Failed: ${#failures[@]}" >&2
+            printf '  FAIL %s\n' "${failures[@]}" >&2
+            exit 1
+          fi

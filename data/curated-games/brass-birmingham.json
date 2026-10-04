@@ -12,17 +12,17 @@
     "played": false
   },
   "source": {
-    "url": "https://files.roxley.com/Brass-Birmingham-Rulebook-2018.11.20-highlights.pdf",
-    "rule_version": "roxley-2018.11.20-en",
-    "revision": "roxley-brass-birmingham-rulebook-2018.11.20-accessed-2026-10-04"
+    "url": "https://arclightgames.jp/product/%E3%83%96%E3%83%A9%E3%82%B9%E3%83%90%E3%83%BC%E3%83%9F%E3%83%B3%E3%82%AC%E3%83%A0/",
+    "rule_version": "roxley-2018.11.20-ja-edition-2019",
+    "revision": "arclight-jp-2019-plus-roxley-rulebook-2018.11.20-accessed-2026-10-04"
   },
   "game": {
     "slug": "brass-birmingham",
     "title": "Brass: Birmingham",
     "summary": "カードを使って建設・ネットワーク・開発・売却・借入・偵察を行い、運河時代と鉄道時代の終わりにリンクと稼働済み産業を得点する経済戦略ゲーム。",
-    "source_url": "https://files.roxley.com/Brass-Birmingham-Rulebook-2018.11.20-highlights.pdf",
-    "source_revision": "roxley-brass-birmingham-rulebook-2018.11.20-accessed-2026-10-04",
-    "generated_from_source_revision": "roxley-brass-birmingham-rulebook-2018.11.20-accessed-2026-10-04",
+    "source_url": "https://arclightgames.jp/product/%E3%83%96%E3%83%A9%E3%82%B9%E3%83%90%E3%83%BC%E3%83%9F%E3%83%B3%E3%82%AC%E3%83%A0/",
+    "source_revision": "arclight-jp-2019-plus-roxley-rulebook-2018.11.20-accessed-2026-10-04",
+    "generated_from_source_revision": "arclight-jp-2019-plus-roxley-rulebook-2018.11.20-accessed-2026-10-04",
     "title_ja": "ブラス：バーミンガム",
     "title_en": "Brass: Birmingham",
     "description": "産業革命期のイングランド中西部で産業施設と運河・鉄道網を築き、2つの時代を通じて勝利点を競う経済戦略ゲーム。",
@@ -164,6 +164,7 @@
         "section_heading": "END OF ERA MAINTENANCE / WINNING THE GAME",
         "locator_id": "brass-birmingham:rulebook:era-end"
       }
-    ]
+    ],
+    "source_url": "https://files.roxley.com/Brass-Birmingham-Rulebook-2018.11.20-highlights.pdf"
   }
 }
