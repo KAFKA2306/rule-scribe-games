@@ -12,17 +12,17 @@
     "played": false
   },
   "source": {
-    "url": "https://boardgamegeek.com/filepage/191076/age-of-steam-deluxe-english-rules",
-    "rule_version": "eagle-gryphon-deluxe-v17-en",
-    "revision": "eagle-gryphon-age-of-steam-deluxe-rules-v17-accessed-2026-10-04"
+    "url": "https://www.eagle-gryphon.com/products/age-of-steam-deluxe-edition",
+    "rule_version": "eagle-gryphon-deluxe-base-v9-en",
+    "revision": "eagle-gryphon-official-product-plus-base-rules-v9-accessed-2026-10-04"
   },
   "game": {
     "slug": "age-of-steam",
     "title": "Age of Steam: Deluxe Edition",
     "summary": "株式発行で資金を調達し、手番順を競り、線路を敷設して商品を都市へ運び、収入を伸ばしながら負債と路線網を管理する鉄道経済ゲーム。",
-    "source_url": "https://boardgamegeek.com/filepage/191076/age-of-steam-deluxe-english-rules",
-    "source_revision": "eagle-gryphon-age-of-steam-deluxe-rules-v17-accessed-2026-10-04",
-    "generated_from_source_revision": "eagle-gryphon-age-of-steam-deluxe-rules-v17-accessed-2026-10-04",
+    "source_url": "https://www.eagle-gryphon.com/products/age-of-steam-deluxe-edition",
+    "source_revision": "eagle-gryphon-official-product-plus-base-rules-v9-accessed-2026-10-04",
+    "generated_from_source_revision": "eagle-gryphon-official-product-plus-base-rules-v9-accessed-2026-10-04",
     "title_ja": "蒸気の時代 デラックス版",
     "title_en": "Age of Steam: Deluxe Edition",
     "min_players": 3,
@@ -34,7 +34,7 @@
     "edition_label": "Age of Steam Deluxe Edition",
     "language_code": "en",
     "official_url": "https://www.eagle-gryphon.com/products/age-of-steam-deluxe-edition",
-    "source_trust": "authorized_partner",
+    "source_trust": "official_publisher",
     "identity_status": "verified",
     "identity_source": "https://www.eagle-gryphon.com/products/age-of-steam-deluxe-edition",
     "content_review_status": "ai_draft"
@@ -42,10 +42,10 @@
   "ruleset": {
     "language_code": "en",
     "edition_label": "Age of Steam Deluxe Edition",
-    "revision_label": "eagle-gryphon-v17-en",
+    "revision_label": "eagle-gryphon-base-v9-en",
     "platform": "physical",
     "publisher_name": "Eagle-Gryphon Games",
-    "source_id": "publisher:eagle-gryphon:age-of-steam-deluxe:rules-v17",
+    "source_id": "publisher:eagle-gryphon:age-of-steam-deluxe:base-rules-v9",
     "source_type": "rulebook",
     "authority": "official_publisher",
     "coverage": "core",
@@ -99,6 +99,7 @@
         "section_heading": "Victory Point Computations",
         "locator_id": "age-of-steam:rulebook:victory"
       }
-    ]
+    ],
+    "source_url": "https://drive.google.com/file/d/1mYf5e7dtxdCFmHSEwgSgnCNI9885sfMG/view"
   }
 }
