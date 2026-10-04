@@ -44,7 +44,7 @@
     "revision_label": "feuerland-current-en",
     "platform": "physical",
     "publisher_name": "Feuerland Spiele",
-    "source_type": "publisher_rulebook",
+    "source_type": "rulebook",
     "authority": "official_publisher",
     "coverage": "core",
     "version": 1,
