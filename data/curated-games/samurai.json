@@ -1,14 +1,95 @@
 {
   "schema_version": "1",
-  "lifecycle_status": "candidate",
+  "lifecycle_status": "curated",
   "slug": "samurai",
   "work": {
     "canonical_title": "Samurai",
-    "identity_status": "unverified"
+    "identity_status": "verified"
   },
   "preference": {
     "status": "candidate",
     "priority": "high",
     "played": false
+  },
+  "source": {
+    "url": "https://images-cdn.fantasyflightgames.com/filer_public/58/58/5858c0b8-3ceb-49ab-880e-565e9c4eaadc/kn26_rulebook.pdf",
+    "rule_version": "fantasy-flight-kn26-en",
+    "revision": "fantasy-flight-samurai-kn26-rulebook-accessed-2026-10-04"
+  },
+  "game": {
+    "slug": "samurai",
+    "title": "Samurai",
+    "summary": "日本列島の都市・村にある兜・仏像・水田の3種類の駒へ影響力タイルを配置し、囲まれた駒の多数影響力を競って3階級の支持を集めるアブストラクト戦略ゲーム。",
+    "source_url": "https://images-cdn.fantasyflightgames.com/filer_public/58/58/5858c0b8-3ceb-49ab-880e-565e9c4eaadc/kn26_rulebook.pdf",
+    "source_revision": "fantasy-flight-samurai-kn26-rulebook-accessed-2026-10-04",
+    "generated_from_source_revision": "fantasy-flight-samurai-kn26-rulebook-accessed-2026-10-04",
+    "title_ja": "サムライ",
+    "title_en": "Samurai",
+    "min_players": 2,
+    "max_players": 4,
+    "play_time": 60,
+    "min_age": 10,
+    "publisher": "Fantasy Flight Games",
+    "edition_label": "Fantasy Flight Games edition",
+    "language_code": "en",
+    "official_url": "https://www.fantasyflightgames.com/en/products/samurai/",
+    "source_trust": "official_publisher",
+    "identity_status": "verified",
+    "identity_source": "https://www.fantasyflightgames.com/en/products/samurai/",
+    "content_review_status": "ai_draft"
+  },
+  "ruleset": {
+    "language_code": "en",
+    "edition_label": "Fantasy Flight Games edition",
+    "revision_label": "ffg-kn26-en",
+    "platform": "physical",
+    "publisher_name": "Fantasy Flight Games",
+    "source_id": "publisher:ffg:samurai:kn26-rulebook",
+    "source_type": "publisher_rulebook",
+    "authority": "official_publisher",
+    "coverage": "core",
+    "version": 1,
+    "nodes": [
+      {
+        "rule_id": "setup.board-and-figures",
+        "node_type": "setup",
+        "normalized_statement": "Use the board sections and number of High Helmet, Buddha, and Rice Field figures specified for the player count. Each player takes a screen and the 20 influence tiles of one color; figures are placed on villages and cities according to setup.",
+        "sequence": 10,
+        "section_heading": "Preparation",
+        "locator_id": "samurai:rulebook:setup"
+      },
+      {
+        "rule_id": "turn.place-tiles",
+        "node_type": "turn",
+        "normalized_statement": "On a turn, a player places at least one tile from behind the screen on a legal empty space. Ship tiles go only on sea spaces and other influence tiles go on land spaces, with the special exchange tiles following their own rules.",
+        "sequence": 20,
+        "section_heading": "During each turn",
+        "locator_id": "samurai:rulebook:turn"
+      },
+      {
+        "rule_id": "capture.figure",
+        "node_type": "condition",
+        "normalized_statement": "When all land spaces adjacent to a figure are filled, compare the strength of adjacent tiles that influence that figure type. The player with the strongest influence captures it; if the highest influence is tied, the figure is set aside.",
+        "sequence": 30,
+        "section_heading": "Figures and Tokens / Capture",
+        "locator_id": "samurai:rulebook:capture"
+      },
+      {
+        "rule_id": "game.end",
+        "node_type": "game_end",
+        "normalized_statement": "The game ends when the last figure of any one of the three types has been captured or set aside, or when four figures have been set aside because of tied influence.",
+        "sequence": 40,
+        "section_heading": "Game end",
+        "locator_id": "samurai:rulebook:end"
+      },
+      {
+        "rule_id": "game.victory",
+        "node_type": "victory",
+        "normalized_statement": "A player with the outright most figures in two or three categories wins immediately. Otherwise, only players with an outright majority in one category are eligible; they set aside that category and compare their other captured figures, with total captured figures as the next tiebreaker. Remaining ties share victory.",
+        "sequence": 50,
+        "section_heading": "Scoring and determining the winner",
+        "locator_id": "samurai:rulebook:victory"
+      }
+    ]
   }
 }

@@ -1,14 +1,95 @@
 {
   "schema_version": "1",
-  "lifecycle_status": "candidate",
+  "lifecycle_status": "curated",
   "slug": "ra",
   "work": {
     "canonical_title": "Ra",
-    "identity_status": "unverified"
+    "identity_status": "verified"
   },
   "preference": {
     "status": "candidate",
     "priority": "high",
     "played": false
+  },
+  "source": {
+    "url": "https://boardgamegeek.com/filepage/256798/english-edition-rulebooks-25th-century-games",
+    "rule_version": "25th-century-retail-v17-en",
+    "revision": "25th-century-ra-retail-third-printing-rules-v17-accessed-2026-10-04"
+  },
+  "game": {
+    "slug": "ra",
+    "title": "Ra",
+    "summary": "3つの時代を通じ、袋からタイルを引くか自らラーを呼んで競りを発生させ、固定値の太陽ディスクで入札して多様な得点タイルを集める競りゲーム。",
+    "source_url": "https://boardgamegeek.com/filepage/256798/english-edition-rulebooks-25th-century-games",
+    "source_revision": "25th-century-ra-retail-third-printing-rules-v17-accessed-2026-10-04",
+    "generated_from_source_revision": "25th-century-ra-retail-third-printing-rules-v17-accessed-2026-10-04",
+    "title_ja": "ラー",
+    "title_en": "Ra",
+    "min_players": 2,
+    "max_players": 5,
+    "play_time": 60,
+    "min_age": 12,
+    "publisher": "25th Century Games",
+    "edition_label": "25th Century Games retail edition, third printing",
+    "language_code": "en",
+    "official_url": "https://www.25thcenturygames.com/store/ra",
+    "source_trust": "official_publisher",
+    "identity_status": "verified",
+    "identity_source": "https://www.25thcenturygames.com/store/ra",
+    "content_review_status": "ai_draft"
+  },
+  "ruleset": {
+    "language_code": "en",
+    "edition_label": "25th Century Games retail edition, third printing",
+    "revision_label": "25c-retail-v17-en",
+    "platform": "physical",
+    "publisher_name": "25th Century Games",
+    "source_id": "designer-publisher:25c:ra:retail-v17",
+    "source_type": "designer_publisher_rulebook_mirror",
+    "authority": "designer_publisher",
+    "coverage": "core",
+    "version": 1,
+    "nodes": [
+      {
+        "rule_id": "game.epochs",
+        "node_type": "phase",
+        "normalized_statement": "The game is played over three Epochs. Each Epoch continues until scoring is triggered by all players having used their Sun disks or by the Sun Boat reaching the final space of the Ra track.",
+        "sequence": 10,
+        "section_heading": "Playing the Game / Scoring",
+        "locator_id": "ra:rulebook:epochs"
+      },
+      {
+        "rule_id": "turn.actions",
+        "node_type": "turn",
+        "normalized_statement": "On a turn, a player takes one legal action: draw a tile from the bag, invoke Ra to start an auction, or spend one or more God tiles to take eligible tiles from the auction track.",
+        "sequence": 20,
+        "section_heading": "Actions",
+        "locator_id": "ra:rulebook:actions"
+      },
+      {
+        "rule_id": "auction.bidding",
+        "node_type": "action",
+        "normalized_statement": "In an auction, eligible players get one opportunity in order to bid one face-up Sun disk or pass. Each later bid must exceed the current bid; the highest Sun wins the auction lot and exchanges that Sun for the Sun disk in the center.",
+        "sequence": 30,
+        "section_heading": "Auctions / Bidding / Winning an Auction",
+        "locator_id": "ra:rulebook:auction"
+      },
+      {
+        "rule_id": "epoch.end",
+        "node_type": "round_end",
+        "normalized_statement": "When an Epoch ends, score the categories indicated for that Epoch, then prepare the next Epoch by returning the appropriate temporary tiles and turning used Sun disks face up as specified. Monuments wait until the third Epoch for scoring.",
+        "sequence": 40,
+        "section_heading": "Scoring / Beginning a New Epoch",
+        "locator_id": "ra:rulebook:epoch-end"
+      },
+      {
+        "rule_id": "game.victory",
+        "node_type": "victory",
+        "normalized_statement": "After scoring the third Epoch, including Monument and Sun-disk scoring, the player with the most total points wins.",
+        "sequence": 50,
+        "section_heading": "Scoring / Winning the Game",
+        "locator_id": "ra:rulebook:victory"
+      }
+    ]
   }
 }

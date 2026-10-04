@@ -1,14 +1,104 @@
 {
   "schema_version": "1",
-  "lifecycle_status": "candidate",
+  "lifecycle_status": "curated",
   "slug": "container-10th-anniversary-jumbo-edition",
   "work": {
     "canonical_title": "Container",
-    "identity_status": "unverified"
+    "identity_status": "verified"
   },
   "preference": {
     "status": "candidate",
     "priority": "high",
     "played": false
+  },
+  "source": {
+    "url": "https://boardgamegeek.com/boardgame/229892/container-10th-anniversary-jumbo-edition/files",
+    "rule_version": "mercury-10th-anniversary-retail-en",
+    "revision": "mercury-container-10th-anniversary-retail-rulebook-publisher-authorized-scan-accessed-2026-10-04"
+  },
+  "game": {
+    "slug": "container-10th-anniversary-jumbo-edition",
+    "title": "Container: 10th Anniversary Jumbo Edition!",
+    "summary": "工場でコンテナを生産・値付けし、他人の商品を倉庫で仕入れ直して値付けし、船で島へ運んでブラインド競りにかける、プレイヤー主導の閉鎖経済ゲーム。",
+    "source_url": "https://boardgamegeek.com/boardgame/229892/container-10th-anniversary-jumbo-edition/files",
+    "source_revision": "mercury-container-10th-anniversary-retail-rulebook-publisher-authorized-scan-accessed-2026-10-04",
+    "generated_from_source_revision": "mercury-container-10th-anniversary-retail-rulebook-publisher-authorized-scan-accessed-2026-10-04",
+    "title_ja": "コンテナ：10周年記念ジャンボ版",
+    "title_en": "Container: 10th Anniversary Jumbo Edition!",
+    "min_players": 3,
+    "max_players": 5,
+    "play_time": 90,
+    "min_age": 13,
+    "published_year": 2018,
+    "publisher": "Mercury Games",
+    "edition_label": "10th Anniversary Jumbo Edition retail rules",
+    "language_code": "en",
+    "official_url": "https://www.kickstarter.com/projects/1280624810/container-10th-anniversary-jumbo-edition",
+    "source_trust": "official_publisher",
+    "identity_status": "verified",
+    "identity_source": "https://www.kickstarter.com/projects/1280624810/container-10th-anniversary-jumbo-edition",
+    "content_review_status": "ai_draft"
+  },
+  "ruleset": {
+    "language_code": "en",
+    "edition_label": "10th Anniversary Jumbo Edition retail rules",
+    "revision_label": "mercury-10th-anniversary-retail-en",
+    "platform": "physical",
+    "publisher_name": "Mercury Games",
+    "source_id": "publisher-authorized:mercury:container-10th:rulebook-scan",
+    "source_type": "publisher_authorized_rulebook_scan",
+    "authority": "publisher_authorized",
+    "coverage": "core",
+    "version": 1,
+    "nodes": [
+      {
+        "rule_id": "setup.personal-economy",
+        "node_type": "setup",
+        "normalized_statement": "Each player receives a player board, ship, starting money and bluff cards, a scoring/value card, and the starting factory and warehouse components specified by the retail rules; the central island and common container supply are prepared.",
+        "sequence": 10,
+        "section_heading": "Setup",
+        "locator_id": "container-10th:rulebook:setup"
+      },
+      {
+        "rule_id": "turn.two-actions",
+        "node_type": "turn",
+        "normalized_statement": "After paying required loan interest, a player performs exactly two actions. Actions may include building factories or warehouses, producing containers, purchasing containers into the harbor store, and sailing the ship; the same action may generally be chosen twice except where the rules restrict it.",
+        "sequence": 20,
+        "section_heading": "Player Turn / Actions",
+        "locator_id": "container-10th:rulebook:turn"
+      },
+      {
+        "rule_id": "economy.pricing",
+        "node_type": "action",
+        "normalized_statement": "Produced containers are offered from factory stores at prices chosen by their owners. Other players may purchase them into warehouse stores and set new prices, creating the player-driven production and wholesale market.",
+        "sequence": 30,
+        "section_heading": "Produce Containers / Buy Containers",
+        "locator_id": "container-10th:rulebook:pricing"
+      },
+      {
+        "rule_id": "auction.island",
+        "node_type": "action",
+        "normalized_statement": "Sailing a loaded ship to the island triggers a blind auction for its containers. After bids are revealed, the ship owner may accept the highest bid, receiving that payment plus a matching subsidy from the bank, or pay the bank the amount of the highest bid to keep the shipment.",
+        "sequence": 40,
+        "section_heading": "Foreign Island / Auction",
+        "locator_id": "container-10th:rulebook:auction"
+      },
+      {
+        "rule_id": "game.end",
+        "node_type": "game_end",
+        "normalized_statement": "The game ends when the common supply of containers has been exhausted in two colors.",
+        "sequence": 50,
+        "section_heading": "Game End",
+        "locator_id": "container-10th:rulebook:end"
+      },
+      {
+        "rule_id": "game.victory",
+        "node_type": "victory",
+        "normalized_statement": "At final scoring, containers on the island are valued according to each player's secret value card and the edition's set/scoring rules, remaining cash is included, and outstanding loans are penalized as specified. The player with the highest final total wins.",
+        "sequence": 60,
+        "section_heading": "Final Scoring",
+        "locator_id": "container-10th:rulebook:victory"
+      }
+    ]
   }
 }

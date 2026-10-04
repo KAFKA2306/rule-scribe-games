@@ -1,14 +1,104 @@
 {
   "schema_version": "1",
-  "lifecycle_status": "candidate",
+  "lifecycle_status": "curated",
   "slug": "age-of-steam",
   "work": {
     "canonical_title": "Age of Steam",
-    "identity_status": "unverified"
+    "identity_status": "verified"
   },
   "preference": {
     "status": "candidate",
     "priority": "highest",
     "played": false
+  },
+  "source": {
+    "url": "https://boardgamegeek.com/filepage/191076/age-of-steam-deluxe-english-rules",
+    "rule_version": "eagle-gryphon-deluxe-v17-en",
+    "revision": "eagle-gryphon-age-of-steam-deluxe-rules-v17-accessed-2026-10-04"
+  },
+  "game": {
+    "slug": "age-of-steam",
+    "title": "Age of Steam: Deluxe Edition",
+    "summary": "株式発行で資金を調達し、手番順を競り、線路を敷設して商品を都市へ運び、収入を伸ばしながら負債と路線網を管理する鉄道経済ゲーム。",
+    "source_url": "https://boardgamegeek.com/filepage/191076/age-of-steam-deluxe-english-rules",
+    "source_revision": "eagle-gryphon-age-of-steam-deluxe-rules-v17-accessed-2026-10-04",
+    "generated_from_source_revision": "eagle-gryphon-age-of-steam-deluxe-rules-v17-accessed-2026-10-04",
+    "title_ja": "蒸気の時代 デラックス版",
+    "title_en": "Age of Steam: Deluxe Edition",
+    "min_players": 3,
+    "max_players": 6,
+    "play_time": 120,
+    "min_age": 10,
+    "published_year": 2019,
+    "publisher": "Eagle-Gryphon Games",
+    "edition_label": "Age of Steam Deluxe Edition",
+    "language_code": "en",
+    "official_url": "https://www.eagle-gryphon.com/products/age-of-steam-deluxe-edition",
+    "source_trust": "official_publisher",
+    "identity_status": "verified",
+    "identity_source": "https://www.eagle-gryphon.com/products/age-of-steam-deluxe-edition",
+    "content_review_status": "ai_draft"
+  },
+  "ruleset": {
+    "language_code": "en",
+    "edition_label": "Age of Steam Deluxe Edition",
+    "revision_label": "eagle-gryphon-v17-en",
+    "platform": "physical",
+    "publisher_name": "Eagle-Gryphon Games",
+    "source_id": "publisher:eagle-gryphon:age-of-steam-deluxe:rules-v17",
+    "source_type": "publisher_rulebook_mirror",
+    "authority": "official_publisher",
+    "coverage": "core",
+    "version": 1,
+    "nodes": [
+      {
+        "rule_id": "setup.rust-belt",
+        "node_type": "setup",
+        "normalized_statement": "For the standard Rust Belt game, lay out the board and displays, place the turn marker on Start, fill the Goods Display from the bag, give each player the starting railroad markers and two issued shares, and seed starting goods on the map as specified.",
+        "sequence": 10,
+        "section_heading": "SETTING UP THE GAME",
+        "locator_id": "age-of-steam:rulebook:setup"
+      },
+      {
+        "rule_id": "turn.sequence",
+        "node_type": "phase",
+        "normalized_statement": "Each turn follows ten phases in order: Issue Shares, Determine Player Order, Select Actions, Build Track, Move Goods, Collect Income, Pay Expenses, Income Reduction, Goods Growth, and Advance Turn Marker.",
+        "sequence": 20,
+        "section_heading": "SEQUENCE OF PLAY",
+        "locator_id": "age-of-steam:rulebook:sequence"
+      },
+      {
+        "rule_id": "phase.player-order",
+        "node_type": "phase",
+        "normalized_statement": "Players bid for turn order. Players drop out or raise bids until all but one have dropped; the first player to drop pays nothing, the final two bidders pay their full bids, and other bidders pay half their bid rounded up.",
+        "sequence": 30,
+        "section_heading": "II. DETERMINE PLAYER ORDER",
+        "locator_id": "age-of-steam:rulebook:player-order"
+      },
+      {
+        "rule_id": "phase.build-track",
+        "node_type": "action",
+        "normalized_statement": "During Build Track, players place track tiles on the hex map to create railroad links between cities and towns, paying terrain-dependent costs and following the track placement and completion rules.",
+        "sequence": 40,
+        "section_heading": "IV. Build Track",
+        "locator_id": "age-of-steam:rulebook:build"
+      },
+      {
+        "rule_id": "game.end",
+        "node_type": "game_end",
+        "normalized_statement": "The game ends after the last turn shown on the Turn Track for the number of players.",
+        "sequence": 50,
+        "section_heading": "ENDING/WINNING THE GAME",
+        "locator_id": "age-of-steam:rulebook:end"
+      },
+      {
+        "rule_id": "game.victory",
+        "node_type": "victory",
+        "normalized_statement": "At final scoring, gain 3 victory points for each dollar of income on the Income Track and 1 point for each track section in completed railroad links, then lose 3 points for each issued share. Cash itself is worth no points. Most victory points wins; ties are possible.",
+        "sequence": 60,
+        "section_heading": "Victory Point Computations",
+        "locator_id": "age-of-steam:rulebook:victory"
+      }
+    ]
   }
 }

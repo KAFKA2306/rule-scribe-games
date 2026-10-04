@@ -1,14 +1,95 @@
 {
   "schema_version": "1",
-  "lifecycle_status": "candidate",
+  "lifecycle_status": "curated",
   "slug": "iki",
   "work": {
     "canonical_title": "IKI",
-    "identity_status": "unverified"
+    "identity_status": "verified"
   },
   "preference": {
     "status": "candidate",
     "priority": "high",
     "played": false
+  },
+  "source": {
+    "url": "https://sorryweare.fr/en/game/iki-en/",
+    "rule_version": "swaf-iki-en-current",
+    "revision": "sorry-we-are-french-iki-en-rules-page-accessed-2026-10-04"
+  },
+  "game": {
+    "slug": "iki",
+    "title": "IKI",
+    "summary": "江戸・日本橋で職人や商人を雇い、親方を大通りで動かして取引しながら人物を成長・引退させ、四季と火事を乗り越えて最も多くのIKIを得ることを目指す。",
+    "source_url": "https://sorryweare.fr/en/game/iki-en/",
+    "source_revision": "sorry-we-are-french-iki-en-rules-page-accessed-2026-10-04",
+    "generated_from_source_revision": "sorry-we-are-french-iki-en-rules-page-accessed-2026-10-04",
+    "title_ja": "IKI 江戸職人物語",
+    "title_en": "IKI",
+    "min_players": 2,
+    "max_players": 4,
+    "play_time": 90,
+    "min_age": 14,
+    "publisher": "Sorry We Are French",
+    "edition_label": "Sorry We Are French edition",
+    "language_code": "en",
+    "official_url": "https://sorryweare.fr/en/game/iki-en/",
+    "source_trust": "official_publisher",
+    "identity_status": "verified",
+    "identity_source": "https://sorryweare.fr/en/game/iki-en/",
+    "content_review_status": "ai_draft"
+  },
+  "ruleset": {
+    "language_code": "en",
+    "edition_label": "Sorry We Are French edition",
+    "revision_label": "swaf-iki-en-current",
+    "platform": "physical",
+    "publisher_name": "Sorry We Are French",
+    "source_id": "publisher:swaf:iki:english-rules",
+    "source_type": "publisher_rules_landing_page",
+    "authority": "official_publisher",
+    "coverage": "core",
+    "version": 1,
+    "nodes": [
+      {
+        "rule_id": "game.rounds",
+        "node_type": "phase",
+        "normalized_statement": "A game lasts 13 rounds. The first 12 rounds represent the months of the year and follow the regular monthly structure; the thirteenth round is New Year and is played differently.",
+        "sequence": 10,
+        "section_heading": "How to play ?",
+        "locator_id": "iki:rules:rounds"
+      },
+      {
+        "rule_id": "phase.lifestyle",
+        "node_type": "phase",
+        "normalized_statement": "In the Lifestyle phase, players determine their positions on the Ikizama track.",
+        "sequence": 20,
+        "section_heading": "How to play ? / Lifestyle",
+        "locator_id": "iki:rules:lifestyle"
+      },
+      {
+        "rule_id": "phase.actions",
+        "node_type": "phase",
+        "normalized_statement": "In the Actions phase, each player first recruits a Character or collects income, then moves their Oyakata and conducts transactions in the Main Street.",
+        "sequence": 30,
+        "section_heading": "How to play ? / Actions",
+        "locator_id": "iki:rules:actions"
+      },
+      {
+        "rule_id": "phase.events",
+        "node_type": "round_end",
+        "normalized_statement": "The Event and End of Round phase occurs every month; account balance happens after months 3, 6, 9 and 12, and fires occur after months 5, 8 and 11.",
+        "sequence": 40,
+        "section_heading": "How to play ? / Event and End of Round",
+        "locator_id": "iki:rules:events"
+      },
+      {
+        "rule_id": "game.victory",
+        "node_type": "victory",
+        "normalized_statement": "After living through the year in Edo, the winner is the player who has earned the most IKI.",
+        "sequence": 50,
+        "section_heading": "How to win ?",
+        "locator_id": "iki:rules:victory"
+      }
+    ]
   }
 }
