@@ -12,17 +12,17 @@
     "played": false
   },
   "source": {
-    "url": "https://boardgamegeek.com/filepage/123433/english-rulebook",
+    "url": "https://www.splottershop.com/products/food-chain-magnate",
     "rule_version": "splotter-en-3rd-printing",
-    "revision": "splotter-food-chain-magnate-en-3rd-printing-accessed-2026-10-04"
+    "revision": "splotter-official-product-plus-english-rulebook-mirror-accessed-2026-10-04"
   },
   "game": {
     "slug": "food-chain-magnate",
     "title": "Food Chain Magnate",
     "summary": "ファストフード企業を組織し、採用・訓練・生産・広告・価格設定・販売を通じて需要を奪い合い、最終的に最も多くの現金を持つことを目指す経済戦略ゲーム。",
-    "source_url": "https://boardgamegeek.com/filepage/123433/english-rulebook",
-    "source_revision": "splotter-food-chain-magnate-en-3rd-printing-accessed-2026-10-04",
-    "generated_from_source_revision": "splotter-food-chain-magnate-en-3rd-printing-accessed-2026-10-04",
+    "source_url": "https://www.splottershop.com/products/food-chain-magnate",
+    "source_revision": "splotter-official-product-plus-english-rulebook-mirror-accessed-2026-10-04",
+    "generated_from_source_revision": "splotter-official-product-plus-english-rulebook-mirror-accessed-2026-10-04",
     "title_ja": "フードチェーンマグネイト",
     "title_en": "Food Chain Magnate",
     "min_players": 2,
@@ -34,7 +34,7 @@
     "edition_label": "Splotter English 3rd printing",
     "language_code": "en",
     "official_url": "https://www.splottershop.com/products/food-chain-magnate",
-    "source_trust": "authorized_partner",
+    "source_trust": "official_publisher",
     "identity_status": "verified",
     "identity_source": "https://www.splottershop.com/products/food-chain-magnate",
     "content_review_status": "ai_draft"
@@ -107,6 +107,7 @@
         "section_heading": "Breaking the bank (2nd time)",
         "locator_id": "food-chain-magnate:rulebook:victory"
       }
-    ]
+    ],
+    "source_url": "https://boardgamegeek.com/filepage/123433/english-rulebook"
   }
 }
