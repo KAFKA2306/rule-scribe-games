@@ -12,17 +12,17 @@
     "played": false
   },
   "source": {
-    "url": "https://boardgamegeek.com/filepage/93479/keyflower-second-edition-rules",
+    "url": "https://arclightgames.jp/product/500keyflower/",
     "rule_version": "rd-games-second-edition-en-2013",
-    "revision": "rd-games-keyflower-second-edition-en-2013-accessed-2026-10-04"
+    "revision": "arclight-official-product-plus-rd-games-second-edition-rules-accessed-2026-10-04"
   },
   "game": {
     "slug": "keyflower",
     "title": "Keyflower",
     "summary": "春・夏・秋・冬の4ラウンドで、色付きワーカーを入札と施設利用の両方に使い、村タイルを獲得・稼働・改良して最終勝利点を競う。",
-    "source_url": "https://boardgamegeek.com/filepage/93479/keyflower-second-edition-rules",
-    "source_revision": "rd-games-keyflower-second-edition-en-2013-accessed-2026-10-04",
-    "generated_from_source_revision": "rd-games-keyflower-second-edition-en-2013-accessed-2026-10-04",
+    "source_url": "https://arclightgames.jp/product/500keyflower/",
+    "source_revision": "arclight-official-product-plus-rd-games-second-edition-rules-accessed-2026-10-04",
+    "generated_from_source_revision": "arclight-official-product-plus-rd-games-second-edition-rules-accessed-2026-10-04",
     "title_ja": "キーフラワー",
     "title_en": "Keyflower",
     "min_players": 2,
@@ -34,7 +34,7 @@
     "edition_label": "Second Edition rules (2013)",
     "language_code": "en",
     "official_url": "https://boardgamegeek.com/boardgame/122515/keyflower",
-    "source_trust": "authorized_partner",
+    "source_trust": "official_publisher",
     "identity_status": "verified",
     "identity_source": "https://boardgamegeek.com/filepage/93479/keyflower-second-edition-rules",
     "content_review_status": "ai_draft"
@@ -91,6 +91,7 @@
         "section_heading": "Game end scoring",
         "locator_id": "keyflower:rulebook:victory"
       }
-    ]
+    ],
+    "source_url": "https://boardgamegeek.com/filepage/93479/keyflower-second-edition-rules"
   }
 }
