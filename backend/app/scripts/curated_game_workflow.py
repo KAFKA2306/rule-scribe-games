@@ -92,7 +92,7 @@ class RuleSetSpec(BaseModel):
     publisher_name: str = Field(min_length=1)
     source_id: str | None = Field(default=None, pattern=r"^[a-z0-9][a-z0-9._:-]{2,191}$")
     source_url: str | None = Field(default=None, pattern=r"^https://")
-    source_type: str = Field(default="publisher_rulebook", min_length=1)
+    source_type: str = Field(default="rulebook", min_length=1)
     authority: Literal["official_publisher", "official_localizer", "publisher_authorized", "designer_publisher"] = "official_publisher"
     coverage: Literal["core", "full"] = "core"
     version: int = Field(default=1, ge=1)
