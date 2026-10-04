@@ -46,7 +46,7 @@
     "platform": "physical",
     "publisher_name": "Splotter Spellen",
     "source_id": "designer:splotter:food-chain-magnate:rulebook-v3",
-    "source_type": "designer_publisher_rulebook_mirror",
+    "source_type": "rulebook",
     "authority": "designer_publisher",
     "coverage": "core",
     "version": 1,
