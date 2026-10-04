@@ -65,9 +65,25 @@ jobs:
               || true
           )
 
-          printf '%s\n' "${changed[@]}" | sed '/^$/d' > /tmp/curated-games.txt
-          echo "count=${#changed[@]}" >> "$GITHUB_OUTPUT"
-          echo "Changed curated games: ${#changed[@]}"
+          if git diff --name-only "$BEFORE_SHA" "$GITHUB_SHA" -- \
+            backend/app/scripts/curated_game_fast_path_v2.py \
+            backend/app/scripts/curated_game_workflow.py \
+            data/curated-games/schema-v1.json \
+            | grep -q .; then
+            mapfile -t projected < <(
+              grep -l '"ruleset"' data/curated-games/*.json \
+                | grep -v '/schema-' \
+                | sed -E 's#^data/curated-games/##; s#\.json$##' \
+                | sort -u \
+                || true
+            )
+            changed=("${changed[@]}" "${projected[@]}")
+          fi
+
+          printf '%s\n' "${changed[@]}" | sed '/^$/d' | sort -u > /tmp/curated-games.txt
+          count="$(wc -l < /tmp/curated-games.txt | tr -d ' ')"
+          echo "count=$count" >> "$GITHUB_OUTPUT"
+          echo "Curated games selected for publication: $count"
       - name: Install uv
         if: steps.changed.outputs.count != '0'
         uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9

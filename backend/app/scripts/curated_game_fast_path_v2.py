@@ -482,7 +482,21 @@ def verify_catalog_live(spec: CuratedGameSpec, base_url: str) -> None:
             raise WorkflowError("production API source provenance does not match structured input")
         if not payload.get("work_id"):
             raise WorkflowError("production API record has no canonical work_id")
-        validate_exposed_catalog_fields(spec.game, payload)
+
+        expected_public = dict(spec.game)
+        review_status = str(spec.game.get("content_review_status") or "unknown")
+        if review_status not in {"human_reviewed", "publisher_reviewed"}:
+            expected_public.pop("summary", None)
+            expected_public.pop("description", None)
+        validate_exposed_catalog_fields(expected_public, payload)
+
+        if review_status not in {"human_reviewed", "publisher_reviewed"}:
+            title = str(spec.game.get("title_ja") or spec.game["title"])
+            neutral = f"「{title}」の出典付きルール要約と出典情報を確認できます。"
+            if payload.get("summary") != neutral or payload.get("description") != neutral:
+                raise WorkflowError(
+                    f"production player-summary projection mismatch for {spec.slug}"
+                )
 
         page_response = client.get(f"{base}/games/{spec.slug}")
         if page_response.status_code != 200:
