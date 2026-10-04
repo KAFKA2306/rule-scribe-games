@@ -268,7 +268,7 @@
         "source_type": {
           "type": "string",
           "minLength": 1,
-          "default": "publisher_rulebook"
+          "default": "rulebook"
         },
         "authority": {
           "enum": [
