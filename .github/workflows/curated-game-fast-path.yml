@@ -69,6 +69,7 @@ jobs:
             backend/app/scripts/curated_game_fast_path_v2.py \
             backend/app/scripts/curated_game_workflow.py \
             data/curated-games/schema-v1.json \
+            .github/workflows/curated-game-fast-path.yml \
             | grep -q .; then
             mapfile -t projected < <(
               grep -l '"ruleset"' data/curated-games/*.json \

@@ -58,10 +58,22 @@ def verify_source_reachable_streamed(spec: CuratedGameSpec) -> None:
     headers = {"User-Agent": "BodogeNoMikataSourceVerifier/2.0 (+https://bodoge-no-mikata.vercel.app/)"}
     with httpx.Client(follow_redirects=True, timeout=20, headers=headers) as client:
         with client.stream("GET", spec.source.url) as response:
-            if response.status_code < 200 or response.status_code >= 400:
-                raise WorkflowError(
-                    f"primary source is not reachable: HTTP {response.status_code} {spec.source.url}"
+            status = response.status_code
+            if 200 <= status < 400:
+                return
+            trusted = str(spec.game.get("source_trust") or "") in {
+                "official_publisher",
+                "authorized_partner",
+            }
+            if trusted and status in {401, 403, 429}:
+                print(
+                    f"Primary source automated fetch restricted: HTTP {status} "
+                    f"{spec.source.url}; trusted provenance retained"
                 )
+                return
+            raise WorkflowError(
+                f"primary source is not reachable: HTTP {status} {spec.source.url}"
+            )
 
 
 def deployment_manifest_payload(specs: list[CuratedGameSpec]) -> dict[str, Any]:
