@@ -12,17 +12,17 @@
     "played": false
   },
   "source": {
-    "url": "https://hobbyjapan.co.jp/game/?p=5736",
+    "url": "https://hobbyjapan.games/caylus/",
     "rule_version": "ystari-original-en",
-    "revision": "hobby-japan-caylus-product-plus-ystari-english-rules-accessed-2026-10-04"
+    "revision": "hobby-japan-caylus-multilingual-product-plus-ystari-english-rules-accessed-2026-10-04"
   },
   "game": {
     "slug": "caylus",
     "title": "Caylus",
     "summary": "城下町へ労働者を配置して建物を利用・建設し、監督官の位置で利用可能な建物が変化する中、城の建設と都市開発から威信点と王の恩恵を得るワーカープレイスメント。",
-    "source_url": "https://hobbyjapan.co.jp/game/?p=5736",
-    "source_revision": "hobby-japan-caylus-product-plus-ystari-english-rules-accessed-2026-10-04",
-    "generated_from_source_revision": "hobby-japan-caylus-product-plus-ystari-english-rules-accessed-2026-10-04",
+    "source_url": "https://hobbyjapan.games/caylus/",
+    "source_revision": "hobby-japan-caylus-multilingual-product-plus-ystari-english-rules-accessed-2026-10-04",
+    "generated_from_source_revision": "hobby-japan-caylus-multilingual-product-plus-ystari-english-rules-accessed-2026-10-04",
     "title_ja": "ケイラス",
     "title_en": "Caylus",
     "min_players": 2,
@@ -33,10 +33,10 @@
     "publisher": "Ystari Games",
     "edition_label": "Ystari English rules",
     "language_code": "en",
-    "official_url": "https://hobbyjapan.co.jp/game/?p=5736",
+    "official_url": "https://hobbyjapan.games/caylus/",
     "source_trust": "official_localizer",
     "identity_status": "verified",
-    "identity_source": "https://hobbyjapan.co.jp/game/?p=5736",
+    "identity_source": "https://hobbyjapan.games/caylus/",
     "content_review_status": "ai_draft"
   },
   "ruleset": {
