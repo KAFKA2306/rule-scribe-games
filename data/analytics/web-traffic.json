@@ -3,7 +3,7 @@
   "source": "https://api.vercel.com/v1/query/web-analytics/visits/aggregate",
   "event_source": "https://api.vercel.com/v1/query/web-analytics/events/aggregate",
   "scope": "production Web Analytics; custom-event export may be plan-limited",
-  "collected_at": "2026-10-08T06:19:12.642673+00:00",
+  "collected_at": "2026-10-09T06:21:16.451254+00:00",
   "days": [
     {
       "date": "2026-07-26",
@@ -374,6 +374,11 @@
       "date": "2026-10-07",
       "pageviews": 0,
       "visitors": 0
+    },
+    {
+      "date": "2026-10-08",
+      "pageviews": 0,
+      "visitors": 0
     }
   ],
   "affiliate_outbound": {
@@ -383,14 +388,14 @@
   },
   "affiliate_outbound_days": [],
   "rolling_window": {
-    "since": "2026-09-07",
-    "until": "2026-10-08",
+    "since": "2026-09-08",
+    "until": "2026-10-09",
     "limit_per_breakdown": 100,
     "request_paths": [
       {
         "requestPath": "/",
-        "pageviews": 10,
-        "visitors": 10
+        "pageviews": 8,
+        "visitors": 8
       },
       {
         "requestPath": "/games/geister",
@@ -446,8 +451,8 @@
     "referrers": [
       {
         "referrerHostname": "",
-        "pageviews": 12,
-        "visitors": 10
+        "pageviews": 10,
+        "visitors": 8
       },
       {
         "referrerHostname": "google.com",
