@@ -1,0 +1,67 @@
+name: Jev AI Gateway smoke
+
+on:
+  pull_request:
+    paths:
+      - "api/ai-search.js"
+      - "scripts/smoke_jev_gateway.mjs"
+      - "package.json"
+      - "vercel.json"
+      - ".github/workflows/jev-gateway-smoke.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  jev-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - name: Install root AI dependency
+        run: npm install --ignore-scripts --no-audit --no-fund
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@59.0.0
+
+      - name: Pull preview environment and OIDC token
+        shell: bash
+        run: |
+          set -euo pipefail
+          vercel pull --yes --environment=preview --token="$VERCEL_TOKEN"
+          vercel env pull .env.preview.local --yes --environment=preview --token="$VERCEL_TOKEN"
+          oidc="$(python - <<'PY'
+          from pathlib import Path
+          import shlex
+
+          values = {}
+          for raw in Path(".env.preview.local").read_text(encoding="utf-8").splitlines():
+              line = raw.strip()
+              if not line or line.startswith("#") or "=" not in line:
+                  continue
+              key, value = line.split("=", 1)
+              value = value.strip()
+              if len(value) >= 2 and value[0] == value[-1] and value[0] in "'\"":
+                  value = value[1:-1]
+              values[key.strip()] = value
+          print(values.get("VERCEL_OIDC_TOKEN", ""))
+          PY
+          )"
+          if [ -z "$oidc" ]; then
+            echo "::error::VERCEL_OIDC_TOKEN was not present in the preview environment pull."
+            exit 1
+          fi
+          echo "::add-mask::$oidc"
+          echo "VERCEL_OIDC_TOKEN=$oidc" >> "$GITHUB_ENV"
+
+      - name: Call Jev through AI Gateway
+        run: node scripts/smoke_jev_gateway.mjs

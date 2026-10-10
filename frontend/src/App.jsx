@@ -180,6 +180,9 @@ function App() {
   const [activeTier, setActiveTier] = useState((searchParams.get('tier') || '').slice(0, 40) || null)
   const [sortOption, setSortOption] = useState(SORT_OPTIONS.includes(initialSort) ? initialSort : 'recent')
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
+  const [aiQuery, setAiQuery] = useState('')
+  const [aiFiltering, setAiFiltering] = useState(false)
+  const [aiNotice, setAiNotice] = useState('')
 
   const [compareList, setCompareList] = useState([])
   const [compareNotice, setCompareNotice] = useState('')
@@ -286,11 +289,41 @@ function App() {
     event.preventDefault()
   }
 
+  const handleAiFilter = async (event) => {
+    event.preventDefault()
+    const trimmed = aiQuery.trim()
+    if (!trimmed || aiFiltering) return
+
+    setAiFiltering(true)
+    setAiNotice('')
+    try {
+      const data = await api.post('/api/ai-search', { query: trimmed })
+      setActivePlayers(data.players || null)
+      setActiveTime(data.time || null)
+
+      const applied = []
+      if (data.players) applied.push(`人数 ${data.players}人`)
+      if (data.time) applied.push(`時間 ${TIME_FILTERS.find((time) => time.id === data.time)?.label || data.time}`)
+      setAiNotice(
+        applied.length > 0
+          ? `Jevが条件を適用: ${applied.join(' / ')}`
+          : 'Jevは人数・時間の明示条件を検出しませんでした。',
+      )
+    } catch (err) {
+      console.error('Failed to interpret AI filters:', err)
+      setAiNotice('AI条件の解釈に失敗しました。通常の検索・フィルターはそのまま使えます。')
+    } finally {
+      setAiFiltering(false)
+    }
+  }
+
   const clearFilters = () => {
     setQuery('')
     setActivePlayers(null)
     setActiveTime(null)
     setActiveTier(null)
+    setAiQuery('')
+    setAiNotice('')
   }
 
   const toggleCompare = (game) => {
@@ -428,6 +461,32 @@ function App() {
       </aside>
 
       <main>
+        <form
+          className="app-feedback"
+          aria-label="AI条件検索"
+          onSubmit={handleAiFilter}
+          style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}
+        >
+          <label htmlFor="jev-ai-filter" className="sr-only">AIで人数・プレイ時間を絞り込む</label>
+          <input
+            id="jev-ai-filter"
+            type="text"
+            className="search-input"
+            placeholder="AI条件: 例「4人で30〜60分」"
+            value={aiQuery}
+            maxLength={300}
+            disabled={aiFiltering}
+            onChange={(event) => setAiQuery(event.target.value)}
+            style={{ flex: '1 1 280px' }}
+          />
+          <button type="submit" className="filter-btn active" disabled={aiFiltering || !aiQuery.trim()}>
+            {aiFiltering ? 'Jev判定中…' : 'AIで絞り込む'}
+          </button>
+          <span className="meta-item">Jev · Vercel AI Gateway</span>
+        </form>
+
+        {aiNotice && <div className="app-feedback" role="status">{aiNotice}</div>}
+
         <div className="control-panel">
           <div className="active-filters">
             <button
