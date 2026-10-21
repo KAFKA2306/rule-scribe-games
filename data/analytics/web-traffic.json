@@ -3,7 +3,7 @@
   "source": "https://api.vercel.com/v1/query/web-analytics/visits/aggregate",
   "event_source": "https://api.vercel.com/v1/query/web-analytics/events/aggregate",
   "scope": "production Web Analytics; custom-event export may be plan-limited",
-  "collected_at": "2026-10-20T05:01:17.549015+00:00",
+  "collected_at": "2026-10-21T05:01:13.753990+00:00",
   "days": [
     {
       "date": "2026-07-26",
@@ -434,6 +434,11 @@
       "date": "2026-10-19",
       "pageviews": 0,
       "visitors": 0
+    },
+    {
+      "date": "2026-10-20",
+      "pageviews": 0,
+      "visitors": 0
     }
   ],
   "affiliate_outbound": {
@@ -443,24 +448,19 @@
   },
   "affiliate_outbound_days": [],
   "rolling_window": {
-    "since": "2026-09-19",
-    "until": "2026-10-20",
+    "since": "2026-09-20",
+    "until": "2026-10-21",
     "limit_per_breakdown": 100,
     "request_paths": [
       {
         "requestPath": "/",
-        "pageviews": 10,
-        "visitors": 10
+        "pageviews": 9,
+        "visitors": 9
       },
       {
         "requestPath": "/games/geister",
         "pageviews": 3,
         "visitors": 3
-      },
-      {
-        "requestPath": "/games/3-second-try",
-        "pageviews": 1,
-        "visitors": 1
       },
       {
         "requestPath": "/games/caru-uta-basic-set",
@@ -479,11 +479,6 @@
       },
       {
         "requestPath": "/games/gambler-x-gamble",
-        "pageviews": 1,
-        "visitors": 1
-      },
-      {
-        "requestPath": "/games/modern-art",
         "pageviews": 1,
         "visitors": 1
       },
@@ -516,8 +511,8 @@
     "referrers": [
       {
         "referrerHostname": "",
-        "pageviews": 10,
-        "visitors": 8
+        "pageviews": 7,
+        "visitors": 7
       },
       {
         "referrerHostname": "bing.com",
@@ -559,18 +554,6 @@
         ]
       },
       {
-        "requestPath": "/games/3-second-try",
-        "pageviews": 1,
-        "visitors": 1,
-        "referrers": [
-          {
-            "referrerHostname": "",
-            "pageviews": 1,
-            "visitors": 1
-          }
-        ]
-      },
-      {
         "requestPath": "/games/caru-uta-basic-set",
         "pageviews": 1,
         "visitors": 1,
@@ -613,18 +596,6 @@
         "referrers": [
           {
             "referrerHostname": "google.com",
-            "pageviews": 1,
-            "visitors": 1
-          }
-        ]
-      },
-      {
-        "requestPath": "/games/modern-art",
-        "pageviews": 1,
-        "visitors": 1,
-        "referrers": [
-          {
-            "referrerHostname": "",
             "pageviews": 1,
             "visitors": 1
           }
