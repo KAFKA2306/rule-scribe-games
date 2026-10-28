@@ -3,7 +3,7 @@
   "source": "https://api.vercel.com/v1/query/web-analytics/visits/aggregate",
   "event_source": "https://api.vercel.com/v1/query/web-analytics/events/aggregate",
   "scope": "production Web Analytics; custom-event export may be plan-limited",
-  "collected_at": "2026-10-27T05:17:13.349916+00:00",
+  "collected_at": "2026-10-28T05:56:12.222503+00:00",
   "days": [
     {
       "date": "2026-07-26",
@@ -469,6 +469,11 @@
       "date": "2026-10-26",
       "pageviews": 1,
       "visitors": 1
+    },
+    {
+      "date": "2026-10-27",
+      "pageviews": 0,
+      "visitors": 0
     }
   ],
   "affiliate_outbound": {
@@ -478,19 +483,14 @@
   },
   "affiliate_outbound_days": [],
   "rolling_window": {
-    "since": "2026-09-26",
-    "until": "2026-10-27",
+    "since": "2026-09-27",
+    "until": "2026-10-28",
     "limit_per_breakdown": 100,
     "request_paths": [
       {
         "requestPath": "/",
-        "pageviews": 7,
-        "visitors": 7
-      },
-      {
-        "requestPath": "/games/geister",
-        "pageviews": 2,
-        "visitors": 2
+        "pageviews": 9,
+        "visitors": 8
       },
       {
         "requestPath": "/games/sky-team",
@@ -509,6 +509,11 @@
       },
       {
         "requestPath": "/games/detective-conan-karuta",
+        "pageviews": 1,
+        "visitors": 1
+      },
+      {
+        "requestPath": "/games/geister",
         "pageviews": 1,
         "visitors": 1
       },
@@ -536,16 +541,16 @@
       },
       {
         "referrerHostname": "bing.com",
-        "pageviews": 5,
-        "visitors": 5
-      },
-      {
-        "referrerHostname": "note.com",
-        "pageviews": 3,
-        "visitors": 3
+        "pageviews": 7,
+        "visitors": 6
       },
       {
         "referrerHostname": "google.com",
+        "pageviews": 2,
+        "visitors": 2
+      },
+      {
+        "referrerHostname": "note.com",
         "pageviews": 2,
         "visitors": 2
       },
@@ -556,23 +561,6 @@
       }
     ],
     "game_page_referrers": [
-      {
-        "requestPath": "/games/geister",
-        "pageviews": 2,
-        "visitors": 2,
-        "referrers": [
-          {
-            "referrerHostname": "",
-            "pageviews": 1,
-            "visitors": 1
-          },
-          {
-            "referrerHostname": "note.com",
-            "pageviews": 1,
-            "visitors": 1
-          }
-        ]
-      },
       {
         "requestPath": "/games/sky-team",
         "pageviews": 2,
@@ -621,6 +609,18 @@
         "referrers": [
           {
             "referrerHostname": "google.com",
+            "pageviews": 1,
+            "visitors": 1
+          }
+        ]
+      },
+      {
+        "requestPath": "/games/geister",
+        "pageviews": 1,
+        "visitors": 1,
+        "referrers": [
+          {
+            "referrerHostname": "",
             "pageviews": 1,
             "visitors": 1
           }
