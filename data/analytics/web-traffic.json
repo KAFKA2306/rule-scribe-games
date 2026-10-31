@@ -3,7 +3,7 @@
   "source": "https://api.vercel.com/v1/query/web-analytics/visits/aggregate",
   "event_source": "https://api.vercel.com/v1/query/web-analytics/events/aggregate",
   "scope": "production Web Analytics; custom-event export may be plan-limited",
-  "collected_at": "2026-10-30T06:01:51.847004+00:00",
+  "collected_at": "2026-10-31T05:57:21.411199+00:00",
   "days": [
     {
       "date": "2026-07-26",
@@ -484,6 +484,11 @@
       "date": "2026-10-29",
       "pageviews": 0,
       "visitors": 0
+    },
+    {
+      "date": "2026-10-30",
+      "pageviews": 0,
+      "visitors": 0
     }
   ],
   "affiliate_outbound": {
@@ -493,8 +498,8 @@
   },
   "affiliate_outbound_days": [],
   "rolling_window": {
-    "since": "2026-09-29",
-    "until": "2026-10-30",
+    "since": "2026-09-30",
+    "until": "2026-10-31",
     "limit_per_breakdown": 100,
     "request_paths": [
       {
@@ -508,11 +513,6 @@
         "visitors": 2
       },
       {
-        "requestPath": "/games/caru-uta-basic-set",
-        "pageviews": 1,
-        "visitors": 1
-      },
-      {
         "requestPath": "/games/codenames",
         "pageviews": 1,
         "visitors": 1
@@ -524,11 +524,6 @@
       },
       {
         "requestPath": "/games/geister",
-        "pageviews": 1,
-        "visitors": 1
-      },
-      {
-        "requestPath": "/games/quick-shot",
         "pageviews": 1,
         "visitors": 1
       },
@@ -551,13 +546,8 @@
       },
       {
         "referrerHostname": "",
-        "pageviews": 5,
-        "visitors": 5
-      },
-      {
-        "referrerHostname": "google.com",
-        "pageviews": 2,
-        "visitors": 2
+        "pageviews": 4,
+        "visitors": 4
       },
       {
         "referrerHostname": "note.com",
@@ -566,6 +556,11 @@
       },
       {
         "referrerHostname": "github.com",
+        "pageviews": 1,
+        "visitors": 1
+      },
+      {
+        "referrerHostname": "google.com",
         "pageviews": 1,
         "visitors": 1
       }
@@ -589,18 +584,6 @@
         ]
       },
       {
-        "requestPath": "/games/caru-uta-basic-set",
-        "pageviews": 1,
-        "visitors": 1,
-        "referrers": [
-          {
-            "referrerHostname": "google.com",
-            "pageviews": 1,
-            "visitors": 1
-          }
-        ]
-      },
-      {
         "requestPath": "/games/codenames",
         "pageviews": 1,
         "visitors": 1,
@@ -626,18 +609,6 @@
       },
       {
         "requestPath": "/games/geister",
-        "pageviews": 1,
-        "visitors": 1,
-        "referrers": [
-          {
-            "referrerHostname": "",
-            "pageviews": 1,
-            "visitors": 1
-          }
-        ]
-      },
-      {
-        "requestPath": "/games/quick-shot",
         "pageviews": 1,
         "visitors": 1,
         "referrers": [
