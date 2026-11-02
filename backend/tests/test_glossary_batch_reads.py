@@ -89,10 +89,12 @@ def test_glossary_projection_batches_reads_and_keeps_source_bound_rules(monkeypa
     assert bid.rule_references[0].rule_id == "scoring.zero-bid"
     assert bid.rule_references[0].verification_status.value == "verified"
     tigress = by_id["component.special-card"].rule_references[0]
-    assert tigress.player_count == 2
+    expected_players = 2
+    assert tigress.player_count == expected_players
     assert tigress.source_locator == "skull-king:faq:graybeard-tigress"
 
     # Two concepts and two rules must not trigger per-item Supabase requests.
-    assert len(client.calls) == 8
+    expected_queries = 8
+    assert len(client.calls) == expected_queries
     assert client.calls.count("rule_sets") == 1
     assert client.calls.count("rule_nodes") == 1
