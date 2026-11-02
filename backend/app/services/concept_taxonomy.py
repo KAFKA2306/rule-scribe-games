@@ -171,6 +171,9 @@ class ConceptTaxonomyService:
 
     @classmethod
     def _load_game_concepts(cls, game: dict, base: dict) -> GameConceptsReadResponse:
+        # A glossary is a single read projection. Fetching every label, relation,
+        # rule set and RuleNode separately caused dozens of serial HTTP requests
+        # and production browser timeouts on a cold serverless invocation.
         client = supabase._get_client()
         links = (
             client.table("game_concepts")
@@ -182,37 +185,137 @@ class ConceptTaxonomyService:
         if not links:
             return GameConceptsReadResponse(status="not_available", **base)
 
+        concept_ids = sorted({link["concept_id"] for link in links})
+        concept_rows = (
+            client.table("concepts").select("*").in_("concept_id", concept_ids).execute().data
+        )
+        label_rows = (
+            client.table("concept_labels")
+            .select("concept_id,language_code,label_type,label,normalized_label")
+            .in_("concept_id", concept_ids).execute().data
+        )
+        outgoing = (
+            client.table("concept_relations").select("*")
+            .in_("from_concept_id", concept_ids).execute().data
+        )
+        incoming = (
+            client.table("concept_relations").select("*")
+            .in_("to_concept_id", concept_ids).execute().data
+        )
+
+        concepts_by_id = {row["concept_id"]: row for row in concept_rows}
+        labels_by_id: dict[str, list[ConceptLabel]] = {}
+        for row in label_rows:
+            labels_by_id.setdefault(row["concept_id"], []).append(
+                ConceptLabel.model_validate(row)
+            )
+        relations_by_id = {
+            str(row["id"]): row for row in [*outgoing, *incoming]
+        }
+        relations_by_concept: dict[str, list[ConceptRelation]] = {}
+        for row in relations_by_id.values():
+            relation = ConceptRelation(
+                from_concept_id=row["from_concept_id"],
+                to_concept_id=row["to_concept_id"],
+                relation_type=row["relation_type"],
+                verification_status=row.get("verification_status", "unknown"),
+                source_url=row.get("source_url"),
+                source_locator=row.get("source_locator"),
+            )
+            for concept_id in {relation.from_concept_id, relation.to_concept_id}:
+                if concept_id in concepts_by_id:
+                    relations_by_concept.setdefault(concept_id, []).append(relation)
+
+        rule_sets = (
+            client.table("rule_sets").select("id")
+            .eq("game_id", game["id"]).eq("is_active", True)
+            .limit(1).execute().data
+        )
+        rule_set_id = str(rule_sets[0]["id"]) if rule_sets else None
+        rule_links_by_concept: dict[str, list[dict]] = {}
+        nodes_by_id: dict[str, dict] = {}
+        if rule_set_id:
+            rule_links = (
+                client.table("rule_node_concepts")
+                .select("concept_id,rule_id,reference_kind,verification_status")
+                .eq("rule_set_id", rule_set_id)
+                .in_("concept_id", concept_ids).execute().data
+            )
+            for row in rule_links:
+                rule_links_by_concept.setdefault(row["concept_id"], []).append(row)
+            rule_ids = sorted({row["rule_id"] for row in rule_links})
+            if rule_ids:
+                nodes = (
+                    client.table("rule_nodes")
+                    .select("rule_id,node_type,normalized_statement,source_url,source_locator,metadata")
+                    .eq("rule_set_id", rule_set_id)
+                    .in_("rule_id", rule_ids).execute().data
+                )
+                nodes_by_id = {row["rule_id"]: row for row in nodes}
+
         references: list[GameConceptReference] = []
         for link in links:
-            detail = cls._load_concept_core(client, link["concept_id"])
-            if detail is None:
+            row = concepts_by_id.get(link["concept_id"])
+            if row is None:
                 continue
+            concept = Concept(
+                concept_id=row["concept_id"],
+                concept_type=row["concept_type"],
+                lifecycle_status=row.get("lifecycle_status", "active"),
+                replaced_by_concept_id=row.get("replaced_by_concept_id"),
+                definition=row.get("definition"),
+                verification_status=row.get("verification_status", "unknown"),
+                source_url=row.get("source_url"),
+                source_locator=row.get("source_locator"),
+                labels=labels_by_id.get(link["concept_id"], []),
+            )
             preferred_labels = {
-                label.language_code: label.label
-                for label in detail.concept.labels
+                label.language_code: label.label for label in concept.labels
                 if label.label_type.value == "pref"
             }
             alternate_labels: dict[str, list[str]] = {}
-            for label in detail.concept.labels:
+            for label in concept.labels:
                 if label.label_type.value == "alt":
                     alternate_labels.setdefault(label.language_code, []).append(label.label)
-            related_ids = sorted(
-                {
-                    relation.to_concept_id if relation.from_concept_id == detail.concept.concept_id else relation.from_concept_id
-                    for relation in detail.relations
-                    if relation.relation_type.value == "related"
-                }
-            )
-            rule_references = cls._load_rule_references(client, str(game["id"]), link["concept_id"])
+            related_ids = sorted({
+                relation.to_concept_id
+                if relation.from_concept_id == concept.concept_id
+                else relation.from_concept_id
+                for relation in relations_by_concept.get(concept.concept_id, [])
+                if relation.relation_type.value == "related"
+            })
+            rule_references: list[RuleConceptReference] = []
+            for rule_link in rule_links_by_concept.get(concept.concept_id, []):
+                node = nodes_by_id.get(rule_link["rule_id"])
+                if node is None:
+                    continue
+                metadata = node.get("metadata") or {}
+                condition = metadata.get("condition") if isinstance(metadata, dict) else None
+                player_count = condition.get("player_count") if isinstance(condition, dict) else None
+                rule_references.append(
+                    RuleConceptReference(
+                        rule_id=node["rule_id"],
+                        node_type=node["node_type"],
+                        normalized_statement=node["normalized_statement"],
+                        reference_kind=rule_link["reference_kind"],
+                        verification_status=rule_link.get("verification_status", "unknown"),
+                        rule_set_id=rule_set_id,
+                        player_count=player_count
+                        if isinstance(player_count, int) and not isinstance(player_count, bool)
+                        else None,
+                        source_url=node.get("source_url"),
+                        source_locator=node.get("source_locator"),
+                    )
+                )
             references.append(
                 GameConceptReference(
-                    concept_id=detail.concept.concept_id,
-                    concept_type=detail.concept.concept_type,
+                    concept_id=concept.concept_id,
+                    concept_type=concept.concept_type,
                     usage_role=link["usage_role"],
                     verification_status=link.get("verification_status", "unknown"),
                     preferred_labels=preferred_labels,
                     alternate_labels=alternate_labels,
-                    definition=detail.concept.definition,
+                    definition=concept.definition,
                     related_concept_ids=related_ids,
                     rule_references=rule_references,
                 )
