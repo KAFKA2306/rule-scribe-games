@@ -1,0 +1,36 @@
+name: Glossary projection contract
+
+on:
+  pull_request:
+    paths:
+      - 'backend/app/services/concept_taxonomy.py'
+      - 'backend/tests/test_glossary_batch_reads.py'
+      - 'backend/tests/test_concept_taxonomy.py'
+      - '.github/workflows/glossary-projection-contract.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'backend/app/services/concept_taxonomy.py'
+      - 'backend/tests/test_glossary_batch_reads.py'
+      - 'backend/tests/test_concept_taxonomy.py'
+      - '.github/workflows/glossary-projection-contract.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  glossary-contract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9
+      - name: Install locked Python dependencies
+        run: uv sync --frozen
+      - name: Validate changed Python files
+        run: uvx ruff check backend/app/services/concept_taxonomy.py backend/tests/test_glossary_batch_reads.py
+      - name: Verify bounded read projection and taxonomy contracts
+        env:
+          PYTHONPATH: backend
+        run: uv run pytest -q backend/tests/test_glossary_batch_reads.py backend/tests/test_concept_taxonomy.py
