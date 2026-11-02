@@ -226,32 +226,9 @@ class ConceptTaxonomyService:
                 if concept_id in concepts_by_id:
                     relations_by_concept.setdefault(concept_id, []).append(relation)
 
-        rule_sets = (
-            client.table("rule_sets").select("id")
-            .eq("game_id", game["id"]).eq("is_active", True)
-            .limit(1).execute().data
+        rule_set_id, rule_links_by_concept, nodes_by_id = cls._load_game_rule_nodes(
+            client, str(game["id"]), concept_ids
         )
-        rule_set_id = str(rule_sets[0]["id"]) if rule_sets else None
-        rule_links_by_concept: dict[str, list[dict]] = {}
-        nodes_by_id: dict[str, dict] = {}
-        if rule_set_id:
-            rule_links = (
-                client.table("rule_node_concepts")
-                .select("concept_id,rule_id,reference_kind,verification_status")
-                .eq("rule_set_id", rule_set_id)
-                .in_("concept_id", concept_ids).execute().data
-            )
-            for row in rule_links:
-                rule_links_by_concept.setdefault(row["concept_id"], []).append(row)
-            rule_ids = sorted({row["rule_id"] for row in rule_links})
-            if rule_ids:
-                nodes = (
-                    client.table("rule_nodes")
-                    .select("rule_id,node_type,normalized_statement,source_url,source_locator,metadata")
-                    .eq("rule_set_id", rule_set_id)
-                    .in_("rule_id", rule_ids).execute().data
-                )
-                nodes_by_id = {row["rule_id"]: row for row in nodes}
 
         references: list[GameConceptReference] = []
         for link in links:
@@ -305,6 +282,38 @@ class ConceptTaxonomyService:
         if not references:
             return GameConceptsReadResponse(status="not_available", **base)
         return GameConceptsReadResponse(status="available", concepts=references, **base)
+
+    @staticmethod
+    def _load_game_rule_nodes(
+        client, game_id: str, concept_ids: list[str]
+    ) -> tuple[str | None, dict[str, list[dict]], dict[str, dict]]:
+        rule_sets = (
+            client.table("rule_sets").select("id")
+            .eq("game_id", game_id).eq("is_active", True)
+            .limit(1).execute().data
+        )
+        if not rule_sets:
+            return None, {}, {}
+        rule_set_id = str(rule_sets[0]["id"])
+        rule_links = (
+            client.table("rule_node_concepts")
+            .select("concept_id,rule_id,reference_kind,verification_status")
+            .eq("rule_set_id", rule_set_id)
+            .in_("concept_id", concept_ids).execute().data
+        )
+        links_by_concept: dict[str, list[dict]] = {}
+        for row in rule_links:
+            links_by_concept.setdefault(row["concept_id"], []).append(row)
+        rule_ids = sorted({row["rule_id"] for row in rule_links})
+        if not rule_ids:
+            return rule_set_id, links_by_concept, {}
+        nodes = (
+            client.table("rule_nodes")
+            .select("rule_id,node_type,normalized_statement,source_url,source_locator,metadata")
+            .eq("rule_set_id", rule_set_id)
+            .in_("rule_id", rule_ids).execute().data
+        )
+        return rule_set_id, links_by_concept, {row["rule_id"]: row for row in nodes}
 
     @staticmethod
     def _project_rule_references(
