@@ -207,7 +207,7 @@ class ConceptTaxonomyService:
         labels_by_id: dict[str, list[ConceptLabel]] = {}
         for row in label_rows:
             labels_by_id.setdefault(row["concept_id"], []).append(
-                ConceptLabel.model_validate(row)
+                ConceptLabel.model_validate({key: value for key, value in row.items() if key != "concept_id"})
             )
         relations_by_id = {
             str(row["id"]): row for row in [*outgoing, *incoming]
