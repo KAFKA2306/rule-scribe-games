@@ -136,7 +136,8 @@ def test_concept_detail_batches_cross_game_backlinks_without_mixing_rule_sets(mo
     assert backlinks[0].rule_references[0].rule_set_id == "set-1"
     assert backlinks[1].rule_references[0].normalized_statement == "Beta turn"
     assert backlinks[1].rule_references[0].rule_set_id == "set-2"
-    assert backlinks[1].rule_references[0].player_count == 2
+    expected_players = 2
+    assert backlinks[1].rule_references[0].player_count == expected_players
     assert backlinks[1].rule_references[0].verification_status.value == "source_bound"
 
     # Five reads regardless of how many linked games or RuleNodes exist.
