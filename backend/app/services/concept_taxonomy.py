@@ -347,60 +347,6 @@ class ConceptTaxonomyService:
         return references
 
     @classmethod
-    def _load_rule_references(cls, client, game_id: str, concept_id: str) -> list[RuleConceptReference]:
-        rule_sets = (
-            client.table("rule_sets")
-            .select("id")
-            .eq("game_id", game_id)
-            .eq("is_active", True)
-            .limit(1)
-            .execute()
-            .data
-        )
-        if not rule_sets:
-            return []
-        rule_set_id = rule_sets[0]["id"]
-        links = (
-            client.table("rule_node_concepts")
-            .select("rule_id,reference_kind,verification_status")
-            .eq("rule_set_id", rule_set_id)
-            .eq("concept_id", concept_id)
-            .execute()
-            .data
-        )
-        references: list[RuleConceptReference] = []
-        for link in links:
-            nodes = (
-                client.table("rule_nodes")
-                .select("rule_id,node_type,normalized_statement,source_url,source_locator,metadata")
-                .eq("rule_set_id", rule_set_id)
-                .eq("rule_id", link["rule_id"])
-                .limit(1)
-                .execute()
-                .data
-            )
-            if not nodes:
-                continue
-            node = nodes[0]
-            metadata = node.get("metadata") or {}
-            condition = metadata.get("condition") if isinstance(metadata, dict) else None
-            player_count = condition.get("player_count") if isinstance(condition, dict) else None
-            references.append(
-                RuleConceptReference(
-                    rule_id=node["rule_id"],
-                    node_type=node["node_type"],
-                    normalized_statement=node["normalized_statement"],
-                    reference_kind=link["reference_kind"],
-                    verification_status=link.get("verification_status", "unknown"),
-                    rule_set_id=str(rule_set_id),
-                    player_count=player_count if isinstance(player_count, int) and not isinstance(player_count, bool) else None,
-                    source_url=node.get("source_url"),
-                    source_locator=node.get("source_locator"),
-                )
-            )
-        return references
-
-    @classmethod
     def _load_game_backlinks(cls, client, concept_id: str) -> list[ConceptGameBacklink]:
         links = (
             client.table("game_concepts")
@@ -412,20 +358,81 @@ class ConceptTaxonomyService:
         by_game: dict[str, list[str]] = {}
         for link in links:
             by_game.setdefault(str(link["game_id"]), []).append(link["usage_role"])
+        if not by_game:
+            return []
+
+        # The detail endpoint must not issue one game/rule query per backlink.
+        games = (
+            client.table("games")
+            .select("id,slug,title")
+            .in_("id", sorted(by_game))
+            .execute()
+            .data
+        )
+        if not games:
+            return []
+        game_ids = {str(game["id"]) for game in games}
+        active_rule_sets = (
+            client.table("rule_sets")
+            .select("id,game_id")
+            .in_("game_id", sorted(game_ids))
+            .eq("is_active", True)
+            .execute()
+            .data
+        )
+        selected_rule_set_by_game: dict[str, str] = {}
+        for row in active_rule_sets:
+            game_id = str(row["game_id"])
+            if game_id in game_ids:
+                # Match the existing one-active-RuleSet-per-game projection.
+                selected_rule_set_by_game.setdefault(game_id, str(row["id"]))
+
+        rule_set_ids = sorted(set(selected_rule_set_by_game.values()))
+        links_by_rule_set: dict[str, list[dict]] = {}
+        nodes_by_rule_set: dict[str, dict[str, dict]] = {}
+        if rule_set_ids:
+            rule_links = (
+                client.table("rule_node_concepts")
+                .select("rule_set_id,rule_id,reference_kind,verification_status")
+                .in_("rule_set_id", rule_set_ids)
+                .eq("concept_id", concept_id)
+                .execute()
+                .data
+            )
+            for link in rule_links:
+                links_by_rule_set.setdefault(str(link["rule_set_id"]), []).append(link)
+            rule_ids = sorted({link["rule_id"] for link in rule_links})
+            if rule_ids:
+                nodes = (
+                    client.table("rule_nodes")
+                    .select("rule_set_id,rule_id,node_type,normalized_statement,source_url,source_locator,metadata")
+                    .in_("rule_set_id", rule_set_ids)
+                    .in_("rule_id", rule_ids)
+                    .execute()
+                    .data
+                )
+                for node in nodes:
+                    nodes_by_rule_set.setdefault(str(node["rule_set_id"]), {})[node["rule_id"]] = node
 
         backlinks: list[ConceptGameBacklink] = []
-        for game_id, usage_roles in by_game.items():
-            games = client.table("games").select("id,slug,title").eq("id", game_id).limit(1).execute().data
-            if not games:
-                continue
-            game = games[0]
+        for game in games:
+            game_id = str(game["id"])
+            rule_set_id = selected_rule_set_by_game.get(game_id)
+            rule_references = (
+                cls._project_rule_references(
+                    links_by_rule_set.get(rule_set_id, []),
+                    nodes_by_rule_set.get(rule_set_id, {}),
+                    rule_set_id,
+                )
+                if rule_set_id else []
+            )
             backlinks.append(
                 ConceptGameBacklink(
-                    game_id=str(game["id"]),
+                    game_id=game_id,
                     slug=str(game["slug"]),
                     title=game.get("title"),
-                    usage_roles=sorted(set(usage_roles)),
-                    rule_references=cls._load_rule_references(client, game_id, concept_id),
+                    usage_roles=sorted(set(by_game[game_id])),
+                    rule_references=rule_references,
                 )
             )
         return sorted(backlinks, key=lambda item: item.slug)
