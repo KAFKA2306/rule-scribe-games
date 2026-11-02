@@ -284,29 +284,11 @@ class ConceptTaxonomyService:
                 for relation in relations_by_concept.get(concept.concept_id, [])
                 if relation.relation_type.value == "related"
             })
-            rule_references: list[RuleConceptReference] = []
-            for rule_link in rule_links_by_concept.get(concept.concept_id, []):
-                node = nodes_by_id.get(rule_link["rule_id"])
-                if node is None:
-                    continue
-                metadata = node.get("metadata") or {}
-                condition = metadata.get("condition") if isinstance(metadata, dict) else None
-                player_count = condition.get("player_count") if isinstance(condition, dict) else None
-                rule_references.append(
-                    RuleConceptReference(
-                        rule_id=node["rule_id"],
-                        node_type=node["node_type"],
-                        normalized_statement=node["normalized_statement"],
-                        reference_kind=rule_link["reference_kind"],
-                        verification_status=rule_link.get("verification_status", "unknown"),
-                        rule_set_id=rule_set_id,
-                        player_count=player_count
-                        if isinstance(player_count, int) and not isinstance(player_count, bool)
-                        else None,
-                        source_url=node.get("source_url"),
-                        source_locator=node.get("source_locator"),
-                    )
-                )
+            rule_references = cls._project_rule_references(
+                rule_links_by_concept.get(concept.concept_id, []),
+                nodes_by_id,
+                rule_set_id,
+            )
             references.append(
                 GameConceptReference(
                     concept_id=concept.concept_id,
@@ -323,6 +305,37 @@ class ConceptTaxonomyService:
         if not references:
             return GameConceptsReadResponse(status="not_available", **base)
         return GameConceptsReadResponse(status="available", concepts=references, **base)
+
+    @staticmethod
+    def _project_rule_references(
+        rule_links: list[dict],
+        nodes_by_id: dict[str, dict],
+        rule_set_id: str | None,
+    ) -> list[RuleConceptReference]:
+        references: list[RuleConceptReference] = []
+        for rule_link in rule_links:
+            node = nodes_by_id.get(rule_link["rule_id"])
+            if node is None:
+                continue
+            metadata = node.get("metadata") or {}
+            condition = metadata.get("condition") if isinstance(metadata, dict) else None
+            player_count = condition.get("player_count") if isinstance(condition, dict) else None
+            references.append(
+                RuleConceptReference(
+                    rule_id=node["rule_id"],
+                    node_type=node["node_type"],
+                    normalized_statement=node["normalized_statement"],
+                    reference_kind=rule_link["reference_kind"],
+                    verification_status=rule_link.get("verification_status", "unknown"),
+                    rule_set_id=rule_set_id,
+                    player_count=player_count
+                    if isinstance(player_count, int) and not isinstance(player_count, bool)
+                    else None,
+                    source_url=node.get("source_url"),
+                    source_locator=node.get("source_locator"),
+                )
+            )
+        return references
 
     @classmethod
     def _load_rule_references(cls, client, game_id: str, concept_id: str) -> list[RuleConceptReference]:
