@@ -3,7 +3,7 @@
   "source": "https://api.vercel.com/v1/query/web-analytics/visits/aggregate",
   "event_source": "https://api.vercel.com/v1/query/web-analytics/events/aggregate",
   "scope": "production Web Analytics; custom-event export may be plan-limited",
-  "collected_at": "2026-11-02T06:27:06.096119+00:00",
+  "collected_at": "2026-11-03T06:59:27.918763+00:00",
   "days": [
     {
       "date": "2026-07-26",
@@ -499,6 +499,11 @@
       "date": "2026-11-01",
       "pageviews": 0,
       "visitors": 0
+    },
+    {
+      "date": "2026-11-02",
+      "pageviews": 0,
+      "visitors": 0
     }
   ],
   "affiliate_outbound": {
@@ -508,14 +513,14 @@
   },
   "affiliate_outbound_days": [],
   "rolling_window": {
-    "since": "2026-10-02",
-    "until": "2026-11-02",
+    "since": "2026-10-03",
+    "until": "2026-11-03",
     "limit_per_breakdown": 100,
     "request_paths": [
       {
         "requestPath": "/",
-        "pageviews": 10,
-        "visitors": 8
+        "pageviews": 9,
+        "visitors": 7
       },
       {
         "requestPath": "/games/sky-team",
@@ -546,8 +551,8 @@
     "referrers": [
       {
         "referrerHostname": "bing.com",
-        "pageviews": 9,
-        "visitors": 7
+        "pageviews": 8,
+        "visitors": 6
       },
       {
         "referrerHostname": "",
