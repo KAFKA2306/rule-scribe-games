@@ -3,7 +3,7 @@
   "source": "https://api.vercel.com/v1/query/web-analytics/visits/aggregate",
   "event_source": "https://api.vercel.com/v1/query/web-analytics/events/aggregate",
   "scope": "production Web Analytics; custom-event export may be plan-limited",
-  "collected_at": "2026-11-11T06:47:57.858405+00:00",
+  "collected_at": "2026-11-12T07:25:30.784268+00:00",
   "days": [
     {
       "date": "2026-07-26",
@@ -544,6 +544,11 @@
       "date": "2026-11-10",
       "pageviews": 0,
       "visitors": 0
+    },
+    {
+      "date": "2026-11-11",
+      "pageviews": 0,
+      "visitors": 0
     }
   ],
   "affiliate_outbound": {
@@ -553,14 +558,14 @@
   },
   "affiliate_outbound_days": [],
   "rolling_window": {
-    "since": "2026-10-11",
-    "until": "2026-11-11",
+    "since": "2026-10-12",
+    "until": "2026-11-12",
     "limit_per_breakdown": 100,
     "request_paths": [
       {
         "requestPath": "/",
-        "pageviews": 11,
-        "visitors": 9
+        "pageviews": 10,
+        "visitors": 8
       },
       {
         "requestPath": "/games/sky-team",
@@ -578,11 +583,6 @@
         "visitors": 1
       },
       {
-        "requestPath": "/games/geister",
-        "pageviews": 1,
-        "visitors": 1
-      },
-      {
         "requestPath": "/games/terraforming-mars",
         "pageviews": 1,
         "visitors": 1
@@ -591,13 +591,13 @@
     "referrers": [
       {
         "referrerHostname": "",
-        "pageviews": 8,
-        "visitors": 8
+        "pageviews": 7,
+        "visitors": 7
       },
       {
         "referrerHostname": "bing.com",
-        "pageviews": 8,
-        "visitors": 6
+        "pageviews": 7,
+        "visitors": 5
       },
       {
         "referrerHostname": "note.com",
@@ -637,18 +637,6 @@
       },
       {
         "requestPath": "/games/codenames",
-        "pageviews": 1,
-        "visitors": 1,
-        "referrers": [
-          {
-            "referrerHostname": "",
-            "pageviews": 1,
-            "visitors": 1
-          }
-        ]
-      },
-      {
-        "requestPath": "/games/geister",
         "pageviews": 1,
         "visitors": 1,
         "referrers": [
