@@ -3,7 +3,7 @@
   "source": "https://api.vercel.com/v1/query/web-analytics/visits/aggregate",
   "event_source": "https://api.vercel.com/v1/query/web-analytics/events/aggregate",
   "scope": "production Web Analytics; custom-event export may be plan-limited",
-  "collected_at": "2026-11-14T06:44:38.025912+00:00",
+  "collected_at": "2026-11-15T06:49:30.173880+00:00",
   "days": [
     {
       "date": "2026-07-26",
@@ -559,6 +559,11 @@
       "date": "2026-11-13",
       "pageviews": 1,
       "visitors": 1
+    },
+    {
+      "date": "2026-11-14",
+      "pageviews": 2,
+      "visitors": 2
     }
   ],
   "affiliate_outbound": {
@@ -568,14 +573,14 @@
   },
   "affiliate_outbound_days": [],
   "rolling_window": {
-    "since": "2026-10-14",
-    "until": "2026-11-14",
+    "since": "2026-10-15",
+    "until": "2026-11-15",
     "limit_per_breakdown": 100,
     "request_paths": [
       {
         "requestPath": "/",
-        "pageviews": 9,
-        "visitors": 7
+        "pageviews": 10,
+        "visitors": 8
       },
       {
         "requestPath": "/games/sky-team",
@@ -589,11 +594,6 @@
       },
       {
         "requestPath": "/games/catan",
-        "pageviews": 1,
-        "visitors": 1
-      },
-      {
-        "requestPath": "/games/codenames",
         "pageviews": 1,
         "visitors": 1
       }
@@ -635,18 +635,6 @@
       },
       {
         "requestPath": "/games/catan",
-        "pageviews": 1,
-        "visitors": 1,
-        "referrers": [
-          {
-            "referrerHostname": "",
-            "pageviews": 1,
-            "visitors": 1
-          }
-        ]
-      },
-      {
-        "requestPath": "/games/codenames",
         "pageviews": 1,
         "visitors": 1,
         "referrers": [
