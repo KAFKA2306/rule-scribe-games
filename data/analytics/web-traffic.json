@@ -3,7 +3,7 @@
   "source": "https://api.vercel.com/v1/query/web-analytics/visits/aggregate",
   "event_source": "https://api.vercel.com/v1/query/web-analytics/events/aggregate",
   "scope": "production Web Analytics; custom-event export may be plan-limited",
-  "collected_at": "2026-11-18T07:43:21.956875+00:00",
+  "collected_at": "2026-11-19T07:39:44.654120+00:00",
   "days": [
     {
       "date": "2026-07-26",
@@ -579,6 +579,11 @@
       "date": "2026-11-17",
       "pageviews": 0,
       "visitors": 0
+    },
+    {
+      "date": "2026-11-18",
+      "pageviews": 31,
+      "visitors": 15
     }
   ],
   "affiliate_outbound": {
@@ -588,19 +593,19 @@
   },
   "affiliate_outbound_days": [],
   "rolling_window": {
-    "since": "2026-10-18",
-    "until": "2026-11-18",
+    "since": "2026-10-19",
+    "until": "2026-11-19",
     "limit_per_breakdown": 100,
     "request_paths": [
       {
         "requestPath": "/",
-        "pageviews": 9,
-        "visitors": 7
+        "pageviews": 25,
+        "visitors": 19
       },
       {
-        "requestPath": "/games/sky-team",
-        "pageviews": 2,
-        "visitors": 2
+        "requestPath": "/games/skull-king",
+        "pageviews": 7,
+        "visitors": 6
       },
       {
         "requestPath": "/data",
@@ -608,7 +613,32 @@
         "visitors": 1
       },
       {
+        "requestPath": "/games/brass-lancashire",
+        "pageviews": 3,
+        "visitors": 1
+      },
+      {
         "requestPath": "/games/catan",
+        "pageviews": 1,
+        "visitors": 1
+      },
+      {
+        "requestPath": "/games/ipso",
+        "pageviews": 1,
+        "visitors": 1
+      },
+      {
+        "requestPath": "/games/minna-de-ponkotsu-paint",
+        "pageviews": 3,
+        "visitors": 1
+      },
+      {
+        "requestPath": "/games/sky-team",
+        "pageviews": 1,
+        "visitors": 1
+      },
+      {
+        "requestPath": "/games/terraforming-mars",
         "pageviews": 1,
         "visitors": 1
       }
@@ -616,40 +646,95 @@
     "referrers": [
       {
         "referrerHostname": "",
-        "pageviews": 7,
-        "visitors": 7
+        "pageviews": 33,
+        "visitors": 20
       },
       {
         "referrerHostname": "bing.com",
-        "pageviews": 5,
-        "visitors": 3
-      },
-      {
-        "referrerHostname": "note.com",
-        "pageviews": 1,
-        "visitors": 1
+        "pageviews": 10,
+        "visitors": 5
       }
     ],
     "game_page_referrers": [
       {
-        "requestPath": "/games/sky-team",
-        "pageviews": 2,
-        "visitors": 2,
+        "requestPath": "/games/skull-king",
+        "pageviews": 7,
+        "visitors": 6,
         "referrers": [
           {
-            "referrerHostname": "bing.com",
-            "pageviews": 1,
-            "visitors": 1
+            "referrerHostname": "",
+            "pageviews": 4,
+            "visitors": 4
           },
           {
-            "referrerHostname": "note.com",
-            "pageviews": 1,
+            "referrerHostname": "bing.com",
+            "pageviews": 3,
+            "visitors": 2
+          }
+        ]
+      },
+      {
+        "requestPath": "/games/brass-lancashire",
+        "pageviews": 3,
+        "visitors": 1,
+        "referrers": [
+          {
+            "referrerHostname": "",
+            "pageviews": 3,
             "visitors": 1
           }
         ]
       },
       {
         "requestPath": "/games/catan",
+        "pageviews": 1,
+        "visitors": 1,
+        "referrers": [
+          {
+            "referrerHostname": "",
+            "pageviews": 1,
+            "visitors": 1
+          }
+        ]
+      },
+      {
+        "requestPath": "/games/ipso",
+        "pageviews": 1,
+        "visitors": 1,
+        "referrers": [
+          {
+            "referrerHostname": "",
+            "pageviews": 1,
+            "visitors": 1
+          }
+        ]
+      },
+      {
+        "requestPath": "/games/minna-de-ponkotsu-paint",
+        "pageviews": 3,
+        "visitors": 1,
+        "referrers": [
+          {
+            "referrerHostname": "",
+            "pageviews": 3,
+            "visitors": 1
+          }
+        ]
+      },
+      {
+        "requestPath": "/games/sky-team",
+        "pageviews": 1,
+        "visitors": 1,
+        "referrers": [
+          {
+            "referrerHostname": "bing.com",
+            "pageviews": 1,
+            "visitors": 1
+          }
+        ]
+      },
+      {
+        "requestPath": "/games/terraforming-mars",
         "pageviews": 1,
         "visitors": 1,
         "referrers": [
