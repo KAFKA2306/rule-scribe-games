@@ -3,7 +3,6 @@ https://bodoge-no-mikata.vercel.app/
 # RuleScribe Games
 
 [![Vercel Deployment](https://github.com/KAFKA2306/rule-scribe-games/actions/workflows/deploy.yml/badge.svg)](https://github.com/KAFKA2306/rule-scribe-games/actions/workflows/deploy.yml)
-[![Rule quality gate](https://github.com/KAFKA2306/rule-scribe-games/actions/workflows/rule-quality.yml/badge.svg)](https://github.com/KAFKA2306/rule-scribe-games/actions/workflows/rule-quality.yml)
 [![Curated game release verification](https://github.com/KAFKA2306/rule-scribe-games/actions/workflows/curated-game-release-verification.yml/badge.svg)](https://github.com/KAFKA2306/rule-scribe-games/actions/workflows/curated-game-release-verification.yml)
 
 <div align="center">
