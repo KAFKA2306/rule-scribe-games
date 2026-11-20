@@ -18,7 +18,7 @@ function buildVisibleNarration(fallbackText) {
     .filter(Boolean)
 
   const content = coachSteps.length > 0
-    ? coachSteps
+    ? [visibleText('.coach-mode .coach-disclaimer').replace(/。$/, ''), ...coachSteps]
     : synopsis
       ? [synopsis]
       : []

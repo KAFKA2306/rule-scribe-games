@@ -325,7 +325,7 @@ export default function GamePage({ slug: propSlug, initialGame }) {
                 )}
 
                 <div style={{ textAlign: 'center', padding: '1rem', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
-                  登録済みのゲーム固有要約を表示しています。AI生成・要約を含む場合があり、公式裁定ではありません。
+                  <span className="coach-disclaimer">登録済みのゲーム固有要約を表示しています。AI生成・要約を含む場合があり、公式裁定ではありません。</span>
                   {coachSourceUrl && (
                     <>
                       {' '}
