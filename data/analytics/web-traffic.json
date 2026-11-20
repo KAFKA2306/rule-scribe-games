@@ -3,7 +3,7 @@
   "source": "https://api.vercel.com/v1/query/web-analytics/visits/aggregate",
   "event_source": "https://api.vercel.com/v1/query/web-analytics/events/aggregate",
   "scope": "production Web Analytics; custom-event export may be plan-limited",
-  "collected_at": "2026-11-19T07:39:44.654120+00:00",
+  "collected_at": "2026-11-20T07:30:50.641378+00:00",
   "days": [
     {
       "date": "2026-07-26",
@@ -584,6 +584,11 @@
       "date": "2026-11-18",
       "pageviews": 31,
       "visitors": 15
+    },
+    {
+      "date": "2026-11-19",
+      "pageviews": 1,
+      "visitors": 1
     }
   ],
   "affiliate_outbound": {
@@ -593,14 +598,14 @@
   },
   "affiliate_outbound_days": [],
   "rolling_window": {
-    "since": "2026-10-19",
-    "until": "2026-11-19",
+    "since": "2026-10-20",
+    "until": "2026-11-20",
     "limit_per_breakdown": 100,
     "request_paths": [
       {
         "requestPath": "/",
-        "pageviews": 25,
-        "visitors": 19
+        "pageviews": 26,
+        "visitors": 20
       },
       {
         "requestPath": "/games/skull-king",
@@ -646,8 +651,8 @@
     "referrers": [
       {
         "referrerHostname": "",
-        "pageviews": 33,
-        "visitors": 20
+        "pageviews": 34,
+        "visitors": 21
       },
       {
         "referrerHostname": "bing.com",
