@@ -3,7 +3,7 @@
   "source": "https://api.vercel.com/v1/query/web-analytics/visits/aggregate",
   "event_source": "https://api.vercel.com/v1/query/web-analytics/events/aggregate",
   "scope": "production Web Analytics; custom-event export may be plan-limited",
-  "collected_at": "2026-11-20T07:30:50.641378+00:00",
+  "collected_at": "2026-11-21T07:25:50.322544+00:00",
   "days": [
     {
       "date": "2026-07-26",
@@ -589,6 +589,11 @@
       "date": "2026-11-19",
       "pageviews": 1,
       "visitors": 1
+    },
+    {
+      "date": "2026-11-20",
+      "pageviews": 10,
+      "visitors": 6
     }
   ],
   "affiliate_outbound": {
@@ -598,19 +603,19 @@
   },
   "affiliate_outbound_days": [],
   "rolling_window": {
-    "since": "2026-10-20",
-    "until": "2026-11-20",
+    "since": "2026-10-21",
+    "until": "2026-11-21",
     "limit_per_breakdown": 100,
     "request_paths": [
       {
         "requestPath": "/",
-        "pageviews": 26,
-        "visitors": 20
+        "pageviews": 29,
+        "visitors": 22
       },
       {
         "requestPath": "/games/skull-king",
-        "pageviews": 7,
-        "visitors": 6
+        "pageviews": 14,
+        "visitors": 10
       },
       {
         "requestPath": "/data",
@@ -651,25 +656,25 @@
     "referrers": [
       {
         "referrerHostname": "",
-        "pageviews": 34,
-        "visitors": 21
+        "pageviews": 42,
+        "visitors": 26
       },
       {
         "referrerHostname": "bing.com",
-        "pageviews": 10,
-        "visitors": 5
+        "pageviews": 12,
+        "visitors": 6
       }
     ],
     "game_page_referrers": [
       {
         "requestPath": "/games/skull-king",
-        "pageviews": 7,
-        "visitors": 6,
+        "pageviews": 14,
+        "visitors": 10,
         "referrers": [
           {
             "referrerHostname": "",
-            "pageviews": 4,
-            "visitors": 4
+            "pageviews": 11,
+            "visitors": 8
           },
           {
             "referrerHostname": "bing.com",
