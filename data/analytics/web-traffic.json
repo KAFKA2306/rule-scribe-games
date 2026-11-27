@@ -3,7 +3,7 @@
   "source": "https://api.vercel.com/v1/query/web-analytics/visits/aggregate",
   "event_source": "https://api.vercel.com/v1/query/web-analytics/events/aggregate",
   "scope": "production Web Analytics; custom-event export may be plan-limited",
-  "collected_at": "2026-11-26T08:37:45.832930+00:00",
+  "collected_at": "2026-11-27T08:48:49.680509+00:00",
   "days": [
     {
       "date": "2026-07-26",
@@ -619,6 +619,11 @@
       "date": "2026-11-25",
       "pageviews": 3,
       "visitors": 3
+    },
+    {
+      "date": "2026-11-26",
+      "pageviews": 2,
+      "visitors": 2
     }
   ],
   "affiliate_outbound": {
@@ -628,14 +633,14 @@
   },
   "affiliate_outbound_days": [],
   "rolling_window": {
-    "since": "2026-10-26",
-    "until": "2026-11-26",
+    "since": "2026-10-27",
+    "until": "2026-11-27",
     "limit_per_breakdown": 100,
     "request_paths": [
       {
         "requestPath": "/",
-        "pageviews": 39,
-        "visitors": 32
+        "pageviews": 42,
+        "visitors": 35
       },
       {
         "requestPath": "/games/skull-king",
@@ -668,11 +673,6 @@
         "visitors": 1
       },
       {
-        "requestPath": "/games/sky-team",
-        "pageviews": 1,
-        "visitors": 1
-      },
-      {
         "requestPath": "/games/terraforming-mars",
         "pageviews": 1,
         "visitors": 1
@@ -681,13 +681,13 @@
     "referrers": [
       {
         "referrerHostname": "",
-        "pageviews": 52,
-        "visitors": 36
+        "pageviews": 55,
+        "visitors": 39
       },
       {
         "referrerHostname": "bing.com",
-        "pageviews": 12,
-        "visitors": 6
+        "pageviews": 11,
+        "visitors": 5
       }
     ],
     "game_page_referrers": [
@@ -752,18 +752,6 @@
           {
             "referrerHostname": "",
             "pageviews": 3,
-            "visitors": 1
-          }
-        ]
-      },
-      {
-        "requestPath": "/games/sky-team",
-        "pageviews": 1,
-        "visitors": 1,
-        "referrers": [
-          {
-            "referrerHostname": "bing.com",
-            "pageviews": 1,
             "visitors": 1
           }
         ]
