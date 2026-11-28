@@ -6,6 +6,7 @@ import re
 from pathlib import Path
 
 from app.core.supabase import get_by_slug
+from app.models import GamePageDetail
 from app.services.player_summary import project_player_summary
 from app.services.presentation_projection import PresentationProjectionReadError, PresentationProjectionService
 from app.services.rulesets import RuleSetService
@@ -42,6 +43,11 @@ def _meta_tag(document: str, *, attr: str, key: str, content: str) -> str:
 def _safe_json_script(data: dict) -> str:
     payload = json.dumps(data, ensure_ascii=False, separators=(",", ":"))
     return payload.replace("&", "\\u0026").replace("<", "\\u003c").replace(">", "\\u003e")
+
+
+def _game_bootstrap_script(game: dict) -> str:
+    game_payload = GamePageDetail.model_validate(game).model_dump(mode="json", exclude_none=True)
+    return f'<script type="application/json" id="ssr-game-data">{_safe_json_script(game_payload)}</script>'
 
 
 def _page_title(game: dict, title: str, *, has_canonical_rules: bool) -> str:
@@ -116,9 +122,7 @@ async def _canonical_rule_text(slug: str) -> str | None:
         return None
 
     candidates = [
-        ruleset
-        for ruleset in rulesets.rulesets
-        if ruleset.is_active and ruleset.verification_status == "source_bound"
+        ruleset for ruleset in rulesets.rulesets if ruleset.is_active and ruleset.verification_status == "source_bound"
     ]
     for ruleset in candidates:
         try:
@@ -179,7 +183,10 @@ async def generate_seo_html(slug: str) -> str | None:
         return None
 
     canonical_rules = await _canonical_rule_text(slug)
-    game = project_player_summary(game, source_bound=canonical_rules is not None)
+    game = project_player_summary(
+        {**game, "rules_content": canonical_rules},
+        source_bound=canonical_rules is not None,
+    )
 
     title = str(game.get("title_ja") or game.get("title") or game.get("name") or "Untitled")
     description = str(game.get("summary") or game.get("description") or "")
@@ -248,7 +255,9 @@ async def generate_seo_html(slug: str) -> str | None:
 
     if not html_content:
         logger.error(f"index.html template not found in {possible_paths}")
-        html_content = '<html lang="ja"><head><title>ボドゲのミカタ</title></head><body><div id="root"></div></body></html>'
+        html_content = (
+            '<html lang="ja"><head><title>ボドゲのミカタ</title></head><body><div id="root"></div></body></html>'
+        )
 
     escaped_title = html.escape(page_title, quote=False)
     html_content = _replace_or_insert_tag(
@@ -324,4 +333,6 @@ async def generate_seo_html(slug: str) -> str | None:
     </section>
 {ruleset_identity_section}{rules_section}  </article>
 </div>"""
+
+    html_content = html_content.replace("</head>", f"  {_game_bootstrap_script(game)}\n</head>", 1)
     return html_content.replace('<div id="root"></div>', ssr_content, 1)

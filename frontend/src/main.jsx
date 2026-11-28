@@ -21,6 +21,24 @@ import { installMobileFilterFocus } from './lib/mobileFilterFocus.js'
 
 installMobileFilterFocus()
 
+function readSsrGameData() {
+  const element = document.getElementById('ssr-game-data')
+  if (!element) return null
+
+  try {
+    const game = JSON.parse(element.textContent || '')
+    const routeSlug = window.location.pathname.match(/^\/games\/([^/]+)$/)?.[1]
+    return game && game.slug === routeSlug ? game : null
+  } catch (error) {
+    console.error('Could not parse server-rendered game data:', error)
+    return null
+  } finally {
+    element.remove()
+  }
+}
+
+const initialSsrGame = readSsrGameData()
+
 const router = createBrowserRouter([
   {
     element: <AppShell />,
@@ -37,7 +55,7 @@ const router = createBrowserRouter([
         path: '/games/:slug',
         element: (
           <Suspense fallback={<LoadingFallback />}>
-            <GamePage />
+            <GamePage initialGame={initialSsrGame} />
           </Suspense>
         ),
       },

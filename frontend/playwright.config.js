@@ -11,6 +11,12 @@ export default defineConfig({
   use: {
     baseURL: productionBaseURL || 'http://127.0.0.1:5173',
     trace: 'retain-on-failure',
+    ...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH && {
+      launchOptions: {
+        executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH,
+        args: ['--no-sandbox'],
+      },
+    }),
   },
   webServer: productionBaseURL
     ? undefined

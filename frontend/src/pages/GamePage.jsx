@@ -66,15 +66,20 @@ function getDefaultTab({ hasCoachSummary, hasRules }) {
 export default function GamePage({ slug: propSlug, initialGame }) {
   const { slug: urlSlug } = useParams()
   const slug = propSlug || urlSlug
+  const initialGameForSlug = initialGame?.slug === slug ? initialGame : null
 
-  const [game, setGame] = useState(initialGame || null)
-  const [loading, setLoading] = useState(!initialGame)
-  const [error, setError] = useState(null)
+  const [gameState, setGame] = useState(null)
+  const game = initialGameForSlug || (gameState?.slug === slug ? gameState : null)
+  const [gameRequestError, setGameRequestError] = useState(null)
+  const error = gameRequestError?.slug === slug ? gameRequestError.message : null
+  const [retryKey, setRetryKey] = useState(0)
   const [activeTab, setActiveTab] = useState('rules')
-  const [connections, setConnections] = useState(null)
-  const [connectionsLoading, setConnectionsLoading] = useState(false)
-  const [connectionsError, setConnectionsError] = useState(false)
-  const [ruleNodes, setRuleNodes] = useState([])
+  const [connectionsState, setConnectionsState] = useState({ slug: null, data: null, error: false })
+  const connections = connectionsState.slug === slug ? connectionsState.data : null
+  const connectionsLoading = activeTab === 'graph' && connectionsState.slug !== slug
+  const connectionsError = connectionsState.slug === slug && connectionsState.error
+  const [ruleNodeState, setRuleNodeState] = useState({ slug: null, nodes: [] })
+  const ruleNodes = ruleNodeState.slug === slug ? ruleNodeState.nodes : []
 
   const BASE_URL = 'https://bodoge-no-mikata.vercel.app'
   const infographicsSourceUrl = game?.infographics_source_url || game?.source_url || null
@@ -90,28 +95,28 @@ export default function GamePage({ slug: propSlug, initialGame }) {
   const tabAvailability = { hasCoachSummary, hasInfographics, hasRules }
 
   useEffect(() => {
-    const fetchData = async () => {
-      if (!initialGame) {
-        setLoading(true)
-        setError(null)
-        try {
-          const data = await api.get(`/api/games/${slug}`)
-          const gameData = Array.isArray(data) ? data[0] : data.game || data
-          setGame(gameData)
-        } catch (err) {
-          console.error(err)
-          setError('ゲーム情報の取得に失敗しました')
-        } finally {
-          setLoading(false)
-        }
-      }
-    }
-    fetchData()
-  }, [slug, initialGame])
+    let cancelled = false
 
-  useEffect(() => {
-    setRuleNodes([])
-  }, [slug])
+    api.get(`/api/games/${slug}`)
+      .then((data) => {
+        if (cancelled) return
+        const gameData = Array.isArray(data) ? data[0] : data.game || data
+        setGame(gameData)
+        setGameRequestError({ slug, message: null })
+      })
+      .catch((err) => {
+        if (cancelled) return
+        console.error('Failed to refresh game details:', err)
+        setGameRequestError({
+          slug,
+          message: initialGameForSlug
+            ? '最新情報を取得できませんでした。取得済みのゲーム情報を表示しています。'
+            : 'ゲーム情報の取得に失敗しました。',
+        })
+      })
+
+    return () => { cancelled = true }
+  }, [slug, initialGameForSlug, retryKey])
 
   useEffect(() => {
     if (!game || typeof window === 'undefined') return undefined
@@ -148,20 +153,14 @@ export default function GamePage({ slug: propSlug, initialGame }) {
     if (activeTab !== 'graph') return undefined
 
     let cancelled = false
-    setConnectionsLoading(true)
-    setConnectionsError(false)
-    setConnections(null)
 
     api.get(`/api/games/${slug}/connections?limit=8`)
       .then((data) => {
-        if (!cancelled) setConnections(data)
+        if (!cancelled) setConnectionsState({ slug, data, error: false })
       })
       .catch((err) => {
         console.error('Failed to fetch canonical connections:', err)
-        if (!cancelled) setConnectionsError(true)
-      })
-      .finally(() => {
-        if (!cancelled) setConnectionsLoading(false)
+        if (!cancelled) setConnectionsState({ slug, data: null, error: true })
       })
 
     return () => { cancelled = true }
@@ -177,15 +176,19 @@ export default function GamePage({ slug: propSlug, initialGame }) {
     window.history.pushState(null, '', `${window.location.pathname}${window.location.search}${hash}`)
   }
 
-  if (loading) {
+  if (!game && !error) {
     return <div className="page-state page-state--loading" role="status">ARCHIVE LOADING...</div>
   }
 
-  if (error || !game) {
+  if (!game) {
     return (
       <div className="page-state page-state--error" role="alert">
         <div>
           <p>{error || 'Game not found'}</p>
+          {error && <button type="button" onClick={() => {
+            setGameRequestError({ slug, message: null })
+            setRetryKey((current) => current + 1)
+          }}>再試行</button>}
           <Link to="/" className="back-link">ディレクトリに戻る</Link>
         </div>
       </div>
@@ -231,6 +234,16 @@ export default function GamePage({ slug: propSlug, initialGame }) {
           <ShareButton slug={slug} />
         </div>
       </div>
+
+      {error && (
+        <div className="game-page-notice" role="status">
+          <span>{error}</span>
+          <button type="button" onClick={() => {
+            setGameRequestError({ slug, message: null })
+            setRetryKey((current) => current + 1)
+          }}>再試行</button>
+        </div>
+      )}
 
       <div className="game-layout">
         <div className="game-main">
@@ -414,7 +427,7 @@ export default function GamePage({ slug: propSlug, initialGame }) {
         </div>
 
         <div className="game-sidebar" aria-label="補足情報">
-          <ConceptGlossary slug={slug} onRuleNodesLoaded={setRuleNodes} />
+          <ConceptGlossary slug={slug} onRuleNodesLoaded={(nodes) => setRuleNodeState({ slug, nodes })} />
 
           <div className="pro-card" aria-label="出典・根拠">
             <div className="pro-card-title">出典・根拠</div>

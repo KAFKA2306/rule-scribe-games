@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 import pytest
@@ -8,31 +9,40 @@ from app.services import seo_renderer
 def test_page_title_omits_strategy_when_unavailable() -> None:
     game = {"structured_data": {"strategy_analysis": None}}
 
-    assert seo_renderer._page_title(
-        game,
-        "スカルキング",
-        has_canonical_rules=True,
-    ) == "「スカルキング」のルール・インスト要約 | ボドゲのミカタ"
+    assert (
+        seo_renderer._page_title(
+            game,
+            "スカルキング",
+            has_canonical_rules=True,
+        )
+        == "「スカルキング」のルール・インスト要約 | ボドゲのミカタ"
+    )
 
 
 def test_page_title_includes_strategy_when_available() -> None:
     game = {"structured_data": {"strategy_analysis": "終盤では得点状況を見てビッドを調整する。"}}
 
-    assert seo_renderer._page_title(
-        game,
-        "Example",
-        has_canonical_rules=True,
-    ) == "「Example」のルール・戦略・インスト要約 | ボドゲのミカタ"
+    assert (
+        seo_renderer._page_title(
+            game,
+            "Example",
+            has_canonical_rules=True,
+        )
+        == "「Example」のルール・戦略・インスト要約 | ボドゲのミカタ"
+    )
 
 
 def test_page_title_is_neutral_without_canonical_rules() -> None:
     game = {"content_review_status": "review_required"}
 
-    assert seo_renderer._page_title(
-        game,
-        "みんなでぽんこつペイント",
-        has_canonical_rules=False,
-    ) == "「みんなでぽんこつペイント」の基本情報 | ボドゲのミカタ"
+    assert (
+        seo_renderer._page_title(
+            game,
+            "みんなでぽんこつペイント",
+            has_canonical_rules=False,
+        )
+        == "「みんなでぽんこつペイント」の基本情報 | ボドゲのミカタ"
+    )
 
 
 def test_open_ended_player_count_does_not_invent_maximum() -> None:
@@ -140,14 +150,19 @@ async def test_game_ssr_replaces_metadata_escapes_content_and_omits_legacy_rules
     assert '<nav aria-label="パンくずリスト">' in rendered
     assert '<a href="/">ゲーム一覧</a>' in rendered
     assert 'aria-current="page"' in rendered
-    assert '<strong>プレイ時間:</strong> 90-120分' in rendered
+    assert "<strong>プレイ時間:</strong> 90-120分" in rendered
     assert '"timeRequired"' not in rendered
     assert '<script>alert("title")</script>' not in rendered
     assert '<script>alert("rules")</script>' not in rendered
     assert '<img src=x onerror=alert("summary")>' not in rendered
-    assert '&lt;script&gt;alert(&quot;rules&quot;)&lt;/script&gt;' not in rendered
-    assert '<h2>ルール</h2>' not in rendered
+    assert "&lt;script&gt;alert(&quot;rules&quot;)&lt;/script&gt;" not in rendered
+    assert "<h2>ルール</h2>" not in rendered
     assert "\\u003cscript" in rendered
+    game_json = rendered.split('id="ssr-game-data">', 1)[1].split("</script>", 1)[0]
+    initial_game = json.loads(game_json)
+    assert initial_game["slug"] == "safe-game"
+    assert initial_game.get("rules_content") is None
+    assert "</script>" not in game_json
     assert "ルール・インスト要約" not in rendered
     assert "基本情報 | ボドゲのミカタ" in rendered
 
@@ -159,6 +174,7 @@ async def test_known_mixed_game_record_is_noindex(
 ) -> None:
     async def game(_slug: str):
         return {
+            "id": "mixed-game-id",
             "slug": "game",
             "title": "Mixed record",
             "identity_status": "unverified",

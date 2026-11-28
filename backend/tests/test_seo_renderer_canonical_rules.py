@@ -1,3 +1,5 @@
+import json
+import re
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -87,6 +89,7 @@ async def test_source_bound_ssr_uses_same_neutral_summary_as_public_api(
 ):
     async def game(_slug: str):
         return {
+            "id": "game-ito",
             "slug": "ito",
             "title": "ito",
             "title_ja": "イト",
@@ -120,3 +123,12 @@ async def test_source_bound_ssr_uses_same_neutral_summary_as_public_api(
     assert "<strong>内容確認状態:</strong> review_required" in rendered
     assert "unreviewed legacy summary" not in rendered
     assert "unreviewed legacy description" not in rendered
+    game_json = re.search(
+        r'<script type="application/json" id="ssr-game-data">(.*?)</script>',
+        rendered,
+        re.DOTALL,
+    )
+    assert game_json is not None
+    initial_game = json.loads(game_json.group(1))
+    assert initial_game["slug"] == "ito"
+    assert initial_game["rules_content"] == "## ゲーム進行\n- 出典付きルール"

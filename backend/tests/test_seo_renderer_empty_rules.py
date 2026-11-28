@@ -9,6 +9,7 @@ from app.services import seo_renderer
 async def test_ssr_omits_rule_section_when_no_rule_text(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     async def game(_slug: str):
         return {
+            "id": "unverified-game-id",
             "slug": "unverified-game",
             "title": "未確認ゲーム",
             "summary": "ルール一次資料の確認待ちです。",
@@ -38,9 +39,12 @@ async def test_ssr_omits_rule_section_when_no_rule_text(monkeypatch: pytest.Monk
 
 
 @pytest.mark.asyncio
-async def test_ssr_keeps_rule_section_when_rule_text_exists(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+async def test_ssr_hides_legacy_rule_text_without_source_bound_rules(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
     async def game(_slug: str):
         return {
+            "id": "legacy-game-id",
             "slug": "legacy-game",
             "title": "確認済みゲーム",
             "summary": "確認済みです。",
@@ -65,5 +69,5 @@ async def test_ssr_keeps_rule_section_when_rule_text_exists(monkeypatch: pytest.
     rendered = await seo_renderer.generate_seo_html("legacy-game")
 
     assert rendered is not None
-    assert "<h2>ルール</h2>" in rendered
-    assert "手番ではカードを1枚引く。" in rendered
+    assert "<h2>ルール</h2>" not in rendered
+    assert "手番ではカードを1枚引く。" not in rendered
